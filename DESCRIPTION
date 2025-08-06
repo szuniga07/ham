@@ -12,3 +12,5 @@ RoxygenNote: 7.3.2
 Depends: 
     R (>= 2.10)
 LazyData: true
+URL: https://github.com/szuniga07/ham
+BugReports: https://github.com/szuniga07/ham/issues
