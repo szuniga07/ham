@@ -9,6 +9,7 @@
 #'
 #' @examples
 #' alpha(items=c("i1","i2","i3","i4","i5"), data=cas)
+#' @export
 #'
 alpha <- function(items, data) {
   if (sum( length(quote(items)), length(quote(data)) ) != 2) stop("Error: You did not type both names for 'items' and 'data' arguments.")  #If statement expression prints this.

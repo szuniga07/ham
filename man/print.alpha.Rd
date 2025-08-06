@@ -11,6 +11,9 @@
 
 \item{...}{Additional arguments.}
 }
+\value{
+Formatted alpha results.
+}
 \description{
 Print alpha results
 }
