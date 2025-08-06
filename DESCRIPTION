@@ -1,10 +1,18 @@
 Package: ham
-Title: What the Package Does (One Line, Title Case)
+Title: Healthcare Analysis Methods
 Version: 0.0.0.9000
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
+    person("Stephen", "Zuniga", , "rms.shiny@gmail.com", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0003-1458-3924"))
+Description: Conducts analyses for healthcare program evaluations or intervention 
+ studies. Calculates regression analyses for standard ordinary least squares (OLD or 
+ linear) or logistic models. And performs regression models used for causal modeling such 
+ as differences-in-differences and interrupted time-series (ITS) models. Can provide 
+ limited interpretations of model results and a ranking of variable importance from 
+ the models. Performs propensity score models, top-coding of outcome variables in a model, 
+ and can return new data with the newly formed variables and constructed variables used in 
+ DID and ITS. Also performs Cronbach's alpha for various scale items (e.g., 5-point 
+ Likert scale items from surveys).
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
