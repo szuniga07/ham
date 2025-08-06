@@ -1,4 +1,4 @@
-#' Title
+#' Importance of variables based on partial chi-square statistic
 #'
 #' @param model an assess regression model or models with lm or glm class.
 #'

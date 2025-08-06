@@ -2,7 +2,7 @@
 % Please edit documentation in R/importance.R
 \name{importance}
 \alias{importance}
-\title{Title}
+\title{Importance of variables based on partial chi-square statistic}
 \usage{
 importance(model)
 }
@@ -13,7 +13,7 @@ importance(model)
 a data.frame object with partial X^2 summary statistics.
 }
 \description{
-Title
+Importance of variables based on partial chi-square statistic
 }
 \examples{
 importance(assess(mpg ~ hp + wt, data=mtcars, regression= "ols")$model)
