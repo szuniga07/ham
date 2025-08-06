@@ -1,0 +1,169 @@
+#' Print interpret object
+#'
+#' @param x interpret object.
+#'
+#' @param ... Additional arguments.
+#'
+#' @return formatted interpret object results.
+#' @export
+#' @importFrom methods show
+#' @examples
+#' print(interpret(alpha(items=c("i1","i2","i3","i4","i5"), data=cas)))
+print.interpret <- function(x, ...) {
+  object <- x
+  #alpha objects
+  if("interpret" %in% class(object) ) {
+    if("alpha" %in% class(object) ) {
+      cat("Interpretations: Alpha", "\n" )
+      cat("----------------------", "\n" )
+      cat(object$alpha_overall, "\n" )
+      cat("\n" )
+      cat(object$descriptives, "\n" )
+      cat("\n" )
+      cat(object$deleted , "\n" )
+      cat("\n" )
+      cat(object$excluded , "\n" )
+    }
+  }
+  # standard models
+  if("interpret" %in% class(object) ) {
+    if("model" %in% class(object) ) {
+      cat("Interpretations: Model", "\n" )
+      cat("----------------------", "\n" )
+      cat(object$introduction, "\n" )
+      cat("\n" )
+      cat(object$all_significant, "\n" )
+      cat("\n" )
+      cat(object$positive_beta , "\n" )
+      cat("\n" )
+      cat(object$negative_beta , "\n" )
+      cat("\n" )
+      cat(object$R2 , "\n" )
+    }
+  }
+  # DID
+  if("interpret" %in% class(object) ) {
+    if("did" %in% class(object) ) {
+      cat("Interpretations: DID", "\n" )
+      cat("--------------------", "\n" )
+      cat(object$B_0, "\n" )
+      cat("\n" )
+      cat(object$B_1, "\n" )
+      cat("\n" )
+      cat(object$B_2 , "\n" )
+      cat("\n" )
+      cat(object$B_3 , "\n" )
+    }
+  }
+  # ITS
+  if("interpret" %in% class(object) ) {
+    if("sgst" %in% class(object) ) {
+      cat("Interpretations: ITS", "\n" )
+      cat("--------------------", "\n" )
+      cat(object$its_intro, "\n" )
+      cat("\n" )
+      cat(object$B0, "\n" )
+      cat("\n" )
+      cat(object$B1, "\n" )
+      cat("\n" )
+      cat(object$B2 , "\n" )
+      cat("\n" )
+      cat(object$B3 , "\n" )
+      cat("\n" )
+      cat(object$its_Summary , "\n" )
+      cat("\n" )
+      cat(object$its_covariates , "\n" )
+    }
+  }
+  # mgst
+  if("interpret" %in% class(object) ) {
+    if("mgst" %in% class(object) ) {
+      cat("Interpretations: ITS", "\n" )
+      cat("--------------------", "\n" )
+      cat(object$its_intro, "\n" )
+      cat("\n" )
+      cat(object$B0, "\n" )
+      cat("\n" )
+      cat(object$B1, "\n" )
+      cat("\n" )
+      cat(object$B2 , "\n" )
+      cat("\n" )
+      cat(object$B3 , "\n" )
+      cat("\n" )
+      cat(object$B4 , "\n" )
+      cat("\n" )
+      cat(object$B5 , "\n" )
+      cat("\n" )
+      cat(object$B6 , "\n" )
+      cat("\n" )
+      cat(object$B7 , "\n" )
+      cat("\n" )
+      cat(object$its_Summary , "\n" )
+      cat("\n" )
+      cat(object$its_covariates , "\n" )
+    }
+  }
+  if("interpret" %in% class(object) ) {
+    if("sgmt" %in% class(object) ) {
+      cat("Interpretations: ITS", "\n" )
+      cat("--------------------", "\n" )
+      cat(object$its_intro, "\n" )
+      cat("\n" )
+      cat(object$B0, "\n" )
+      cat("\n" )
+      cat(object$B1, "\n" )
+      cat("\n" )
+      cat(object$B2 , "\n" )
+      cat("\n" )
+      cat(object$B3 , "\n" )
+      cat("\n" )
+      cat(object$B4 , "\n" )
+      cat("\n" )
+      cat(object$B5 , "\n" )
+      cat("\n" )
+      cat(object$its_Summary1 , "\n" )
+      cat("\n" )
+      cat(object$its_Summary2 , "\n" )
+      cat("\n" )
+      cat(object$its_covariates , "\n" )
+    }
+  }
+  if("interpret" %in% class(object) ) {
+    if("mgmt" %in% class(object) ) {
+      cat("Interpretations: ITS", "\n" )
+      cat("--------------------", "\n" )
+      cat(object$its_intro, "\n" )
+      cat("\n" )
+      cat(object$B0, "\n" )
+      cat("\n" )
+      cat(object$B1, "\n" )
+      cat("\n" )
+      cat(object$B2 , "\n" )
+      cat("\n" )
+      cat(object$B3 , "\n" )
+      cat("\n" )
+      cat(object$B4 , "\n" )
+      cat("\n" )
+      cat(object$B5 , "\n" )
+      cat("\n" )
+      cat(object$B6, "\n" )
+      cat("\n" )
+      cat(object$B7, "\n" )
+      cat("\n" )
+      cat(object$B8 , "\n" )
+      cat("\n" )
+      cat(object$B9 , "\n" )
+      cat("\n" )
+      cat(object$B10 , "\n" )
+      cat("\n" )
+      cat(object$B11 , "\n" )
+      cat("\n" )
+      cat(object$its_Summary1 , "\n" )
+      cat("\n" )
+      cat(object$its_Summary2 , "\n" )
+      cat("\n" )
+      cat(object$its_covariates , "\n" )
+    }
+  }
+
+}

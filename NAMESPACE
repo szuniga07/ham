@@ -2,9 +2,11 @@
 
 S3method(plot,importance)
 S3method(print,alpha)
+S3method(print,interpret)
 export(alpha)
 export(assess)
 export(importance)
+export(interpret)
 export(itsEffect)
 importFrom(graphics,axis)
 importFrom(graphics,dotchart)
