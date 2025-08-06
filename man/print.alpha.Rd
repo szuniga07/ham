@@ -8,10 +8,13 @@
 }
 \arguments{
 \item{x}{alpha object from Cronbach's alpha calculation.}
+
+\item{...}{Additional arguments.}
 }
 \description{
 Title
 }
 \examples{
 print(alpha(items=c("i1","i2","i3","i4","i5"), data=cas))
+
 }

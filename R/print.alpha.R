@@ -2,11 +2,13 @@
 #'
 #' @param x alpha object from Cronbach's alpha calculation.
 #'
+#' @param ... Additional arguments.
+#'
 #' @return
-#' @export
 #'
 #' @examples
 #' print(alpha(items=c("i1","i2","i3","i4","i5"), data=cas))
+#'
 #' @export
 print.alpha <- function(x, ...) {
   Alpha <- x
