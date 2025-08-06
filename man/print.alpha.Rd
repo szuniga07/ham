@@ -2,7 +2,7 @@
 % Please edit documentation in R/print.alpha.R
 \name{print.alpha}
 \alias{print.alpha}
-\title{Title}
+\title{Print alpha results}
 \usage{
 \method{print}{alpha}(x, ...)
 }
@@ -12,7 +12,7 @@
 \item{...}{Additional arguments.}
 }
 \description{
-Title
+Print alpha results
 }
 \examples{
 print(alpha(items=c("i1","i2","i3","i4","i5"), data=cas))

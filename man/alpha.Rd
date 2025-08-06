@@ -19,4 +19,5 @@ Calculate Cronbach's alpha on multiple items
 }
 \examples{
 alpha(items=c("i1","i2","i3","i4","i5"), data=cas)
+
 }

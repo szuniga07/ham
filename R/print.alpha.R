@@ -1,4 +1,4 @@
-#' Title
+#' Print alpha results
 #'
 #' @param x alpha object from Cronbach's alpha calculation.
 #'
