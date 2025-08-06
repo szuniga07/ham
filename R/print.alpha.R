@@ -9,6 +9,8 @@
 #' @examples
 #' print(alpha(items=c("i1","i2","i3","i4","i5"), data=cas))
 #'
+#' @importFrom methods show
+#'
 #' @export
 print.alpha <- function(x, ...) {
   Alpha <- x

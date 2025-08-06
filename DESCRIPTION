@@ -14,3 +14,4 @@ Depends:
 LazyData: true
 URL: https://github.com/szuniga07/ham
 BugReports: https://github.com/szuniga07/ham/issues
+Imports: methods
