@@ -12,7 +12,7 @@
 \item{...}{Additional arguments.}
 }
 \value{
-Formatted alpha results.
+formatted alpha results.
 }
 \description{
 Print alpha results
