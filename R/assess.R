@@ -1,5 +1,13 @@
 #' Assess models with regression
 #'
+#' Fit ordinary least squares (OLS) and logistic models. And fit causal models such
+#' differences-in-differences. Run these models to evaluate program performance
+#' or test intervention effects (e.g., healthcare programs). Options are available
+#' for top coding the outcome variable as well as propensity scores. New data can
+#' optionally be returned that has these additional variables and constructed variables
+#' that are used for DID and ITS models.
+#'
+#'
 #' @param formula a formula object.
 #' @param data a data.frame in which to interpret the variables named in the formula.
 #' @param regression Select a regression method for standard regression models
@@ -28,6 +36,7 @@
 #' will return the data with any new columns created from the DID, ITS, propensity score, or top coding.
 #' The default is newdata=FALSE. No new data will be returned if none was created.
 #'
+#'
 #' @return a list of results from selected regression models. Will return new data if selected.
 #' And returns relevant model information such as variable names, type of analysis, formula, and summary
 #' of ITS effects if selected.
@@ -36,6 +45,7 @@
 #' @references
 #' Angrist, J. D., & Pischke, J. S. (2009). Mostly Harmless Econometrics:
 #' An Empiricist's Companion. Princeton University Press. ISBN: 9780691120355.
+#'
 #' Linden, A. (2015). Conducting Interrupted Time-series Analysis for Single- and
 #' Multiple-group Comparisons. The Stata Journal, 15, 2, 480-500. https://doi.org/10.1177/1536867X1501500208
 #'
@@ -417,15 +427,22 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
   }
 
   # DID models # additional_data c(create_did, create_its, create_topcode, create_propensity)
+  if (create_did == TRUE) {
+    if (all.vars(primary_formula)[-1][1] != ".") {
+      pri_for_x_did <- all.vars(primary_formula)[-1]
+    } else {
+      pri_for_x_did <- NULL
+    }
+  }
   #Updates formulas
   if (create_did == TRUE) {
     if(did== "many") {
       DID_formula <- update(primary_formula,
-                            paste("~ ", paste(c(c("Period","DID","DID.Trend"), prop_score_name), collapse = "+") ))
+                            paste("~ ", paste(c(c("Period","DID","DID.Trend"), pri_for_x_did), collapse = "+") ))
     }
     if(did== "two") {
       DID_formula <- update(primary_formula,
-                            paste("~ ", paste(c(c("Post.All", "Int.Var","DID"), prop_score_name), collapse = "+") ))
+                            paste("~ ", paste(c(c("Post.All", "Int.Var","DID"), pri_for_x_did), collapse = "+") ))
     }
   } else {
     DID_formula <- NULL
@@ -444,8 +461,15 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
 
   # ITS model #
   if (create_its == TRUE) {
-    ITS_formula <- update(primary_formula,
-                          paste("~ ", paste(c(colnames(its_data), prop_score_name), collapse = "+") ))
+    if (all.vars(primary_formula)[-1][1] != ".") {
+      pri_for_x_its <- all.vars(primary_formula)[-1]
+      ITS_formula <- update(primary_formula,
+                            paste("~ ", paste(c(colnames(its_data), pri_for_x_its), collapse = "+") ))
+    }
+    if (all.vars(primary_formula)[-1][1] == ".") {
+      ITS_formula <- update(primary_formula,
+                            paste("~ ", paste(c(colnames(its_data)), collapse = "+") ))
+    }
   } else {
     ITS_formula <- NULL
   }

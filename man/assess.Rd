@@ -65,7 +65,12 @@ And returns relevant model information such as variable names, type of analysis,
 of ITS effects if selected.
 }
 \description{
-Assess models with regression
+Fit ordinary least squares (OLS) and logistic models. And fit causal models such
+differences-in-differences. Run these models to evaluate program performance
+or test intervention effects (e.g., healthcare programs). Options are available
+for top coding the outcome variable as well as propensity scores. New data can
+optionally be returned that has these additional variables and constructed variables
+that are used for DID and ITS models.
 }
 \examples{
 summary(assess(mpg ~ hp+wt, data=mtcars, regression= "ols", topcode=30)$model)
@@ -73,6 +78,7 @@ summary(assess(mpg ~ hp+wt, data=mtcars, regression= "ols", topcode=30)$model)
 \references{
 Angrist, J. D., & Pischke, J. S. (2009). Mostly Harmless Econometrics:
 An Empiricist's Companion. Princeton University Press. ISBN: 9780691120355.
+
 Linden, A. (2015). Conducting Interrupted Time-series Analysis for Single- and
 Multiple-group Comparisons. The Stata Journal, 15, 2, 480-500. https://doi.org/10.1177/1536867X1501500208
 }
