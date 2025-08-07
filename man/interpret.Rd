@@ -16,9 +16,20 @@ a list with interpretations of alpha scales or regression model results.
 Interpret assess model output
 }
 \examples{
+# Interpret Cronbach's alpha
 interpret(alpha(items=c("i1","i2","i3","i4","i5"), data=cas))
 
+# interpret a standard linear (OLS) regression
+hos1 <- assess(formula=survey ~ program + month, data=hosprog, regression= "ols")
+interpret(hos1)$model
+
+# interpret a differences-in-differences model
 hos2 <- assess(formula=survey ~ ., data=hosprog, intervention = "program",
 int.time="month", treatment = 5, did="two", newdata=TRUE)
 interpret(hos2)$did  #interpret(hos2) also runs, returns ITS results if present
+
+# interpret an interrupted time series model
+hos3 <- assess(formula=survey ~ ., data=hosprog, intervention = "program",
+int.time="month", its="two", interrupt = 5)
+interpret(hos3)$its
 }

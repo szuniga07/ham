@@ -8,7 +8,10 @@
 #' that are used for DID and ITS models.
 #'
 #'
-#' @param formula a formula object.
+#' @param formula a formula object. Use 'Y ~ .' in DID and ITS models to only
+#' specify the constructed model variables (e.g., right side of the DID model:
+#' Y ~ Post.All + Int.Var + DID). If regression=ols or regression=logistic, 'Y ~ .'
+#' will use all variables in the data.frame as is standard in formulas.
 #' @param data a data.frame in which to interpret the variables named in the formula.
 #' @param regression Select a regression method for standard regression models
 #' (i.e., neither DID nor ITS). Options are regression="ols" (ordinary least squares AKA linear)
