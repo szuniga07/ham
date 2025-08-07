@@ -8,13 +8,13 @@
 
 The goal of ham is to provide different modeling approaches to
 evaluating healthcare programs (or programs in other fields) with
-regression analyses. This includes standard regression methods like
+regression analysis. This includes standard regression methods like
 linear (OLS) and logistic regression. And ham adds options for
 differences-in-differences models as well as interrupted time-series
 analysis. DID and ITS models offer options for causal modeling. What is
 unique about ham is that it creates datasets with constructed variables
 for DID and ITS models, optionally can add top coded outcome variables,
-propensity scores, and provides some interpretation of models results.
+propensity scores, and provides some interpretation of model results.
 Additionally, Cronbach’s alpha can be calculated for such things as
 patient surveys.
 
@@ -30,7 +30,8 @@ devtools::install_github("szuniga07/ham")
 
 ## Example
 
-This is a basic example which shows you how to solve a common problem:
+These are 2 basic examples of adding propensity scores and topcoding of
+outcomes. And an example of calculating Cronbach’s alpha:
 
 ``` r
 library(ham)
@@ -88,8 +89,8 @@ alpha(items=c("i1","i2","i3","i4","i5"), data=cas)
 #> Excluded = 0
 ```
 
-What is special about using `README.Rmd` instead of just `README.md`?
-You can include R chunks like so:
+This is an example of a differences-in-differences model, the key
+variable is DID:
 
 ``` r
 summary(assess(formula=los ~ ., data=hosprog, intervention = "program",
@@ -116,10 +117,10 @@ summary(assess(formula=los ~ ., data=hosprog, intervention = "program",
 #> F-statistic: 47.14 on 3 and 716 DF,  p-value: < 2.2e-16
 ```
 
-You’ll still need to render `README.Rmd` regularly, to keep `README.md`
-up-to-date. `devtools::build_readme()` is handy for this.
-
-You can also embed plots, for example:
+Here is a mtcars mpg example of a variable importance plot which can
+help provide focus on which are the most important variables to
+consider. Higher chi-square indicates higher importance. Significant
+results are highlighted in red:
 
 ``` r
 plot(importance(assess(mpg ~ hp+wt, data=mtcars, regression= "ols")$model))
@@ -127,5 +128,4 @@ plot(importance(assess(mpg ~ hp+wt, data=mtcars, regression= "ols")$model))
 
 <img src="man/figures/README-mtcars-1.png" width="100%" />
 
-In that case, don’t forget to commit and push the resulting figure
-files, so they display on GitHub and CRAN.
+Interrupted time-series models are also available.
