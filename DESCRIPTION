@@ -23,3 +23,6 @@ LazyData: true
 URL: https://github.com/szuniga07/ham
 BugReports: https://github.com/szuniga07/ham/issues
 Imports: methods
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
