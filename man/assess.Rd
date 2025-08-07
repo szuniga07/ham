@@ -66,14 +66,44 @@ of ITS effects if selected.
 }
 \description{
 Fit ordinary least squares (OLS) and logistic models. And fit causal models such
-differences-in-differences. Run these models to evaluate program performance
+as differences-in-differences and interrupted time series. Run these models to evaluate program performance
 or test intervention effects (e.g., healthcare programs). Options are available
 for top coding the outcome variable as well as propensity scores. New data can
 optionally be returned that has these additional variables and constructed variables
 that are used for DID and ITS models.
 }
 \examples{
-summary(assess(mpg ~ hp+wt, data=mtcars, regression= "ols", topcode=30)$model)
+# standard regression model tests (i.e., not DID or ITS)
+# ordinary least squares R^2
+summary(assess(hp ~ mpg+wt, data=mtcars, regression="ols")$model)
+# logistic
+summary(assess(formula=vs~mpg+wt+hp, data=mtcars, regression="logistic")$model)
+
+# OLS with a propensity score
+summary(assess(formula=los ~ month+program, data=hosprog, intervention = "program",
+regression="ols", propensity=c("female","age","risk"))$model)
+
+# OLS: top coding los at 17.1 and propensity score means (top.los and pscore)
+summary(assess(formula=los ~ month+program, data=hosprog, intervention = "program",
+regression="ols", topcode=17.1, propensity=c("female","age","risk"),
+newdata=TRUE)$newdata[, c("los", "top.los", "pscore")])
+
+# differences-in-differences model: using 2 time periods, pre- and post-intervention
+summary(assess(formula=los ~ ., data=hosprog, intervention = "program",
+int.time="month", treatment = 5, did="two")$DID)
+
+# DID model: using time points
+summary(assess(formula=los ~ ., data=hosprog, intervention = "program",
+int.time="month", treatment = 5, did="many")$DID)
+
+#interrupted time series model: two groups and 1 interruption (interrupt= 5)
+summary(assess(formula=los ~ ., data=hosprog, intervention = "program",
+int.time="month", its="two", interrupt = 5)$ITS)
+
+#interrupted time series model: two groups and 2 interruptions (interrupt= c(5,9))
+summary(assess(formula=los ~ ., data=hosprog, intervention = "program",
+int.time="month", its="two", interrupt = c(5,9))$ITS)
+
 }
 \references{
 Angrist, J. D., & Pischke, J. S. (2009). Mostly Harmless Econometrics:

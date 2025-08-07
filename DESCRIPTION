@@ -8,7 +8,7 @@ Description: Conducts analyses for healthcare program evaluations or interventio
     studies. Calculates regression analyses for standard ordinary least squares 
     (OLS or linear) or logistic models. Performs regression models used for 
     causal modeling such as differences-in-differences (DID) and interrupted 
-    time-series (ITS) models. Provides limited interpretations of model 
+    time series (ITS) models. Provides limited interpretations of model 
     results and a ranking of variable importance in models. Performs 
     propensity score models, top-coding of model outcome variables, and 
     can return new data with the newly formed variables. Also performs Cronbach's 
