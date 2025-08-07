@@ -17,6 +17,7 @@ Interpret assess model output
 }
 \examples{
 interpret(alpha(items=c("i1","i2","i3","i4","i5"), data=cas))
+
 hos2 <- assess(formula=survey ~ ., data=hosprog, intervention = "program",
 int.time="month", treatment = 5, did="two", newdata=TRUE)
 interpret(hos2)$did  #interpret(hos2) also runs, returns ITS results if present

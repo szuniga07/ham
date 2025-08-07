@@ -1,9 +1,9 @@
 #' Calculate Cronbach's alpha on multiple items
 #'
-#' @description Performs Cronbach's alpha of listed items from a data frame.
+#' @description Performs Cronbach's alpha of specified items from a data frame.
 #' Cronbach's Alpha is a formula for estimating the internal consistency
-#' reliability of a measurement instrument such as survey items. Survey items
-#' can have 2 or more categories such as 5-point scales and contain 2 or more items.
+#' reliability of a measurement instrument such as survey items  (see Allen & Yang, 1979; Kline, 1999).
+#' Survey items can have 2 or more categories such as 5-point scales and contain 2 or more items.
 #'
 #' @param items Vector of items names that form a scale (e.g., 5-point Likert scales)
 #'
@@ -11,10 +11,15 @@
 #'
 #' @return A character vector.
 #'
+#' @references
+#' Allen, M. J., & Yen, W. M. (1979). Introduction to Measurement Theory.
+#' Brooks/Cole. ISBN: 0-8185-0283-5.
+#' Kline, Paul (1999). Handbook of Psychological Testing (2nd ed).
+#' Routledge, New York. ISBN: 9780415211581.
+#'
 #' @examples
 #' alpha(items=c("i1","i2","i3","i4","i5"), data=cas)
-#' @source Allen, M. J., & Yen, W. M. (1979). Introduction to Measurement Theory.
-#' Brooks/Cole.ISBN 0-8185-0283-5
+#'
 #' @export
 #'
 alpha <- function(items, data) {

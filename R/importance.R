@@ -5,6 +5,10 @@
 #' @return a data.frame object with partial X^2 summary statistics.
 #' @export
 #'
+#' @references
+#' Harrell, F. E., Jr. (2016). Regression Modeling Strategies. Springer
+#' International Publishing. ISBN: 978-3-319-19424-0.
+#'
 #' @examples
 #' importance(assess(mpg ~ hp + wt, data=mtcars, regression= "ols")$model)
 #' @importFrom stats pchisq

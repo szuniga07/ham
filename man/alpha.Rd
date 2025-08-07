@@ -3,10 +3,6 @@
 \name{alpha}
 \alias{alpha}
 \title{Calculate Cronbach's alpha on multiple items}
-\source{
-Allen, M. J., & Yen, W. M. (1979). Introduction to Measurement Theory.
-Brooks/Cole.ISBN 0-8185-0283-5
-}
 \usage{
 alpha(items, data)
 }
@@ -19,11 +15,18 @@ alpha(items, data)
 A character vector.
 }
 \description{
-Performs Cronbach's alpha of listed items from a data frame.
+Performs Cronbach's alpha of specified items from a data frame.
 Cronbach's Alpha is a formula for estimating the internal consistency
-reliability of a measurement instrument such as survey items. Survey items
-can have 2 or more categories such as 5-point scales and contain 2 or more items.
+reliability of a measurement instrument such as survey items  (see Allen & Yang, 1979; Kline, 1999).
+Survey items can have 2 or more categories such as 5-point scales and contain 2 or more items.
 }
 \examples{
 alpha(items=c("i1","i2","i3","i4","i5"), data=cas)
+
+}
+\references{
+Allen, M. J., & Yen, W. M. (1979). Introduction to Measurement Theory.
+Brooks/Cole. ISBN: 0-8185-0283-5.
+Kline, Paul (1999). Handbook of Psychological Testing (2nd ed).
+Routledge, New York. ISBN: 9780415211581.
 }

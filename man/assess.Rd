@@ -70,3 +70,9 @@ Assess models with regression
 \examples{
 summary(assess(mpg ~ hp+wt, data=mtcars, regression= "ols", topcode=30)$model)
 }
+\references{
+Angrist, J. D., & Pischke, J. S. (2009). Mostly Harmless Econometrics:
+An Empiricist's Companion. Princeton University Press. ISBN: 9780691120355.
+Linden, A. (2015). Conducting Interrupted Time-series Analysis for Single- and
+Multiple-group Comparisons. The Stata Journal, 15, 2, 480-500. https://doi.org/10.1177/1536867X1501500208
+}

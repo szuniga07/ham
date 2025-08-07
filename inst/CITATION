@@ -1,0 +1,50 @@
+bibentry(
+  bibtype = "Book",
+  title = "Introduction to Measurement Theory",
+  author = person("M. J. Allen, W. M. Yen"),
+  year = 1979,
+  publisher = "Brooks & Cole",
+  ISBN = "0-8185-0283-5"
+)
+
+bibentry(
+  bibtype = "Book",
+  title = "Mostly Harmless Econometrics: An Empiricist's Companion",
+  author = person("Joshua D. Angrist, Jörn-Steffen Pischke"),
+  year = 2009,
+  publisher = "Princeton University Press",
+  url = "https://www.mostlyharmlesseconometrics.com/",
+  ISBN = "9780691120355"
+)
+
+bibentry(
+  bibtype = "Book",
+  title = "Regression Modeling Strategies: With Applications to Linear Models, Logistic and Ordinal Regression, and Survival Analysis (2nd Ed.)",
+  author = person("Frank E. Harrell, Jr."),
+  year = 2015,
+  publisher = "Springer",
+  url = "https://hbiostat.org/doc/rms/book/",
+  ISBN = "978-3-319-19424-0"
+)
+
+bibentry(
+  bibtype = "Book",
+  title = "Handbook of Psychological Testing (2nd Ed.)",
+  author = person("Paul Kline"),
+  year = 1999,
+  publisher = "Routledge",
+  ISBN = "9780415211581"
+)
+
+bibentry(
+  bibtype  = "Article",
+  title    = "Conducting Interrupted Time-series Analysis for Single- and Multiple-group Comparisons",
+  author   = "Ariel Linden",
+  journal  = "The Stata Journal",
+  year     = 2015,
+  volume   = 15,
+  number   = 2,
+  pages    = 480-500,
+  doi      = "10.1177/1536867X1501500208"
+)
+
