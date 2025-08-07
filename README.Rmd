@@ -1,0 +1,60 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+# ham
+
+<!-- badges: start -->
+<!-- badges: end -->
+
+The goal of ham is to provide different modeling approaches to evaluating healthcare programs (or programs in other fields) with regression analyses. This includes standard regression methods like linear (OLS) and logistic regression. And ham adds options for differences-in-differences models as well as interrupted time-series analysis. DID and ITS models offer options for causal modeling. What is unique about ham is that it creates datasets with constructed variables for DID and ITS models, optionally can add top coded outcome variables, propensity scores, and provides some interpretation of models results. Additionally, Cronbach's alpha can be calculated for such things as patient surveys.
+
+## Installation
+
+You can install the development version of ham from [GitHub](https://github.com/) with:
+
+``` r
+# install.packages("devtools")
+devtools::install_github("szuniga07/ham")
+```
+
+## Example
+
+This is a basic example which shows you how to solve a common problem:
+
+```{r example}
+library(ham)
+## ordinary least squares: intercept with top coding los and propensity score
+summary(assess(formula=los ~ month+program, data=hosprog, intervention = "program", regression="ols", topcode=17.1, propensity= c("female","age","risk"))$model)
+
+## Cronbach's alpha
+alpha(items=c("i1","i2","i3","i4","i5"), data=cas)
+```
+
+What is special about using `README.Rmd` instead of just `README.md`? You can include R chunks like so:
+
+```{r hosprog}
+summary(assess(formula=los ~ ., data=hosprog, intervention = "program",
+       int.time="month", treatment = 5, did="two")$DID)
+```
+
+You'll still need to render `README.Rmd` regularly, to keep `README.md` up-to-date. `devtools::build_readme()` is handy for this.
+
+You can also embed plots, for example:
+
+```{r mtcars}
+plot(importance(assess(mpg ~ hp+wt, data=mtcars, regression= "ols")$model))
+```
+
+In that case, don't forget to commit and push the resulting figure files, so they display on GitHub and CRAN.
