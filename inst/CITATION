@@ -1,7 +1,7 @@
 bibentry(
   bibtype = "Book",
   title = "Introduction to Measurement Theory",
-  author = person("M. J. Allen, W. M. Yen"),
+  author = person("Mary Allen, Wendy Yen"),
   year = 1979,
   publisher = "Brooks & Cole",
   ISBN = "0-8185-0283-5"
@@ -10,7 +10,7 @@ bibentry(
 bibentry(
   bibtype = "Book",
   title = "Mostly Harmless Econometrics: An Empiricist's Companion",
-  author = person("Joshua D. Angrist, Jörn-Steffen Pischke"),
+  author = person("Joshua D. Angrist and Jörn-Steffen Pischke"),
   year = 2009,
   publisher = "Princeton University Press",
   url = "https://www.mostlyharmlesseconometrics.com/",
@@ -20,7 +20,7 @@ bibentry(
 bibentry(
   bibtype = "Book",
   title = "Regression Modeling Strategies: With Applications to Linear Models, Logistic and Ordinal Regression, and Survival Analysis (2nd Ed.)",
-  author = person("Frank E. Harrell, Jr."),
+  author = person("Frank E. Harrell. Jr."),
   year = 2015,
   publisher = "Springer",
   url = "https://hbiostat.org/doc/rms/book/",
@@ -39,7 +39,7 @@ bibentry(
 bibentry(
   bibtype  = "Article",
   title    = "Conducting Interrupted Time-series Analysis for Single- and Multiple-group Comparisons",
-  author   = "Ariel Linden",
+  author   = person("Ariel Linden"),
   journal  = "The Stata Journal",
   year     = 2015,
   volume   = 15,
