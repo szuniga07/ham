@@ -2,7 +2,7 @@
 % Please edit documentation in R/alpha.R
 \name{alpha}
 \alias{alpha}
-\title{Calculate Cronbach's alpha on scale items}
+\title{Calculates Cronbach's alpha on scale items}
 \usage{
 alpha(items, data)
 }

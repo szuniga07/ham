@@ -1,4 +1,4 @@
-#' Calculate Cronbach's alpha on scale items
+#' Calculates Cronbach's alpha on scale items
 #'
 #' Performs Cronbach's alpha of specified items from a data frame.
 #' Cronbach's Alpha is a formula for estimating the internal consistency
