@@ -10,7 +10,7 @@ interpret(object)
 \item{object}{assess class objects: alpha, ITS, DID, or ols or logistic models.}
 }
 \value{
-a list with interpretations of alpha scales or regression model results.
+a list with interpretations of Cronbach's alpha scales or regression model results.
 }
 \description{
 Provides simple interpretations of regression coefficients and Cronbach's

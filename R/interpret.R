@@ -8,7 +8,7 @@
 #'
 #' @param object assess class objects: alpha, ITS, DID, or ols or logistic models.
 #'
-#' @return a list with interpretations of alpha scales or regression model results.
+#' @return a list with interpretations of Cronbach's alpha scales or regression model results.
 #' @export
 #'
 #' @examples

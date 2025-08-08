@@ -12,7 +12,7 @@ alpha(items, data)
 \item{data}{Data frame object.}
 }
 \value{
-A character vector.
+A list object with Cronbach's alpha summary statistics.
 }
 \description{
 Performs Cronbach's alpha of specified items from a data frame.

@@ -9,7 +9,7 @@
 #'
 #' @param data  Data frame object.
 #'
-#' @return A character vector.
+#' @return A list object with Cronbach's alpha summary statistics.
 #'
 #' @references
 #' Allen, M. J., & Yen, W. M. (1979). Introduction to Measurement Theory.
