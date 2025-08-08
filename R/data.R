@@ -41,7 +41,7 @@
 
 #' Patient hospital intervention data, intervention group only
 #' @format ## `hosprog`
-#' An artificial data frame with 360 rows and 10 columns:
+#' An artificial data frame with 360 rows and 10 columns, intervention patients only:
 #' \describe{
 #'   \item{survey}{Patient satisfaction survey mean score.}
 #'   \item{ los }{Hospital length of stay (los)}
