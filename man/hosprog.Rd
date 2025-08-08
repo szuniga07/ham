@@ -23,6 +23,13 @@ An artificial data frame with 720 rows and 10 columns:
 }
 }
 }
+\source{
+Artificial dataset created by using runif. The strength in
+the association between each variable is weighted by multiplying
+each subsequent predictor in increments of 1. For example,
+Y equals runif(720) multiplied by 1 plus runif(720) multiplied by 2
+and so on. This allows some predictors to have stronger correlations with Y.
+}
 \usage{
 hosprog
 }

@@ -19,10 +19,23 @@ a data.frame object of ITS effects and summary statistics.
 Generally run within assess().
 }
 \description{
-Interrupted time series analysis effects
+Calculates effects for intervention and control groups based on interrupted
+time series models from an assess class object. Within a period (or interruption),
+the effect that represents the trend during the period is calculated for both
+groups as well as the difference between the groups. Summary statistics
+are provided that include the effect sizes, t-statistic, standard errors,
+p-values, and 95\% confidence intervals of the effect sizes. These values are
+provided for the intervention group, control group (when applicable), and the
+differences between the two groups (Linden, 2015). These values are automatically
+generated while running a model in assess.
 }
 \examples{
 i21 <- assess(formula=survey ~ ., data=hosprog, intervention = "program",topcode =NULL,
 int.time="month", regression="none", interrupt=5, its="two", newdata=TRUE, propensity=NULL)
 itsEffect(model= i21$ITS, type= "mgst")
+
+}
+\references{
+Linden, Ariel. (2015). Conducting Interrupted Time-series Analysis for Single- and Multiple-group
+Comparisons. The Stata Journal, 2015, 15(2), 480-500, https://doi.org/10.1177/1536867X1501500208
 }

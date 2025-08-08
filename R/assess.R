@@ -53,9 +53,9 @@
 #' Multiple-group Comparisons. The Stata Journal, 15, 2, 480-500. https://doi.org/10.1177/1536867X1501500208
 #'
 #' @examples
-#' # standard regression model tests (i.e., not DID or ITS)
 #' # ordinary least squares R^2
 #' summary(assess(hp ~ mpg+wt, data=mtcars, regression="ols")$model)
+#'
 #' # logistic
 #' summary(assess(formula=vs~mpg+wt+hp, data=mtcars, regression="logistic")$model)
 #'

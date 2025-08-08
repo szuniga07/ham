@@ -14,6 +14,11 @@ An artificial data frame with 100 rows and 5 columns:
 }
 }
 }
+\source{
+Artificial dataset created with rbinom for 5 items.
+For example, rbinom(100, 5, .9) generates 1 item. The prob
+argument is modified to give more or less consistent ratings per item.
+}
 \usage{
 cas
 }

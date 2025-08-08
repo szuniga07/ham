@@ -1,6 +1,13 @@
 #' Importance of variables based on partial chi-square statistic
 #'
-#' @param model an assess regression model or models with lm or glm class.
+#' Calculates partial chi-square from assess class objects. The
+#' importance metric is the partial chi-square minus its degrees
+#' of freedom based on the regression coefficients (Harrell, 2015).
+#' A higher chi-square indicates a larger effect by the predictors.
+#' Therefore, the rank of the chi-square can indicate which predictors
+#' are more important in explaining the variation in the outcome variable.
+#'
+#' @param model an assess class object or models with lm or glm class.
 #'
 #' @return a data.frame object with partial X^2 summary statistics.
 #' @export
@@ -10,7 +17,12 @@
 #' International Publishing. ISBN: 978-3-319-19424-0.
 #'
 #' @examples
-#' importance(assess(mpg ~ hp + wt, data=mtcars, regression= "ols")$model)
+#' # OLS regression
+#' importance(assess(mpg ~ hp + wt + cyl, data=mtcars, regression= "ols")$model)
+#'
+#' # logistic regression
+#' importance(assess(vs~mpg+wt+hp, data=mtcars, regression= "logistic")$model)
+#'
 #' @importFrom stats pchisq
 importance <- function(model) {
   if (!any(class(model) %in% c("glm","lm"))) {stop("Error: Expecting 'lm' or 'glm' class regression model." )}

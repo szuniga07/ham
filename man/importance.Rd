@@ -7,16 +7,26 @@
 importance(model)
 }
 \arguments{
-\item{model}{an assess regression model or models with lm or glm class.}
+\item{model}{an assess class object or models with lm or glm class.}
 }
 \value{
 a data.frame object with partial X^2 summary statistics.
 }
 \description{
-Importance of variables based on partial chi-square statistic
+Calculates partial chi-square from assess class objects. The
+importance metric is the partial chi-square minus its degrees
+of freedom based on the regression coefficients (Harrell, 2015).
+A higher chi-square indicates a larger effect by the predictors.
+Therefore, the rank of the chi-square can indicate which predictors
+are more important in explaining the variation in the outcome variable.
 }
 \examples{
-importance(assess(mpg ~ hp + wt, data=mtcars, regression= "ols")$model)
+# OLS regression
+importance(assess(mpg ~ hp + wt + cyl, data=mtcars, regression= "ols")$model)
+
+# logistic regression
+importance(assess(vs~mpg+wt+hp, data=mtcars, regression= "logistic")$model)
+
 }
 \references{
 Harrell, F. E., Jr. (2016). Regression Modeling Strategies. Springer

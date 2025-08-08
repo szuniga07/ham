@@ -2,7 +2,7 @@
 % Please edit documentation in R/interpret.R
 \name{interpret}
 \alias{interpret}
-\title{Interpret assess model output}
+\title{Interpret model output}
 \usage{
 interpret(object)
 }
@@ -13,7 +13,11 @@ interpret(object)
 a list with interpretations of alpha scales or regression model results.
 }
 \description{
-Interpret assess model output
+Provides simple interpretations of regression coefficients and Cronbach's
+alpha from assess and alpha classes. The interpretations describe
+coefficients and significance values as well as modifying item scales.
+The interpretations are text comments associated with specific parameters
+of the various analyses.
 }
 \examples{
 # Interpret Cronbach's alpha

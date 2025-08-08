@@ -1,5 +1,10 @@
 #' Print interpret object
 #'
+#' Formats interpretations from interpret class objects. Provides simple
+#' interpretations of regression coefficients and Cronbach's alpha, Select
+#' and print specific object interpretations, returned in sentence and
+#' paragraph formats.
+#'
 #' @param x interpret object.
 #'
 #' @param ... Additional arguments.
@@ -8,7 +13,24 @@
 #' @export
 #' @importFrom methods show
 #' @examples
+#'
+#' #Cronbach's alpha
 #' print(interpret(alpha(items=c("i1","i2","i3","i4","i5"), data=cas)))
+#'
+#' #' # interpret a standard linear (OLS) regression
+#' hos1 <- assess(formula=survey ~ program + month, data=hosprog, regression= "ols")
+#' print(interpret(hos1)$model)
+#'
+#' # interpret a differences-in-differences model
+#' hos2 <- assess(formula=survey ~ ., data=hosprog, intervention = "program",
+#' int.time="month", treatment = 5, did="two", newdata=TRUE)
+#' interpret(hos2)$did
+#'
+#' # interpret an interrupted time series model
+#' hos3 <- assess(formula=survey ~ ., data=hosprog, intervention = "program",
+#' int.time="month", its="two", interrupt = 5)
+#' interpret(hos3)$its
+#'
 print.interpret <- function(x, ...) {
   object <- x
   #alpha objects

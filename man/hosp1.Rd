@@ -23,6 +23,10 @@ An artificial data frame with 360 rows and 10 columns:
 }
 }
 }
+\source{
+hosp1 is a subset of the artificial dataset hosprog. It is
+the intervention group's data used for single group interrupted time series.
+}
 \usage{
 hosp1
 }

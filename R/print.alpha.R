@@ -1,5 +1,11 @@
 #' Print alpha results
 #'
+#' Formats alpha class results to display summary statistics by
+#' commonly reported sections. These include the overall alpha and
+#' other scale statistics, item statistics, scale statistics if
+#' an item is removed from the scale, and the total sample size.
+#'
+#'
 #' @param x alpha object from Cronbach's alpha calculation.
 #'
 #' @param ... Additional arguments.

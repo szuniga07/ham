@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot.importance.R
 \name{plot.importance}
 \alias{plot.importance}
-\title{Plot of variable importance sorted by partial chi-square statistic}
+\title{Plot of variable importance ranked by partial chi-square statistic}
 \usage{
 \method{plot}{importance}(x, y, ...)
 }
@@ -17,8 +17,19 @@
 plot of variable importance, significant variables highlighted in red.
 }
 \description{
-Plot of variable importance sorted by partial chi-square statistic
+Plots an importance class object. Produces a dot chart that places the predictor
+variable with the highest partial chi-square at the bottom. It is a metric of
+the partial chi-square minus its degrees of freedom (Harrell, 2015). Predictor
+variables with significant p-values at the 0.05 alpha are highlighted red.
 }
 \examples{
-plot(importance(assess(mpg ~ hp + wt, data=mtcars, regression= "ols")$model))
+# OLS regression
+plot(importance(assess(mpg ~ hp + wt + cyl, data=mtcars, regression= "ols")$model))
+
+# logistic regression
+plot(importance(assess(vs~mpg+wt+hp, data=mtcars, regression= "logistic")$model))
+}
+\references{
+Harrell, F. E., Jr. (2016). Regression Modeling Strategies. Springer
+International Publishing. ISBN: 978-3-319-19424-0.
 }

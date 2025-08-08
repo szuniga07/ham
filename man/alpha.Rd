@@ -2,7 +2,7 @@
 % Please edit documentation in R/alpha.R
 \name{alpha}
 \alias{alpha}
-\title{Calculate Cronbach's alpha on multiple items}
+\title{Calculate Cronbach's alpha on scale items}
 \usage{
 alpha(items, data)
 }
@@ -23,6 +23,8 @@ Survey items can have 2 or more categories such as 5-point scales and contain 2 
 \examples{
 alpha(items=c("i1","i2","i3","i4","i5"), data=cas)
 
+# remove i1 as suggested in the previous example, returns higher alpha
+alpha(items=c("i2","i3","i4","i5"), data=cas)
 }
 \references{
 Allen, M. J., & Yen, W. M. (1979). Introduction to Measurement Theory.

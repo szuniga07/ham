@@ -76,9 +76,9 @@ optionally be returned that has these additional variables and constructed varia
 that are used for DID and ITS models.
 }
 \examples{
-# standard regression model tests (i.e., not DID or ITS)
 # ordinary least squares R^2
 summary(assess(hp ~ mpg+wt, data=mtcars, regression="ols")$model)
+
 # logistic
 summary(assess(formula=vs~mpg+wt+hp, data=mtcars, regression="logistic")$model)
 

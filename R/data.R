@@ -9,7 +9,9 @@
 #'   \item{i1 -i5}{5 survey items}
 #'   ...
 #' }
-#' @source
+#' @source Artificial dataset created with rbinom for 5 items.
+#' For example, rbinom(100, 5, .9) generates 1 item. The prob
+#' argument is modified to give more or less consistent ratings per item.
 #'
 "cas"
 
@@ -29,7 +31,11 @@
 #'   \item{ program}{Indicates patient program participation. 1='yes', 0='no'}
 #'   ...
 #' }
-#' @source
+#' @source Artificial dataset created by using runif. The strength in
+#' the association between each variable is weighted by multiplying
+#' each subsequent predictor in increments of 1. For example,
+#' Y equals runif(720) multiplied by 1 plus runif(720) multiplied by 2
+#' and so on. This allows some predictors to have stronger correlations with Y.
 #'
 "hosprog"
 
@@ -49,6 +55,7 @@
 #'   \item{ program}{Indicates patient program participation. 1='yes', 0='no'}
 #'   ...
 #' }
-#' @source
+#' @source hosp1 is a subset of the artificial dataset hosprog. It is
+#' the intervention group's data used for single group interrupted time series.
 #'
 "hosp1"

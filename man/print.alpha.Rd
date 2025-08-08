@@ -15,7 +15,10 @@
 formatted alpha results.
 }
 \description{
-Print alpha results
+Formats alpha class results to display summary statistics by
+commonly reported sections. These include the overall alpha and
+other scale statistics, item statistics, scale statistics if
+an item is removed from the scale, and the total sample size.
 }
 \examples{
 print(alpha(items=c("i1","i2","i3","i4","i5"), data=cas))
