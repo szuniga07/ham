@@ -75,6 +75,8 @@ print.interpret <- function(x, ...) {
       cat(object$B_2 , "\n" )
       cat("\n" )
       cat(object$B_3 , "\n" )
+      cat("\n" )
+      cat(object$did_covariates , "\n" )
     }
   }
   # ITS
