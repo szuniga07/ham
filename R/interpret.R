@@ -131,11 +131,13 @@ interpret <- function(object) {
       did_b1_change <- ifelse(coef(object$DID)[which(names(coef(object$DID))=="Period")] > 0, "increase", "decrease")
       did_b2_change <- ifelse(coef(object$DID)[which(names(coef(object$DID))=="DID")] > 0, "increase", "decrease")
       did_b3_change <- ifelse(coef(object$DID)[which(names(coef(object$DID))=="DID.Trend")] > 0, "increase", "decrease")
-      #many time period interpretations
+      #many times period interpretations
+      B0_coef <- coef(object$DID)[which(names(coef(object$DID))== "(Intercept)")]
+      B1_coef <- coef(object$DID)[which(names(coef(object$DID))== "Period")]
       B2_coef <- coef(object$DID)[which(names(coef(object$DID))== "DID")]
       B3_coef <- coef(object$DID)[which(names(coef(object$DID))== "DID.Trend")]
-      B_0 <- paste0("The intercept represents the starting point of the control \ngroup's trend line at the baseline period (Time 1).")
-      B_1 <- paste0("Period is the change in the control group's ", Y_var_did, " value \ntrend line after the baseline period. There was a ", did_b1_sig, " \n", did_b1_change, " for the control group after the baseline period.")
+      B_0 <- paste0("The intercept represents the starting point of the control \ngroup's trend line at the baseline period (Time 1): ", round(B0_coef, 3), ".")
+      B_1 <- paste0("Period is the change in the control group's ", Y_var_did, " value trend \nline after the baseline period. There was a ", did_b1_sig, " ", did_b1_change, " \nfor the control group after the baseline period: ",round(B1_coef, 3), ".")
       B_2 <- paste0("DID estimates the average treatment effect on the treated \ngroup (ATET). This represents the difference in the mean \noverall level between the intervention and control groups. \nIn other words, there was a ", did_b2_sig, " ", did_b2_change, " in the \nmean ", Y_var_did, " by ", round(B2_coef, 3)," for the intervention group.")
       B_3 <- paste0("DID.Trend is the difference in the intervention group's \ntrend line after the intervention period started (> Time 1). \nThe intervention group had a ", did_b3_sig, " ", did_b3_change, " in trend \nof the mean ", Y_var_did, " by ", round(B3_coef, 3),  " after the intervention started.")
       did_covariates <- c("If there are additional variables in the model then the coefficients \nabove represent the effects after controlling for the other variables.")
@@ -151,10 +153,13 @@ interpret <- function(object) {
       did_b2_change <- ifelse(coef(object$DID)[which(names(coef(object$DID))=="Int.Var")] > 0, "increase", "decrease")
       did_b3_change <- ifelse(coef(object$DID)[which(names(coef(object$DID))=="DID")] > 0, "increase", "decrease")
       # 2 time periods
+      B0_coef <- coef(object$DID)[which(names(coef(object$DID))== "(Intercept)")]
+      B1_coef <- coef(object$DID)[which(names(coef(object$DID))== "Post.All")]
+      B2_coef <- coef(object$DID)[which(names(coef(object$DID))== "Int.Var")]
       B3_coef <- coef(object$DID)[which(names(coef(object$DID))=="DID")]
-      B_0 <- paste0("The intercept represents the mean ", Y_var_did, " value of \nthe control group at the baseline period (Time 1).")
-      B_1 <- paste0("Post.All is the change in the control group\'s ", Y_var_did, " \nvalue in the 2nd time period (Time 2). There was a \n", did_b1_sig, " ", did_b1_change," for the control group \nat time 2.")
-      B_2 <- paste0("Int.Var is the difference between the intervention \nand control group at the baseline period (Time 1). The \nintervention group had a ", did_b2_sig, " ", did_b2_change, " in the \nmean ", Y_var_did, " value compared to the control group.")
+      B_0 <- paste0("The intercept represents the mean ", Y_var_did, " value of the \ncontrol group at the baseline period (Time 1): ", round(B0_coef, 3), ".")
+      B_1 <- paste0("Post.All is the change in the control group\'s ", Y_var_did, " \nvalue in the 2nd time period (Time 2). There was a \n", did_b1_sig, " ", did_b1_change," for the control group \nat time 2: ", round(B1_coef, 3), ".")
+      B_2 <- paste0("Int.Var is the difference between the intervention \nand control group at the baseline period (Time 1). The \nintervention group had a ", did_b2_sig, " ", did_b2_change, " in the \nmean ", Y_var_did, " value compared to the control group: ", round(B2_coef, 3), ".")
       B_3 <- paste0("DID estimates the average treatment effect on the \ntreated group (ATET). This interaction represents the \ndifference in the trend differences for the intervention and \ncontrol groups: \n(Int. Time 2 - Int. Time 1) - (Ctl. Time 2 - Ctl. Time 1) = ", round(B3_coef, 3), ".", " ", " \nIn other words, there was a ", did_b3_sig, " ", did_b3_change," in the \nmean ", Y_var_did, " trend by ", round(B3_coef, 3)," for the intervention group.")
       did_covariates <- c("If there are additional variables in the model then the coefficients \nabove represent the effects after controlling for the other variables.")
     }
