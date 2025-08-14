@@ -7,7 +7,7 @@
 \format{
 \subsection{\code{hosprog}}{
 
-An artificial data frame with 360 rows and 10 columns, intervention patients only:
+An artificial data frame with 352 rows and 10 columns, intervention patients only:
 \describe{
 \item{survey}{Patient satisfaction survey mean score.}
 \item{ los }{Hospital length of stay (los)}

@@ -13,7 +13,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# ham
+# Healthcare Analysis Methods (ham)
 
 <!-- badges: start -->
 <!-- badges: end -->
@@ -29,30 +29,222 @@ You can install the development version of ham from [GitHub](https://github.com/
 devtools::install_github("szuniga07/ham")
 ```
 
-## Example
+## Cronbach's alpha example
 
-These are 2 basic examples of adding propensity scores and topcoding of outcomes. And an example of calculating Cronbach's alpha:
+An example of calculating Cronbach's alpha:
 
-```{r example}
+```{r cronbachs alpha example}
 library(ham)
-## ordinary least squares: intercept with top coding los and propensity score
-summary(assess(formula=los ~ month+program, data=hosprog, intervention = "program", regression="ols", topcode=17.1, propensity= c("female","age","risk"))$model)
-
-## Cronbach's alpha
 alpha(items=c("i1","i2","i3","i4","i5"), data=cas)
 ```
 
-This is an example of a differences-in-differences model, the key variable is DID:
+## 1. Introduction
 
-```{r hosprog}
-summary(assess(formula=los ~ ., data=hosprog, intervention = "program",
-       int.time="month", treatment = 5, did="two")$DID)
+This is the ham package on healthcare analysis methods. This package can help when performing program evaluations or intervention studies in healthcare.  Or simply to test if a program has an impact on an outcome of interest.
+
+ham can help with research or evaluation studies. When working in healthcare systems, multi-site evaluations can strongly resemble research studies and commonly use regression methods. For an introduction to evaluation, please see the reference below.
+
+Patton, M. Q. (1997). Utilization-focused evaluation: The new century text (3rd ed.). Thousand Oaks, CA: Sage Publications
+
+What is unique about ham, is that it provides options for running standard linear or ordinary least squares (OLS) and logistic regression as well as methods used in causal modeling such as differences-in-differences (DID) and interrupted time series analysis (ITS). It also optionally makes data with the newly created variables (i.e., this saves you time).
+
+This vignette will introduce ham's features in the following functions:
+* alpha: Conduct Cronbach's alpha on scale items (e.g., survey questions).
+* assess: Perform various regression methods (OLS, logistic, differences-in-differences, and interrupted time series)
+* importance: Rank variable importance from regression coefficients using the partial chi-square statistic.
+* interpret: Provides simple coefficient interpretations. This is a helpful reminder, especially as models have increased coefficients (e.g., ITS).
+* There are also printing and plotting options to help review your results.
+
+Below will cover 3 sections with examples of the different features along the way.
+
+## 2. Linear and logistic regression
+The example dataset has common variables found in program evaluation or intervention studies (I'll refer to both as a 'study'), there are various outcome and predictor variables (or response and explanatory variables or
+dependent and independent variables or other names common in your field). In these studies, we try to assess the impact of the predictors on the outcome. We often use treatment and control groups to asses a healthcare program or intervention's impact on our key outcome variable of interest. Because of multiple stakeholders, we often conduct these studies with multiple outcomes to help answer the multiple stakeholder's questions.
+
+A common approach to answering study questions is using a regression to test a treatment effect while controlling for other covariates.
+
+Here are OLS and logistic regression example using assess() on the mtcars data. These use lm() and glm() found in R's stats package.
+
+### OLS or linear regression
+```{r ols}
+summary(assess(hp ~ mpg+wt, data=mtcars, regression="ols")$model)
 ```
 
-Here is a mtcars mpg example of a variable importance plot which can help provide focus on which are the most important variables to consider. Higher chi-square indicates higher importance. Significant results are highlighted in red:
-
-```{r mtcars}
-plot(importance(assess(mpg ~ hp+wt, data=mtcars, regression= "ols")$model))
+### Logistic regression
+```{r logistic}
+summary(assess(formula=vs~mpg+wt+hp, data=mtcars, regression="logistic")$model)
 ```
 
-Interrupted time-series models are also available.
+ham can topcode the outcome and create a propensity score variable. Here is an example using the artificially created hosprog data with hospital stay cost as the outcome with a novel hospital program/intervention binary indicator and a 12 month time variable. The option for new data being returned is specified with newdata=TRUE.
+
+### OLS topcoding
+top coding cost at $17,150 and propensity score based on age, female indicator, and a health risk probability score.
+
+```{r ols topcoding propensity}
+m1 <- assess(formula=cost ~ month * program, data=hosprog, intervention = "program",
+regression="ols", topcode=17150, propensity=c("female","age","risk"),
+newdata=TRUE)
+```
+
+### Model results
+```{r ols topcoding propensity results}
+summary(m1$model)
+```
+
+Descriptive statistics on newly created variables and the original cost as a comparison. top.cost is the topcoded cost variable.
+```{r summary topcoding propensity}
+summary(m1$newdata[, c( "cost","top.cost", "pscore")])
+```
+
+### importance
+We can examine variable importance based on partial chi-square (i.e., which variables explain the outcome the most).
+```{r importance}
+importance(m1$model)
+```
+
+### Plot importance 
+We can examine variable importance to see a ranking of variables with a graph. The hospital program has the highest rank, variables highlighted in red are statistically significant.
+```{r plotImportance}
+plot(importance(m1$model))
+```
+
+Topcoding can be applied to any model. Propensity scores can be created for any model except the single group interrupted time series because there is no control group (i.e. intervention group only).
+
+## 3. Differences-in-Differences
+
+DID can be used on binary or continuous outcome variables. Below is an example using the hosprog data with length of stay as the outcome and the created DID variables as the predictors, use '.' on the right-hand side of the formula to indicate only the created variables will be used. Replace '.' with any additional selected variables. The newly created DID variables will be added in all DID models. This model has a pre/post design (i.e., there are only 2 distinct time points) by selecting: 
+did="two", with post starting at month 5.
+
+### DID model 1
+```{r did model 1}
+dm1 <- assess(formula= los ~ ., data=hosprog, intervention = "program",
+              int.time="month", treatment= 5, did="two")
+```
+
+### View DID model results
+```{r did model 1 results}
+summary(dm1$DID)
+```
+
+### Coefficient interpretations
+```{r interpret did model 1}
+interpret(dm1)$did
+```
+
+### DID model 2
+
+This model allows for more than 2 time points. It allows for monthly increments by selecting did="many".
+```{r did model 2}
+dm2 <- assess(formula= los ~ ., data=hosprog, intervention = "program",
+              int.time="month", treatment= 5, did="many")
+```
+
+### View DID model 2 results
+```{r did model 2 results}
+summary(dm2$DID)
+```
+
+### Get coefficient interpretations
+```{r interpret did model 2}
+interpret(dm2)$did
+```
+
+We can also use DID on binary outcomes like hospital re-admission within 30-days.
+
+```{r did model 3}
+dm3 <- assess(formula= rdm30 ~ ., data=hosprog, intervention = "program",
+              int.time="month", treatment= 5, did="two")
+```
+
+### View DID model 3 results
+```{r did model 3 results}
+summary(dm3$DID)
+```
+
+Significant DID effect showing reduced re-admissions
+
+## 4. Interrupted Time Series
+
+ITS lets us look at trends for 1 or 2 groups such as an intervention/treatment group without a control group or both a treatment and control group. And we have the option of one or more treatment periods (or interruptions). This gives us 4 options that can be specified using the interrupt and its= arguments.
+
+Below are examples using the hosprog data for the patient survey and death
+within 30-days. The dataset hosp1 will be used for the single group examples.
+
+We begin by looking at a single group with a single interruption/treatment period and assessing their survey scores. We specify it with: 
+interrupt= 5 and its="one".
+
+### ITS model 1 
+```{r its model 1}
+im11 <- assess(formula=los ~ ., data=hosprog, intervention = "program",
+               int.time="month", interrupt= 5, its="one")
+```
+
+### View ITS model 1 results
+```{r its model 1 results}
+summary(im11$ITS)
+```
+
+### interpret coefficients
+```{r its model 1 interpretations}
+interpret(im11)$its
+```
+
+There is a second key period of interest at month 9 which is specified with interrupt= c(5, 9) and its="one"
+
+### ITS model 2
+```{r its model 2}
+im12 <- assess(formula=los ~ ., data=hosprog, intervention = "program",
+               int.time="month", interrupt= c(5, 9), its="one")
+```
+
+### View ITS model 2 results
+```{r its model 2 results}
+summary(im12$ITS)
+```
+
+We continue with comparing the intervention and control groups on their survey scores which is specified with interrupt= 5 and its="two".
+
+### ITS model 3
+```{r its model 3}
+im21 <- assess(formula=los ~ ., data=hosprog, intervention = "program",
+               int.time="month", interrupt= 5, its="two")
+```
+
+### View ITS model 3 results
+```{r its model 3 results}
+summary(im21$ITS)
+```
+
+We have an interest in a 2nd interruption at month 9,
+which is specified with interrupt= c(5, 9) and its="two".
+
+### ITS model 4
+```{r its model 4}
+im22 <- assess(formula=los ~ ., data=hosprog, intervention = "program",
+               int.time="month", interrupt= c(5, 9), its="two")
+```
+
+### View ITS model 4 results
+```{r its model 4 results}
+summary(im22$ITS)
+```
+
+We can also perform an ITS on binary outcomes like death within 30-days.
+We will examine an intervention and control group at months 5 and 9,
+which is specified with interrupt= c(5, 9) and its="two".
+
+### ITS model 5
+```{r its model 5}
+id22 <- assess(formula=death30 ~ ., data=hosprog, intervention = "program",
+               int.time="month", interrupt= c(5, 9), its="two")
+```
+
+### View ITS model 5 results
+```{r its model 5 results}
+summary(id22$ITS)
+```
+
+### interpret ITS model 5 results
+```{r interpret its model 5}
+interpret(id22)$its
+```

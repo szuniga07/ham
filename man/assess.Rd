@@ -86,9 +86,9 @@ summary(assess(formula=vs~mpg+wt+hp, data=mtcars, regression="logistic")$model)
 summary(assess(formula=los ~ month+program, data=hosprog, intervention = "program",
 regression="ols", propensity=c("female","age","risk"))$model)
 
-# OLS: top coding los at 17.1 and propensity score means (top.los and pscore)
+# OLS: top coding los at 8.27 and propensity score means (top.los and pscore)
 summary(assess(formula=los ~ month+program, data=hosprog, intervention = "program",
-regression="ols", topcode=17.1, propensity=c("female","age","risk"),
+regression="ols", topcode=8.27, propensity=c("female","age","risk"),
 newdata=TRUE)$newdata[, c("los", "top.los", "pscore")])
 
 # differences-in-differences model: using 2 time periods, pre- and post-intervention

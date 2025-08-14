@@ -63,9 +63,9 @@
 #' summary(assess(formula=los ~ month+program, data=hosprog, intervention = "program",
 #' regression="ols", propensity=c("female","age","risk"))$model)
 #'
-#' # OLS: top coding los at 17.1 and propensity score means (top.los and pscore)
+#' # OLS: top coding los at 8.27 and propensity score means (top.los and pscore)
 #' summary(assess(formula=los ~ month+program, data=hosprog, intervention = "program",
-#' regression="ols", topcode=17.1, propensity=c("female","age","risk"),
+#' regression="ols", topcode=8.27, propensity=c("female","age","risk"),
 #' newdata=TRUE)$newdata[, c("los", "top.los", "pscore")])
 #'
 #' # differences-in-differences model: using 2 time periods, pre- and post-intervention
@@ -339,7 +339,12 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
   if(itsa_type == "mgmt") {
     txip2 <- ITS.Int * txp2
   }
-
+  #No propensity score for single group ITSA
+  if(itsa_type %in% c("sgst", "sgmt")) {
+    if (!is.null(propensity) ) {
+      stop("Error: No propensity score calculated without a control group.")
+    }
+  }
   # Make DID data #
   if (did == "two") {
     did_data <- data.frame(Post.All, Int.Var, Period, DID)

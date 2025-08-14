@@ -12,7 +12,8 @@ Description: Conducts analyses for healthcare program evaluations or interventio
     results and a ranking of variable importance in models. Performs 
     propensity score models, top-coding of model outcome variables, and 
     can return new data with the newly formed variables. Also performs Cronbach's 
-    alpha for various scale items (e.g., survey questions).
+    alpha for various scale items (e.g., survey questions). See Github URL for 
+    examples in the README file.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
