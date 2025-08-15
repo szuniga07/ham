@@ -76,6 +76,10 @@ summary(assess(hp ~ mpg+wt, data=mtcars, regression="ols")$model)
 ### Logistic regression
 ```{r logistic}
 summary(assess(formula=vs~mpg+wt+hp, data=mtcars, regression="logistic")$model)
+
+## Interpret the results
+interpret(assess(formula=vs~mpg+wt+hp, data=mtcars, regression="logistic")
+          )$model
 ```
 
 ham can topcode the outcome and create a propensity score variable. Here is an example using the artificially created hosprog data with hospital stay cost as the outcome with a novel hospital program/intervention binary indicator and a 12 month time variable. The option for new data being returned is specified with newdata=TRUE.

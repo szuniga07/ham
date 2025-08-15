@@ -184,6 +184,36 @@ summary(assess(formula=vs~mpg+wt+hp, data=mtcars, regression="logistic")$model)
 #> AIC: 22.748
 #> 
 #> Number of Fisher Scoring iterations: 8
+
+## Interpret the results
+interpret(assess(formula=vs~mpg+wt+hp, data=mtcars, regression="logistic")
+          )$model
+#> Interpretations: Model 
+#> ---------------------- 
+#> These estimates tell you about the relationship between the 
+#> independent variables and the dependent variable. These estimates 
+#> tell the amount of change in outcome scores that would be 
+#> predicted by a 1 unit increase in the predictor. 
+#> 
+#> The following predictor variable(s) have coefficient(s) 
+#> significantly different from 0 using an alpha of 0.05:
+#> hp 
+#> 
+#> For every 1 unit increase in these predictor variables,
+#> vs is predicted to increase by the value of the 
+#> coefficient, holding all other variables constant. The following 
+#> predictor variable(s) have positive coefficient(s) that 
+#> increase the predicted value of the outcome: 
+#> No positive coefficients in your model were significant. 
+#> 
+#> For every 1 unit increase in these predictor variables,
+#> vs is predicted to decrease by the value of the 
+#> coefficient, holding all other variables constant. The following 
+#> predictor variable(s) have negative coefficient(s) that 
+#> decrease the predicted value of the outcome: 
+#> hp 
+#> 
+#> There is no R2 information provided.
 ```
 
 ham can topcode the outcome and create a propensity score variable. Here
