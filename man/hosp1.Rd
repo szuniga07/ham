@@ -3,7 +3,7 @@
 \docType{data}
 \name{hosp1}
 \alias{hosp1}
-\title{Patient hospital intervention data, intervention group only}
+\title{Patient hospital program/intervention data, intervention group only}
 \format{
 \subsection{\code{hosprog}}{
 
@@ -31,6 +31,6 @@ the intervention group's data used for single group interrupted time series.
 hosp1
 }
 \description{
-Patient hospital intervention data, intervention group only
+Patient hospital program/intervention data, intervention group only
 }
 \keyword{datasets}

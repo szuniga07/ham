@@ -3,7 +3,7 @@
 \docType{data}
 \name{hosprog}
 \alias{hosprog}
-\title{Patient hospital intervention data}
+\title{Patient hospital program/intervention data}
 \format{
 \subsection{\code{hosprog}}{
 
@@ -34,6 +34,6 @@ and so on. This allows some predictors to have stronger correlations with Y.
 hosprog
 }
 \description{
-Patient hospital intervention data
+Patient hospital program/intervention data
 }
 \keyword{datasets}

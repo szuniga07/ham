@@ -9,7 +9,7 @@
 
 An artificial data frame with 100 rows and 5 columns:
 \describe{
-\item{i1 -i5}{5 survey items}
+\item{i1 - i5}{5 survey items}
 ...
 }
 }
@@ -23,7 +23,7 @@ argument is modified to give more or less consistent ratings per item.
 cas
 }
 \description{
-Artificial data of a 5 item hospital satisfaction survey to be used
-for a Cronbach's alpha scale.
+Artificial data of a 5 item hospital satisfaction survey
+for a Cronbach's alpha scale (cas).
 }
 \keyword{datasets}
