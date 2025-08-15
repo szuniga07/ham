@@ -13,12 +13,13 @@ importance(model)
 a data.frame object with partial X^2 summary statistics.
 }
 \description{
-Calculates partial chi-square from assess class objects. The
-importance metric is the partial chi-square minus its degrees
+Calculates partial chi-square (Wald chi-square for individual
+coefficients) from assess class objects. The
+importance is the partial chi-square minus its degrees
 of freedom based on the regression coefficients (Harrell, 2015).
 A higher chi-square indicates a larger effect by the predictors.
 Therefore, the rank of the chi-square can indicate which predictors
-are more important in explaining the variation in the outcome variable.
+can contribute more in explaining the variation in the outcome variable.
 }
 \examples{
 # OLS regression

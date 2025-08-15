@@ -15,9 +15,9 @@
 formatted alpha results.
 }
 \description{
-Formats alpha class results to display summary statistics by
-commonly reported sections. These include the overall alpha and
-other scale statistics, item statistics, scale statistics if
+Formats alpha class results to display summary statistics of
+scale information. These include the overall alpha, scale
+mean and standard deviation, item statistics, scale statistics if
 an item is removed from the scale, and the total sample size.
 }
 \examples{

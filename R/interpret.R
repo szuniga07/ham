@@ -1,12 +1,12 @@
 #' Interpret model output
 #'
 #' Provides simple interpretations of regression coefficients and Cronbach's
-#' alpha from assess and alpha classes. The interpretations describe
+#' alpha from assess and alpha function classes. The interpretations describe
 #' coefficients and significance values as well as modifying item scales.
 #' The interpretations are text comments associated with specific parameters
 #' of the various analyses.
 #'
-#' @param object assess class objects: alpha, ITS, DID, or ols or logistic models.
+#' @param object alpha and assess class objects: alpha, ITS, DID, linear (ols) or logistic models.
 #'
 #' @return a list with interpretations of Cronbach's alpha scales or regression model results.
 #' @export

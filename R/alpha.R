@@ -5,7 +5,7 @@
 #' reliability of a measurement instrument such as survey items  (see Allen & Yang, 1979; Kline, 1999).
 #' Survey items can have 2 or more categories such as 5-point scales and contain 2 or more items.
 #'
-#' @param items Vector of items names that form a scale (e.g., 5-point Likert scales)
+#' @param items Vector of item names that form a scale (e.g., 5-point Likert scales)
 #'
 #' @param data  Data frame object.
 #'

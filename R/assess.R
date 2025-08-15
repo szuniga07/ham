@@ -1,6 +1,6 @@
 #' Assess models with regression
 #'
-#' Fit ordinary least squares (OLS) and logistic models. And fit causal models such
+#' Fit ordinary least squares (OLS) and logistic models. And fit models for causal inference such
 #' as differences-in-differences and interrupted time series. Run these models to evaluate program performance
 #' or test intervention effects (e.g., healthcare programs). Options are available
 #' for top coding the outcome variable as well as propensity scores. New data can
@@ -41,8 +41,8 @@
 #'
 #'
 #' @return a list of results from selected regression models. Will return new data if selected.
-#' And returns relevant model information such as variable names, type of analysis, formula, and summary
-#' of ITS effects if selected.
+#' And returns relevant model information such as variable names, type of analysis, formula, study
+#' information, and summary of ITS effects if analyzed.
 #' @export
 #'
 #' @references
@@ -546,7 +546,9 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
                          DID_formula=DID_formula,
                          ITS_formula=ITS_formula),
             analysis_type=list(regression_type=regression_type,
-                               did_type=did_type, itsa_type=itsa_type))
+                               did_type=did_type, itsa_type=itsa_type),
+            study= list(regression=regression, did=did, its=its, intervention=intervention,
+                        int.time=int.time, treatment=treatment, interrupt=interrupt))
   class(z) <- c("assess","ham", "list")
 
   #Returned objects

@@ -16,7 +16,7 @@ and type="mgmt", it is multiple-group multiple-time.}
 }
 \value{
 a data.frame object of ITS effects and summary statistics.
-Generally run within assess().
+Generally run within the assess function.
 }
 \description{
 Calculates effects for intervention and control groups based on interrupted

@@ -64,11 +64,11 @@ The default is newdata=FALSE. No new data will be returned if none was created.}
 }
 \value{
 a list of results from selected regression models. Will return new data if selected.
-And returns relevant model information such as variable names, type of analysis, formula, and summary
-of ITS effects if selected.
+And returns relevant model information such as variable names, type of analysis, formula, study
+information, and summary of ITS effects if analyzed.
 }
 \description{
-Fit ordinary least squares (OLS) and logistic models. And fit causal models such
+Fit ordinary least squares (OLS) and logistic models. And fit models for causal inference such
 as differences-in-differences and interrupted time series. Run these models to evaluate program performance
 or test intervention effects (e.g., healthcare programs). Options are available
 for top coding the outcome variable as well as propensity scores. New data can

@@ -17,7 +17,7 @@
 #' and type="mgmt", it is multiple-group multiple-time.
 #'
 #' @return a data.frame object of ITS effects and summary statistics.
-#' Generally run within assess().
+#' Generally run within the assess function.
 #' @export
 #'
 #' @references

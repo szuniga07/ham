@@ -7,14 +7,14 @@
 interpret(object)
 }
 \arguments{
-\item{object}{assess class objects: alpha, ITS, DID, or ols or logistic models.}
+\item{object}{alpha and assess class objects: alpha, ITS, DID, linear (ols) or logistic models.}
 }
 \value{
 a list with interpretations of Cronbach's alpha scales or regression model results.
 }
 \description{
 Provides simple interpretations of regression coefficients and Cronbach's
-alpha from assess and alpha classes. The interpretations describe
+alpha from assess and alpha function classes. The interpretations describe
 coefficients and significance values as well as modifying item scales.
 The interpretations are text comments associated with specific parameters
 of the various analyses.

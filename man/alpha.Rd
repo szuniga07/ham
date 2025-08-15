@@ -7,7 +7,7 @@
 alpha(items, data)
 }
 \arguments{
-\item{items}{Vector of items names that form a scale (e.g., 5-point Likert scales)}
+\item{items}{Vector of item names that form a scale (e.g., 5-point Likert scales)}
 
 \item{data}{Data frame object.}
 }

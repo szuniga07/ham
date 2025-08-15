@@ -1,8 +1,8 @@
 #' Print interpret object
 #'
 #' Formats interpretations from interpret class objects. Provides simple
-#' interpretations of regression coefficients and Cronbach's alpha, Select
-#' and print specific object interpretations, returned in sentence and
+#' interpretations of regression coefficients and Cronbach's alpha. Print
+#' specific model interpretations (or run all), returned in sentence and
 #' paragraph formats.
 #'
 #' @param x interpret object.
