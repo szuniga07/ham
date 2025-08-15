@@ -36,6 +36,9 @@ An example of calculating Cronbach's alpha:
 ```{r cronbachs alpha example}
 library(ham)
 alpha(items=c("i1","i2","i3","i4","i5"), data=cas)
+
+## Interpret the results
+interpret(alpha(items=c("i1","i2","i3","i4","i5"), data=cas))
 ```
 
 ## 1. Introduction

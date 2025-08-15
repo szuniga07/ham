@@ -62,6 +62,22 @@ alpha(items=c("i1","i2","i3","i4","i5"), data=cas)
 #> Total    = 100 
 #> Valid    = 100 
 #> Excluded = 0
+
+## Interpret the results
+interpret(alpha(items=c("i1","i2","i3","i4","i5"), data=cas))
+#> Interpretations: Alpha 
+#> ---------------------- 
+#> Your 5 item scale has a Cronbach's alpha of 0.92. This is 
+#> generally considered as being in the 'excellent' range. 
+#> 
+#> The scale mean is 3.77 and has a standard deviation of 0.67. 
+#> 
+#> Removing one of these item(s): i1, can improve the Cronbach's 
+#> alpha in a new scale to a higher level than the current alpha 
+#> based on all items. 
+#> 
+#> 0 row(s) of data excluded from the analysis because of missing 
+#> data.
 ```
 
 ## 1. Introduction
