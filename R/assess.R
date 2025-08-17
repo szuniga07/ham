@@ -84,7 +84,7 @@
 #' summary(assess(formula=los ~ ., data=hosprog, intervention = "program",
 #' int.time="month", its="two", interrupt = c(5,9))$ITS)
 #'
-#' @importFrom stats as.formula binomial plogis predict update
+#' @importFrom stats as.formula binomial plogis predict update aggregate
 assess <- function(formula, data, regression= "none", did ="none", its ="none",
                    intervention =NULL, int.time=NULL, treatment=NULL,
                    interrupt=NULL, topcode =NULL, propensity =NULL, newdata =FALSE) {
@@ -539,6 +539,16 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
     attributes(DID_formula) <- NULL
   }
 
+  #Calculate group means per time period
+  if(any(!is.null(c(intervention, int.time)) ==  TRUE)) {
+    aggr_fmla <- as.formula(paste(paste0(yvar , "~"),
+                                  paste(c(int.time,intervention), collapse= "+")))
+    group_means <- stats::aggregate(x=aggr_fmla, data=data, FUN="mean")
+    colnames(group_means) <-  c(eval(int.time), eval(intervention), eval(yvar))
+  } else {
+    group_means <- NULL
+  }
+
   z <- list(model=model_1, DID=did_model, DID.Names=DID.Names, ITS=its_model,
             ITS.Effects=ITS.Effects,ITS.Names=ITS.Names, newdata=new_df,
             formula=list(primary_formula=primary_formula,
@@ -548,7 +558,7 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
             analysis_type=list(regression_type=regression_type,
                                did_type=did_type, itsa_type=itsa_type),
             study= list(regression=regression, did=did, its=its, intervention=intervention,
-                        int.time=int.time, treatment=treatment, interrupt=interrupt))
+                        int.time=int.time, treatment=treatment, interrupt=interrupt, group_means=group_means))
   class(z) <- c("assess","ham", "list")
 
   #Returned objects
