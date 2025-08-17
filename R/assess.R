@@ -153,7 +153,7 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
   if (!is.null(intervention)) {
     if(all(c(did, its) ==  "none")) {
       if(is.null(propensity)) {
-        stop("Error: Not expecting interention when there is no did, its, or propensity model specified.")
+        stop("Error: Not expecting intervention when there is no did, its, or propensity model specified.")
       }
     }
   }
