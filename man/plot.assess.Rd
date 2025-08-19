@@ -25,15 +25,15 @@ plot of partial predictions for treatment and control groups.
 }
 \description{
 Provides partial prediction plots for treatment and control groups from difference-in-difference (DID)
-or interrupted time series (ITS) models. It is recommended to graph for models that do not include
-additional covariates (e.g., patient demographics) because the coordinates may be off. The graph
-will produce lines for treatment/intervention and control groups to gain understanding
-through a visual representation of the regression coefficients. The treatment/intervention
-group is represented with a blue line, the control group is represented with a red line, and
-the  line, when available, is a dashed line.
+and interrupted time series (ITS) models. The graph will produce lines for treatment/intervention and
+control groups to gain understanding through a visual representation of the regression coefficients.
+The treatment/intervention group is represented with a blue line, the control group is represented with
+a red line, and the counterfactual line, when available, is a dashed line.
 }
 \examples{
-hsur <- assess(formula=survey ~ ., data=hosprog, intervention = "program",
-int.time="month", interrupt=5, its="two")
-plot(x=hsur, y="ITS", ylim=c(2,5), add.legend="bottom")
+am2 <- assess(formula= los ~ ., data=hosprog, intervention = "program",
+topcode =NULL, int.time="month", regression="none", treatment= 5,
+interrupt=c(5,9), did="many", its="two", newdata=TRUE, propensity=NULL)
+plot(am2, "DID", add.legend="bottomleft", ylim=c(2, 8))  #DID model
+plot(am2, "ITS", add.legend="top", ylim=c(2, 8))         #ITS model
 }

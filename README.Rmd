@@ -236,6 +236,11 @@ im22 <- assess(formula=los ~ ., data=hosprog, intervention = "program",
 summary(im22$ITS)
 ```
 
+### View a partial prediction plot
+```{r plotAssess}
+plot(x=im22, y="ITS", ylim=c(2, 8), add.legend="bottomleft")
+```
+
 We can also perform an ITS on binary outcomes like death within 30-days.
 We will examine an intervention and control group at months 5 and 9,
 which is specified with interrupt= c(5, 9) and its="two".

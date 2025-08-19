@@ -1,12 +1,10 @@
 #' Prediction plot of treatment and control groups for DID and ITS models
 #'
 #' Provides partial prediction plots for treatment and control groups from difference-in-difference (DID)
-#' or interrupted time series (ITS) models. It is recommended to graph for models that do not include
-#' additional covariates (e.g., patient demographics) because the coordinates may be off. The graph
-#' will produce lines for treatment/intervention and control groups to gain understanding
-#' through a visual representation of the regression coefficients. The treatment/intervention
-#' group is represented with a blue line, the control group is represented with a red line, and
-#' the  line, when available, is a dashed line.
+#' and interrupted time series (ITS) models. The graph will produce lines for treatment/intervention and
+#' control groups to gain understanding through a visual representation of the regression coefficients.
+#' The treatment/intervention group is represented with a blue line, the control group is represented with
+#' a red line, and the counterfactual line, when available, is a dashed line.
 #'
 #' @param x assess object. Either difference-in-difference or interrupted time series model with no covariate adjustment.
 #' @param y type of model, specify either 'DID' (difference-in-difference) or 'ITS' (interrupted time series). Will not accept other models.
@@ -21,9 +19,11 @@
 #' @export
 #'
 #' @examples
-#' hsur <- assess(formula=survey ~ ., data=hosprog, intervention = "program",
-#' int.time="month", interrupt=5, its="two")
-#' plot(x=hsur, y="ITS", ylim=c(2,5), add.legend="bottom")
+#' am2 <- assess(formula= los ~ ., data=hosprog, intervention = "program",
+#' topcode =NULL, int.time="month", regression="none", treatment= 5,
+#' interrupt=c(5,9), did="many", its="two", newdata=TRUE, propensity=NULL)
+#' plot(am2, "DID", add.legend="bottomleft", ylim=c(2, 8))  #DID model
+#' plot(am2, "ITS", add.legend="top", ylim=c(2, 8))         #ITS model
 plot.assess <- function(x, y, xlim=NULL, ylim=NULL, add.legend=NULL, ...) {
   if(any(is.null(c(x, y)) == TRUE)) {
     stop("Error: Expecting both an x and y argument.")
@@ -32,6 +32,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, add.legend=NULL, ...) {
   if (!y %in% c("DID", "ITS")) {stop("Error: Expecting y='DID' or y='ITS'." )}
 
   # Get assess objects
+
   # Get aggregated values
   aggr_mns <-  x[["study"]][["group_means"]]
   int_start_y <- aggr_mns[which(aggr_mns[, 1] == min(aggr_mns[, 1]) &
@@ -75,19 +76,37 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, add.legend=NULL, ...) {
   ## DID Two ##
   #############
   if (model_type == "two") {
-    c0 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*0 + coef(cmodel)[[3]]*0 +
+    model_vars <- all.vars(x[["formula"]][["DID_formula"]])[-1] #all model X
+    #Model X means
+    mod_var_mn <- colMeans(cmodel[["model"]])[-which(names(colMeans(cmodel[["model"]]))==yvar)]
+    main_vars <- c("Post.All", "Int.Var",  "DID") # main causal model terms
+    cov_names <- setdiff(names(mod_var_mn), main_vars) # additional covariates
+    cov_mn <- mod_var_mn[which(names(mod_var_mn) %in% cov_names)] # covariate means
+    #coefficient * X mean
+    cov_vals <- vector()
+    for( i in cov_names) {
+      cov_vals[i] <- cov_mn[i] * coef(cmodel)[i]
+    }
+    # add this to adjust the intercept for additional covariates
+    if(length(cov_names) !=0) {
+      B0_adjust <- sum(cov_vals)
+    } else {
+      B0_adjust <- 0
+    }
+    #Fitted values
+    c0 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*0 + coef(cmodel)[[3]]*0 +
       coef(cmodel)[[4]]*0 #control group time 0
-    c1 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*1 + coef(cmodel)[[3]]*0 +
+    c1 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*1 + coef(cmodel)[[3]]*0 +
       coef(cmodel)[[4]]*0 #control group time 1
-    t0 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*0 + coef(cmodel)[[3]]*1 +
+    t0 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*0 + coef(cmodel)[[3]]*1 +
       coef(cmodel)[[4]]*0   #intervention group time 0
-    t1 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*1 + coef(cmodel)[[3]]*1 +
+    t1 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*1 + coef(cmodel)[[3]]*1 +
       coef(cmodel)[[4]]*1   #intervention group time 1
     #Counterfactual for treated
-    cft1 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*1 + coef(cmodel)[[3]]*1 +
+    cft1 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*1 + coef(cmodel)[[3]]*1 +
       coef(cmodel)[[4]]*0   #intervention group time 1
     #Average treatment effect on the treated
-    atet1 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*1 + coef(cmodel)[[3]]*1 +
+    atet1 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*1 + coef(cmodel)[[3]]*1 +
       coef(cmodel)[[4]]*1   #intervention group time 1
 
     plot(0:1, range(c(cmodel[["fitted.values"]], t0)), type="n",
@@ -109,25 +128,43 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, add.legend=NULL, ...) {
   ## DID Many ##
   ##############
   if (model_type == "many") {
+    model_vars <- all.vars(x[["formula"]][["DID_formula"]])[-1] #all model X
+    #Model X means
+    mod_var_mn <- colMeans(cmodel[["model"]])[-which(names(colMeans(cmodel[["model"]]))==yvar)]
+    main_vars <- c("Period","DID","DID.Trend") # main causal model terms
+    cov_names <- setdiff(names(mod_var_mn), main_vars) # additional covariates
+    cov_mn <- mod_var_mn[which(names(mod_var_mn) %in% cov_names)] # covariate means
+    #coefficient * X mean
+    cov_vals <- vector()
+    for( i in cov_names) {
+      cov_vals[i] <- cov_mn[i] * coef(cmodel)[i]
+    }
+    # add this to adjust the intercept for additional covariates
+    if(length(cov_names) !=0) {
+      B0_adjust <- sum(cov_vals)
+    } else {
+      B0_adjust <- 0
+    }
+
     treat_start <- x[["study"]][["treatment"]] # treatment start
     max_time <- max(cmodel[["model"]][["Period"]]) # max study time
-
-    c0 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*1 + coef(cmodel)[[3]]*0 +
+    #Fitted values
+    c0 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*1 + coef(cmodel)[[3]]*0 +
       coef(cmodel)[[4]]*0 #control group time 0
-    c1 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*max_time + coef(cmodel)[[3]]*0 +
+    c1 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*max_time + coef(cmodel)[[3]]*0 +
       coef(cmodel)[[4]]*0 #control group time 1
     t0 <- int_start_y + coef(cmodel)[[2]]*0 + coef(cmodel)[[3]]*0 +
       coef(cmodel)[[4]]*0   #intervention group time 0
-    t1 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*max_time + coef(cmodel)[[3]]*1 +
+    t1 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*max_time + coef(cmodel)[[3]]*1 +
       coef(cmodel)[[4]]*max_time   #intervention group time 1
     #Counterfactual for treated
     # use int_start_y here
     cft1 <- int_start_y + coef(cmodel)[[2]]*max_time + coef(cmodel)[[3]]*0 +
       coef(cmodel)[[4]]*0   #intervention group time 1
     #Average treatment effect on the treated
-    atet0 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*treat_start + coef(cmodel)[[3]]*1 +
+    atet0 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*treat_start + coef(cmodel)[[3]]*1 +
       coef(cmodel)[[4]]*treat_start   #intervention group time 1
-    atet1 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*max_time + coef(cmodel)[[3]]*1 +
+    atet1 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*max_time + coef(cmodel)[[3]]*1 +
       coef(cmodel)[[4]]*max_time   #intervention group time 1
 
     plot(range(aggr_mns[, 1]), range(c(cmodel[["fitted.values"]], t0)), type="n",
@@ -139,35 +176,53 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, add.legend=NULL, ...) {
     lines(c(1, max_time), c(t0, cft1), type="l", col="blue", lty=2, lwd=3)
     #ATET line
     segments(x0 = treat_start, y0 = atet0, x1 = max_time, y1 = atet1, col = "blue", lwd = 3, lty=1)
-  if (!is.null(add.legend)) {
-    legend(x=add.legend, legend=c("Intervention", "Control","Counterfactual", "Treated"),
-           lty= c(1,1,2,3),
-           lwd=1, col=c("blue","red","blue","gray"), bty="n", cex=1)
-  }
+    if (!is.null(add.legend)) {
+      legend(x=add.legend, legend=c("Intervention", "Control","Counterfactual", "Treated"),
+             lty= c(1,1,2,3),
+             lwd=1, col=c("blue","red","blue","gray"), bty="n", cex=1)
+    }
   }
 
   ##########
   ## sgst ##
   ##########
   if (model_type == "sgst") {
+    model_vars <- all.vars(x[["formula"]][["DID_formula"]])[-1] #all model X
+    #Model X means
+    mod_var_mn <- colMeans(cmodel[["model"]])[-which(names(colMeans(cmodel[["model"]]))==yvar)]
+    main_vars <- x[["ITS.Names"]] # main causal model terms
+    cov_names <- setdiff(names(mod_var_mn), main_vars) # additional covariates
+    cov_mn <- mod_var_mn[which(names(mod_var_mn) %in% cov_names)] # covariate means
+    #coefficient * X mean
+    cov_vals <- vector()
+    for( i in cov_names) {
+      cov_vals[i] <- cov_mn[i] * coef(cmodel)[i]
+    }
+    # add this to adjust the intercept for additional covariates
+    if(length(cov_names) !=0) {
+      B0_adjust <- sum(cov_vals)
+    } else {
+      B0_adjust <- 0
+    }
+
     interrupt_1 <- x[["study"]][["interrupt"]]
     max_time <- max(cmodel$model$ITS.Time)
     time_per1 <- c(1, interrupt_1-1)
     time_per2 <- c(interrupt_1, max_time)
     #Period 1's (pre-intervention) start and stop values
-    t00 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*0 + coef(cmodel)[[3]]*0 +
+    t00 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*0 + coef(cmodel)[[3]]*0 +
       coef(cmodel)[[4]]*0
-    t01 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*time_per1[2] + coef(cmodel)[[3]]*0 +
+    t01 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per1[2] + coef(cmodel)[[3]]*0 +
       coef(cmodel)[[4]]*0
     #Period 2's (post-intervention) start and stop values
-    t10 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*time_per2[1] + coef(cmodel)[[3]]*1 +
+    t10 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per2[1] + coef(cmodel)[[3]]*1 +
       coef(cmodel)[[4]]*0
-    t11 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*time_per2[2] + coef(cmodel)[[3]]*1 +
+    t11 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per2[2] + coef(cmodel)[[3]]*1 +
       coef(cmodel)[[4]]*(time_per2[2]-interrupt_1)
     #Counterfactual for treated in period 2
-    cft10 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*time_per2[1] + coef(cmodel)[[3]]*0 +
+    cft10 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per2[1] + coef(cmodel)[[3]]*0 +
       coef(cmodel)[[4]]*0
-    cft11 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*time_per2[2] + coef(cmodel)[[3]]*0 +
+    cft11 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per2[2] + coef(cmodel)[[3]]*0 +
       coef(cmodel)[[4]]*0
 
     plot(range(aggr_mns[, 1]), range(c(cmodel[["fitted.values"]], t00)), type="n",
@@ -190,6 +245,24 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, add.legend=NULL, ...) {
   ## sgmt ##
   ##########
   if (model_type == "sgmt") {
+    model_vars <- all.vars(x[["formula"]][["DID_formula"]])[-1] #all model X
+    #Model X means
+    mod_var_mn <- colMeans(cmodel[["model"]])[-which(names(colMeans(cmodel[["model"]]))==yvar)]
+    main_vars <- x[["ITS.Names"]] # main causal model terms
+    cov_names <- setdiff(names(mod_var_mn), main_vars) # additional covariates
+    cov_mn <- mod_var_mn[which(names(mod_var_mn) %in% cov_names)] # covariate means
+    #coefficient * X mean
+    cov_vals <- vector()
+    for( i in cov_names) {
+      cov_vals[i] <- cov_mn[i] * coef(cmodel)[i]
+    }
+    # add this to adjust the intercept for additional covariates
+    if(length(cov_names) !=0) {
+      B0_adjust <- sum(cov_vals)
+    } else {
+      B0_adjust <- 0
+    }
+
     interrupt_1 <- x[["study"]][["interrupt"]][1]
     interrupt_2 <- x[["study"]][["interrupt"]][2]
     max_time <- max(cmodel$model$ITS.Time)
@@ -197,29 +270,29 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, add.legend=NULL, ...) {
     time_per2 <- c(interrupt_1, interrupt_2-1)
     time_per3 <- c(interrupt_2, max_time)
     #Period 1's (pre-intervention) start and stop values
-    t00 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*0 + coef(cmodel)[[3]]*0 +
+    t00 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*0 + coef(cmodel)[[3]]*0 +
       coef(cmodel)[[4]]*0 + coef(cmodel)[[5]]*0 + coef(cmodel)[[6]]*0
-    t01 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*time_per1[2] + coef(cmodel)[[3]]*0 +
+    t01 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per1[2] + coef(cmodel)[[3]]*0 +
       coef(cmodel)[[4]]*0 + coef(cmodel)[[5]]*0 + coef(cmodel)[[6]]*0
     #Period 2's (post-intervention) start and stop values
-    t10 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*time_per2[1] + coef(cmodel)[[3]]*1 +
+    t10 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per2[1] + coef(cmodel)[[3]]*1 +
       coef(cmodel)[[4]]*0 + coef(cmodel)[[5]]*0 + coef(cmodel)[[6]]*0
-    t11 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*time_per2[2] + coef(cmodel)[[3]]*1 +
+    t11 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per2[2] + coef(cmodel)[[3]]*1 +
       coef(cmodel)[[4]]*(time_per2[2]-interrupt_1) + coef(cmodel)[[5]]*0 + coef(cmodel)[[6]]*0
     #Period 3's (post-intervention) start and stop values
-    t20 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*time_per3[1] + coef(cmodel)[[3]]*1 +
+    t20 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per3[1] + coef(cmodel)[[3]]*1 +
       coef(cmodel)[[4]]*(time_per2[2]-interrupt_1) + coef(cmodel)[[5]]*1 + coef(cmodel)[[6]]*0
-    t21 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*time_per3[2] + coef(cmodel)[[3]]*1 +
+    t21 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per3[2] + coef(cmodel)[[3]]*1 +
       coef(cmodel)[[4]]*(time_per3[2]-interrupt_1) + coef(cmodel)[[5]]*1 + coef(cmodel)[[6]]*(time_per3[2]-interrupt_2)
     #Counterfactual for treated in period 2
-    cft10 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*time_per2[1] + coef(cmodel)[[3]]*0 +
+    cft10 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per2[1] + coef(cmodel)[[3]]*0 +
       coef(cmodel)[[4]]*0 + coef(cmodel)[[5]]*0 + coef(cmodel)[[6]]*0
-    cft11 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*time_per2[2] + coef(cmodel)[[3]]*0 +
+    cft11 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per2[2] + coef(cmodel)[[3]]*0 +
       coef(cmodel)[[4]]*0  + coef(cmodel)[[5]]*0 + coef(cmodel)[[6]]*0
     #Counterfactual for treated in period 3
-    cft20 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*time_per3[1] + coef(cmodel)[[3]]*0 +
+    cft20 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per3[1] + coef(cmodel)[[3]]*0 +
       coef(cmodel)[[4]]*0 + coef(cmodel)[[5]]*0 + coef(cmodel)[[6]]*0
-    cft21 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*time_per3[2] + coef(cmodel)[[3]]*0 +
+    cft21 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per3[2] + coef(cmodel)[[3]]*0 +
       coef(cmodel)[[4]]*0  + coef(cmodel)[[5]]*0 + coef(cmodel)[[6]]*0
 
     plot(range(aggr_mns[, 1]), range(c(cmodel[["fitted.values"]], t00)), type="n",
@@ -247,6 +320,24 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, add.legend=NULL, ...) {
   ## mgst ##
   ##########
   if (model_type == "mgst") {
+    model_vars <- all.vars(x[["formula"]][["DID_formula"]])[-1] #all model X
+    #Model X means
+    mod_var_mn <- colMeans(cmodel[["model"]])[-which(names(colMeans(cmodel[["model"]]))==yvar)]
+    main_vars <- x[["ITS.Names"]] # main causal model terms
+    cov_names <- setdiff(names(mod_var_mn), main_vars) # additional covariates
+    cov_mn <- mod_var_mn[which(names(mod_var_mn) %in% cov_names)] # covariate means
+    #coefficient * X mean
+    cov_vals <- vector()
+    for( i in cov_names) {
+      cov_vals[i] <- cov_mn[i] * coef(cmodel)[i]
+    }
+    # add this to adjust the intercept for additional covariates
+    if(length(cov_names) !=0) {
+      B0_adjust <- sum(cov_vals)
+    } else {
+      B0_adjust <- 0
+    }
+
     interrupt_1 <- x[["study"]][["interrupt"]][1]
     max_time <- max(cmodel$model$ITS.Time)
     time_per1 <- c(1, interrupt_1-1)
@@ -254,26 +345,26 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, add.legend=NULL, ...) {
 
     ## Control group
     #Period 1's (pre-intervention) start and stop values
-    c00 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*time_per1[1] + coef(cmodel)[[3]]*1 + coef(cmodel)[[4]]*0 +
+    c00 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per1[1] + coef(cmodel)[[3]]*1 + coef(cmodel)[[4]]*0 +
       coef(cmodel)[[5]]*0 + coef(cmodel)[[6]]*0 + coef(cmodel)[[7]]*0 + coef(cmodel)[[8]]*0
-    c01 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*time_per1[2] + coef(cmodel)[[3]]*0 + coef(cmodel)[[4]]*0 +
+    c01 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per1[2] + coef(cmodel)[[3]]*0 + coef(cmodel)[[4]]*0 +
       coef(cmodel)[[5]]*0 + coef(cmodel)[[6]]*0 + coef(cmodel)[[7]]*0 + coef(cmodel)[[8]]*0
     #Period 2's (post-intervention) start and stop values
-    c10 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*time_per2[1] + coef(cmodel)[[3]]*0 + coef(cmodel)[[4]]*0 +
+    c10 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per2[1] + coef(cmodel)[[3]]*0 + coef(cmodel)[[4]]*0 +
       coef(cmodel)[[5]]*1 + coef(cmodel)[[6]]*0 + coef(cmodel)[[7]]*0 + coef(cmodel)[[8]]*0
-    c11 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*time_per2[2] + coef(cmodel)[[3]]*0 + coef(cmodel)[[4]]*0 +
+    c11 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per2[2] + coef(cmodel)[[3]]*0 + coef(cmodel)[[4]]*0 +
       coef(cmodel)[[5]]*1 + coef(cmodel)[[6]]*(time_per2[2]-interrupt_1) + coef(cmodel)[[7]]*0 + coef(cmodel)[[8]]*0
 
     ## Intervention group
     #Period 1's (pre-intervention) start and stop values
-    t00 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*time_per1[1] + coef(cmodel)[[3]]*1 + coef(cmodel)[[4]]*time_per1[1] +
+    t00 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per1[1] + coef(cmodel)[[3]]*1 + coef(cmodel)[[4]]*time_per1[1] +
       coef(cmodel)[[5]]*0 + coef(cmodel)[[6]]*0 + coef(cmodel)[[7]]*0 + coef(cmodel)[[8]]*0
-    t01 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*time_per1[2] + coef(cmodel)[[3]]*1 + coef(cmodel)[[4]]*time_per1[2] +
+    t01 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per1[2] + coef(cmodel)[[3]]*1 + coef(cmodel)[[4]]*time_per1[2] +
       coef(cmodel)[[5]]*0 + coef(cmodel)[[6]]*0 + coef(cmodel)[[7]]*0 + coef(cmodel)[[8]]*0
     #Period 2's (post-intervention) start and stop values
-    t10 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*time_per2[1] + coef(cmodel)[[3]]*1 + coef(cmodel)[[4]]*time_per2[1] +
+    t10 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per2[1] + coef(cmodel)[[3]]*1 + coef(cmodel)[[4]]*time_per2[1] +
       coef(cmodel)[[5]]*1 + coef(cmodel)[[6]]*0 + coef(cmodel)[[7]]*1 + coef(cmodel)[[8]]*0
-    t11 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*time_per2[2] + coef(cmodel)[[3]]*1 + coef(cmodel)[[4]]*time_per2[2] +
+    t11 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per2[2] + coef(cmodel)[[3]]*1 + coef(cmodel)[[4]]*time_per2[2] +
       coef(cmodel)[[5]]*1 + coef(cmodel)[[6]]*(time_per2[2]-interrupt_1) + coef(cmodel)[[7]]*1 + coef(cmodel)[[8]]*(time_per2[2]-interrupt_1)
 
     plot(range(aggr_mns[, 1]), range(c(cmodel[["fitted.values"]], t00)), type="n",
@@ -299,59 +390,74 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, add.legend=NULL, ...) {
   ## mgmt ##
   ##########
   if (model_type == "mgmt") {
+    model_vars <- all.vars(x[["formula"]][["DID_formula"]])[-1] #all model X
+    #Model X means
+    mod_var_mn <- colMeans(cmodel[["model"]])[-which(names(colMeans(cmodel[["model"]]))==yvar)]
+    main_vars <- x[["ITS.Names"]] # main causal model terms
+    cov_names <- setdiff(names(mod_var_mn), main_vars) # additional covariates
+    cov_mn <- mod_var_mn[which(names(mod_var_mn) %in% cov_names)] # covariate means
+    #coefficient * X mean
+    cov_vals <- vector()
+    for( i in cov_names) {
+      cov_vals[i] <- cov_mn[i] * coef(cmodel)[i]
+    }
+    # add this to adjust the intercept for additional covariates
+    if(length(cov_names) !=0) {
+      B0_adjust <- sum(cov_vals)
+    } else {
+      B0_adjust <- 0
+    }
+
     interrupt_1 <- x[["study"]][["interrupt"]][1]
     interrupt_2 <- x[["study"]][["interrupt"]][2]
     max_time <- max(cmodel$model$ITS.Time)
     time_per1 <- c(1, interrupt_1-1)
     time_per2 <- c(interrupt_1, interrupt_2-1)
     time_per3 <- c(interrupt_2, max_time)
-    time_per1
-    time_per2
-    time_per3
 
     ## Control group
     #Period 1's (pre-intervention) start and stop values
-    c00 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*time_per1[1] + coef(cmodel)[[3]]*1 + coef(cmodel)[[4]]*0 +
+    c00 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per1[1] + coef(cmodel)[[3]]*1 + coef(cmodel)[[4]]*0 +
       coef(cmodel)[[5]]*0 + coef(cmodel)[[6]]*0 + coef(cmodel)[[7]]*0 + coef(cmodel)[[8]]*0 +
       coef(cmodel)[[9]]*0 + coef(cmodel)[[10]]*0 + coef(cmodel)[[11]]*0 + coef(cmodel)[[12]]*0
-    c01 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*time_per1[2] + coef(cmodel)[[3]]*0 + coef(cmodel)[[4]]*0 +
+    c01 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per1[2] + coef(cmodel)[[3]]*0 + coef(cmodel)[[4]]*0 +
       coef(cmodel)[[5]]*0 + coef(cmodel)[[6]]*0 + coef(cmodel)[[7]]*0 + coef(cmodel)[[8]]*0 +
       coef(cmodel)[[9]]*0 + coef(cmodel)[[10]]*0 + coef(cmodel)[[11]]*0 + coef(cmodel)[[12]]*0
     #Period 2's (post-intervention) start and stop values
-    c10 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*time_per2[1] + coef(cmodel)[[3]]*0 + coef(cmodel)[[4]]*0 +
+    c10 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per2[1] + coef(cmodel)[[3]]*0 + coef(cmodel)[[4]]*0 +
       coef(cmodel)[[5]]*1 + coef(cmodel)[[6]]*0 + coef(cmodel)[[7]]*0 + coef(cmodel)[[8]]*0 +
       coef(cmodel)[[9]]*0 + coef(cmodel)[[10]]*0 + coef(cmodel)[[11]]*0 + coef(cmodel)[[12]]*0
-    c11 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*time_per2[2] + coef(cmodel)[[3]]*0 + coef(cmodel)[[4]]*0 +
+    c11 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per2[2] + coef(cmodel)[[3]]*0 + coef(cmodel)[[4]]*0 +
       coef(cmodel)[[5]]*1 + coef(cmodel)[[6]]*(time_per2[2]-interrupt_1) + coef(cmodel)[[7]]*0 + coef(cmodel)[[8]]*0 +
       coef(cmodel)[[9]]*0 + coef(cmodel)[[10]]*0 + coef(cmodel)[[11]]*0 + coef(cmodel)[[12]]*0
     #Period 3's (post-intervention) start and stop values
-    c20 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*time_per3[1] + coef(cmodel)[[3]]*0 + coef(cmodel)[[4]]*0 +
+    c20 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per3[1] + coef(cmodel)[[3]]*0 + coef(cmodel)[[4]]*0 +
       coef(cmodel)[[5]]*1 + coef(cmodel)[[6]]*(time_per3[1]-interrupt_1) + coef(cmodel)[[7]]*0 + coef(cmodel)[[8]]*0 +
       coef(cmodel)[[9]]*1 + coef(cmodel)[[10]]*0 + coef(cmodel)[[11]]*0 + coef(cmodel)[[12]]*0
-    c21 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*time_per3[2] + coef(cmodel)[[3]]*0 + coef(cmodel)[[4]]*0 +
+    c21 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per3[2] + coef(cmodel)[[3]]*0 + coef(cmodel)[[4]]*0 +
       coef(cmodel)[[5]]*1 + coef(cmodel)[[6]]*(time_per3[2]-interrupt_1) + coef(cmodel)[[7]]*0 + coef(cmodel)[[8]]*0 +
       coef(cmodel)[[9]]*1 + coef(cmodel)[[10]]*(time_per3[2]-interrupt_2) + coef(cmodel)[[11]]*0 + coef(cmodel)[[12]]*0
 
     ## Intervention group
     #Period 1's (pre-intervention) start and stop values
-    t00 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*time_per1[1] + coef(cmodel)[[3]]*1 + coef(cmodel)[[4]]*time_per1[1] +
+    t00 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per1[1] + coef(cmodel)[[3]]*1 + coef(cmodel)[[4]]*time_per1[1] +
       coef(cmodel)[[5]]*0 + coef(cmodel)[[6]]*0 + coef(cmodel)[[7]]*0 + coef(cmodel)[[8]]*0 +
       coef(cmodel)[[9]]*0 + coef(cmodel)[[10]]*0 + coef(cmodel)[[11]]*0 + coef(cmodel)[[12]]*0
-    t01 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*time_per1[2] + coef(cmodel)[[3]]*1 + coef(cmodel)[[4]]*time_per1[2] +
+    t01 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per1[2] + coef(cmodel)[[3]]*1 + coef(cmodel)[[4]]*time_per1[2] +
       coef(cmodel)[[5]]*0 + coef(cmodel)[[6]]*0 + coef(cmodel)[[7]]*0 + coef(cmodel)[[8]]*0 +
       coef(cmodel)[[9]]*0 + coef(cmodel)[[10]]*0 + coef(cmodel)[[11]]*0 + coef(cmodel)[[12]]*0
     #Period 2's (post-intervention) start and stop values
-    t10 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*time_per2[1] + coef(cmodel)[[3]]*1 + coef(cmodel)[[4]]*time_per2[1] +
+    t10 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per2[1] + coef(cmodel)[[3]]*1 + coef(cmodel)[[4]]*time_per2[1] +
       coef(cmodel)[[5]]*1 + coef(cmodel)[[6]]*0 + coef(cmodel)[[7]]*1 + coef(cmodel)[[8]]*0 +
       coef(cmodel)[[9]]*0 + coef(cmodel)[[10]]*0 + coef(cmodel)[[11]]*0 + coef(cmodel)[[12]]*0
-    t11 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*time_per2[2] + coef(cmodel)[[3]]*1 + coef(cmodel)[[4]]*time_per2[2] +
+    t11 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per2[2] + coef(cmodel)[[3]]*1 + coef(cmodel)[[4]]*time_per2[2] +
       coef(cmodel)[[5]]*1 + coef(cmodel)[[6]]*(time_per2[2]-interrupt_1) + coef(cmodel)[[7]]*1 + coef(cmodel)[[8]]*(time_per2[2]-interrupt_1) +
       coef(cmodel)[[9]]*0 + coef(cmodel)[[10]]*0 + coef(cmodel)[[11]]*0 + coef(cmodel)[[12]]*0
     #Period 3's (post-intervention) start and stop values
-    t20 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*time_per3[1] + coef(cmodel)[[3]]*1 + coef(cmodel)[[4]]*time_per3[1] +
+    t20 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per3[1] + coef(cmodel)[[3]]*1 + coef(cmodel)[[4]]*time_per3[1] +
       coef(cmodel)[[5]]*1 + coef(cmodel)[[6]]*(time_per3[1]-interrupt_1) + coef(cmodel)[[7]]*1 + coef(cmodel)[[8]]*(time_per3[1]-interrupt_1) +
       coef(cmodel)[[9]]*1 + coef(cmodel)[[10]]*0 + coef(cmodel)[[11]]*1 + coef(cmodel)[[12]]*0
-    t21 <- coef(cmodel)[[1]] + coef(cmodel)[[2]]*time_per3[2] + coef(cmodel)[[3]]*1 + coef(cmodel)[[4]]*time_per3[2] +
+    t21 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per3[2] + coef(cmodel)[[3]]*1 + coef(cmodel)[[4]]*time_per3[2] +
       coef(cmodel)[[5]]*1 + coef(cmodel)[[6]]*(time_per3[2]-interrupt_1) + coef(cmodel)[[7]]*1 + coef(cmodel)[[8]]*(time_per3[2]-interrupt_1) +
       coef(cmodel)[[9]]*1 + coef(cmodel)[[10]]*(time_per3[2]-interrupt_2) + coef(cmodel)[[11]]*1 + coef(cmodel)[[12]]*(time_per3[2]-interrupt_2)
 

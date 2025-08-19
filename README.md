@@ -685,6 +685,14 @@ summary(im22$ITS)
 #> F-statistic:  18.9 on 11 and 708 DF,  p-value: < 2.2e-16
 ```
 
+### View a partial prediction plot
+
+``` r
+plot(x=im22, y="ITS", ylim=c(2, 8), add.legend="bottomleft")
+```
+
+<img src="man/figures/README-plotAssess-1.png" width="100%" />
+
 We can also perform an ITS on binary outcomes like death within 30-days.
 We will examine an intervention and control group at months 5 and 9,
 which is specified with interrupt= c(5, 9) and its=“two”.
