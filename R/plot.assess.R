@@ -228,7 +228,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, add.legend=NULL, ...) {
     plot(range(aggr_mns[, 1]), range(c(cmodel[["fitted.values"]], t00)), type="n",
          main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim)
     #Intervention line
-    abline(v=20, col="gray", lty=3, lwd=3)
+    abline(v=interrupt_1, col="gray", lty=3, lwd=3)
     lines(time_per1, c(t00, t01), lty=1, col="blue", lwd=3)
     # counterfactual
     segments(x0 = interrupt_1, y0 = cft10, x1 = time_per2[2], y1 = cft11, col = "blue", lwd = 3, lty=2)
