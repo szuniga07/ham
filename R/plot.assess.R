@@ -35,6 +35,9 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, add.legend=NULL, ...) {
 
   # Get aggregated values
   aggr_mns <-  x[["study"]][["group_means"]]
+  #Correct for time increments that don't begin at 1
+  aggr_mns[, "time.2.backup.var"] <- aggr_mns[, 1]
+  aggr_mns[, 1] <- as.numeric(ordered(aggr_mns[, 1]))
   int_start_y <- aggr_mns[which(aggr_mns[, 1] == min(aggr_mns[, 1]) &
                                   aggr_mns[, 2] == max(aggr_mns[, 2])), 3]
   # formula type
@@ -147,6 +150,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, add.legend=NULL, ...) {
     }
 
     treat_start <- x[["study"]][["treatment"]] # treatment start
+    treat_start <- which(aggr_mns[, "time.2.backup.var"] == treat_start )[1]
     max_time <- max(cmodel[["model"]][["Period"]]) # max study time
     #Fitted values
     c0 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*1 + coef(cmodel)[[3]]*0 +
@@ -206,6 +210,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, add.legend=NULL, ...) {
     }
 
     interrupt_1 <- x[["study"]][["interrupt"]]
+    interrupt_1 <- which(aggr_mns[, "time.2.backup.var"] == interrupt_1 )[1]
     max_time <- max(cmodel$model$ITS.Time)
     time_per1 <- c(1, interrupt_1-1)
     time_per2 <- c(interrupt_1, max_time)
@@ -264,7 +269,9 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, add.legend=NULL, ...) {
     }
 
     interrupt_1 <- x[["study"]][["interrupt"]][1]
+    interrupt_1 <- which(aggr_mns[, "time.2.backup.var"] == interrupt_1 )[1]
     interrupt_2 <- x[["study"]][["interrupt"]][2]
+    interrupt_2 <- which(aggr_mns[, "time.2.backup.var"] == interrupt_2 )[1]
     max_time <- max(cmodel$model$ITS.Time)
     time_per1 <- c(1, interrupt_1-1)
     time_per2 <- c(interrupt_1, interrupt_2-1)
@@ -339,6 +346,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, add.legend=NULL, ...) {
     }
 
     interrupt_1 <- x[["study"]][["interrupt"]][1]
+    interrupt_1 <- which(aggr_mns[, "time.2.backup.var"] == interrupt_1 )[1]
     max_time <- max(cmodel$model$ITS.Time)
     time_per1 <- c(1, interrupt_1-1)
     time_per2 <- c(interrupt_1, max_time)
@@ -409,7 +417,9 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, add.legend=NULL, ...) {
     }
 
     interrupt_1 <- x[["study"]][["interrupt"]][1]
+    interrupt_1 <- which(aggr_mns[, "time.2.backup.var"] == interrupt_1 )[1]
     interrupt_2 <- x[["study"]][["interrupt"]][2]
+    interrupt_2 <- which(aggr_mns[, "time.2.backup.var"] == interrupt_2 )[1]
     max_time <- max(cmodel$model$ITS.Time)
     time_per1 <- c(1, interrupt_1-1)
     time_per2 <- c(interrupt_1, interrupt_2-1)
