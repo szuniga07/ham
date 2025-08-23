@@ -295,6 +295,9 @@ graph. The hospital program has the highest rank, variables highlighted
 in red are statistically significant.
 
 ``` r
+#Consider using these graphical parameters
+par(mar=c(4.2, 2, 3.5, 3))
+par(oma = c(0, 0, 0, 3))
 plot(importance(m1$model))
 ```
 

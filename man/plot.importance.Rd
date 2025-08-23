@@ -21,7 +21,8 @@ Plots an importance class object. Produces a dot chart that places the predictor
 variable with the highest partial chi-square (Wald chi-square for individual
 coefficients) at the bottom. It is a metric of the partial chi-square
 minus its degrees of freedom (Harrell, 2015). Predictor variables
-with significant p-values at the 0.05 alpha are highlighted red.
+with significant p-values at the 0.05 alpha are highlighted red. Consider
+graphical parameters of mar=c(4.2, 2, 3.5, 3) and oma = c(0, 0, 0, 3).
 }
 \examples{
 # OLS regression

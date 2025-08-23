@@ -4,7 +4,8 @@
 #' variable with the highest partial chi-square (Wald chi-square for individual
 #' coefficients) at the bottom. It is a metric of the partial chi-square
 #' minus its degrees of freedom (Harrell, 2015). Predictor variables
-#' with significant p-values at the 0.05 alpha are highlighted red.
+#' with significant p-values at the 0.05 alpha are highlighted red. Consider
+#' graphical parameters of mar=c(4.2, 2, 3.5, 3) and oma = c(0, 0, 0, 3).
 #'
 #' @param x importance object.
 #' @param y not currently used.
@@ -12,7 +13,7 @@
 #'
 #' @return plot of variable importance, significant variables highlighted in red.
 #'
-#' @importFrom graphics axis dotchart par
+#' @importFrom graphics axis dotchart
 #' @export
 #' @references
 #' Harrell, F. E., Jr. (2016). Regression Modeling Strategies. Springer
@@ -34,13 +35,9 @@ plot.importance <- function(x, y, ...) {
   chi2_labels <- object[, "X"][a_o]
 
   # Create the dot chart
-  graphics::par(mar=c(4.2, 2, 3.5, 3))
-  graphics::par(oma = c(0, 0, 0, 3))
   graphics::dotchart(a_num, labels = chi2_labels, main = "Variable Importance", pt.cex= 2,
            col = ifelse(p_vals < .05, "red", "black"), pch = 19, xlab="X^2 - d.f.")
   # Add labels to the right margin
   graphics::axis(4, at=1:(nrow(object)), tick= FALSE, las=1, cex.axis= 1.1,
        labels= paste("p=" , sprintf("%.4f", p_vals)) )
-  graphics::par(mar= c(5.1, 4.1, 4.1, 2.1))
-  graphics::par(oma = c(0, 0, 0, 0))
 }
