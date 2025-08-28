@@ -18,6 +18,8 @@ propensity scores, and provides some interpretation of model results.
 Additionally, Cronbach’s alpha can be calculated for such things as
 patient surveys.
 
+<img src="man/figures/logo.png" width="20%" style="display: block; margin: auto;" />
+
 ## Installation
 
 You can install the development version of ham from
