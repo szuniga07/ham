@@ -189,7 +189,7 @@ interrupt= 5 and its="one".
 
 ### ITS model 1 
 ```{r its model 1}
-im11 <- assess(formula=los ~ ., data=hosprog, intervention = "program",
+im11 <- assess(formula=los ~ ., data=hosp1, intervention = "program",
                int.time="month", interrupt= 5, its="one")
 ```
 
@@ -207,7 +207,7 @@ There is a second key period of interest at month 9 which is specified with inte
 
 ### ITS model 2
 ```{r its model 2}
-im12 <- assess(formula=los ~ ., data=hosprog, intervention = "program",
+im12 <- assess(formula=los ~ ., data=hosp1, intervention = "program",
                int.time="month", interrupt= c(5, 9), its="one")
 ```
 

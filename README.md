@@ -503,7 +503,7 @@ specify it with: interrupt= 5 and its=“one”.
 ### ITS model 1
 
 ``` r
-im11 <- assess(formula=los ~ ., data=hosprog, intervention = "program",
+im11 <- assess(formula=los ~ ., data=hosp1, intervention = "program",
                int.time="month", interrupt= 5, its="one")
 ```
 
@@ -517,20 +517,20 @@ summary(im11$ITS)
 #> 
 #> Residuals:
 #>     Min      1Q  Median      3Q     Max 
-#> -3.4880 -1.4060 -0.3311  1.0471  8.7621 
+#> -3.7673 -1.1134 -0.3565  0.5679  9.0804 
 #> 
 #> Coefficients:
 #>             Estimate Std. Error t value Pr(>|t|)    
-#> (Intercept)  4.47171    0.32302  13.843   <2e-16 ***
-#> ITS.Time     0.01634    0.11522   0.142    0.887    
-#> post5       -0.41904    0.34926  -1.200    0.231    
-#> txp5         0.05454    0.12139   0.449    0.653    
+#> (Intercept)   6.3299     0.4131  15.323   <2e-16 ***
+#> ITS.Time     -0.2889     0.1429  -2.022   0.0439 *  
+#> post5        -1.0081     0.4206  -2.397   0.0171 *  
+#> txp5          0.2153     0.1503   1.432   0.1530    
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 #> 
-#> Residual standard error: 1.963 on 716 degrees of freedom
-#> Multiple R-squared:  0.005683,   Adjusted R-squared:  0.001517 
-#> F-statistic: 1.364 on 3 and 716 DF,  p-value: 0.2526
+#> Residual standard error: 1.71 on 348 degrees of freedom
+#> Multiple R-squared:  0.2331, Adjusted R-squared:  0.2265 
+#> F-statistic: 35.25 on 3 and 348 DF,  p-value: < 2.2e-16
 ```
 
 ### interpret coefficients
@@ -544,23 +544,23 @@ interpret(im11)$its
 #> the corresponding variables are post1 = post12). 
 #> This analysis is for a one-group, single intervention period (interruption). 
 #> 
-#> Intercept is 4.472 and the starting value of the trend 
+#> Intercept is 6.33 and the starting value of the trend 
 #> for the intervention group. 
 #> 
-#> ITS.Time is 0.016 and the slope prior to intervention. 
-#> The coefficient is non-significant. 
+#> ITS.Time is -0.289 and the slope prior to intervention. 
+#> The coefficient is significant. 
 #> 
-#> post1 is -0.419 and the immediate shift in the trend line 
+#> post1 is -1.008 and the immediate shift in the trend line 
 #> after the intervention start (e.g., 1st year of intervention). 
-#> The coefficient is non-significant. 
+#> The coefficient is significant. 
 #> 
-#> txp1 is 0.055 and the difference between pre- and 
+#> txp1 is 0.215 and the difference between pre- and 
 #> post-intervention slopes (e.g., change in the pre-intervention 
 #> slope). The coefficient is non-significant. 
 #> 
 #> Summary: The results show that after the start of the intervention, 
 #> there was a non-significant change in the los trend. This gives 
-#> a total post-intervention trend in the los of 0.071 
+#> a total post-intervention trend in the los of -0.074 
 #> over time (i.e., the total combined value of change not the 
 #> change relative to pre-intervention). 
 #> 
@@ -574,7 +574,7 @@ with interrupt= c(5, 9) and its=“one”
 ### ITS model 2
 
 ``` r
-im12 <- assess(formula=los ~ ., data=hosprog, intervention = "program",
+im12 <- assess(formula=los ~ ., data=hosp1, intervention = "program",
                int.time="month", interrupt= c(5, 9), its="one")
 ```
 
@@ -588,22 +588,22 @@ summary(im12$ITS)
 #> 
 #> Residuals:
 #>     Min      1Q  Median      3Q     Max 
-#> -3.4880 -1.3729 -0.3323  1.0400  8.6369 
+#> -3.7673 -1.1092 -0.2717  0.6124  8.7874 
 #> 
 #> Coefficients:
 #>             Estimate Std. Error t value Pr(>|t|)    
-#> (Intercept)  4.47171    0.32328  13.832   <2e-16 ***
-#> ITS.Time     0.01634    0.11531   0.142    0.887    
-#> post5       -0.34634    0.37210  -0.931    0.352    
-#> txp5         0.01687    0.16336   0.103    0.918    
-#> post9       -0.07645    0.38591  -0.198    0.843    
-#> txp9         0.13087    0.15980   0.819    0.413    
+#> (Intercept)   6.3299     0.4109  15.406   <2e-16 ***
+#> ITS.Time     -0.2889     0.1421  -2.033   0.0428 *  
+#> post5        -1.0165     0.4503  -2.257   0.0246 *  
+#> txp5          0.2917     0.1991   1.465   0.1438    
+#> post9        -0.9232     0.4793  -1.926   0.0549 .  
+#> txp9          0.2298     0.2006   1.146   0.2527    
 #> ---
 #> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 #> 
-#> Residual standard error: 1.964 on 714 degrees of freedom
-#> Multiple R-squared:  0.006888,   Adjusted R-squared:  -6.622e-05 
-#> F-statistic: 0.9905 on 5 and 714 DF,  p-value: 0.4225
+#> Residual standard error: 1.7 on 346 degrees of freedom
+#> Multiple R-squared:  0.2457, Adjusted R-squared:  0.2348 
+#> F-statistic: 22.54 on 5 and 346 DF,  p-value: < 2.2e-16
 ```
 
 We continue with comparing the intervention and control groups on their
