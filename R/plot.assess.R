@@ -10,6 +10,13 @@
 #' @param y type of model, specify either 'DID' (difference-in-difference) or 'ITS' (interrupted time series). Will not accept other models.
 #' @param xlim specify plot's x-axis limits with a 2 value vector.
 #' @param ylim specify plot's y-axis limits with a 2 value vector.
+#' @param main the main title of the plot.
+#' @param col specify intervention and control group colors in a vector. Defaults are c("blue", "red") or "blue" for single-group Interrupted Time Series models.
+#' @param lwd select the line width.
+#' @param cex A numerical value giving the amount by which plotting text and symbols should be magnified relative to the default of 1.
+#' @param cex.axis The magnification to be used for axis annotation relative to the current setting of cex.
+#' @param cex.lab The magnification to be used for x and y labels relative to the current setting of cex.
+#' @param cex.main The magnification to be used for main titles relative to the current setting of cex.
 #' @param add.legend add a legend by selecting the location as "bottomright", "bottom", "bottomleft",
 #' "left", "topleft", "top", "topright", "right", "center". No legend if nothing selected.
 #' @param ... additional arguments.
@@ -24,7 +31,11 @@
 #' interrupt=c(5,9), did="many", its="two", newdata=TRUE, propensity=NULL)
 #' plot(am2, "DID", add.legend="bottomleft", ylim=c(2, 8))  #DID model
 #' plot(am2, "ITS", add.legend="top", ylim=c(2, 8))         #ITS model
-plot.assess <- function(x, y, xlim=NULL, ylim=NULL, add.legend=NULL, ...) {
+#' plot(am2, "ITS", add.legend="top", main="ITS study", col=c("cyan","hotpink"),
+#' lwd=6, cex.axis=2, cex.lab=2, cex.main=3 )
+plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NULL,
+                        cex=NULL, cex.axis=NULL, cex.lab=NULL, cex.main=NULL,
+                        add.legend=NULL, ...) {
   if(any(is.null(c(x, y)) == TRUE)) {
     stop("Error: Expecting both an x and y argument.")
   }
@@ -68,11 +79,42 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, add.legend=NULL, ...) {
   }
 
   #Get main title
+  if(is.null(main)) {
   if(y == "DID") {
     main_title <- "Differences-in-Differences"
   }
   if(y == "ITS") {
     main_title <- "Interrupted Time Series"
+  }
+  } else{
+    main_title <- main
+  }
+  #Line colors
+  if(is.null(col)) {
+    lcol <- c("blue", "red")
+    } else {
+      lcol <- col
+      }
+  # Cex settings cex, cex.axis, cex.lab, cex.main
+  if(!is.null(cex)) {
+    cex <- cex
+  } else {
+    cex <- NULL
+    }
+  if(!is.null(cex.axis)) {
+    cex.axis <- cex.axis
+    }
+  if(!is.null(cex.lab)) {
+    cex.lab <- cex.lab
+    }
+  if(!is.null(cex.main)) {
+    cex.main <- cex.main
+    }
+  #Line width
+  if(is.null(lwd)) {
+    lwidth <- 3
+  } else {
+    lwidth <- lwd
   }
 
   #############
@@ -113,17 +155,18 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, add.legend=NULL, ...) {
       coef(cmodel)[[4]]*1   #intervention group time 1
 
     plot(0:1, range(c(cmodel[["fitted.values"]], t0)), type="n",
-         main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim)
+         main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim,
+         cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
     #Intervention line
-    abline(v=.5, col="gray", lty=3, lwd=3)
-    lines(0:1, c(t0, t1), type="l", col="blue", lwd=3)
-    lines(0:1, c(c0, c1), type="l", col="red", lwd=3)
+    abline(v=.5, col="gray", lty=3, lwd=lwidth)
+    lines(0:1, c(t0, t1), type="l", col=lcol[1], lwd=lwidth)
+    lines(0:1, c(c0, c1), type="l", col=lcol[2], lwd=lwidth)
     #Counter factual lines
-    lines(c(0, 1), c(mean(t0, cft1), cft1), col="blue", lty=2, lwd=3)
+    lines(c(0, 1), c(mean(t0, cft1), cft1), col=lcol[1], lty=2, lwd=lwidth)
     if (!is.null(add.legend)) {
       legend(x=add.legend, legend=c("Intervention", "Control","Counterfactual", "Treated"),
              lty= c(1,1,2,3),
-             lwd=1, col=c("blue","red","blue","gray"), bty="n", cex=1)
+             lwd=1, col=c(lcol[1],lcol[2],lcol[1],"gray"), bty="n", cex=1)
     }
   }
 
@@ -157,7 +200,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, add.legend=NULL, ...) {
       coef(cmodel)[[4]]*0 #control group time 0
     c1 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*max_time + coef(cmodel)[[3]]*0 +
       coef(cmodel)[[4]]*0 #control group time 1
-    t0 <- int_start_y + coef(cmodel)[[2]]*0 + coef(cmodel)[[3]]*0 +
+    t0 <- int_start_y + coef(cmodel)[[2]]*1 + coef(cmodel)[[3]]*0 +
       coef(cmodel)[[4]]*0   #intervention group time 0
     t1 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*max_time + coef(cmodel)[[3]]*1 +
       coef(cmodel)[[4]]*max_time   #intervention group time 1
@@ -172,18 +215,19 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, add.legend=NULL, ...) {
       coef(cmodel)[[4]]*max_time   #intervention group time 1
 
     plot(range(aggr_mns[, 1]), range(c(cmodel[["fitted.values"]], t0)), type="n",
-         main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim)
+         main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim,
+         cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
     #Intervention line
-    abline(v=treat_start, col="gray", lty=3, lwd=3)
-    lines(c(1, max_time), c(c0, c1), type="l", col="red", lwd=3)
+    abline(v=treat_start, col="gray", lty=3, lwd=lwidth)
+    lines(c(1, max_time), c(c0, c1), type="l", col=lcol[2], lwd=lwidth)
     #Counter factual line
-    lines(c(1, max_time), c(t0, cft1), type="l", col="blue", lty=2, lwd=3)
+    lines(c(1, max_time), c(t0, cft1), type="l", col=lcol[1], lty=2, lwd=lwidth)
     #ATET line
-    segments(x0 = treat_start, y0 = atet0, x1 = max_time, y1 = atet1, col = "blue", lwd = 3, lty=1)
+    segments(x0 = treat_start, y0 = atet0, x1 = max_time, y1 = atet1, col = lcol[1], lwd = lwidth, lty=1)
     if (!is.null(add.legend)) {
       legend(x=add.legend, legend=c("Intervention", "Control","Counterfactual", "Treated"),
              lty= c(1,1,2,3),
-             lwd=1, col=c("blue","red","blue","gray"), bty="n", cex=1)
+             lwd=1, col=c(lcol[1],lcol[2],lcol[1],"gray"), bty="n", cex=1)
     }
   }
 
@@ -215,7 +259,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, add.legend=NULL, ...) {
     time_per1 <- c(1, interrupt_1-1)
     time_per2 <- c(interrupt_1, max_time)
     #Period 1's (pre-intervention) start and stop values
-    t00 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*0 + coef(cmodel)[[3]]*0 +
+    t00 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*1 + coef(cmodel)[[3]]*0 +
       coef(cmodel)[[4]]*0
     t01 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per1[2] + coef(cmodel)[[3]]*0 +
       coef(cmodel)[[4]]*0
@@ -231,18 +275,19 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, add.legend=NULL, ...) {
       coef(cmodel)[[4]]*0
 
     plot(range(aggr_mns[, 1]), range(c(cmodel[["fitted.values"]], t00)), type="n",
-         main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim)
+         main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim,
+         cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
     #Intervention line
-    abline(v=interrupt_1, col="gray", lty=3, lwd=3)
-    lines(time_per1, c(t00, t01), lty=1, col="blue", lwd=3)
+    abline(v=interrupt_1, col="gray", lty=3, lwd=lwidth)
+    lines(time_per1, c(t00, t01), lty=1, col=lcol[1], lwd=lwidth)
     # counterfactual
-    segments(x0 = interrupt_1, y0 = cft10, x1 = time_per2[2], y1 = cft11, col = "blue", lwd = 3, lty=2)
+    segments(x0 = interrupt_1, y0 = cft10, x1 = time_per2[2], y1 = cft11, col = lcol[1], lwd = lwidth, lty=2)
     # intervention line
-    segments(x0 = interrupt_1, y0 = t10, x1 = time_per2[2], y1 = t11, col = "blue", lwd = 3, lty=1)
+    segments(x0 = interrupt_1, y0 = t10, x1 = time_per2[2], y1 = t11, col = lcol[1], lwd = lwidth, lty=1)
     if (!is.null(add.legend)) {
       legend(x=add.legend, legend=c("Intervention", "Counterfactual", "Treated"),
              lty= c(1,2,3),
-             lwd=1, col=c("blue","blue","gray"), bty="n", cex=1)
+             lwd=1, col=c(lcol[1],lcol[1],"gray"), bty="n", cex=1)
     }
   }
 
@@ -277,7 +322,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, add.legend=NULL, ...) {
     time_per2 <- c(interrupt_1, interrupt_2-1)
     time_per3 <- c(interrupt_2, max_time)
     #Period 1's (pre-intervention) start and stop values
-    t00 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*0 + coef(cmodel)[[3]]*0 +
+    t00 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*1 + coef(cmodel)[[3]]*0 +
       coef(cmodel)[[4]]*0 + coef(cmodel)[[5]]*0 + coef(cmodel)[[6]]*0
     t01 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per1[2] + coef(cmodel)[[3]]*0 +
       coef(cmodel)[[4]]*0 + coef(cmodel)[[5]]*0 + coef(cmodel)[[6]]*0
@@ -303,23 +348,24 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, add.legend=NULL, ...) {
       coef(cmodel)[[4]]*0  + coef(cmodel)[[5]]*0 + coef(cmodel)[[6]]*0
 
     plot(range(aggr_mns[, 1]), range(c(cmodel[["fitted.values"]], t00)), type="n",
-         main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim)
+         main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim,
+         cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
     #Intervention line
-    abline(v= interrupt_1, col="gray", lty=3, lwd=3)
-    abline(v= interrupt_2, col="gray", lty=3, lwd=3)
-    lines(time_per1, c(t00, t01), lty=1, col="blue", lwd=3)
+    abline(v= interrupt_1, col="gray", lty=3, lwd=lwidth)
+    abline(v= interrupt_2, col="gray", lty=3, lwd=lwidth)
+    lines(time_per1, c(t00, t01), lty=1, col=lcol[1], lwd=lwidth)
     # counterfactual in period 2
-    segments(x0 = interrupt_1, y0 = cft10, x1 = time_per2[2], y1 = cft11, col = "blue", lwd = 3, lty=2)
+    segments(x0 = interrupt_1, y0 = cft10, x1 = time_per2[2], y1 = cft11, col = lcol[1], lwd = lwidth, lty=2)
     # counterfactual in period 3
-    segments(x0 = interrupt_2, y0 = cft20, x1 = time_per3[2], y1 = cft21, col = "blue", lwd = 3, lty=2)
+    segments(x0 = interrupt_2, y0 = cft20, x1 = time_per3[2], y1 = cft21, col = lcol[1], lwd = lwidth, lty=2)
     # intervention line period 2
-    segments(x0 = interrupt_1, y0 = t10, x1 = time_per2[2], y1 = t11, col = "blue", lwd = 3, lty=1)
+    segments(x0 = interrupt_1, y0 = t10, x1 = time_per2[2], y1 = t11, col = lcol[1], lwd = lwidth, lty=1)
     # intervention line period 3
-    segments(x0 = interrupt_2, y0 = t20, x1 = time_per3[2], y1 = t21, col = "blue", lwd = 3, lty=1)
+    segments(x0 = interrupt_2, y0 = t20, x1 = time_per3[2], y1 = t21, col = lcol[1], lwd = lwidth, lty=1)
     if (!is.null(add.legend)) {
       legend(x=add.legend, legend=c("Intervention", "Counterfactual", "Treated"),
              lty= c(1,2,3),
-             lwd=1, col=c("blue","blue","gray"), bty="n", cex=1)
+             lwd=1, col=c(lcol[1],lcol[1],"gray"), bty="n", cex=1)
     }
   }
 
@@ -376,21 +422,22 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, add.legend=NULL, ...) {
       coef(cmodel)[[5]]*1 + coef(cmodel)[[6]]*(time_per2[2]-interrupt_1) + coef(cmodel)[[7]]*1 + coef(cmodel)[[8]]*(time_per2[2]-interrupt_1)
 
     plot(range(aggr_mns[, 1]), range(c(cmodel[["fitted.values"]], t00)), type="n",
-         main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim)
+         main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim,
+         cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
     #Intervention line
-    abline(v= interrupt_1, col="gray", lty=3, lwd=3)
+    abline(v= interrupt_1, col="gray", lty=3, lwd=lwidth)
     # control period 1
-    lines(time_per1, c(c00, c01), lty=1, col="red", lwd=3)
+    lines(time_per1, c(c00, c01), lty=1, col=lcol[2], lwd=lwidth)
     # control line period 2
-    segments(x0 = interrupt_1, y0 = c10, x1 = time_per2[2], y1 = c11, col = "red", lwd = 3, lty=1)
+    segments(x0 = interrupt_1, y0 = c10, x1 = time_per2[2], y1 = c11, col = lcol[2], lwd = lwidth, lty=1)
     # intervention period 1
-    lines(time_per1, c(t00, t01), lty=1, col="blue", lwd=3)
+    lines(time_per1, c(t00, t01), lty=1, col=lcol[1], lwd=lwidth)
     # intervention line period 2
-    segments(x0 = interrupt_1, y0 = t10, x1 = time_per2[2], y1 = t11, col = "blue", lwd = 3, lty=1)
+    segments(x0 = interrupt_1, y0 = t10, x1 = time_per2[2], y1 = t11, col = lcol[1], lwd = lwidth, lty=1)
     if (!is.null(add.legend)) {
       legend(x=add.legend, legend=c("Intervention", "Control", "Treated"),
              lty= c(1,1,3),
-             lwd=1, col=c("blue","red","gray"), bty="n", cex=1)
+             lwd=1, col=c(lcol[1],lcol[2],"gray"), bty="n", cex=1)
     }
   }
 
@@ -472,26 +519,27 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, add.legend=NULL, ...) {
       coef(cmodel)[[9]]*1 + coef(cmodel)[[10]]*(time_per3[2]-interrupt_2) + coef(cmodel)[[11]]*1 + coef(cmodel)[[12]]*(time_per3[2]-interrupt_2)
 
     plot(range(aggr_mns[, 1]), range(c(cmodel[["fitted.values"]], t00)), type="n",
-         main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim)
+         main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim,
+         cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
     #Intervention line
-    abline(v= interrupt_1, col="gray", lty=3, lwd=3)
-    abline(v= interrupt_2, col="gray", lty=3, lwd=3)
+    abline(v= interrupt_1, col="gray", lty=3, lwd=lwidth)
+    abline(v= interrupt_2, col="gray", lty=3, lwd=lwidth)
     # control period 1
-    lines(time_per1, c(c00, c01), lty=1, col="red", lwd=3)
+    lines(time_per1, c(c00, c01), lty=1, col=lcol[2], lwd=lwidth)
     # control line period 2
-    segments(x0 = interrupt_1, y0 = c10, x1 = time_per2[2], y1 = c11, col = "red", lwd = 3, lty=1)
+    segments(x0 = interrupt_1, y0 = c10, x1 = time_per2[2], y1 = c11, col = lcol[2], lwd = lwidth, lty=1)
     # control line period 3
-    segments(x0 = interrupt_2, y0 = c20, x1 = time_per3[2], y1 = c21, col = "red", lwd = 3, lty=1)
+    segments(x0 = interrupt_2, y0 = c20, x1 = time_per3[2], y1 = c21, col = lcol[2], lwd = lwidth, lty=1)
     # intervention period 1
-    lines(time_per1, c(t00, t01), lty=1, col="blue", lwd=3)
+    lines(time_per1, c(t00, t01), lty=1, col=lcol[1], lwd=lwidth)
     # intervention line period 2
-    segments(x0 = interrupt_1, y0 = t10, x1 = time_per2[2], y1 = t11, col = "blue", lwd = 3, lty=1)
+    segments(x0 = interrupt_1, y0 = t10, x1 = time_per2[2], y1 = t11, col = lcol[1], lwd = lwidth, lty=1)
     # intervention line period 3
-    segments(x0 = interrupt_2, y0 = t20, x1 = time_per3[2], y1 = t21, col = "blue", lwd = 3, lty=1)
+    segments(x0 = interrupt_2, y0 = t20, x1 = time_per3[2], y1 = t21, col = lcol[1], lwd = lwidth, lty=1)
     if (!is.null(add.legend)) {
       legend(x=add.legend, legend=c("Intervention", "Control", "Treated"),
              lty= c(1,1,3),
-             lwd=1, col=c("blue","red","gray"), bty="n", cex=1)
+             lwd=1, col=c(lcol[1],lcol[2],"gray"), bty="n", cex=1)
     }
   }
 }

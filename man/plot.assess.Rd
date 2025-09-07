@@ -4,7 +4,21 @@
 \alias{plot.assess}
 \title{Prediction plot of treatment and control groups for DID and ITS models}
 \usage{
-\method{plot}{assess}(x, y, xlim = NULL, ylim = NULL, add.legend = NULL, ...)
+\method{plot}{assess}(
+  x,
+  y,
+  xlim = NULL,
+  ylim = NULL,
+  main = NULL,
+  col = NULL,
+  lwd = NULL,
+  cex = NULL,
+  cex.axis = NULL,
+  cex.lab = NULL,
+  cex.main = NULL,
+  add.legend = NULL,
+  ...
+)
 }
 \arguments{
 \item{x}{assess object. Either difference-in-difference or interrupted time series model with no covariate adjustment.}
@@ -14,6 +28,20 @@
 \item{xlim}{specify plot's x-axis limits with a 2 value vector.}
 
 \item{ylim}{specify plot's y-axis limits with a 2 value vector.}
+
+\item{main}{the main title of the plot.}
+
+\item{col}{specify intervention and control group colors in a vector. Defaults are c("blue", "red") or "blue" for single-group Interrupted Time Series models.}
+
+\item{lwd}{select the line width.}
+
+\item{cex}{A numerical value giving the amount by which plotting text and symbols should be magnified relative to the default of 1.}
+
+\item{cex.axis}{The magnification to be used for axis annotation relative to the current setting of cex.}
+
+\item{cex.lab}{The magnification to be used for x and y labels relative to the current setting of cex.}
+
+\item{cex.main}{The magnification to be used for main titles relative to the current setting of cex.}
 
 \item{add.legend}{add a legend by selecting the location as "bottomright", "bottom", "bottomleft",
 "left", "topleft", "top", "topright", "right", "center". No legend if nothing selected.}
@@ -36,4 +64,6 @@ topcode =NULL, int.time="month", regression="none", treatment= 5,
 interrupt=c(5,9), did="many", its="two", newdata=TRUE, propensity=NULL)
 plot(am2, "DID", add.legend="bottomleft", ylim=c(2, 8))  #DID model
 plot(am2, "ITS", add.legend="top", ylim=c(2, 8))         #ITS model
+plot(am2, "ITS", add.legend="top", main="ITS study", col=c("cyan","hotpink"),
+lwd=6, cex.axis=2, cex.lab=2, cex.main=3 )
 }
