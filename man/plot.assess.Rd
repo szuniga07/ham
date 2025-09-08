@@ -69,9 +69,9 @@ a red line, and the counterfactual line, when available, is a dashed line.
 \examples{
 am2 <- assess(formula= los ~ ., data=hosprog, intervention = "program",
 topcode =NULL, int.time="month", regression="none", treatment= 5,
-interrupt=c(5,9), did="many", its="two", newdata=TRUE, propensity=NULL)
+interrupt=c(5,9), did="two", its="two", newdata=TRUE, propensity=NULL)
 plot(am2, "DID", add.legend="bottomleft", ylim=c(2, 8))  #DID model
 plot(am2, "ITS", add.legend="top", ylim=c(2, 8))         #ITS model
-plot(am2, "ITS", add.legend="top", main="ITS study", col=c("cyan","hotpink"),
-lwd=6, cex.axis=2, cex.lab=2, cex.main=3 )
+plot(am2, "DID", add.legend="topleft", main="DID study", col=c("dodgerblue","magenta"),
+ylim=c(2, 8), lwd=6, cex=2, cex.axis=2, cex.lab=1.5, cex.main=3, arrow=TRUE, xshift=0.02)
 }

@@ -32,11 +32,11 @@
 #' @examples
 #' am2 <- assess(formula= los ~ ., data=hosprog, intervention = "program",
 #' topcode =NULL, int.time="month", regression="none", treatment= 5,
-#' interrupt=c(5,9), did="many", its="two", newdata=TRUE, propensity=NULL)
+#' interrupt=c(5,9), did="two", its="two", newdata=TRUE, propensity=NULL)
 #' plot(am2, "DID", add.legend="bottomleft", ylim=c(2, 8))  #DID model
 #' plot(am2, "ITS", add.legend="top", ylim=c(2, 8))         #ITS model
-#' plot(am2, "ITS", add.legend="top", main="ITS study", col=c("cyan","hotpink"),
-#' lwd=6, cex.axis=2, cex.lab=2, cex.main=3 )
+#' plot(am2, "DID", add.legend="topleft", main="DID study", col=c("dodgerblue","magenta"),
+#' ylim=c(2, 8), lwd=6, cex=2, cex.axis=2, cex.lab=1.5, cex.main=3, arrow=TRUE, xshift=0.02)
 plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NULL,
                         cex=NULL, cex.axis=NULL, cex.lab=NULL, cex.main=NULL,
                         arrow=FALSE, xshift=NULL, add.legend=NULL, ...) {
@@ -123,9 +123,9 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
   #Indicate if I want to add arrows with coefficient names
   #Make CEX for intercept point
   if(!is.null(cex)) {
-    intCEX <- cex
+    arwCEX <- cex
   } else {
-    intCEX <- 1
+    arwCEX <- 1
   }
   #This will shift over the post.all arrow, left or right so it doesn't
   #collide with the counterfactual line
@@ -191,16 +191,16 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
     # Arrows and coefficient names #
     if (arrow == TRUE) {
       # c0 Intercept
-      points(0, c0, col=lcol[2], cex=intCEX)  # intercept: control group pre-test
+      points(0, c0, col=lcol[2], cex=arwCEX)  # intercept: control group pre-test
       # c1 effect
       arrows(x0 = 1+ axshift, y0 = c0, x1 = 1 + axshift, y1 = c1, code=2, angle=15,
-             length=.25, col = lcol[2], lwd = 1, lty=3)
+             length=.25, col = lcol[2], lwd = arwCEX, lty=3)
       # t0 effect
       arrows(x0 = 0, y0 = c0, x1 = 0, y1 = t0, code=2, angle=15, length=.25,
-             col = lcol[1], lwd = 1, lty=3)
+             col = lcol[1], lwd = arwCEX, lty=3)
       # t1 effect
       arrows(x0 = 1, y0 = t1, x1 = 1, y1 = cft1, code=1, angle=15, length=.25,
-             col = lcol[1], lwd = 1, lty=3)
+             col = lcol[1], lwd = arwCEX, lty=3)
       # Add in coefficient names
       text(0, c0, labels ="Intercept", pos=4)  # intercept: control group pre-test
       text(1, c1, labels ="Post.All", pos=2)  # control group post-test
