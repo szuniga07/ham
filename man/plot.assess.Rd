@@ -16,6 +16,8 @@
   cex.axis = NULL,
   cex.lab = NULL,
   cex.main = NULL,
+  arrow = FALSE,
+  xshift = NULL,
   add.legend = NULL,
   ...
 )
@@ -42,6 +44,12 @@
 \item{cex.lab}{The magnification to be used for x and y labels relative to the current setting of cex.}
 
 \item{cex.main}{The magnification to be used for main titles relative to the current setting of cex.}
+
+\item{arrow}{logical TRUE or FALSE that indicates whether arrows and
+coefficient names should be added to visualize effects. Default is FALSE.}
+
+\item{xshift}{shifts one of the overlapping arrows along the x-axis for a
+better view. Values can be positive or negative.}
 
 \item{add.legend}{add a legend by selecting the location as "bottomright", "bottom", "bottomleft",
 "left", "topleft", "top", "topright", "right", "center". No legend if nothing selected.}

@@ -17,12 +17,16 @@
 #' @param cex.axis The magnification to be used for axis annotation relative to the current setting of cex.
 #' @param cex.lab The magnification to be used for x and y labels relative to the current setting of cex.
 #' @param cex.main The magnification to be used for main titles relative to the current setting of cex.
+#' @param arrow logical TRUE or FALSE that indicates whether arrows and
+#' coefficient names should be added to visualize effects. Default is FALSE.
+#' @param xshift shifts one of the overlapping arrows along the x-axis for a
+#' better view. Values can be positive or negative.
 #' @param add.legend add a legend by selecting the location as "bottomright", "bottom", "bottomleft",
 #' "left", "topleft", "top", "topright", "right", "center". No legend if nothing selected.
 #' @param ... additional arguments.
 #'
 #' @return plot of partial predictions for treatment and control groups.
-#' @importFrom graphics lines plot legend abline segments
+#' @importFrom graphics lines plot legend abline segments arrows points text
 #' @export
 #'
 #' @examples
@@ -35,7 +39,7 @@
 #' lwd=6, cex.axis=2, cex.lab=2, cex.main=3 )
 plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NULL,
                         cex=NULL, cex.axis=NULL, cex.lab=NULL, cex.main=NULL,
-                        add.legend=NULL, ...) {
+                        arrow=FALSE, xshift=NULL, add.legend=NULL, ...) {
   if(any(is.null(c(x, y)) == TRUE)) {
     stop("Error: Expecting both an x and y argument.")
   }
@@ -116,6 +120,27 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
   } else {
     lwidth <- lwd
   }
+  #Indicate if I want to add arrows with coefficient names
+  #Make CEX for intercept point
+  if(!is.null(cex)) {
+    intCEX <- cex
+  } else {
+    intCEX <- 1
+  }
+  #This will shift over the post.all arrow, left or right so it doesn't
+  #collide with the counterfactual line
+  if(!is.null(xshift)) {
+    axshift <- xshift
+  } else {
+    axshift <- 0
+  }
+  #This gets the sign of the coefficients to assign the arrow codes
+  #cmodel will work for DID and ITS models
+  mdlcoefsign <- sign(coef(cmodel))[-1]
+  #Change to arrow code, this leaves 0=0
+  arrow_code <- mdlcoefsign
+  arrow_code[arrow_code == -1] <- 1
+  arrow_code[arrow_code == 1] <- 2
 
   #############
   ## DID Two ##
@@ -163,6 +188,25 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
     lines(0:1, c(c0, c1), type="l", col=lcol[2], lwd=lwidth)
     #Counter factual lines
     lines(c(0, 1), c(mean(t0, cft1), cft1), col=lcol[1], lty=2, lwd=lwidth)
+    # Arrows and coefficient names #
+    if (arrow == TRUE) {
+      # c0 Intercept
+      points(0, c0, col=lcol[2], cex=intCEX)  # intercept: control group pre-test
+      # c1 effect
+      arrows(x0 = 1+ axshift, y0 = c0, x1 = 1 + axshift, y1 = c1, code=2, angle=15,
+             length=.25, col = lcol[2], lwd = 1, lty=3)
+      # t0 effect
+      arrows(x0 = 0, y0 = c0, x1 = 0, y1 = t0, code=2, angle=15, length=.25,
+             col = lcol[1], lwd = 1, lty=3)
+      # t1 effect
+      arrows(x0 = 1, y0 = t1, x1 = 1, y1 = cft1, code=1, angle=15, length=.25,
+             col = lcol[1], lwd = 1, lty=3)
+      # Add in coefficient names
+      text(0, c0, labels ="Intercept", pos=4)  # intercept: control group pre-test
+      text(1, c1, labels ="Post.All", pos=2)  # control group post-test
+      text(0, t0, labels ="Int.Var", pos=4)  # intervention group pre-test
+      text(1, t1, labels ="DID", pos=2)  # intervention group post-test
+    }
     if (!is.null(add.legend)) {
       legend(x=add.legend, legend=c("Intervention", "Control","Counterfactual", "Treated"),
              lty= c(1,1,2,3),
