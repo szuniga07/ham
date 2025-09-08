@@ -193,13 +193,13 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
       # c0 Intercept
       points(0, c0, col=lcol[2], cex=arwCEX)  # intercept: control group pre-test
       # c1 effect
-      arrows(x0 = 1+ axshift, y0 = c0, x1 = 1 + axshift, y1 = c1, code=2, angle=15,
+      arrows(x0 = 1+ axshift, y0 = c0, x1 = 1 + axshift, y1 = c1, code=2, angle=25,
              length=.25, col = lcol[2], lwd = arwCEX, lty=3)
       # t0 effect
-      arrows(x0 = 0, y0 = c0, x1 = 0, y1 = t0, code=2, angle=15, length=.25,
+      arrows(x0 = 0, y0 = c0, x1 = 0, y1 = t0, code=2, angle=25, length=.25,
              col = lcol[1], lwd = arwCEX, lty=3)
       # t1 effect
-      arrows(x0 = 1, y0 = t1, x1 = 1, y1 = cft1, code=1, angle=15, length=.25,
+      arrows(x0 = 1, y0 = t1, x1 = 1, y1 = cft1, code=1, angle=25, length=.25,
              col = lcol[1], lwd = arwCEX, lty=3)
       # Add in coefficient names
       text(0, c0, labels ="Intercept", pos=4)  # intercept: control group pre-test
