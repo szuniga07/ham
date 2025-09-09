@@ -48,8 +48,10 @@
 \item{arrow}{logical TRUE or FALSE that indicates whether arrows and
 coefficient names should be added to visualize effects. Default is FALSE.}
 
-\item{xshift}{shifts one of the overlapping arrows along the x-axis for a
-better view. Values can be positive or negative.}
+\item{xshift}{shifts one or some of the overlapping intervention associated arrows
+along the x-axis for a better view. Vector values of length 1 or 2 can be positive
+or negative. And xshift should be specified in the order of the coefficients
+(e.g., "DID" before "DID.Trend" for DID models with argument did="many").}
 
 \item{add.legend}{add a legend by selecting the location as "bottomright", "bottom", "bottomleft",
 "left", "topleft", "top", "topright", "right", "center". No legend if nothing selected.}

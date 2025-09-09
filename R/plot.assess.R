@@ -19,14 +19,17 @@
 #' @param cex.main The magnification to be used for main titles relative to the current setting of cex.
 #' @param arrow logical TRUE or FALSE that indicates whether arrows and
 #' coefficient names should be added to visualize effects. Default is FALSE.
-#' @param xshift shifts one of the overlapping arrows along the x-axis for a
-#' better view. Values can be positive or negative.
+#' @param xshift shifts one or some of the overlapping intervention associated arrows
+#' along the x-axis for a better view. Vector values of length 1 or 2 can be positive
+#' or negative. And xshift should be specified in the order of the coefficients
+#' (e.g., "DID" before "DID.Trend" for DID models with argument did="many").
 #' @param add.legend add a legend by selecting the location as "bottomright", "bottom", "bottomleft",
 #' "left", "topleft", "top", "topright", "right", "center". No legend if nothing selected.
 #' @param ... additional arguments.
 #'
 #' @return plot of partial predictions for treatment and control groups.
 #' @importFrom graphics lines plot legend abline segments arrows points text
+#' @importFrom utils head tail
 #' @export
 #'
 #' @examples
@@ -193,14 +196,14 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
       # c0 Intercept
       points(0, c0, col=lcol[2], cex=arwCEX)  # intercept: control group pre-test
       # c1 effect
-      arrows(x0 = 1+ axshift, y0 = c0, x1 = 1 + axshift, y1 = c1, code=2, angle=25,
+      arrows(x0 = 1, y0 = c0, x1 = 1, y1 = c1, code=arrow_code[1], angle=25,
              length=.25, col = lcol[2], lwd = arwCEX, lty=3)
       # t0 effect
-      arrows(x0 = 0, y0 = c0, x1 = 0, y1 = t0, code=2, angle=25, length=.25,
-             col = lcol[1], lwd = arwCEX, lty=3)
+      arrows(x0 = 0, y0 = c0, x1 = 0, y1 = t0, code=arrow_code[2], angle=25,
+             length=.25, col = lcol[1], lwd = arwCEX, lty=3)
       # t1 effect
-      arrows(x0 = 1, y0 = t1, x1 = 1, y1 = cft1, code=1, angle=25, length=.25,
-             col = lcol[1], lwd = arwCEX, lty=3)
+      arrows(x0 = 1 + axshift, y0 = cft1, x1 = 1 + axshift, y1 = t1, code=arrow_code[3],
+             angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
       # Add in coefficient names
       text(0, c0, labels ="Intercept", pos=4)  # intercept: control group pre-test
       text(1, c1, labels ="Post.All", pos=2)  # control group post-test
@@ -244,6 +247,8 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
       coef(cmodel)[[4]]*0 #control group time 0
     c1 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*max_time + coef(cmodel)[[3]]*0 +
       coef(cmodel)[[4]]*0 #control group time 1
+    c0.5 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*treat_start + coef(cmodel)[[3]]*0 +
+      coef(cmodel)[[4]]*0 #control group at time of the treatment start
     t0 <- int_start_y + coef(cmodel)[[2]]*1 + coef(cmodel)[[3]]*0 +
       coef(cmodel)[[4]]*0   #intervention group time 0
     t1 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*max_time + coef(cmodel)[[3]]*1 +
@@ -268,6 +273,26 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
     lines(c(1, max_time), c(t0, cft1), type="l", col=lcol[1], lty=2, lwd=lwidth)
     #ATET line
     segments(x0 = treat_start, y0 = atet0, x1 = max_time, y1 = atet1, col = lcol[1], lwd = lwidth, lty=1)
+
+    # Arrows and coefficient names #
+    if (arrow == TRUE) {
+      # c0 Intercept
+      points(1, c0, col=lcol[2], cex=arwCEX)  # intercept: control group pre-test
+      # c1 effect
+      arrows(x0 = max_time, y0 = c0, x1 = max_time, y1 = c1, code=arrow_code[1],
+             angle=25, length=.25, col = lcol[2], lwd = arwCEX, lty=3)
+      # DID effect
+      arrows(x0 = treat_start + head(axshift, 1), y0 = c0.5, x1 = treat_start + head(axshift, 1),
+             y1 = atet0, code=arrow_code[2], angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+      # DID.Trend effect
+      arrows(x0 = max_time + tail(axshift, 1), y0 = atet0, x1 = max_time + tail(axshift, 1), y1 = atet1,
+             code=arrow_code[3], angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+      # Add in coefficient names
+      text(1, c0, labels ="Intercept", pos=4)
+      text(max_time, c1, labels ="Period", pos=2)
+      text(treat_start, t0, labels ="DID", pos= ((mdlcoefsign[2]-3)*-1) -1) # how to place text
+      text(max_time, atet0, labels ="DID.Trend", pos=2)
+    }
     if (!is.null(add.legend)) {
       legend(x=add.legend, legend=c("Intervention", "Control","Counterfactual", "Treated"),
              lty= c(1,1,2,3),
