@@ -661,6 +661,8 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
         }
       }
 
+      # Intercept
+      points(1, c00, col=lcol[2], cex=arwCEX)  # intercept: control group pre-test
       # ITS.Time
       arrows(x0 = timeqtrp1, y0 = time1chi, x1 = timemidp1, y1 = time1chi, code=2,
              angle=25, length=.25, col = lcol[2], lwd = arwCEX, lty=3)
