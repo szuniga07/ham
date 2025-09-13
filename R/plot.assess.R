@@ -20,7 +20,7 @@
 #' @param arrow logical TRUE or FALSE that indicates whether arrows and
 #' coefficient names should be added to visualize effects. Default is FALSE.
 #' @param xshift shifts one or some of the overlapping intervention associated arrows
-#' along the x-axis for a better view. Vector values of length 1 or 2 can be positive
+#' along the x-axis for a better view. Vector values of at least length 1 or more can be positive
 #' or negative. And xshift should be specified in the order of the coefficients
 #' (e.g., "DID" before "DID.Trend" for DID models with argument did="many").
 #' @param add.legend add a legend by selecting the location as "bottomright", "bottom", "bottomleft",
@@ -142,8 +142,8 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
   mdlcoefsign <- sign(coef(cmodel))[-1]
   #Change to arrow code, this leaves 0=0
   arrow_code <- mdlcoefsign
-  arrow_code[arrow_code == -1] <- 1
   arrow_code[arrow_code == 1] <- 2
+  arrow_code[arrow_code == -1] <- 1
 
   #############
   ## DID Two ##
@@ -202,7 +202,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
       arrows(x0 = 0, y0 = c0, x1 = 0, y1 = t0, code=arrow_code[2], angle=25,
              length=.25, col = lcol[1], lwd = arwCEX, lty=3)
       # t1 effect
-      arrows(x0 = 1 + axshift, y0 = cft1, x1 = 1 + axshift, y1 = t1, code=arrow_code[3],
+      arrows(x0 = 1 + axshift, y0 = t1, x1 = 1 + axshift, y1 = cft1, code=arrow_code[3],
              angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
       # Add in coefficient names
       text(0, c0, labels ="Intercept", pos=4)  # intercept: control group pre-test
@@ -285,7 +285,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
       arrows(x0 = treat_start + head(axshift, 1), y0 = c0.5, x1 = treat_start + head(axshift, 1),
              y1 = atet0, code=arrow_code[2], angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
       # DID.Trend effect
-      arrows(x0 = max_time + tail(axshift, 1), y0 = atet0, x1 = max_time + tail(axshift, 1), y1 = atet1,
+      arrows(x0 = max_time + tail(axshift, 1), y0 = atet1, x1 = max_time + tail(axshift, 1), y1 = atet0,
              code=arrow_code[3], angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
       # Add in coefficient names
       text(1, c0, labels ="Intercept", pos=4)
@@ -556,6 +556,10 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
     c11 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per2[2] + coef(cmodel)[[3]]*0 + coef(cmodel)[[4]]*0 +
       coef(cmodel)[[5]]*1 + coef(cmodel)[[6]]*(time_per2[2]-interrupt_1) + coef(cmodel)[[7]]*0 + coef(cmodel)[[8]]*0 +
       coef(cmodel)[[9]]*0 + coef(cmodel)[[10]]*0 + coef(cmodel)[[11]]*0 + coef(cmodel)[[12]]*0
+    # Control group counterfactual for post1
+    cfc10 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per2[1] + coef(cmodel)[[3]]*0 + coef(cmodel)[[4]]*0 +
+      coef(cmodel)[[5]]*0 + coef(cmodel)[[6]]*0 + coef(cmodel)[[7]]*0 + coef(cmodel)[[8]]*0 +
+      coef(cmodel)[[9]]*0 + coef(cmodel)[[10]]*0 + coef(cmodel)[[11]]*0 + coef(cmodel)[[12]]*0
     #Period 3's (post-intervention) start and stop values
     c20 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per3[1] + coef(cmodel)[[3]]*0 + coef(cmodel)[[4]]*0 +
       coef(cmodel)[[5]]*1 + coef(cmodel)[[6]]*(time_per3[1]-interrupt_1) + coef(cmodel)[[7]]*0 + coef(cmodel)[[8]]*0 +
@@ -563,6 +567,10 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
     c21 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per3[2] + coef(cmodel)[[3]]*0 + coef(cmodel)[[4]]*0 +
       coef(cmodel)[[5]]*1 + coef(cmodel)[[6]]*(time_per3[2]-interrupt_1) + coef(cmodel)[[7]]*0 + coef(cmodel)[[8]]*0 +
       coef(cmodel)[[9]]*1 + coef(cmodel)[[10]]*(time_per3[2]-interrupt_2) + coef(cmodel)[[11]]*0 + coef(cmodel)[[12]]*0
+    # Control group counterfactual for post2
+    cfc20 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per3[1] + coef(cmodel)[[3]]*0 + coef(cmodel)[[4]]*0 +
+      coef(cmodel)[[5]]*1 + coef(cmodel)[[6]]*(time_per3[1]-interrupt_1) + coef(cmodel)[[7]]*0 + coef(cmodel)[[8]]*0 +
+      coef(cmodel)[[9]]*0 + coef(cmodel)[[10]]*0 + coef(cmodel)[[11]]*0 + coef(cmodel)[[12]]*0
 
     ## Intervention group
     #Period 1's (pre-intervention) start and stop values
