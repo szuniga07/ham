@@ -19,9 +19,11 @@
 #' @param cex.main The magnification to be used for main titles relative to the current setting of cex.
 #' @param arrow logical TRUE or FALSE that indicates whether arrows and
 #' coefficient names should be added to visualize effects. Default is FALSE.
-#' @param xshift shifts one or some of the overlapping intervention associated arrows
-#' along the x-axis for a better view. Vector values of at least length 1 or more can be positive
-#' or negative. And xshift should be specified in the order of the coefficients
+#' @param xshift shifts one or two of some if the overlapping intervention associated arrows
+#' along the x-axis for a better view. Vector values of at least length 1 or 2 can be positive
+#' or negative. And xshift should be specified in the order of the coefficients. Only 1 or 2
+#' of the furthest right, vertical lines for the intervention group is shifted (i.e., not left).
+#' One line is shifted when there is 1 treatment/interruption period and 2 shifts for 2 periods.
 #' (e.g., "DID" before "DID.Trend" for DID models with argument did="many").
 #' @param add.legend add a legend by selecting the location as "bottomright", "bottom", "bottomleft",
 #' "left", "topleft", "top", "topright", "right", "center". No legend if nothing selected.
@@ -276,16 +278,20 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
 
     # Arrows and coefficient names #
     if (arrow == TRUE) {
+      #Add a 0 to axshift if length == 1
+      if (length(axshift) == 1) {
+        axshift <- c(axshift, 0)
+      }
       # c0 Intercept
       points(1, c0, col=lcol[2], cex=arwCEX)  # intercept: control group pre-test
       # c1 effect
       arrows(x0 = max_time, y0 = c0, x1 = max_time, y1 = c1, code=arrow_code[1],
              angle=25, length=.25, col = lcol[2], lwd = arwCEX, lty=3)
       # DID effect
-      arrows(x0 = treat_start + head(axshift, 1), y0 = c0.5, x1 = treat_start + head(axshift, 1),
+      arrows(x0 = treat_start + axshift[1], y0 = c0.5, x1 = treat_start + head(axshift, 1),
              y1 = atet0, code=arrow_code[2], angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
       # DID.Trend effect
-      arrows(x0 = max_time + tail(axshift, 1), y0 = atet1, x1 = max_time + tail(axshift, 1), y1 = atet0,
+      arrows(x0 = max_time + axshift[2], y0 = atet1, x1 = max_time + tail(axshift, 1), y1 = atet0,
              code=arrow_code[3], angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
       # Add in coefficient names
       text(1, c0, labels ="Intercept", pos=4)
@@ -357,6 +363,64 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
       legend(x=add.legend, legend=c("Intervention", "Counterfactual", "Treated"),
              lty= c(1,2,3),
              lwd=1, col=c(lcol[1],lcol[1],"gray"), bty="n", cex=1)
+    }
+    # Arrows and coefficient names #
+    if (arrow == TRUE) {
+      ################
+      ## 1st Period ##
+      ################
+      timemidp1 <- mean(time_per1)
+      timeqtrp1 <- (timemidp1/2) + 0.5  #start point of arrow, add 0.5 b/c no 0 in X
+      #ITS y-axis
+      ## Time 1, Pre-intervention ##
+      #What to do if the treatment group has the highest pre-intervention scores
+      #ITS.int variable name position
+      posIntercept <- 1
+      #treatment group
+      if(t00 >= t01) {
+        time1thi <- t00
+      } else {
+        time1thi <- t01
+      }
+      ################
+      ## 2nd Period ##
+      ################
+      timemidp2 <- mean(time_per2)
+      timeqtrp2 <- mean(c(time_per2[1], timemidp2)) #start point of 2nd arrow
+      #ITS y-axis
+      ## Time 1, Pre-intervention ##
+      #What to do if the treatment group has the highest pre-intervention scores
+      #treatment group
+      if(t10 >= t11) {
+        time2thi <- t10
+      } else {
+        time2thi <- t11
+      }
+      ## Period 1 ##
+      # Intercept
+      points(1, t00, col=lcol[1], cex=arwCEX)  # intercept: control group pre-test
+      # ITS.Time
+      arrows(x0 = timeqtrp1, y0 = time1thi, x1 = timemidp1, y1 = time1thi, code=2,
+             angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+      ## Period 2 ##
+      # post1
+      arrows(x0 = time_per2[1] + axshift[1], y0 = cft10, x1 = time_per2[1] + axshift[1], y1 = t10, code=2,
+             angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+      # txp1
+      arrows(x0 = timeqtrp2, y0 = time2thi, x1 = timemidp2, y1 = time2thi, code=2,
+             angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+
+      # Add in coefficient names
+      # Period 1
+      # Intercept
+      text(1, t00, labels ="Intercept", pos=posIntercept)
+      # ITS.Time
+      text(timemidp1, time1thi, labels ="ITS.Time", pos=4)
+      # Period 2
+      # post1
+      text(time_per2[1] + axshift[1], mean(c(t10, cft10)), labels ="post1", pos=2)
+      # txp1
+      text(timemidp2, time2thi, labels ="txp1", pos=4)
     }
   }
 
@@ -436,7 +500,95 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
              lty= c(1,2,3),
              lwd=1, col=c(lcol[1],lcol[1],"gray"), bty="n", cex=1)
     }
-  }
+    # Arrows and coefficient names #
+    if (arrow == TRUE) {
+      #Add a 0 to axshift if length == 1
+      if (length(axshift) == 1) {
+        axshift <- c(axshift, 0)
+      }
+      ################
+      ## 1st Period ##
+      ################
+      timemidp1 <- mean(time_per1)
+      timeqtrp1 <- (timemidp1/2) + 0.5  #start point of arrow, add 0.5 b/c no 0 in X
+      #ITS y-axis
+      ## Time 1, Pre-intervention ##
+      #What to do if the treatment group has the highest pre-intervention scores
+      #ITS.int variable name position
+      posIntercept <- 1
+      #treatment group
+      if(t00 >= t01) {
+        time1thi <- t00
+      } else {
+        time1thi <- t01
+      }
+      ################
+      ## 2nd Period ##
+      ################
+      timemidp2 <- mean(time_per2)
+      timeqtrp2 <- mean(c(time_per2[1], timemidp2)) #start point of 2nd arrow
+      #ITS y-axis
+      ## Time 1, Pre-intervention ##
+      #What to do if the treatment group has the highest pre-intervention scores
+      #treatment group
+      if(t10 >= t11) {
+        time2thi <- t10
+      } else {
+        time2thi <- t11
+      }
+      ################
+      ## 3rd Period ##
+      ################
+      timemidp3 <- mean(time_per3)
+      timeqtrp3 <- mean(c(time_per3[1], timemidp3)) #start point of 3rd arrow
+      #ITS y-axis
+      ## Time 1, Pre-intervention ##
+      #What to do if the treatment group has the highest pre-intervention scores
+      #treatment group
+      if(t10 >= t11) {
+        time3thi <- t20
+      } else {
+        time3thi <- t21
+      }
+      ## Period 1 ##
+      # Intercept
+      points(1, t00, col=lcol[1], cex=arwCEX)  # intercept: control group pre-test
+      # ITS.Time
+      arrows(x0 = timeqtrp1, y0 = time1thi, x1 = timemidp1, y1 = time1thi, code=2,
+             angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+      ## Period 2 ##
+      # post1
+      arrows(x0 = time_per2[1] + axshift[1], y0 = cft10, x1 = time_per2[1] + axshift[1],
+             y1 = t10, code=2, angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+      # txp1
+      arrows(x0 = timeqtrp2, y0 = time2thi, x1 = timemidp2, y1 = time2thi, code=2,
+             angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+      ## Period 3 ##
+      # post2
+      arrows(x0 = time_per3[1] + axshift[2], y0 = cft20, x1 = time_per3[1] + axshift[2],
+             y1 = t20, code=2, angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+      # txp2
+      arrows(x0 = timeqtrp3, y0 = time3thi, x1 = timemidp3, y1 = time3thi, code=2,
+             angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+
+      # Add in coefficient names
+      # Period 1
+      # Intercept
+      text(1, t00, labels ="Intercept", pos=posIntercept)
+      # ITS.Time
+      text(timemidp1, time1thi, labels ="ITS.Time", pos=4)
+      # Period 2
+      # post1
+      text(time_per2[1] + axshift[1], mean(c(t10, cft10)), labels ="post1", pos=2)
+      # txp1
+      text(timemidp2, time2thi, labels ="txp1", pos=4)
+      # Period 3
+      # post2
+      text(time_per3[1] + axshift[2], mean(c(t20, cft20)), labels ="post2", pos=2)
+      # txp2
+      text(timemidp3, time3thi, labels ="txp2", pos=4)
+    }
+    }
 
   ##########
   ## mgst ##
@@ -477,7 +629,9 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
       coef(cmodel)[[5]]*1 + coef(cmodel)[[6]]*0 + coef(cmodel)[[7]]*0 + coef(cmodel)[[8]]*0
     c11 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per2[2] + coef(cmodel)[[3]]*0 + coef(cmodel)[[4]]*0 +
       coef(cmodel)[[5]]*1 + coef(cmodel)[[6]]*(time_per2[2]-interrupt_1) + coef(cmodel)[[7]]*0 + coef(cmodel)[[8]]*0
-
+    # Control group counterfactual for post1
+    cfc10 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per2[1] + coef(cmodel)[[3]]*0 + coef(cmodel)[[4]]*0 +
+      coef(cmodel)[[5]]*0 + coef(cmodel)[[6]]*0 + coef(cmodel)[[7]]*0 + coef(cmodel)[[8]]*0
     ## Intervention group
     #Period 1's (pre-intervention) start and stop values
     t00 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per1[1] + coef(cmodel)[[3]]*1 + coef(cmodel)[[4]]*time_per1[1] +
@@ -507,6 +661,135 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
       legend(x=add.legend, legend=c("Intervention", "Control", "Treated"),
              lty= c(1,1,3),
              lwd=1, col=c(lcol[1],lcol[2],"gray"), bty="n", cex=1)
+    }
+    # Arrows and coefficient names #
+    if (arrow == TRUE) {
+      ################
+      ## 1st Period ##
+      ################
+      timemidp1 <- mean(time_per1)
+      timeqtrp1 <- (timemidp1/2) + 0.5  #start point of arrow, add 0.5 b/c no 0 in X
+      #ITS y-axis
+      ## Time 1, Pre-intervention ##
+      #What to do if the treatment group has the highest pre-intervention scores
+      if(t00 >= c00) {
+        #ITS.int variable name position
+        posITS.int <- 3
+        posIntercept <- 1
+        #treatment group
+        if(t00 >= t01) {
+          time1thi <- t00
+        } else {
+          time1thi <- t01
+        }
+        # control
+        if(c00 >= c01) {
+          time1chi <- c01
+        } else {
+          time1chi <- c00
+        }
+      }
+      #What to do if the control group has the highest pre-intervention scores
+      if(c00 >= t00) {
+        #ITS.int variable name position
+        posIntercept <- 3
+        posITS.int <- 1
+        #treatment group
+        if(t00 >= t01) {
+          time1thi <- t01
+        } else {
+          time1thi <- t00
+        }
+        # control
+        if(c00 >= c01) {
+          time1chi <- c00
+        } else {
+          time1chi <- c01
+        }
+      }
+      ################
+      ## 2nd Period ##
+      ################
+      timemidp2 <- mean(time_per2)
+      timeqtrp2 <- mean(c(time_per2[1], timemidp2)) #start point of 2nd arrow
+      #ITS y-axis
+      ## Time 1, Pre-intervention ##
+      #What to do if the treatment group has the highest pre-intervention scores
+      if(t10 >= c10) {
+        #treatment group
+        if(t10 >= t11) {
+          time2thi <- t10
+        } else {
+          time2thi <- t11
+        }
+        # control
+        if(c10 >= c11) {
+          time2chi <- c11
+        } else {
+          time2chi <- c10
+        }
+      }
+      #What to do if the control group has the highest pre-intervention scores
+      if(c10 >= t10) {
+        #treatment group
+        if(t10 >= t11) {
+          time2thi <- t11
+        } else {
+          time2thi <- t10
+        }
+        # control
+        if(c10 >= c11) {
+          time2chi <- c10
+        } else {
+          time2chi <- c11
+        }
+      }
+      ## Period 1 ##
+      # Intercept
+      points(1, c00, col=lcol[2], cex=arwCEX)  # intercept: control group pre-test
+      # ITS.Time
+      arrows(x0 = timeqtrp1, y0 = time1chi, x1 = timemidp1, y1 = time1chi, code=2,
+             angle=25, length=.25, col = lcol[2], lwd = arwCEX, lty=3)
+      # ITS.Int
+      arrows(x0 = 1, y0 = c00, x1 = 1, y1 = t00, code=arrow_code[2],  #need arrow, vertical line
+             angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+      # txi
+      arrows(x0 = timeqtrp1, y0 = time1thi, x1 = timemidp1, y1 = time1thi, code=2,
+             angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+      ## Period 2 ##
+      # post1
+      arrows(x0 = time_per2[1], y0 = cfc10, x1 = time_per2[1], y1 = c10, code=2,
+             angle=25, length=.25, col = lcol[2], lwd = arwCEX, lty=3)
+      # txp1
+      arrows(x0 = timeqtrp2, y0 = time2chi, x1 = timemidp2, y1 = time2chi, code=2,
+             angle=25, length=.25, col = lcol[2], lwd = arwCEX, lty=3)
+      # ixp1
+      arrows(x0 = time_per2[1] + axshift[1], y0 = t10, x1 = time_per2[1] + axshift[1],
+             y1 = c10, code=3, angle=25, length=.25, col = lcol[1],
+             lwd = arwCEX, lty=3)
+      # txip1
+      arrows(x0 = timeqtrp2, y0 = time2thi, x1 = timemidp2, y1 = time2thi,
+             code=2, angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+
+      # Add in coefficient names
+      # Period 1
+      # Intercept
+      text(1, c00, labels ="Intercept", pos=posIntercept)
+      # ITS.Time
+      text(timemidp1, time1chi, labels ="ITS.Time", pos=4)
+      # ITS.Int
+      text(1, t00, labels ="ITS.Int", pos=posITS.int)
+      # txi
+      text(timemidp1, time1thi, labels ="txi", pos=4)
+      # Period 2
+      # post1
+      text(time_per2[1], mean(c(c10, cfc10)), labels ="post1", pos=2)
+      # txp1
+      text(timemidp2, time2chi, labels ="txp1", pos=4)
+      # ixp1
+      text(time_per2[1] + axshift[1], mean(c(c10, t10)), labels ="ixp1", pos=4)
+      # txip1
+      text(timemidp2, time2thi, labels ="txip1", pos=4)
     }
   }
 

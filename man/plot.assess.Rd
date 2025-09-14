@@ -48,9 +48,11 @@
 \item{arrow}{logical TRUE or FALSE that indicates whether arrows and
 coefficient names should be added to visualize effects. Default is FALSE.}
 
-\item{xshift}{shifts one or some of the overlapping intervention associated arrows
-along the x-axis for a better view. Vector values of at least length 1 or more can be positive
-or negative. And xshift should be specified in the order of the coefficients
+\item{xshift}{shifts one or two of some if the overlapping intervention associated arrows
+along the x-axis for a better view. Vector values of at least length 1 or 2 can be positive
+or negative. And xshift should be specified in the order of the coefficients. Only 1 or 2
+of the furthest right, vertical lines for the intervention group is shifted (i.e., not left).
+One line is shifted when there is 1 treatment/interruption period and 2 shifts for 2 periods.
 (e.g., "DID" before "DID.Trend" for DID models with argument did="many").}
 
 \item{add.legend}{add a legend by selecting the location as "bottomright", "bottom", "bottomleft",
