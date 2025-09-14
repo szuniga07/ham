@@ -823,3 +823,79 @@ interpret(id22)$its
 #> If there are additional variables in the model then the coefficients 
 #> above represent effects after controlling for the other variables.
 ```
+
+<center>
+
+### REVISIONS AND NEW ADDITIONS!
+
+</center>
+
+The following are corrections of errors and additions in the next
+version of ham.
+
+Errors corrected are for plot.assess only: 1) DID=“many” time 1 is no
+longer the intercept and 2) ITS=“two” intercept is now correct.
+
+Additions are for plot.assess only: 1) added some graphing parameters
+and 2) added arrows and coefficient names to help visualize model
+coefficients.
+
+Examples of new plotting options are below.
+
+<center>
+
+## plot.assess update
+
+</center>
+
+### Differences-in-Differences
+
+``` r
+plot(dm1, "DID", add.legend="bottom", ylim=c(2, 8), main="DID: Two",
+     col=c("dodgerblue","magenta"), lwd=7,
+     cex=2, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(.02) )
+```
+
+<img src="man/figures/README-revDID1-1.png" width="100%" />
+
+``` r
+plot(dm2, "DID", add.legend="topleft", ylim=c(2, 8), main="DID study",
+     col=c("purple","green"), lwd=7,
+     cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(.25, .1) )
+```
+
+<img src="man/figures/README-revDID2-1.png" width="100%" />
+
+### Interrupted Time Series
+
+``` r
+plot(im11, "ITS", add.legend="topleft", xlim=c(.75, 12), ylim=c(2, 8), 
+     main="ITS study: SGST", col="thistle", lwd=7,
+     cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(.25, .25) )
+```
+
+<img src="man/figures/README-revITS1-1.png" width="100%" />
+
+``` r
+plot(im12, "ITS", add.legend="topleft", xlim=c(.75, 12), ylim=c(2, 8), 
+     main="ITS study: SGMT", col="hotpink", lwd=7,
+     cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(.25, .25) )
+```
+
+<img src="man/figures/README-revITS2-1.png" width="100%" />
+
+``` r
+plot(im21, "ITS", add.legend="top", xlim=c(.75, 12), ylim=c(2, 8), 
+     main="ITS study: MGST", col=c("springgreen","salmon"), lwd=7,
+     cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(.25, .25) )
+```
+
+<img src="man/figures/README-revITS3-1.png" width="100%" />
+
+``` r
+plot(im22, "ITS", add.legend="top", xlim=c(.75, 12), ylim=c(2, 8), 
+     main="ITS study: MGMT", col=c("dodgerblue","goldenrod"), lwd=7,
+     cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(.25, .25) )
+```
+
+<img src="man/figures/README-revITS4-1.png" width="100%" />
