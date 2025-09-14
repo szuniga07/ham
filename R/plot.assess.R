@@ -620,6 +620,13 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
     }
     # Arrows and coefficient names #
     if (arrow == TRUE) {
+      #Add a 0 to axshift if length == 1
+      if (length(axshift) == 1) {
+        axshift <- c(axshift, 0)
+      }
+      ################
+      ## 1st Period ##
+      ################
       timemidp1 <- mean(time_per1)
       timeqtrp1 <- (timemidp1/2) + 0.5  #start point of arrow, add 0.5 b/c no 0 in X
       #ITS y-axis
@@ -647,7 +654,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
         #ITS.int variable name position
         posIntercept <- 3
         posITS.int <- 1
-        #treament group
+        #treatment group
         if(t00 >= t01) {
           time1thi <- t01
         } else {
@@ -660,7 +667,81 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
           time1chi <- c01
         }
       }
-
+      ################
+      ## 2nd Period ##
+      ################
+      timemidp2 <- mean(time_per2)
+      timeqtrp2 <- mean(c(time_per2[1], timemidp2)) #start point of 2nd arrow
+      #ITS y-axis
+      ## Time 1, Pre-intervention ##
+      #What to do if the treatment group has the highest pre-intervention scores
+      if(t10 >= c10) {
+        #treatment group
+        if(t10 >= t11) {
+          time2thi <- t10
+        } else {
+          time2thi <- t11
+        }
+        # control
+        if(c10 >= c11) {
+          time2chi <- c11
+        } else {
+          time2chi <- c10
+        }
+      }
+      #What to do if the control group has the highest pre-intervention scores
+      if(c10 >= t10) {
+        #treatment group
+        if(t10 >= t11) {
+          time2thi <- t11
+        } else {
+          time2thi <- t10
+        }
+        # control
+        if(c10 >= c11) {
+          time2chi <- c10
+        } else {
+          time2chi <- c11
+        }
+      }
+      ################
+      ## 3rd Period ##
+      ################
+      timemidp3 <- mean(time_per3)
+      timeqtrp3 <- mean(c(time_per3[1], timemidp3)) #start point of 3rd arrow
+      #ITS y-axis
+      ## Time 1, Pre-intervention ##
+      #What to do if the treatment group has the highest pre-intervention scores
+      if(t20 >= c20) {
+        #treatment group
+        if(t10 >= t11) {
+          time3thi <- t20
+        } else {
+          time3thi <- t21
+        }
+        # control
+        if(c20 >= c21) {
+          time3chi <- c21
+        } else {
+          time3chi <- c20
+        }
+      }
+      #What to do if the control group has the highest pre-intervention scores
+      if(c20 >= t20) {
+        #treatment group
+        if(t20 >= t21) {
+          time3thi <- t21
+        } else {
+          time3thi <- t20
+        }
+        # control
+        if(c20 >= c21) {
+          time3chi <- c20
+        } else {
+          time3chi <- c21
+        }
+      }
+      ## Period 1 ##
       # Intercept
       points(1, c00, col=lcol[2], cex=arwCEX)  # intercept: control group pre-test
       # ITS.Time
@@ -672,8 +753,37 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
       # txi
       arrows(x0 = timeqtrp1, y0 = time1thi, x1 = timemidp1, y1 = time1thi, code=2,
              angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+      ## Period 2 ##
+      # post1
+      arrows(x0 = time_per2[1], y0 = cfc10, x1 = time_per2[1], y1 = c10, code=2,
+             angle=25, length=.25, col = lcol[2], lwd = arwCEX, lty=3)
+      # txp1
+      arrows(x0 = timeqtrp2, y0 = time2chi, x1 = timemidp2, y1 = time2chi, code=2,
+             angle=25, length=.25, col = lcol[2], lwd = arwCEX, lty=3)
+      # ixp1
+      arrows(x0 = time_per2[1] + axshift[1], y0 = t10, x1 = time_per2[1] + axshift[1],
+             y1 = c10, code=3, angle=25, length=.25, col = lcol[1],
+             lwd = arwCEX, lty=3)
+      # txip1
+      arrows(x0 = timeqtrp2, y0 = time2thi, x1 = timemidp2, y1 = time2thi,
+             code=2, angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+      ## Period 3 ##
+      # post2
+      arrows(x0 = time_per3[1], y0 = cfc20, x1 = time_per3[1], y1 = c20, code=2,
+             angle=25, length=.25, col = lcol[2], lwd = arwCEX, lty=3)
+      # txp2
+      arrows(x0 = timeqtrp3, y0 = time3chi, x1 = timemidp3, y1 = time3chi, code=2,
+             angle=25, length=.25, col = lcol[2], lwd = arwCEX, lty=3)
+      # ixp2
+      arrows(x0 = time_per3[1] + axshift[2], y0 = t20, x1 = time_per3[1] + axshift[2],
+             y1 = c20, code=3, angle=25, length=.25, col = lcol[1],
+             lwd = arwCEX, lty=3)
+      # txip2
+      arrows(x0 = timeqtrp3, y0 = time3thi, x1 = timemidp3, y1 = time3thi,
+             code=2, angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
 
       # Add in coefficient names
+      # Period 1
       # Intercept
       text(1, c00, labels ="Intercept", pos=posIntercept)
       # ITS.Time
@@ -682,6 +792,24 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
       text(1, t00, labels ="ITS.Int", pos=posITS.int)
       # txi
       text(timemidp1, time1thi, labels ="txi", pos=4)
+      # Period 2
+      # post1
+      text(time_per2[1], mean(c(c10, cfc10)), labels ="post1", pos=2)
+      # txp1
+      text(timemidp2, time2chi, labels ="txp1", pos=4)
+      # ixp1
+      text(time_per2[1] + axshift[1], mean(c(c10, t10)), labels ="ixp1", pos=4)
+      # txip1
+      text(timemidp2, time2thi, labels ="txip1", pos=4)
+      # Period 3
+      # post2
+      text(time_per3[1], mean(c(c20, cfc20)), labels ="post2", pos=2)
+      # txp2
+      text(timemidp3, time3chi, labels ="txp2", pos=4)
+      # ixp2
+      text(time_per3[1] + axshift[2], mean(c(c20, t20)), labels ="ixp2", pos=4)
+      # txip2
+      text(timemidp3, time3thi, labels ="txip2", pos=4)
     }
   }
 }
