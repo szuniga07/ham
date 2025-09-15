@@ -751,7 +751,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
       arrows(x0 = timeqtrp1, y0 = time1chi, x1 = timemidp1, y1 = time1chi, code=2,
              angle=25, length=.25, col = lcol[2], lwd = arwCEX, lty=3)
       # ITS.Int
-      arrows(x0 = 1, y0 = c00, x1 = 1, y1 = t00, code=arrow_code[2],  #need arrow, vertical line
+      arrows(x0 = 1, y0 = c00, x1 = 1, y1 = t00, code=2, #code=arrow_code[2],  #need arrow, vertical line
              angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
       # txi
       arrows(x0 = timeqtrp1, y0 = time1thi, x1 = timemidp1, y1 = time1thi, code=2,
@@ -1031,7 +1031,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
       arrows(x0 = timeqtrp1, y0 = time1chi, x1 = timemidp1, y1 = time1chi, code=2,
              angle=25, length=.25, col = lcol[2], lwd = arwCEX, lty=3)
       # ITS.Int
-      arrows(x0 = 1, y0 = c00, x1 = 1, y1 = t00, code=arrow_code[2],  #need arrow, vertical line
+      arrows(x0 = 1, y0 = c00, x1 = 1, y1 = t00, code=2, #code=arrow_code[2],  #need arrow, vertical line
              angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
       # txi
       arrows(x0 = timeqtrp1, y0 = time1thi, x1 = timemidp1, y1 = time1thi, code=2,
