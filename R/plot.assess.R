@@ -197,14 +197,14 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
     if (arrow == TRUE) {
       # c0 Intercept
       points(0, c0, col=lcol[2], cex=arwCEX)  # intercept: control group pre-test
-      # c1 effect
-      arrows(x0 = 1, y0 = c0, x1 = 1, y1 = c1, code=arrow_code[1], angle=25,
-             length=.25, col = lcol[2], lwd = arwCEX, lty=3)
+      # c1 effect Post.All
+      arrows(x0 = 1, y0 = c0, x1 = 1, y1 = c1, code=2, #code=arrow_code[1],
+             angle=25, length=.25, col = lcol[2], lwd = arwCEX, lty=3)
       # t0 effect
-      arrows(x0 = 0, y0 = c0, x1 = 0, y1 = t0, code=arrow_code[2], angle=25,
-             length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+      arrows(x0 = 0, y0 = c0, x1 = 0, y1 = t0, code=2, #code=arrow_code[2],
+             angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
       # t1 effect
-      arrows(x0 = 1 + axshift, y0 = t1, x1 = 1 + axshift, y1 = cft1, code=arrow_code[3],
+      arrows(x0 = 1 + axshift, y0 = cft1, x1 = 1 + axshift, y1 = t1, code=2, #code=arrow_code[3],
              angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
       # Add in coefficient names
       text(0, c0, labels ="Intercept", pos=4)  # intercept: control group pre-test
@@ -284,15 +284,16 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
       }
       # c0 Intercept
       points(1, c0, col=lcol[2], cex=arwCEX)  # intercept: control group pre-test
-      # c1 effect
-      arrows(x0 = max_time, y0 = c0, x1 = max_time, y1 = c1, code=arrow_code[1],
+      # c1 effect Period
+      arrows(x0 = max_time, y0 = c0, x1 = max_time, y1 = c1, code=2, #code=arrow_code[1],
              angle=25, length=.25, col = lcol[2], lwd = arwCEX, lty=3)
       # DID effect
-      arrows(x0 = treat_start + axshift[1], y0 = c0.5, x1 = treat_start + head(axshift, 1),
-             y1 = atet0, code=arrow_code[2], angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+      arrows(x0 = treat_start + axshift[1], y0 = c0.5, x1 = treat_start + axshift[1], y1 = atet0,
+             code=2, angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3) #code=arrow_code[2]
       # DID.Trend effect
-      arrows(x0 = max_time + axshift[2], y0 = atet1, x1 = max_time + tail(axshift, 1), y1 = atet0,
-             code=arrow_code[3], angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+      arrows(x0 = max_time + axshift[2], y0 = atet0, x1 = max_time + axshift[2],
+             y1 = atet1, code=2, #code=arrow_code[3],
+             angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
       # Add in coefficient names
       text(1, c0, labels ="Intercept", pos=4)
       text(max_time, c1, labels ="Period", pos=2)

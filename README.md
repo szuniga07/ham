@@ -859,7 +859,7 @@ plot(dm1, "DID", add.legend="bottom", ylim=c(2, 8), main="DID: Two",
 <img src="man/figures/README-revDID1-1.png" width="100%" />
 
 ``` r
-plot(dm2, "DID", add.legend="topleft", ylim=c(2, 8), main="DID study",
+plot(dm2, "DID", add.legend="topleft", ylim=c(2, 8), main="DID: Many",
      col=c("purple","green"), lwd=7,
      cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(.25, .1) )
 ```
@@ -895,7 +895,7 @@ plot(im21, "ITS", add.legend="top", xlim=c(.75, 12), ylim=c(2, 8),
 ``` r
 plot(im22, "ITS", add.legend="top", xlim=c(.75, 12), ylim=c(2, 8), 
      main="ITS study: MGMT", col=c("dodgerblue","goldenrod"), lwd=7,
-     cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(.25, .25) )
+     cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(.5, .25) )
 ```
 
 <img src="man/figures/README-revITS4-1.png" width="100%" />
