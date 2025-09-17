@@ -224,7 +224,7 @@ im21 <- assess(formula=los ~ ., data=hosprog, intervention = "program",
                int.time="month", interrupt= 5, its="two")
 ```
 
-### View ITS model 3 results
+### View ITS model 3 results 
 ```{r its model 3 results}
 summary(im21$ITS)
 ```

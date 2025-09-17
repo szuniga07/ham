@@ -433,9 +433,8 @@ interpret(dm2)$did
 #> line after the baseline period. There was a significant increase 
 #> for the control group after the baseline period: 0.12. 
 #> 
-#> DID estimates the average treatment effect on the treated 
-#> group (ATET). This represents the difference in the mean 
-#> overall level between the intervention and control groups. 
+#> DID estimates the difference in mean overall level between 
+#> the intervention and both the non-intervention period/group. 
 #> In other words, there was a non-significant increase in the 
 #> mean los by 0.101 for the intervention group. 
 #> 
