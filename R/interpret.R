@@ -138,7 +138,7 @@ interpret <- function(object) {
       B3_coef <- coef(object$DID)[which(names(coef(object$DID))== "DID.Trend")]
       B_0 <- paste0("The intercept represents the starting point of the control \ngroup's trend line at the baseline period (Time 1): ", round(B0_coef, 3), ".")
       B_1 <- paste0("Period is the change in the control group's ", Y_var_did, " value trend \nline after the baseline period. There was a ", did_b1_sig, " ", did_b1_change, " \nfor the control group after the baseline period: ",round(B1_coef, 3), ".")
-      B_2 <- paste0("DID estimates the average treatment effect on the treated \ngroup (ATET). This represents the difference in the mean \noverall level between the intervention and control groups. \nIn other words, there was a ", did_b2_sig, " ", did_b2_change, " in the \nmean ", Y_var_did, " by ", round(B2_coef, 3)," for the intervention group.")
+      B_2 <- paste0("DID estimates the difference in mean overall level between \nthe intervention and both the non-intervention period/group. \nIn other words, there was a ", did_b2_sig, " ", did_b2_change, " in the \nmean ", Y_var_did, " by ", round(B2_coef, 3)," for the intervention group.")
       B_3 <- paste0("DID.Trend is the difference in the intervention group's \ntrend line after the intervention period started (> Time 1). \nThe intervention group had a ", did_b3_sig, " ", did_b3_change, " in trend \nof the mean ", Y_var_did, " by ", round(B3_coef, 3),  " after the intervention started.")
       did_covariates <- c("If there are additional variables in the model then the coefficients \nabove represent the effects after controlling for the other variables.")
     }
