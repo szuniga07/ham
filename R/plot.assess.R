@@ -17,6 +17,7 @@
 #' @param cex.axis The magnification to be used for axis annotation relative to the current setting of cex.
 #' @param cex.lab The magnification to be used for x and y labels relative to the current setting of cex.
 #' @param cex.main The magnification to be used for main titles relative to the current setting of cex.
+#' @param cex.text The magnification to be used for the text added into the plot relative to the current setting of 1.
 #' @param arrow logical TRUE or FALSE that indicates whether arrows and
 #' coefficient names should be added to visualize effects. Default is FALSE.
 #' @param xshift shifts one or two of some if the overlapping intervention associated arrows
@@ -25,6 +26,9 @@
 #' of the furthest right, vertical lines for the intervention group is shifted (i.e., not left).
 #' One line is shifted when there is 1 treatment/interruption period and 2 shifts for 2 periods.
 #' (e.g., "DID" before "DID.Trend" for DID models with argument did="many").
+#' @param coefs if 'arrow' is TRUE, logical TRUE or FALSE that indicates whether
+#' coefficient values should be added to the plot. Default is FALSE.
+#' @param round.c if 'arrow' is TRUE, an integer indicating the number of decimal places to be used for rounding coefficient values.
 #' @param add.legend add a legend by selecting the location as "bottomright", "bottom", "bottomleft",
 #' "left", "topleft", "top", "topright", "right", "center". No legend if nothing selected.
 #' @param ... additional arguments.
@@ -41,10 +45,12 @@
 #' plot(am2, "DID", add.legend="bottomleft", ylim=c(2, 8))  #DID model
 #' plot(am2, "ITS", add.legend="top", ylim=c(2, 8))         #ITS model
 #' plot(am2, "DID", add.legend="topleft", main="DID study", col=c("dodgerblue","magenta"),
-#' ylim=c(2, 8), lwd=6, cex=2, cex.axis=2, cex.lab=1.5, cex.main=3, arrow=TRUE, xshift=0.02)
+#' ylim=c(2, 8), lwd=6, cex=3, cex.axis=2, cex.lab=1.5, cex.main=3, cex.text=2,
+#' arrow=TRUE, xshift=0.02, coefs=TRUE, round.c=2 )
 plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NULL,
-                        cex=NULL, cex.axis=NULL, cex.lab=NULL, cex.main=NULL,
-                        arrow=FALSE, xshift=NULL, add.legend=NULL, ...) {
+                        cex=NULL, cex.axis=NULL, cex.lab=NULL, cex.main=NULL, cex.text=NULL,
+                        arrow=FALSE, xshift=NULL, coefs=FALSE, round.c=NULL,
+                        add.legend=NULL, ...) {
   if(any(is.null(c(x, y)) == TRUE)) {
     stop("Error: Expecting both an x and y argument.")
   }
@@ -139,6 +145,18 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
   } else {
     axshift <- 0
   }
+  #Make CEX for text added into the plot (i.e, text())
+  if(!is.null(cex)) {
+    textCEX <- cex.text
+  } else {
+    textCEX <- 1
+  }
+  #Make default round= 2 for text added into the plot (i.e, text())
+  if(!is.null(round.c)) {
+    round.c <- round.c
+  } else {
+    round.c <- 2
+  }
   #This gets the sign of the coefficients to assign the arrow codes
   #cmodel will work for DID and ITS models
   mdlcoefsign <- sign(coef(cmodel))[-1]
@@ -199,18 +217,22 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
       points(0, c0, col=lcol[2], cex=arwCEX)  # intercept: control group pre-test
       # c1 effect Post.All
       arrows(x0 = 1, y0 = c0, x1 = 1, y1 = c1, code=2, #code=arrow_code[1],
-             angle=25, length=.25, col = lcol[2], lwd = arwCEX, lty=3)
+             angle=30, length=.25, col = lcol[2], lwd = arwCEX, lty=3)
       # t0 effect
       arrows(x0 = 0, y0 = c0, x1 = 0, y1 = t0, code=2, #code=arrow_code[2],
-             angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+             angle=30, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
       # t1 effect
       arrows(x0 = 1 + axshift, y0 = cft1, x1 = 1 + axshift, y1 = t1, code=2, #code=arrow_code[3],
-             angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+             angle=30, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
       # Add in coefficient names
-      text(0, c0, labels ="Intercept", pos=4)  # intercept: control group pre-test
-      text(1, c1, labels ="Post.All", pos=2)  # control group post-test
-      text(0, t0, labels ="Int.Var", pos=4)  # intervention group pre-test
-      text(1, t1, labels ="DID", pos=2)  # intervention group post-test
+      # intercept: control group pre-test
+      text(0, c0, labels = if(coefs == TRUE) paste("Intercept=", round(coef(cmodel)[1], round.c)) else "Intercept", pos=4, cex=textCEX)
+      # control group post-test
+      text(1, c1, labels =if(coefs == TRUE) paste("Post.All=", round(coef(cmodel)[2], round.c)) else "Post.All", pos=2, cex=textCEX)
+      # intervention group pre-test
+      text(0, t0, labels =if(coefs == TRUE) paste("Int.Var=", round(coef(cmodel)[3], round.c)) else "Int.Var", pos=4, cex=textCEX)
+      # intervention group post-test
+      text(1, t1, labels =if(coefs == TRUE) paste("DID=", round(coef(cmodel)[4], round.c)) else "DID", pos=2, cex=textCEX)
     }
     if (!is.null(add.legend)) {
       legend(x=add.legend, legend=c("Intervention", "Control","Counterfactual", "Treated"),
@@ -286,19 +308,20 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
       points(1, c0, col=lcol[2], cex=arwCEX)  # intercept: control group pre-test
       # c1 effect Period
       arrows(x0 = max_time, y0 = c0, x1 = max_time, y1 = c1, code=2, #code=arrow_code[1],
-             angle=25, length=.25, col = lcol[2], lwd = arwCEX, lty=3)
+             angle=30, length=.25, col = lcol[2], lwd = arwCEX, lty=3)
       # DID effect
       arrows(x0 = treat_start + axshift[1], y0 = c0.5, x1 = treat_start + axshift[1], y1 = atet0,
-             code=2, angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3) #code=arrow_code[2]
+             code=2, angle=30, length=.25, col = lcol[1], lwd = arwCEX, lty=3) #code=arrow_code[2]
       # DID.Trend effect
       arrows(x0 = max_time + axshift[2], y0 = atet0, x1 = max_time + axshift[2],
              y1 = atet1, code=2, #code=arrow_code[3],
-             angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+             angle=30, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
       # Add in coefficient names
-      text(1, c0, labels ="Intercept", pos=4)
-      text(max_time, c1, labels ="Period", pos=2)
-      text(treat_start, t0, labels ="DID", pos= ((mdlcoefsign[2]-3)*-1) -1) # how to place text
-      text(max_time, atet0, labels ="DID.Trend", pos=2)
+      text(1, c0, labels = if(coefs == TRUE) paste("Intercept=", round(coef(cmodel)[1], round.c)) else "Intercept", pos=4, cex=textCEX)
+      text(max_time, c1, labels =if(coefs == TRUE) paste("Period=", round(coef(cmodel)[2], round.c)) else "Period", pos=2, cex=textCEX)
+      text(treat_start, t0, labels =if(coefs == TRUE) paste("DID=", round(coef(cmodel)[3], round.c)) else "DID",
+           pos= ((mdlcoefsign[2]-3)*-1) -1, cex=textCEX) # how to place text
+      text(max_time, atet0, labels =if(coefs == TRUE) paste("DID.Trend=", round(coef(cmodel)[4], round.c)) else "DID.Trend", pos=2, cex=textCEX)
     }
     if (!is.null(add.legend)) {
       legend(x=add.legend, legend=c("Intervention", "Control","Counterfactual", "Treated"),
@@ -402,26 +425,31 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
       points(1, t00, col=lcol[1], cex=arwCEX)  # intercept: control group pre-test
       # ITS.Time
       arrows(x0 = timeqtrp1, y0 = time1thi, x1 = timemidp1, y1 = time1thi, code=2,
-             angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+             angle=30, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
       ## Period 2 ##
       # post1
       arrows(x0 = time_per2[1] + axshift[1], y0 = cft10, x1 = time_per2[1] + axshift[1], y1 = t10, code=2,
-             angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+             angle=30, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
       # txp1
       arrows(x0 = timeqtrp2, y0 = time2thi, x1 = timemidp2, y1 = time2thi, code=2,
-             angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+             angle=30, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
 
       # Add in coefficient names
       # Period 1
       # Intercept
-      text(1, t00, labels ="Intercept", pos=posIntercept)
+      text(1, t00, labels = if(coefs == TRUE) paste("Intercept=", round(coef(cmodel)[1], round.c)) else "Intercept",
+           pos=posIntercept, cex=textCEX)
       # ITS.Time
-      text(timemidp1, time1thi, labels ="ITS.Time", pos=4)
+      text(timemidp1, time1thi, labels =if(coefs == TRUE) paste("ITS.Time=", round(coef(cmodel)[2], round.c)) else "ITS.Time",
+           pos=4, cex=textCEX)
       # Period 2
       # post1
-      text(time_per2[1] + axshift[1], mean(c(t10, cft10)), labels ="post1", pos=2)
+      text(time_per2[1] + axshift[1], mean(c(t10, cft10)), labels =if(coefs == TRUE) paste("post1=", round(coef(cmodel)[3], round.c)) else "post1",
+           pos=2, cex=textCEX)
       # txp1
-      text(timemidp2, time2thi, labels ="txp1", pos=4)
+      text(timemidp2, time2thi, labels =if(coefs == TRUE) paste("txp1=", round(coef(cmodel)[4], round.c)) else "txp1",
+           pos=4, cex=textCEX)
+
     }
   }
 
@@ -556,38 +584,45 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
       points(1, t00, col=lcol[1], cex=arwCEX)  # intercept: control group pre-test
       # ITS.Time
       arrows(x0 = timeqtrp1, y0 = time1thi, x1 = timemidp1, y1 = time1thi, code=2,
-             angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+             angle=30, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
       ## Period 2 ##
       # post1
       arrows(x0 = time_per2[1] + axshift[1], y0 = cft10, x1 = time_per2[1] + axshift[1],
-             y1 = t10, code=2, angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+             y1 = t10, code=2, angle=30, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
       # txp1
       arrows(x0 = timeqtrp2, y0 = time2thi, x1 = timemidp2, y1 = time2thi, code=2,
-             angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+             angle=30, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
       ## Period 3 ##
       # post2
       arrows(x0 = time_per3[1] + axshift[2], y0 = cft20, x1 = time_per3[1] + axshift[2],
-             y1 = t20, code=2, angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+             y1 = t20, code=2, angle=30, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
       # txp2
       arrows(x0 = timeqtrp3, y0 = time3thi, x1 = timemidp3, y1 = time3thi, code=2,
-             angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+             angle=30, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
 
       # Add in coefficient names
       # Period 1
       # Intercept
-      text(1, t00, labels ="Intercept", pos=posIntercept)
+      text(1, t00, labels = if(coefs == TRUE) paste("Intercept=", round(coef(cmodel)[1], round.c)) else "Intercept",
+           pos=posIntercept, cex=textCEX)
       # ITS.Time
-      text(timemidp1, time1thi, labels ="ITS.Time", pos=4)
+      text(timemidp1, time1thi, labels =if(coefs == TRUE) paste("ITS.Time=", round(coef(cmodel)[2], round.c)) else "ITS.Time",
+           pos=4, cex=textCEX)
       # Period 2
       # post1
-      text(time_per2[1] + axshift[1], mean(c(t10, cft10)), labels ="post1", pos=2)
+      text(time_per2[1] + axshift[1], mean(c(t10, cft10)), labels =if(coefs == TRUE) paste("post1=", round(coef(cmodel)[3], round.c)) else "post1",
+           pos=2, cex=textCEX)
       # txp1
-      text(timemidp2, time2thi, labels ="txp1", pos=4)
+      text(timemidp2, time2thi, labels =if(coefs == TRUE) paste("txp1=", round(coef(cmodel)[4], round.c)) else "txp1",
+           pos=4, cex=textCEX)
       # Period 3
       # post2
-      text(time_per3[1] + axshift[2], mean(c(t20, cft20)), labels ="post2", pos=2)
+      text(time_per3[1] + axshift[2], mean(c(t20, cft20)),
+           labels =if(coefs == TRUE) paste("post2=", round(coef(cmodel)[5], round.c)) else "post2",
+           pos=2, cex=textCEX)
       # txp2
-      text(timemidp3, time3thi, labels ="txp2", pos=4)
+      text(timemidp3, time3thi, labels =if(coefs == TRUE) paste("txp2=", round(coef(cmodel)[6], round.c)) else "txp2",
+           pos=4, cex=textCEX)
     }
     }
 
@@ -750,47 +785,55 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
       points(1, c00, col=lcol[2], cex=arwCEX)  # intercept: control group pre-test
       # ITS.Time
       arrows(x0 = timeqtrp1, y0 = time1chi, x1 = timemidp1, y1 = time1chi, code=2,
-             angle=25, length=.25, col = lcol[2], lwd = arwCEX, lty=3)
+             angle=30, length=.25, col = lcol[2], lwd = arwCEX, lty=3)
       # ITS.Int
       arrows(x0 = 1, y0 = c00, x1 = 1, y1 = t00, code=2, #code=arrow_code[2],  #need arrow, vertical line
-             angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+             angle=30, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
       # txi
       arrows(x0 = timeqtrp1, y0 = time1thi, x1 = timemidp1, y1 = time1thi, code=2,
-             angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+             angle=30, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
       ## Period 2 ##
       # post1
       arrows(x0 = time_per2[1], y0 = cfc10, x1 = time_per2[1], y1 = c10, code=2,
-             angle=25, length=.25, col = lcol[2], lwd = arwCEX, lty=3)
+             angle=30, length=.25, col = lcol[2], lwd = arwCEX, lty=3)
       # txp1
       arrows(x0 = timeqtrp2, y0 = time2chi, x1 = timemidp2, y1 = time2chi, code=2,
-             angle=25, length=.25, col = lcol[2], lwd = arwCEX, lty=3)
+             angle=30, length=.25, col = lcol[2], lwd = arwCEX, lty=3)
       # ixp1
       arrows(x0 = time_per2[1] + axshift[1], y0 = t10, x1 = time_per2[1] + axshift[1],
-             y1 = c10, code=3, angle=25, length=.25, col = lcol[1],
+             y1 = c10, code=3, angle=30, length=.25, col = lcol[1],
              lwd = arwCEX, lty=3)
       # txip1
       arrows(x0 = timeqtrp2, y0 = time2thi, x1 = timemidp2, y1 = time2thi,
-             code=2, angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+             code=2, angle=30, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
 
       # Add in coefficient names
       # Period 1
       # Intercept
-      text(1, c00, labels ="Intercept", pos=posIntercept)
+      text(1, c00, labels =if(coefs == TRUE) paste("Intercept=", round(coef(cmodel)[1], round.c)) else "Intercept",
+           pos=posIntercept, cex=textCEX)
       # ITS.Time
-      text(timemidp1, time1chi, labels ="ITS.Time", pos=4)
+      text(timemidp1, time1chi, labels =if(coefs == TRUE) paste("ITS.Time=", round(coef(cmodel)[2], round.c)) else "ITS.Time",
+           pos=4, cex=textCEX)
       # ITS.Int
-      text(1, t00, labels ="ITS.Int", pos=posITS.int)
+      text(1, t00, labels =if(coefs == TRUE) paste("ITS.Int=", round(coef(cmodel)[3], round.c)) else "ITS.Int",
+           pos=posITS.int, cex=textCEX)
       # txi
-      text(timemidp1, time1thi, labels ="txi", pos=4)
+      text(timemidp1, time1thi, labels =if(coefs == TRUE) paste("txi=", round(coef(cmodel)[4], round.c)) else "txi",
+           pos=4, cex=textCEX)
       # Period 2
       # post1
-      text(time_per2[1], mean(c(c10, cfc10)), labels ="post1", pos=2)
+      text(time_per2[1], mean(c(c10, cfc10)), labels =if(coefs == TRUE) paste("post1=", round(coef(cmodel)[5], round.c)) else "post1",
+           pos=2, cex=textCEX)
       # txp1
-      text(timemidp2, time2chi, labels ="txp1", pos=4)
+      text(timemidp2, time2chi, labels =if(coefs == TRUE) paste("txp1=", round(coef(cmodel)[6], round.c)) else "txp1",
+           pos=4, cex=textCEX)
       # ixp1
-      text(time_per2[1] + axshift[1], mean(c(c10, t10)), labels ="ixp1", pos=4)
+      text(time_per2[1] + axshift[1], mean(c(c10, t10)), labels =if(coefs == TRUE) paste("ixp1=", round(coef(cmodel)[7], round.c)) else "ixp1",
+           pos=4, cex=textCEX)
       # txip1
-      text(timemidp2, time2thi, labels ="txip1", pos=4)
+      text(timemidp2, time2thi, labels =if(coefs == TRUE) paste("txip1=", round(coef(cmodel)[8], round.c)) else "txip1",
+           pos=4, cex=textCEX)
     }
   }
 
@@ -1030,70 +1073,82 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
       points(1, c00, col=lcol[2], cex=arwCEX)  # intercept: control group pre-test
       # ITS.Time
       arrows(x0 = timeqtrp1, y0 = time1chi, x1 = timemidp1, y1 = time1chi, code=2,
-             angle=25, length=.25, col = lcol[2], lwd = arwCEX, lty=3)
+             angle=30, length=.25, col = lcol[2], lwd = arwCEX, lty=3)
       # ITS.Int
       arrows(x0 = 1, y0 = c00, x1 = 1, y1 = t00, code=2, #code=arrow_code[2],  #need arrow, vertical line
-             angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+             angle=30, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
       # txi
       arrows(x0 = timeqtrp1, y0 = time1thi, x1 = timemidp1, y1 = time1thi, code=2,
-             angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+             angle=30, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
       ## Period 2 ##
       # post1
       arrows(x0 = time_per2[1], y0 = cfc10, x1 = time_per2[1], y1 = c10, code=2,
-             angle=25, length=.25, col = lcol[2], lwd = arwCEX, lty=3)
+             angle=30, length=.25, col = lcol[2], lwd = arwCEX, lty=3)
       # txp1
       arrows(x0 = timeqtrp2, y0 = time2chi, x1 = timemidp2, y1 = time2chi, code=2,
-             angle=25, length=.25, col = lcol[2], lwd = arwCEX, lty=3)
+             angle=30, length=.25, col = lcol[2], lwd = arwCEX, lty=3)
       # ixp1
       arrows(x0 = time_per2[1] + axshift[1], y0 = t10, x1 = time_per2[1] + axshift[1],
-             y1 = c10, code=3, angle=25, length=.25, col = lcol[1],
+             y1 = c10, code=3, angle=30, length=.25, col = lcol[1],
              lwd = arwCEX, lty=3)
       # txip1
       arrows(x0 = timeqtrp2, y0 = time2thi, x1 = timemidp2, y1 = time2thi,
-             code=2, angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+             code=2, angle=30, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
       ## Period 3 ##
       # post2
       arrows(x0 = time_per3[1], y0 = cfc20, x1 = time_per3[1], y1 = c20, code=2,
-             angle=25, length=.25, col = lcol[2], lwd = arwCEX, lty=3)
+             angle=30, length=.25, col = lcol[2], lwd = arwCEX, lty=3)
       # txp2
       arrows(x0 = timeqtrp3, y0 = time3chi, x1 = timemidp3, y1 = time3chi, code=2,
-             angle=25, length=.25, col = lcol[2], lwd = arwCEX, lty=3)
+             angle=30, length=.25, col = lcol[2], lwd = arwCEX, lty=3)
       # ixp2
       arrows(x0 = time_per3[1] + axshift[2], y0 = t20, x1 = time_per3[1] + axshift[2],
-             y1 = c20, code=3, angle=25, length=.25, col = lcol[1],
+             y1 = c20, code=3, angle=30, length=.25, col = lcol[1],
              lwd = arwCEX, lty=3)
       # txip2
       arrows(x0 = timeqtrp3, y0 = time3thi, x1 = timemidp3, y1 = time3thi,
-             code=2, angle=25, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+             code=2, angle=30, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
 
       # Add in coefficient names
       # Period 1
       # Intercept
-      text(1, c00, labels ="Intercept", pos=posIntercept)
+      text(1, c00, labels =if(coefs == TRUE) paste("Intercept=", round(coef(cmodel)[1], round.c)) else "Intercept",
+           pos=posIntercept, cex=textCEX)
       # ITS.Time
-      text(timemidp1, time1chi, labels ="ITS.Time", pos=4)
+      text(timemidp1, time1chi, labels =if(coefs == TRUE) paste("ITS.Time=", round(coef(cmodel)[2], round.c)) else "ITS.Time",
+           pos=4, cex=textCEX)
       # ITS.Int
-      text(1, t00, labels ="ITS.Int", pos=posITS.int)
+      text(1, t00, labels =if(coefs == TRUE) paste("ITS.Int=", round(coef(cmodel)[3], round.c)) else "ITS.Int",
+           pos=posITS.int, cex=textCEX)
       # txi
-      text(timemidp1, time1thi, labels ="txi", pos=4)
+      text(timemidp1, time1thi, labels =if(coefs == TRUE) paste("txi=", round(coef(cmodel)[4], round.c)) else "txi",
+           pos=4, cex=textCEX)
       # Period 2
       # post1
-      text(time_per2[1], mean(c(c10, cfc10)), labels ="post1", pos=2)
+      text(time_per2[1], mean(c(c10, cfc10)), labels =if(coefs == TRUE) paste("post1=", round(coef(cmodel)[5], round.c)) else "post1",
+           pos=2, cex=textCEX)
       # txp1
-      text(timemidp2, time2chi, labels ="txp1", pos=4)
+      text(timemidp2, time2chi, labels =if(coefs == TRUE) paste("txp1=", round(coef(cmodel)[6], round.c)) else "txp1",
+           pos=4, cex=textCEX)
       # ixp1
-      text(time_per2[1] + axshift[1], mean(c(c10, t10)), labels ="ixp1", pos=4)
+      text(time_per2[1] + axshift[1], mean(c(c10, t10)), labels =if(coefs == TRUE) paste("ixp1=", round(coef(cmodel)[7], round.c)) else "ixp1",
+           pos=4, cex=textCEX)
       # txip1
-      text(timemidp2, time2thi, labels ="txip1", pos=4)
+      text(timemidp2, time2thi, labels =if(coefs == TRUE) paste("txip1=", round(coef(cmodel)[8], round.c)) else "txip1",
+           pos=4, cex=textCEX)
       # Period 3
       # post2
-      text(time_per3[1], mean(c(c20, cfc20)), labels ="post2", pos=2)
+      text(time_per3[1], mean(c(c20, cfc20)), labels =if(coefs == TRUE) paste("post2=", round(coef(cmodel)[9], round.c)) else "post2",
+           pos=2, cex=textCEX)
       # txp2
-      text(timemidp3, time3chi, labels ="txp2", pos=4)
+      text(timemidp3, time3chi, labels =if(coefs == TRUE) paste("txp2=", round(coef(cmodel)[10], round.c)) else "txp2",
+           pos=4, cex=textCEX)
       # ixp2
-      text(time_per3[1] + axshift[2], mean(c(c20, t20)), labels ="ixp2", pos=4)
+      text(time_per3[1] + axshift[2], mean(c(c20, t20)), labels =if(coefs == TRUE) paste("ixp2=", round(coef(cmodel)[11], round.c)) else "ixp2",
+           pos=4, cex=textCEX)
       # txip2
-      text(timemidp3, time3thi, labels ="txip2", pos=4)
+      text(timemidp3, time3thi, labels =if(coefs == TRUE) paste("txip2=", round(coef(cmodel)[12], round.c)) else "txip2",
+           pos=4, cex=textCEX)
     }
   }
 }

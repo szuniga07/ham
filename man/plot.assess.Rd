@@ -16,8 +16,11 @@
   cex.axis = NULL,
   cex.lab = NULL,
   cex.main = NULL,
+  cex.text = NULL,
   arrow = FALSE,
   xshift = NULL,
+  coefs = FALSE,
+  round.c = NULL,
   add.legend = NULL,
   ...
 )
@@ -45,6 +48,8 @@
 
 \item{cex.main}{The magnification to be used for main titles relative to the current setting of cex.}
 
+\item{cex.text}{The magnification to be used for the text added into the plot relative to the current setting of 1.}
+
 \item{arrow}{logical TRUE or FALSE that indicates whether arrows and
 coefficient names should be added to visualize effects. Default is FALSE.}
 
@@ -54,6 +59,11 @@ or negative. And xshift should be specified in the order of the coefficients. On
 of the furthest right, vertical lines for the intervention group is shifted (i.e., not left).
 One line is shifted when there is 1 treatment/interruption period and 2 shifts for 2 periods.
 (e.g., "DID" before "DID.Trend" for DID models with argument did="many").}
+
+\item{coefs}{if 'arrow' is TRUE, logical TRUE or FALSE that indicates whether
+coefficient values should be added to the plot. Default is FALSE.}
+
+\item{round.c}{if 'arrow' is TRUE, an integer indicating the number of decimal places to be used for rounding coefficient values.}
 
 \item{add.legend}{add a legend by selecting the location as "bottomright", "bottom", "bottomleft",
 "left", "topleft", "top", "topright", "right", "center". No legend if nothing selected.}
@@ -77,5 +87,6 @@ interrupt=c(5,9), did="two", its="two", newdata=TRUE, propensity=NULL)
 plot(am2, "DID", add.legend="bottomleft", ylim=c(2, 8))  #DID model
 plot(am2, "ITS", add.legend="top", ylim=c(2, 8))         #ITS model
 plot(am2, "DID", add.legend="topleft", main="DID study", col=c("dodgerblue","magenta"),
-ylim=c(2, 8), lwd=6, cex=2, cex.axis=2, cex.lab=1.5, cex.main=3, arrow=TRUE, xshift=0.02)
+ylim=c(2, 8), lwd=6, cex=3, cex.axis=2, cex.lab=1.5, cex.main=3, cex.text=2,
+arrow=TRUE, xshift=0.02, coefs=TRUE, round.c=2 )
 }
