@@ -892,9 +892,11 @@ plot(im21, "ITS", add.legend="top", xlim=c(-1, 14), ylim=c(2, 8),
 
 <img src="man/figures/README-revITS3-1.png" width="100%" />
 
+Using all plot options
+
 ``` r
-plot(im22, "ITS", add.legend="top", xlim=c(-1, 14), ylim=c(2, 8), 
-     main="ITS study: MGMT", col=c("dodgerblue","goldenrod"), lwd=7, cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(0, 0), cex.text=.75, coefs=TRUE, round.c=2 )
+plot(im22, "ITS", add.legend="top", xlim=c(-.5, 13), ylim=c(2, 8), 
+     main="ITS study: MGMT", col=c("dodgerblue","goldenrod"), lwd=7, cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(0, .5), cex.text=1.25, coefs=TRUE, round.c=2, pos.text= list("txp1"=3, "post2"=4))
 ```
 
 <img src="man/figures/README-revITS4-1.png" width="100%" />

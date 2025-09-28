@@ -28,7 +28,11 @@
 #' (e.g., "DID" before "DID.Trend" for DID models with argument did="many").
 #' @param coefs if 'arrow' is TRUE, logical TRUE or FALSE that indicates whether
 #' coefficient values should be added to the plot. Default is FALSE.
-#' @param round.c if 'arrow' is TRUE, an integer indicating the number of decimal places to be used for rounding coefficient values.
+#' @param round.c if 'arrow' is TRUE, an integer indicating the number of decimal places to be used
+#' for rounding coefficient values.
+#' @param pos.text if 'arrow' is TRUE, a list of named integer value(s) between 1 to 4 indicating
+#' the position of the text added into the plot. List names should use existing generic time references
+#' (e.g., "post1" and "post2").
 #' @param add.legend add a legend by selecting the location as "bottomright", "bottom", "bottomleft",
 #' "left", "topleft", "top", "topright", "right", "center". No legend if nothing selected.
 #' @param ... additional arguments.
@@ -36,26 +40,35 @@
 #' @return plot of partial predictions for treatment and control groups.
 #' @importFrom graphics lines plot legend abline segments arrows points text
 #' @importFrom utils head tail
+#' @importFrom methods is
 #' @export
 #'
 #' @examples
 #' am2 <- assess(formula= los ~ ., data=hosprog, intervention = "program",
 #' topcode =NULL, int.time="month", regression="none", treatment= 5,
 #' interrupt=c(5,9), did="two", its="two", newdata=TRUE, propensity=NULL)
-#' plot(am2, "DID", add.legend="bottomleft", ylim=c(2, 8))  #DID model
-#' plot(am2, "ITS", add.legend="top", ylim=c(2, 8))         #ITS model
+#' plot(am2, "DID", add.legend="bottomleft", ylim=c(2, 8))  #DID model, basic plot
+#' plot(am2, "ITS", add.legend="top", ylim=c(2, 8))         #ITS model, basic plot
 #' plot(am2, "DID", add.legend="topleft", main="DID study", col=c("dodgerblue","magenta"),
 #' ylim=c(2, 8), lwd=6, cex=3, cex.axis=2, cex.lab=1.5, cex.main=3, cex.text=2,
 #' arrow=TRUE, xshift=0.02, coefs=TRUE, round.c=2 )
+#' plot(am2, "ITS", add.legend="top", xlim=c(-.5, 13), ylim=c(2, 8), main="ITS study",
+#' col=c("cyan","hotpink"), lwd=7, arrow=TRUE, xshift=c(.5, 1.5), cex=2, cex.axis=2, cex.lab=2,
+#' cex.main=3, cex.text=1.2, coefs=TRUE, round.c=1, pos.text= list("txp1"=3, "post2"=4))
 plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NULL,
                         cex=NULL, cex.axis=NULL, cex.lab=NULL, cex.main=NULL, cex.text=NULL,
-                        arrow=FALSE, xshift=NULL, coefs=FALSE, round.c=NULL,
+                        arrow=FALSE, xshift=NULL, coefs=FALSE, round.c=NULL, pos.text=NULL,
                         add.legend=NULL, ...) {
   if(any(is.null(c(x, y)) == TRUE)) {
     stop("Error: Expecting both an x and y argument.")
   }
   if (any(class(x) == "assess") == FALSE) {stop("Error: Expecting assess class object." )}
   if (!y %in% c("DID", "ITS")) {stop("Error: Expecting y='DID' or y='ITS'." )}
+  if(!is.null(pos.text)) {
+    if(is(pos.text, "list") == FALSE) {
+      stop("Error: Expecting a list for pos.text")
+    }
+  }
 
   # Get assess objects
 
@@ -224,15 +237,35 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
       # t1 effect
       arrows(x0 = 1 + axshift, y0 = cft1, x1 = 1 + axshift, y1 = t1, code=2, #code=arrow_code[3],
              angle=30, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+      ## text positions ##
+      postwo <- list("Intercept"=4, "Post.All"=2, "Int.Var"=4,  "DID"=2)
+      #User submitted cpos
+      makechange <- pos.text
+      # identifies which elements to change in original positions
+      newposlist <- vector()
+      if(!is.null(pos.text)) {
+        for (i in 1:length(names(makechange))) {
+          newposlist[i] <- grep(paste0("^", names(makechange)[i], "$"), names(postwo))
+        }
+      }
+      # changes values
+      if(!is.null(pos.text)) {
+        for (i in 1:length(newposlist)) {
+          postwo[[newposlist[i]]] <- makechange[[i]]
+        }
+      } else {
+        postwo <- postwo
+      }
+
       # Add in coefficient names
       # intercept: control group pre-test
-      text(0, c0, labels = if(coefs == TRUE) paste("Intercept=", round(coef(cmodel)[1], round.c)) else "Intercept", pos=4, cex=textCEX)
+      text(0, c0, labels = if(coefs == TRUE) paste("Intercept=", round(coef(cmodel)[1], round.c)) else "Intercept", pos=postwo[[1]], cex=textCEX)
       # control group post-test
-      text(1, c1, labels =if(coefs == TRUE) paste("Post.All=", round(coef(cmodel)[2], round.c)) else "Post.All", pos=2, cex=textCEX)
+      text(1, c1, labels =if(coefs == TRUE) paste("Post.All=", round(coef(cmodel)[2], round.c)) else "Post.All", pos=postwo[[2]], cex=textCEX)
       # intervention group pre-test
-      text(0, t0, labels =if(coefs == TRUE) paste("Int.Var=", round(coef(cmodel)[3], round.c)) else "Int.Var", pos=4, cex=textCEX)
+      text(0, t0, labels =if(coefs == TRUE) paste("Int.Var=", round(coef(cmodel)[3], round.c)) else "Int.Var", pos=postwo[[3]], cex=textCEX)
       # intervention group post-test
-      text(1, t1, labels =if(coefs == TRUE) paste("DID=", round(coef(cmodel)[4], round.c)) else "DID", pos=2, cex=textCEX)
+      text(1, t1, labels =if(coefs == TRUE) paste("DID=", round(coef(cmodel)[4], round.c)) else "DID", pos=postwo[[4]], cex=textCEX)
     }
     if (!is.null(add.legend)) {
       legend(x=add.legend, legend=c("Intervention", "Control","Counterfactual", "Treated"),
@@ -316,12 +349,33 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
       arrows(x0 = max_time + axshift[2], y0 = atet0, x1 = max_time + axshift[2],
              y1 = atet1, code=2, #code=arrow_code[3],
              angle=30, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+
+      ## text positions ##
+      posmany <- list("Intercept"=4, "Period"=2, "DID"=((mdlcoefsign[2]-3)*-1) -1,"DID.Trend"= 2)
+#User submitted cpos
+makechange <- pos.text
+# identifies which elements to change in original positions
+newposlist <- vector()
+if(!is.null(pos.text)) {
+  for (i in 1:length(names(makechange))) {
+    newposlist[i] <- grep(paste0("^", names(makechange)[i], "$"), names(posmany))
+  }
+}
+# changes values
+if(!is.null(pos.text)) {
+  for (i in 1:length(newposlist)) {
+    posmany[[newposlist[i]]] <- makechange[[i]]
+  }
+} else {
+  posmany <- posmany
+}
+
       # Add in coefficient names
-      text(1, c0, labels = if(coefs == TRUE) paste("Intercept=", round(coef(cmodel)[1], round.c)) else "Intercept", pos=4, cex=textCEX)
-      text(max_time, c1, labels =if(coefs == TRUE) paste("Period=", round(coef(cmodel)[2], round.c)) else "Period", pos=2, cex=textCEX)
+      text(1, c0, labels = if(coefs == TRUE) paste("Intercept=", round(coef(cmodel)[1], round.c)) else "Intercept", pos=posmany[[1]], cex=textCEX)
+      text(max_time, c1, labels =if(coefs == TRUE) paste("Period=", round(coef(cmodel)[2], round.c)) else "Period", pos=posmany[[2]], cex=textCEX)
       text(treat_start, t0, labels =if(coefs == TRUE) paste("DID=", round(coef(cmodel)[3], round.c)) else "DID",
-           pos= ((mdlcoefsign[2]-3)*-1) -1, cex=textCEX) # how to place text
-      text(max_time, atet0, labels =if(coefs == TRUE) paste("DID.Trend=", round(coef(cmodel)[4], round.c)) else "DID.Trend", pos=2, cex=textCEX)
+           pos= posmany[[3]], cex=textCEX) # how to place text
+      text(max_time, atet0, labels =if(coefs == TRUE) paste("DID.Trend=", round(coef(cmodel)[4], round.c)) else "DID.Trend", pos=posmany[[4]], cex=textCEX)
     }
     if (!is.null(add.legend)) {
       legend(x=add.legend, legend=c("Intervention", "Control","Counterfactual", "Treated"),
@@ -434,21 +488,41 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
       arrows(x0 = timeqtrp2, y0 = time2thi, x1 = timemidp2, y1 = time2thi, code=2,
              angle=30, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
 
+      ## text positions ##
+      possgst <- list("Intercept"=posIntercept, "ITS.Time"=4, "post1"=2, "txp1"=4)
+      #User submitted cpos
+      makechange <- pos.text
+      # identifies which elements to change in original positions
+      newposlist <- vector()
+      if(!is.null(pos.text)) {
+        for (i in 1:length(names(makechange))) {
+          newposlist[i] <- grep(paste0("^", names(makechange)[i], "$"), names(possgst))
+        }
+      }
+      # changes values
+      if(!is.null(pos.text)) {
+        for (i in 1:length(newposlist)) {
+          possgst[[newposlist[i]]] <- makechange[[i]]
+        }
+      } else {
+        possgst <- possgst
+      }
+
       # Add in coefficient names
       # Period 1
       # Intercept
       text(1, t00, labels = if(coefs == TRUE) paste("Intercept=", round(coef(cmodel)[1], round.c)) else "Intercept",
-           pos=posIntercept, cex=textCEX)
+           pos=possgst[[1]], cex=textCEX)
       # ITS.Time
       text(timemidp1, time1thi, labels =if(coefs == TRUE) paste("ITS.Time=", round(coef(cmodel)[2], round.c)) else "ITS.Time",
-           pos=4, cex=textCEX)
+           pos=possgst[[2]], cex=textCEX)
       # Period 2
       # post1
       text(time_per2[1] + axshift[1], mean(c(t10, cft10)), labels =if(coefs == TRUE) paste("post1=", round(coef(cmodel)[3], round.c)) else "post1",
-           pos=2, cex=textCEX)
+           pos=possgst[[3]], cex=textCEX)
       # txp1
       text(timemidp2, time2thi, labels =if(coefs == TRUE) paste("txp1=", round(coef(cmodel)[4], round.c)) else "txp1",
-           pos=4, cex=textCEX)
+           pos=possgst[[4]], cex=textCEX)
 
     }
   }
@@ -600,29 +674,50 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
       arrows(x0 = timeqtrp3, y0 = time3thi, x1 = timemidp3, y1 = time3thi, code=2,
              angle=30, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
 
+      ## text positions ##
+      possgmt <- list("Intercept"=posIntercept, "ITS.Time"=4, "post1"=2,
+                      "txp1"=4, "post2"=2, "txp2"=4)
+      #User submitted cpos
+      makechange <- pos.text
+      # identifies which elements to change in original positions
+      newposlist <- vector()
+      if(!is.null(pos.text)) {
+        for (i in 1:length(names(makechange))) {
+          newposlist[i] <- grep(paste0("^", names(makechange)[i], "$"), names(possgmt))
+        }
+      }
+      # changes values
+      if(!is.null(pos.text)) {
+        for (i in 1:length(newposlist)) {
+          possgmt[[newposlist[i]]] <- makechange[[i]]
+        }
+      } else {
+        possgmt <- possgmt
+      }
+
       # Add in coefficient names
       # Period 1
       # Intercept
       text(1, t00, labels = if(coefs == TRUE) paste("Intercept=", round(coef(cmodel)[1], round.c)) else "Intercept",
-           pos=posIntercept, cex=textCEX)
+           pos=possgmt[[1]], cex=textCEX)
       # ITS.Time
       text(timemidp1, time1thi, labels =if(coefs == TRUE) paste("ITS.Time=", round(coef(cmodel)[2], round.c)) else "ITS.Time",
-           pos=4, cex=textCEX)
+           pos=possgmt[[2]], cex=textCEX)
       # Period 2
       # post1
       text(time_per2[1] + axshift[1], mean(c(t10, cft10)), labels =if(coefs == TRUE) paste("post1=", round(coef(cmodel)[3], round.c)) else "post1",
-           pos=2, cex=textCEX)
+           pos=possgmt[[3]], cex=textCEX)
       # txp1
       text(timemidp2, time2thi, labels =if(coefs == TRUE) paste("txp1=", round(coef(cmodel)[4], round.c)) else "txp1",
-           pos=4, cex=textCEX)
+           pos=possgmt[[4]], cex=textCEX)
       # Period 3
       # post2
       text(time_per3[1] + axshift[2], mean(c(t20, cft20)),
            labels =if(coefs == TRUE) paste("post2=", round(coef(cmodel)[5], round.c)) else "post2",
-           pos=2, cex=textCEX)
+           pos=possgmt[[5]], cex=textCEX)
       # txp2
       text(timemidp3, time3thi, labels =if(coefs == TRUE) paste("txp2=", round(coef(cmodel)[6], round.c)) else "txp2",
-           pos=4, cex=textCEX)
+           pos=possgmt[[6]], cex=textCEX)
     }
     }
 
@@ -807,33 +902,54 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
       arrows(x0 = timeqtrp2, y0 = time2thi, x1 = timemidp2, y1 = time2thi,
              code=2, angle=30, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
 
+      ## text positions ##
+      posmgst <- list("Intercept"=posIntercept, "ITS.Time"=4, "ITS.Int"=posITS.int, "txi"=4,
+                      "post1"=4, "txp1"=4, "ixp1"=4, "txip1"=4)
+      #User submitted cpos
+      makechange <- pos.text
+      # identifies which elements to change in original positions
+      newposlist <- vector()
+      if(!is.null(pos.text)) {
+        for (i in 1:length(names(makechange))) {
+          newposlist[i] <- grep(paste0("^", names(makechange)[i], "$"), names(posmgst))
+        }
+      }
+      # changes values
+      if(!is.null(pos.text)) {
+        for (i in 1:length(newposlist)) {
+          posmgst[[newposlist[i]]] <- makechange[[i]]
+        }
+      } else {
+        posmgst <- posmgst
+      }
+
       # Add in coefficient names
       # Period 1
       # Intercept
       text(1, c00, labels =if(coefs == TRUE) paste("Intercept=", round(coef(cmodel)[1], round.c)) else "Intercept",
-           pos=posIntercept, cex=textCEX)
+           pos=posmgst[[1]], cex=textCEX)
       # ITS.Time
       text(timemidp1, time1chi, labels =if(coefs == TRUE) paste("ITS.Time=", round(coef(cmodel)[2], round.c)) else "ITS.Time",
-           pos=4, cex=textCEX)
+           pos=posmgst[[2]], cex=textCEX)
       # ITS.Int
       text(1, t00, labels =if(coefs == TRUE) paste("ITS.Int=", round(coef(cmodel)[3], round.c)) else "ITS.Int",
-           pos=posITS.int, cex=textCEX)
+           pos=posmgst[[3]], cex=textCEX)
       # txi
       text(timemidp1, time1thi, labels =if(coefs == TRUE) paste("txi=", round(coef(cmodel)[4], round.c)) else "txi",
-           pos=4, cex=textCEX)
+           pos=posmgst[[4]], cex=textCEX)
       # Period 2
       # post1
       text(time_per2[1], mean(c(c10, cfc10)), labels =if(coefs == TRUE) paste("post1=", round(coef(cmodel)[5], round.c)) else "post1",
-           pos=2, cex=textCEX)
+           pos=posmgst[[5]], cex=textCEX)
       # txp1
       text(timemidp2, time2chi, labels =if(coefs == TRUE) paste("txp1=", round(coef(cmodel)[6], round.c)) else "txp1",
-           pos=4, cex=textCEX)
+           pos=posmgst[[6]], cex=textCEX)
       # ixp1
       text(time_per2[1] + axshift[1], mean(c(c10, t10)), labels =if(coefs == TRUE) paste("ixp1=", round(coef(cmodel)[7], round.c)) else "ixp1",
-           pos=4, cex=textCEX)
+           pos=posmgst[[7]], cex=textCEX)
       # txip1
       text(timemidp2, time2thi, labels =if(coefs == TRUE) paste("txip1=", round(coef(cmodel)[8], round.c)) else "txip1",
-           pos=4, cex=textCEX)
+           pos=posmgst[[8]], cex=textCEX)
     }
   }
 
@@ -1108,47 +1224,67 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
       # txip2
       arrows(x0 = timeqtrp3, y0 = time3thi, x1 = timemidp3, y1 = time3thi,
              code=2, angle=30, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+      ## text positions ##
+      posmgmt <- list("Intercept"=posIntercept, "ITS.Time"=4, "ITS.Int"=posITS.int, "txi"=4,
+                      "post1"=2, "txp1"=4,"ixp1"=4, "txip1"=4, "post2"=2,"txp2"=4,"ixp2"=4, "txip2"=4)
+      #User submitted cpos
+      makechange <- pos.text
+      # identifies which elements to change in original positions
+      newposlist <- vector()
+      if(!is.null(pos.text)) {
+        for (i in 1:length(names(makechange))) {
+          newposlist[i] <- grep(paste0("^", names(makechange)[i], "$"), names(posmgmt))
+        }
+      }
+      # changes values
+      if(!is.null(pos.text)) {
+        for (i in 1:length(newposlist)) {
+          posmgmt[[newposlist[i]]] <- makechange[[i]]
+        }
+      } else {
+        posmgmt <- posmgmt
+      }
 
       # Add in coefficient names
       # Period 1
       # Intercept
       text(1, c00, labels =if(coefs == TRUE) paste("Intercept=", round(coef(cmodel)[1], round.c)) else "Intercept",
-           pos=posIntercept, cex=textCEX)
+           pos=posmgmt[[1]], cex=textCEX)
       # ITS.Time
       text(timemidp1, time1chi, labels =if(coefs == TRUE) paste("ITS.Time=", round(coef(cmodel)[2], round.c)) else "ITS.Time",
-           pos=4, cex=textCEX)
+           pos=posmgmt[[2]], cex=textCEX)
       # ITS.Int
       text(1, t00, labels =if(coefs == TRUE) paste("ITS.Int=", round(coef(cmodel)[3], round.c)) else "ITS.Int",
-           pos=posITS.int, cex=textCEX)
+           pos=posmgmt[[3]], cex=textCEX)
       # txi
       text(timemidp1, time1thi, labels =if(coefs == TRUE) paste("txi=", round(coef(cmodel)[4], round.c)) else "txi",
-           pos=4, cex=textCEX)
+           pos=posmgmt[[4]], cex=textCEX)
       # Period 2
       # post1
       text(time_per2[1], mean(c(c10, cfc10)), labels =if(coefs == TRUE) paste("post1=", round(coef(cmodel)[5], round.c)) else "post1",
-           pos=2, cex=textCEX)
+           pos=posmgmt[[5]], cex=textCEX)
       # txp1
       text(timemidp2, time2chi, labels =if(coefs == TRUE) paste("txp1=", round(coef(cmodel)[6], round.c)) else "txp1",
-           pos=4, cex=textCEX)
+           pos=posmgmt[[6]], cex=textCEX)
       # ixp1
       text(time_per2[1] + axshift[1], mean(c(c10, t10)), labels =if(coefs == TRUE) paste("ixp1=", round(coef(cmodel)[7], round.c)) else "ixp1",
-           pos=4, cex=textCEX)
+           pos=posmgmt[[7]], cex=textCEX)
       # txip1
       text(timemidp2, time2thi, labels =if(coefs == TRUE) paste("txip1=", round(coef(cmodel)[8], round.c)) else "txip1",
-           pos=4, cex=textCEX)
+           pos=posmgmt[[8]], cex=textCEX)
       # Period 3
       # post2
       text(time_per3[1], mean(c(c20, cfc20)), labels =if(coefs == TRUE) paste("post2=", round(coef(cmodel)[9], round.c)) else "post2",
-           pos=2, cex=textCEX)
+           pos=posmgmt[[9]], cex=textCEX)
       # txp2
       text(timemidp3, time3chi, labels =if(coefs == TRUE) paste("txp2=", round(coef(cmodel)[10], round.c)) else "txp2",
-           pos=4, cex=textCEX)
+           pos=posmgmt[[10]], cex=textCEX)
       # ixp2
       text(time_per3[1] + axshift[2], mean(c(c20, t20)), labels =if(coefs == TRUE) paste("ixp2=", round(coef(cmodel)[11], round.c)) else "ixp2",
-           pos=4, cex=textCEX)
+           pos=posmgmt[[11]], cex=textCEX)
       # txip2
       text(timemidp3, time3thi, labels =if(coefs == TRUE) paste("txip2=", round(coef(cmodel)[12], round.c)) else "txip2",
-           pos=4, cex=textCEX)
+           pos=posmgmt[[12]], cex=textCEX)
     }
   }
 }
