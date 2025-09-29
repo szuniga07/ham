@@ -17,6 +17,7 @@
   cex.lab = NULL,
   cex.main = NULL,
   cex.text = NULL,
+  cex.legend = NULL,
   arrow = FALSE,
   xshift = NULL,
   coefs = FALSE,
@@ -51,6 +52,8 @@
 
 \item{cex.text}{The magnification to be used for the text added into the plot relative to the current setting of 1.}
 
+\item{cex.legend}{The magnification to be used for the legend added into the plot relative to the current setting of 1.}
+
 \item{arrow}{logical TRUE or FALSE that indicates whether arrows and
 coefficient names should be added to visualize effects. Default is FALSE.}
 
@@ -61,14 +64,15 @@ of the furthest right, vertical lines for the intervention group is shifted (i.e
 One line is shifted when there is 1 treatment/interruption period and 2 shifts for 2 periods.
 (e.g., "DID" before "DID.Trend" for DID models with argument did="many").}
 
-\item{coefs}{if 'arrow' is TRUE, logical TRUE or FALSE that indicates whether
-coefficient values should be added to the plot. Default is FALSE.}
+\item{coefs}{if 'arrow' is TRUE, logical TRUE or FALSE that indicates whether coefficient values
+and p-value significance symbols ('+' p<0.10; '\emph{' p<0.05; '\strong{' p<0.01; '}}' p<0.001) should be
+added to the plot. Default is FALSE.}
 
-\item{round.c}{if 'arrow' is TRUE, an integer indicating the number of decimal places to be used
-for rounding coefficient values.}
+\item{round.c}{if 'arrow' and 'coefs' are TRUE, an integer indicating the number of decimal places
+to be used for rounding coefficient values.}
 
-\item{pos.text}{if 'arrow' is TRUE, a list of named integer value(s) between 1 to 4 indicating
-the position of the text added into the plot. List names should use existing generic time references
+\item{pos.text}{if 'arrow' and 'coefs' are TRUE, a list of named integer value(s) between 1 to 4 indicating
+the position of the text added into the plot. List name(s) should use existing generic time references
 (e.g., "post1" and "post2").}
 
 \item{add.legend}{add a legend by selecting the location as "bottomright", "bottom", "bottomleft",
@@ -97,5 +101,6 @@ ylim=c(2, 8), lwd=6, cex=3, cex.axis=2, cex.lab=1.5, cex.main=3, cex.text=2,
 arrow=TRUE, xshift=0.02, coefs=TRUE, round.c=2 )
 plot(am2, "ITS", add.legend="top", xlim=c(-.5, 13), ylim=c(2, 8), main="ITS study",
 col=c("cyan","hotpink"), lwd=7, arrow=TRUE, xshift=c(.5, 1.5), cex=2, cex.axis=2, cex.lab=2,
-cex.main=3, cex.text=1.2, coefs=TRUE, round.c=1, pos.text= list("txp1"=3, "post2"=4))
+cex.main=3, cex.text=1.2, cex.legend=1.25, coefs=TRUE, round.c=1, pos.text= list("txp1"=3,
+"post2"=4))
 }

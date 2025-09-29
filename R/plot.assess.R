@@ -18,6 +18,7 @@
 #' @param cex.lab The magnification to be used for x and y labels relative to the current setting of cex.
 #' @param cex.main The magnification to be used for main titles relative to the current setting of cex.
 #' @param cex.text The magnification to be used for the text added into the plot relative to the current setting of 1.
+#' @param cex.legend The magnification to be used for the legend added into the plot relative to the current setting of 1.
 #' @param arrow logical TRUE or FALSE that indicates whether arrows and
 #' coefficient names should be added to visualize effects. Default is FALSE.
 #' @param xshift shifts one or two of some if the overlapping intervention associated arrows
@@ -26,12 +27,13 @@
 #' of the furthest right, vertical lines for the intervention group is shifted (i.e., not left).
 #' One line is shifted when there is 1 treatment/interruption period and 2 shifts for 2 periods.
 #' (e.g., "DID" before "DID.Trend" for DID models with argument did="many").
-#' @param coefs if 'arrow' is TRUE, logical TRUE or FALSE that indicates whether
-#' coefficient values should be added to the plot. Default is FALSE.
-#' @param round.c if 'arrow' is TRUE, an integer indicating the number of decimal places to be used
-#' for rounding coefficient values.
-#' @param pos.text if 'arrow' is TRUE, a list of named integer value(s) between 1 to 4 indicating
-#' the position of the text added into the plot. List names should use existing generic time references
+#' @param coefs if 'arrow' is TRUE, logical TRUE or FALSE that indicates whether coefficient values
+#' and p-value significance symbols ('+' p<0.10; '*' p<0.05; '**' p<0.01; '***' p<0.001) should be
+#' added to the plot. Default is FALSE.
+#' @param round.c if 'arrow' and 'coefs' are TRUE, an integer indicating the number of decimal places
+#' to be used for rounding coefficient values.
+#' @param pos.text if 'arrow' and 'coefs' are TRUE, a list of named integer value(s) between 1 to 4 indicating
+#' the position of the text added into the plot. List name(s) should use existing generic time references
 #' (e.g., "post1" and "post2").
 #' @param add.legend add a legend by selecting the location as "bottomright", "bottom", "bottomleft",
 #' "left", "topleft", "top", "topright", "right", "center". No legend if nothing selected.
@@ -54,11 +56,12 @@
 #' arrow=TRUE, xshift=0.02, coefs=TRUE, round.c=2 )
 #' plot(am2, "ITS", add.legend="top", xlim=c(-.5, 13), ylim=c(2, 8), main="ITS study",
 #' col=c("cyan","hotpink"), lwd=7, arrow=TRUE, xshift=c(.5, 1.5), cex=2, cex.axis=2, cex.lab=2,
-#' cex.main=3, cex.text=1.2, coefs=TRUE, round.c=1, pos.text= list("txp1"=3, "post2"=4))
+#' cex.main=3, cex.text=1.2, cex.legend=1.25, coefs=TRUE, round.c=1, pos.text= list("txp1"=3,
+#' "post2"=4))
 plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NULL,
                         cex=NULL, cex.axis=NULL, cex.lab=NULL, cex.main=NULL, cex.text=NULL,
-                        arrow=FALSE, xshift=NULL, coefs=FALSE, round.c=NULL, pos.text=NULL,
-                        add.legend=NULL, ...) {
+                        cex.legend=NULL, arrow=FALSE, xshift=NULL, coefs=FALSE, round.c=NULL,
+                        pos.text=NULL, add.legend=NULL, ...) {
   if(any(is.null(c(x, y)) == TRUE)) {
     stop("Error: Expecting both an x and y argument.")
   }
@@ -98,12 +101,64 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
     cmodel <- x[["ITS"]]
   }
 
+  #Model summary p-values
+  model_summary_p <- summary(cmodel)$coefficients[, "Pr(>|t|)"]
+  model_summary_p[model_summary_p < 0.10] <- "+"
+  model_summary_p[model_summary_p < 0.05] <- "*"
+  model_summary_p[model_summary_p < 0.01] <- "**"
+  model_summary_p[model_summary_p < 0.001] <- "***"
+  model_summary_p[model_summary_p >= 0.10] <- ""
+
   # model type
   if(y == "DID") {
     model_type <- x[["analysis_type"]][["did_type"]]
   }
   if(y == "ITS") {
     model_type <- x[["analysis_type"]][["itsa_type"]]
+  }
+
+  #Check for correct pos.text variable names
+  if (model_type == "two") {
+    if (!is.null(pos.text)) {
+      if (all(names(pos.text) %in% c("Intercept",'Post.All', 'Int.Var', 'DID')) == FALSE) {
+        stop("Error: Expecting pos.text variable names as 'Intercept', 'Period','Post.All', 'Int.Var', and/or 'DID'.")
+      }
+    }
+  }
+  if (model_type == "many") {
+    if (!is.null(pos.text)) {
+      if (all(names(pos.text) %in% c("Intercept","Period","DID","DID.Trend")) == FALSE) {
+        stop("Error: Expecting pos.text variable names as 'Intercept', 'Period', 'DID', and/or 'DID.Trend'.")
+      }
+    }
+  }
+  if (model_type == "sgst") {
+    if (!is.null(pos.text)) {
+      if (all(names(pos.text) %in% c('Intercept','ITS.Time', 'post1', 'txp1')) == FALSE) {
+        stop("Error: Expecting pos.text variable names as 'Intercept', 'ITS.Time', 'post1', and/or 'txp1'.")
+      }
+    }
+  }
+  if (model_type == "sgmt") {
+    if (!is.null(pos.text)) {
+      if (all(names(pos.text) %in% c('Intercept','ITS.Time', 'post1', 'txp1', 'post2','txp2')) == FALSE) {
+        stop("Error: Expecting pos.text variable names as 'Intercept', 'ITS.Time', 'post1', 'txp1', 'post2', and/or 'txp2'.")
+      }
+    }
+  }
+  if (model_type == "mgst") {
+    if (!is.null(pos.text)) {
+      if (all(names(pos.text) %in% c('Intercept', 'ITS.Time', 'ITS.Int', 'txi', 'post1', 'txp1', 'ixp1', 'txip1')) == FALSE) {
+        stop("Error: Expecting pos.text variable names as 'Intercept', 'ITS.Time', 'ITS.Int', 'txi', 'post1', 'txp1', 'ixp1', and/or 'txip1'.")
+      }
+    }
+  }
+  if (model_type == "mgmt") {
+    if (!is.null(pos.text)) {
+      if (all(names(pos.text) %in% c('Intercept', 'ITS.Time', 'ITS.Int', 'txi', 'post1', 'txp1', 'ixp1', 'txip1', 'post2', 'txp2', 'ixp2', 'txip2')) == FALSE) {
+        stop("Error: Expecting pos.text variable names as 'Intercept', 'ITS.Time', 'ITS.Int', 'txi', 'post1', 'txp1', 'ixp1', 'txip1', 'post2', 'txp2', 'ixp2', and/or 'txip2'.")
+      }
+    }
   }
 
   #Get main title
@@ -169,6 +224,12 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
     round.c <- round.c
   } else {
     round.c <- 2
+  }
+  #Make CEX for legend
+  if(!is.null(cex.legend)) {
+    cex.legend <- cex.legend
+  } else {
+    cex.legend <- 1
   }
   #This gets the sign of the coefficients to assign the arrow codes
   #cmodel will work for DID and ITS models
@@ -259,18 +320,18 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
 
       # Add in coefficient names
       # intercept: control group pre-test
-      text(0, c0, labels = if(coefs == TRUE) paste("Intercept=", round(coef(cmodel)[1], round.c)) else "Intercept", pos=postwo[[1]], cex=textCEX)
+      text(0, c0, labels = if(coefs == TRUE) paste0("Intercept= ", round(coef(cmodel)[1], round.c), model_summary_p[1]) else "Intercept", pos=postwo[[1]], cex=textCEX)
       # control group post-test
-      text(1, c1, labels =if(coefs == TRUE) paste("Post.All=", round(coef(cmodel)[2], round.c)) else "Post.All", pos=postwo[[2]], cex=textCEX)
+      text(1, c1, labels =if(coefs == TRUE) paste0("Post.All= ", round(coef(cmodel)[2], round.c), model_summary_p[2]) else "Post.All", pos=postwo[[2]], cex=textCEX)
       # intervention group pre-test
-      text(0, t0, labels =if(coefs == TRUE) paste("Int.Var=", round(coef(cmodel)[3], round.c)) else "Int.Var", pos=postwo[[3]], cex=textCEX)
+      text(0, t0, labels =if(coefs == TRUE) paste0("Int.Var= ", round(coef(cmodel)[3], round.c), model_summary_p[3]) else "Int.Var", pos=postwo[[3]], cex=textCEX)
       # intervention group post-test
-      text(1, t1, labels =if(coefs == TRUE) paste("DID=", round(coef(cmodel)[4], round.c)) else "DID", pos=postwo[[4]], cex=textCEX)
+      text(1, t1, labels =if(coefs == TRUE) paste0("DID= ", round(coef(cmodel)[4], round.c), model_summary_p[4]) else "DID", pos=postwo[[4]], cex=textCEX)
     }
     if (!is.null(add.legend)) {
       legend(x=add.legend, legend=c("Intervention", "Control","Counterfactual", "Treated"),
              lty= c(1,1,2,3),
-             lwd=1, col=c(lcol[1],lcol[2],lcol[1],"gray"), bty="n", cex=1)
+             lwd=cex.legend, col=c(lcol[1],lcol[2],lcol[1],"gray"), bty="n", cex=cex.legend)
     }
   }
 
@@ -371,16 +432,16 @@ if(!is.null(pos.text)) {
 }
 
       # Add in coefficient names
-      text(1, c0, labels = if(coefs == TRUE) paste("Intercept=", round(coef(cmodel)[1], round.c)) else "Intercept", pos=posmany[[1]], cex=textCEX)
-      text(max_time, c1, labels =if(coefs == TRUE) paste("Period=", round(coef(cmodel)[2], round.c)) else "Period", pos=posmany[[2]], cex=textCEX)
-      text(treat_start, t0, labels =if(coefs == TRUE) paste("DID=", round(coef(cmodel)[3], round.c)) else "DID",
+      text(1, c0, labels = if(coefs == TRUE) paste0("Intercept= ", round(coef(cmodel)[1], round.c), model_summary_p[1]) else "Intercept", pos=posmany[[1]], cex=textCEX)
+      text(max_time, c1, labels =if(coefs == TRUE) paste0("Period= ", round(coef(cmodel)[2], round.c), model_summary_p[2]) else "Period", pos=posmany[[2]], cex=textCEX)
+      text(treat_start, t0, labels =if(coefs == TRUE) paste0("DID= ", round(coef(cmodel)[3], round.c), model_summary_p[3]) else "DID",
            pos= posmany[[3]], cex=textCEX) # how to place text
-      text(max_time, atet0, labels =if(coefs == TRUE) paste("DID.Trend=", round(coef(cmodel)[4], round.c)) else "DID.Trend", pos=posmany[[4]], cex=textCEX)
+      text(max_time, atet0, labels =if(coefs == TRUE) paste0("DID.Trend= ", round(coef(cmodel)[4], round.c), model_summary_p[4]) else "DID.Trend", pos=posmany[[4]], cex=textCEX)
     }
     if (!is.null(add.legend)) {
       legend(x=add.legend, legend=c("Intervention", "Control","Counterfactual", "Treated"),
              lty= c(1,1,2,3),
-             lwd=1, col=c(lcol[1],lcol[2],lcol[1],"gray"), bty="n", cex=1)
+             lwd=cex.legend, col=c(lcol[1],lcol[2],lcol[1],"gray"), bty="n", cex=cex.legend)
     }
   }
 
@@ -440,7 +501,7 @@ if(!is.null(pos.text)) {
     if (!is.null(add.legend)) {
       legend(x=add.legend, legend=c("Intervention", "Counterfactual", "Treated"),
              lty= c(1,2,3),
-             lwd=1, col=c(lcol[1],lcol[1],"gray"), bty="n", cex=1)
+             lwd=cex.legend, col=c(lcol[1],lcol[1],"gray"), bty="n", cex=cex.legend)
     }
     # Arrows and coefficient names #
     if (arrow == TRUE) {
@@ -511,17 +572,17 @@ if(!is.null(pos.text)) {
       # Add in coefficient names
       # Period 1
       # Intercept
-      text(1, t00, labels = if(coefs == TRUE) paste("Intercept=", round(coef(cmodel)[1], round.c)) else "Intercept",
+      text(1, t00, labels = if(coefs == TRUE) paste0("Intercept= ", round(coef(cmodel)[1], round.c), model_summary_p[1]) else "Intercept",
            pos=possgst[[1]], cex=textCEX)
       # ITS.Time
-      text(timemidp1, time1thi, labels =if(coefs == TRUE) paste("ITS.Time=", round(coef(cmodel)[2], round.c)) else "ITS.Time",
+      text(timemidp1, time1thi, labels =if(coefs == TRUE) paste0("ITS.Time= ", round(coef(cmodel)[2], round.c), model_summary_p[2]) else "ITS.Time",
            pos=possgst[[2]], cex=textCEX)
       # Period 2
       # post1
-      text(time_per2[1] + axshift[1], mean(c(t10, cft10)), labels =if(coefs == TRUE) paste("post1=", round(coef(cmodel)[3], round.c)) else "post1",
+      text(time_per2[1] + axshift[1], mean(c(t10, cft10)), labels =if(coefs == TRUE) paste0("post1= ", round(coef(cmodel)[3], round.c), model_summary_p[3]) else "post1",
            pos=possgst[[3]], cex=textCEX)
       # txp1
-      text(timemidp2, time2thi, labels =if(coefs == TRUE) paste("txp1=", round(coef(cmodel)[4], round.c)) else "txp1",
+      text(timemidp2, time2thi, labels =if(coefs == TRUE) paste0("txp1= ", round(coef(cmodel)[4], round.c), model_summary_p[4]) else "txp1",
            pos=possgst[[4]], cex=textCEX)
 
     }
@@ -601,7 +662,7 @@ if(!is.null(pos.text)) {
     if (!is.null(add.legend)) {
       legend(x=add.legend, legend=c("Intervention", "Counterfactual", "Treated"),
              lty= c(1,2,3),
-             lwd=1, col=c(lcol[1],lcol[1],"gray"), bty="n", cex=1)
+             lwd=cex.legend, col=c(lcol[1],lcol[1],"gray"), bty="n", cex=cex.legend)
     }
     # Arrows and coefficient names #
     if (arrow == TRUE) {
@@ -698,25 +759,25 @@ if(!is.null(pos.text)) {
       # Add in coefficient names
       # Period 1
       # Intercept
-      text(1, t00, labels = if(coefs == TRUE) paste("Intercept=", round(coef(cmodel)[1], round.c)) else "Intercept",
+      text(1, t00, labels = if(coefs == TRUE) paste0("Intercept= ", round(coef(cmodel)[1], round.c), model_summary_p[1]) else "Intercept",
            pos=possgmt[[1]], cex=textCEX)
       # ITS.Time
-      text(timemidp1, time1thi, labels =if(coefs == TRUE) paste("ITS.Time=", round(coef(cmodel)[2], round.c)) else "ITS.Time",
+      text(timemidp1, time1thi, labels =if(coefs == TRUE) paste0("ITS.Time= ", round(coef(cmodel)[2], round.c), model_summary_p[2]) else "ITS.Time",
            pos=possgmt[[2]], cex=textCEX)
       # Period 2
       # post1
-      text(time_per2[1] + axshift[1], mean(c(t10, cft10)), labels =if(coefs == TRUE) paste("post1=", round(coef(cmodel)[3], round.c)) else "post1",
+      text(time_per2[1] + axshift[1], mean(c(t10, cft10)), labels =if(coefs == TRUE) paste0("post1= ", round(coef(cmodel)[3], round.c), model_summary_p[3]) else "post1",
            pos=possgmt[[3]], cex=textCEX)
       # txp1
-      text(timemidp2, time2thi, labels =if(coefs == TRUE) paste("txp1=", round(coef(cmodel)[4], round.c)) else "txp1",
+      text(timemidp2, time2thi, labels =if(coefs == TRUE) paste0("txp1= ", round(coef(cmodel)[4], round.c), model_summary_p[4]) else "txp1",
            pos=possgmt[[4]], cex=textCEX)
       # Period 3
       # post2
       text(time_per3[1] + axshift[2], mean(c(t20, cft20)),
-           labels =if(coefs == TRUE) paste("post2=", round(coef(cmodel)[5], round.c)) else "post2",
+           labels =if(coefs == TRUE) paste0("post2= ", round(coef(cmodel)[5], round.c), model_summary_p[5]) else "post2",
            pos=possgmt[[5]], cex=textCEX)
       # txp2
-      text(timemidp3, time3thi, labels =if(coefs == TRUE) paste("txp2=", round(coef(cmodel)[6], round.c)) else "txp2",
+      text(timemidp3, time3thi, labels =if(coefs == TRUE) paste0("txp2= ", round(coef(cmodel)[6], round.c), model_summary_p[6]) else "txp2",
            pos=possgmt[[6]], cex=textCEX)
     }
     }
@@ -791,7 +852,7 @@ if(!is.null(pos.text)) {
     if (!is.null(add.legend)) {
       legend(x=add.legend, legend=c("Intervention", "Control", "Treated"),
              lty= c(1,1,3),
-             lwd=1, col=c(lcol[1],lcol[2],"gray"), bty="n", cex=1)
+             lwd=cex.legend, col=c(lcol[1],lcol[2],"gray"), bty="n", cex=cex.legend)
     }
     # Arrows and coefficient names #
     if (arrow == TRUE) {
@@ -926,29 +987,29 @@ if(!is.null(pos.text)) {
       # Add in coefficient names
       # Period 1
       # Intercept
-      text(1, c00, labels =if(coefs == TRUE) paste("Intercept=", round(coef(cmodel)[1], round.c)) else "Intercept",
+      text(1, c00, labels =if(coefs == TRUE) paste0("Intercept= ", round(coef(cmodel)[1], round.c), model_summary_p[1]) else "Intercept",
            pos=posmgst[[1]], cex=textCEX)
       # ITS.Time
-      text(timemidp1, time1chi, labels =if(coefs == TRUE) paste("ITS.Time=", round(coef(cmodel)[2], round.c)) else "ITS.Time",
+      text(timemidp1, time1chi, labels =if(coefs == TRUE) paste0("ITS.Time= ", round(coef(cmodel)[2], round.c), model_summary_p[2]) else "ITS.Time",
            pos=posmgst[[2]], cex=textCEX)
       # ITS.Int
-      text(1, t00, labels =if(coefs == TRUE) paste("ITS.Int=", round(coef(cmodel)[3], round.c)) else "ITS.Int",
+      text(1, t00, labels =if(coefs == TRUE) paste0("ITS.Int= ", round(coef(cmodel)[3], round.c), model_summary_p[3]) else "ITS.Int",
            pos=posmgst[[3]], cex=textCEX)
       # txi
-      text(timemidp1, time1thi, labels =if(coefs == TRUE) paste("txi=", round(coef(cmodel)[4], round.c)) else "txi",
+      text(timemidp1, time1thi, labels =if(coefs == TRUE) paste0("txi= ", round(coef(cmodel)[4], round.c), model_summary_p[4]) else "txi",
            pos=posmgst[[4]], cex=textCEX)
       # Period 2
       # post1
-      text(time_per2[1], mean(c(c10, cfc10)), labels =if(coefs == TRUE) paste("post1=", round(coef(cmodel)[5], round.c)) else "post1",
+      text(time_per2[1], mean(c(c10, cfc10)), labels =if(coefs == TRUE) paste0("post1= ", round(coef(cmodel)[5], round.c), model_summary_p[5]) else "post1",
            pos=posmgst[[5]], cex=textCEX)
       # txp1
-      text(timemidp2, time2chi, labels =if(coefs == TRUE) paste("txp1=", round(coef(cmodel)[6], round.c)) else "txp1",
+      text(timemidp2, time2chi, labels =if(coefs == TRUE) paste0("txp1= ", round(coef(cmodel)[6], round.c), model_summary_p[6]) else "txp1",
            pos=posmgst[[6]], cex=textCEX)
       # ixp1
-      text(time_per2[1] + axshift[1], mean(c(c10, t10)), labels =if(coefs == TRUE) paste("ixp1=", round(coef(cmodel)[7], round.c)) else "ixp1",
+      text(time_per2[1] + axshift[1], mean(c(c10, t10)), labels =if(coefs == TRUE) paste0("ixp1= ", round(coef(cmodel)[7], round.c), model_summary_p[7]) else "ixp1",
            pos=posmgst[[7]], cex=textCEX)
       # txip1
-      text(timemidp2, time2thi, labels =if(coefs == TRUE) paste("txip1=", round(coef(cmodel)[8], round.c)) else "txip1",
+      text(timemidp2, time2thi, labels =if(coefs == TRUE) paste0("txip1= ", round(coef(cmodel)[8], round.c), model_summary_p[8]) else "txip1",
            pos=posmgst[[8]], cex=textCEX)
     }
   }
@@ -1059,7 +1120,7 @@ if(!is.null(pos.text)) {
     if (!is.null(add.legend)) {
       legend(x=add.legend, legend=c("Intervention", "Control", "Treated"),
              lty= c(1,1,3),
-             lwd=1, col=c(lcol[1],lcol[2],"gray"), bty="n", cex=1)
+             lwd=cex.legend, col=c(lcol[1],lcol[2],"gray"), bty="n", cex=cex.legend)
     }
     # Arrows and coefficient names #
     if (arrow == TRUE) {
@@ -1248,42 +1309,42 @@ if(!is.null(pos.text)) {
       # Add in coefficient names
       # Period 1
       # Intercept
-      text(1, c00, labels =if(coefs == TRUE) paste("Intercept=", round(coef(cmodel)[1], round.c)) else "Intercept",
+      text(1, c00, labels =if(coefs == TRUE) paste0("Intercept= ", round(coef(cmodel)[1], round.c), model_summary_p[1]) else "Intercept",
            pos=posmgmt[[1]], cex=textCEX)
       # ITS.Time
-      text(timemidp1, time1chi, labels =if(coefs == TRUE) paste("ITS.Time=", round(coef(cmodel)[2], round.c)) else "ITS.Time",
+      text(timemidp1, time1chi, labels =if(coefs == TRUE) paste0("ITS.Time= ", round(coef(cmodel)[2], round.c), model_summary_p[2]) else "ITS.Time",
            pos=posmgmt[[2]], cex=textCEX)
       # ITS.Int
-      text(1, t00, labels =if(coefs == TRUE) paste("ITS.Int=", round(coef(cmodel)[3], round.c)) else "ITS.Int",
+      text(1, t00, labels =if(coefs == TRUE) paste0("ITS.Int= ", round(coef(cmodel)[3], round.c), model_summary_p[3]) else "ITS.Int",
            pos=posmgmt[[3]], cex=textCEX)
       # txi
-      text(timemidp1, time1thi, labels =if(coefs == TRUE) paste("txi=", round(coef(cmodel)[4], round.c)) else "txi",
+      text(timemidp1, time1thi, labels =if(coefs == TRUE) paste0("txi= ", round(coef(cmodel)[4], round.c), model_summary_p[4]) else "txi",
            pos=posmgmt[[4]], cex=textCEX)
       # Period 2
       # post1
-      text(time_per2[1], mean(c(c10, cfc10)), labels =if(coefs == TRUE) paste("post1=", round(coef(cmodel)[5], round.c)) else "post1",
+      text(time_per2[1], mean(c(c10, cfc10)), labels =if(coefs == TRUE) paste0("post1= ", round(coef(cmodel)[5], round.c), model_summary_p[5]) else "post1",
            pos=posmgmt[[5]], cex=textCEX)
       # txp1
-      text(timemidp2, time2chi, labels =if(coefs == TRUE) paste("txp1=", round(coef(cmodel)[6], round.c)) else "txp1",
+      text(timemidp2, time2chi, labels =if(coefs == TRUE) paste0("txp1= ", round(coef(cmodel)[6], round.c), model_summary_p[6]) else "txp1",
            pos=posmgmt[[6]], cex=textCEX)
       # ixp1
-      text(time_per2[1] + axshift[1], mean(c(c10, t10)), labels =if(coefs == TRUE) paste("ixp1=", round(coef(cmodel)[7], round.c)) else "ixp1",
+      text(time_per2[1] + axshift[1], mean(c(c10, t10)), labels =if(coefs == TRUE) paste0("ixp1= ", round(coef(cmodel)[7], round.c), model_summary_p[7]) else "ixp1",
            pos=posmgmt[[7]], cex=textCEX)
       # txip1
-      text(timemidp2, time2thi, labels =if(coefs == TRUE) paste("txip1=", round(coef(cmodel)[8], round.c)) else "txip1",
+      text(timemidp2, time2thi, labels =if(coefs == TRUE) paste0("txip1= ", round(coef(cmodel)[8], round.c), model_summary_p[8]) else "txip1",
            pos=posmgmt[[8]], cex=textCEX)
       # Period 3
       # post2
-      text(time_per3[1], mean(c(c20, cfc20)), labels =if(coefs == TRUE) paste("post2=", round(coef(cmodel)[9], round.c)) else "post2",
+      text(time_per3[1], mean(c(c20, cfc20)), labels =if(coefs == TRUE) paste0("post2= ", round(coef(cmodel)[9], round.c), model_summary_p[9]) else "post2",
            pos=posmgmt[[9]], cex=textCEX)
       # txp2
-      text(timemidp3, time3chi, labels =if(coefs == TRUE) paste("txp2=", round(coef(cmodel)[10], round.c)) else "txp2",
+      text(timemidp3, time3chi, labels =if(coefs == TRUE) paste0("txp2= ", round(coef(cmodel)[10], round.c), model_summary_p[10]) else "txp2",
            pos=posmgmt[[10]], cex=textCEX)
       # ixp2
-      text(time_per3[1] + axshift[2], mean(c(c20, t20)), labels =if(coefs == TRUE) paste("ixp2=", round(coef(cmodel)[11], round.c)) else "ixp2",
+      text(time_per3[1] + axshift[2], mean(c(c20, t20)), labels =if(coefs == TRUE) paste0("ixp2= ", round(coef(cmodel)[11], round.c), model_summary_p[11]) else "ixp2",
            pos=posmgmt[[11]], cex=textCEX)
       # txip2
-      text(timemidp3, time3thi, labels =if(coefs == TRUE) paste("txip2=", round(coef(cmodel)[12], round.c)) else "txip2",
+      text(timemidp3, time3thi, labels =if(coefs == TRUE) paste0("txip2= ", round(coef(cmodel)[12], round.c), model_summary_p[12]) else "txip2",
            pos=posmgmt[[12]], cex=textCEX)
     }
   }
