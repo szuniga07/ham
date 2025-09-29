@@ -103,11 +103,14 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
 
   #Model summary p-values
   model_summary_p <- summary(cmodel)$coefficients[, "Pr(>|t|)"]
-  model_summary_p[model_summary_p < 0.10] <- "+"
-  model_summary_p[model_summary_p < 0.05] <- "*"
-  model_summary_p[model_summary_p < 0.01] <- "**"
-  model_summary_p[model_summary_p < 0.001] <- "***"
-  model_summary_p[model_summary_p >= 0.10] <- ""
+  model_summary <- model_summary_p #Need this when indexing, above becomes a character
+  for(i in 1:length(model_summary_p)) {
+    model_summary_p[i][model_summary[i] < 0.10] <- "+"
+    model_summary_p[i][model_summary[i] < 0.05] <- "*"
+    model_summary_p[i][model_summary[i] < 0.01] <- "**"
+    model_summary_p[i][model_summary[i] < 0.001] <- "***"
+    model_summary_p[i][model_summary[i] >= 0.10] <- ""
+  }
 
   # model type
   if(y == "DID") {
