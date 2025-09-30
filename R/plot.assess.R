@@ -124,42 +124,42 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
   if (model_type == "two") {
     if (!is.null(pos.text)) {
       if (all(names(pos.text) %in% c("Intercept",'Post.All', 'Int.Var', 'DID')) == FALSE) {
-        stop("Error: Expecting pos.text variable names as 'Intercept', 'Period','Post.All', 'Int.Var', and/or 'DID'.")
+        stop("Error: Expecting pos.text variable names and values for 'Intercept', 'Period','Post.All', 'Int.Var', and/or 'DID'.")
       }
     }
   }
   if (model_type == "many") {
     if (!is.null(pos.text)) {
       if (all(names(pos.text) %in% c("Intercept","Period","DID","DID.Trend")) == FALSE) {
-        stop("Error: Expecting pos.text variable names as 'Intercept', 'Period', 'DID', and/or 'DID.Trend'.")
+        stop("Error: Expecting pos.text variable names and values for 'Intercept', 'Period', 'DID', and/or 'DID.Trend'.")
       }
     }
   }
   if (model_type == "sgst") {
     if (!is.null(pos.text)) {
       if (all(names(pos.text) %in% c('Intercept','ITS.Time', 'post1', 'txp1')) == FALSE) {
-        stop("Error: Expecting pos.text variable names as 'Intercept', 'ITS.Time', 'post1', and/or 'txp1'.")
+        stop("Error: Expecting pos.text variable names and values for 'Intercept', 'ITS.Time', 'post1', and/or 'txp1'.")
       }
     }
   }
   if (model_type == "sgmt") {
     if (!is.null(pos.text)) {
       if (all(names(pos.text) %in% c('Intercept','ITS.Time', 'post1', 'txp1', 'post2','txp2')) == FALSE) {
-        stop("Error: Expecting pos.text variable names as 'Intercept', 'ITS.Time', 'post1', 'txp1', 'post2', and/or 'txp2'.")
+        stop("Error: Expecting pos.text variable names and values for 'Intercept', 'ITS.Time', 'post1', 'txp1', 'post2', and/or 'txp2'.")
       }
     }
   }
   if (model_type == "mgst") {
     if (!is.null(pos.text)) {
       if (all(names(pos.text) %in% c('Intercept', 'ITS.Time', 'ITS.Int', 'txi', 'post1', 'txp1', 'ixp1', 'txip1')) == FALSE) {
-        stop("Error: Expecting pos.text variable names as 'Intercept', 'ITS.Time', 'ITS.Int', 'txi', 'post1', 'txp1', 'ixp1', and/or 'txip1'.")
+        stop("Error: Expecting pos.text variable names and values for 'Intercept', 'ITS.Time', 'ITS.Int', 'txi', 'post1', 'txp1', 'ixp1', and/or 'txip1'.")
       }
     }
   }
   if (model_type == "mgmt") {
     if (!is.null(pos.text)) {
       if (all(names(pos.text) %in% c('Intercept', 'ITS.Time', 'ITS.Int', 'txi', 'post1', 'txp1', 'ixp1', 'txip1', 'post2', 'txp2', 'ixp2', 'txip2')) == FALSE) {
-        stop("Error: Expecting pos.text variable names as 'Intercept', 'ITS.Time', 'ITS.Int', 'txi', 'post1', 'txp1', 'ixp1', 'txip1', 'post2', 'txp2', 'ixp2', and/or 'txip2'.")
+        stop("Error: Expecting pos.text variable names and values for 'Intercept', 'ITS.Time', 'ITS.Int', 'txi', 'post1', 'txp1', 'ixp1', 'txip1', 'post2', 'txp2', 'ixp2', and/or 'txip2'.")
       }
     }
   }
