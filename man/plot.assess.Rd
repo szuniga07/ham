@@ -20,6 +20,7 @@
   cex.legend = NULL,
   arrow = FALSE,
   xshift = NULL,
+  name = FALSE,
   coefs = FALSE,
   round.c = NULL,
   pos.text = NULL,
@@ -57,21 +58,24 @@
 \item{arrow}{logical TRUE or FALSE that indicates whether arrows and
 coefficient names should be added to visualize effects. Default is FALSE.}
 
-\item{xshift}{shifts one or two of some if the overlapping intervention associated arrows
+\item{xshift}{shifts one or two of some of the overlapping intervention associated arrows
 along the x-axis for a better view. Vector values of at least length 1 or 2 can be positive
 or negative. And xshift should be specified in the order of the coefficients. Only 1 or 2
 of the furthest right, vertical lines for the intervention group is shifted (i.e., not left).
 One line is shifted when there is 1 treatment/interruption period and 2 shifts for 2 periods.
 (e.g., "DID" before "DID.Trend" for DID models with argument did="many").}
 
-\item{coefs}{if 'arrow' is TRUE, logical TRUE or FALSE that indicates whether coefficient values
-and p-value significance symbols ('+' p<0.10; '\emph{' p<0.05; '\strong{' p<0.01; '}}' p<0.001) should be
-added to the plot. Default is FALSE.}
+\item{name}{logical TRUE or FALSE that indicates whether coefficient names
+should be added to the plot. Default is FALSE. It is overridden if coefs = TRUE.}
 
-\item{round.c}{if 'arrow' and 'coefs' are TRUE, an integer indicating the number of decimal places
+\item{coefs}{logical TRUE or FALSE that indicates whether coefficient names, values,
+and p-value significance symbols ('+' p<0.10; '\emph{' p<0.05; '\strong{' p<0.01; '}}' p<0.001) should be
+added to the plot. Default is FALSE. coefs = TRUE overrides name = FALSE.}
+
+\item{round.c}{an integer indicating the number of decimal places
 to be used for rounding coefficient values.}
 
-\item{pos.text}{if 'arrow' and 'coefs' are TRUE, a list of named integer value(s) between 1 to 4 indicating
+\item{pos.text}{a list of named integer value(s) between 1 to 4 indicating
 the position of the text added into the plot. List name(s) should use existing generic time references
 (e.g., "post1" and "post2").}
 
@@ -101,6 +105,6 @@ ylim=c(2, 8), lwd=6, cex=3, cex.axis=2, cex.lab=1.5, cex.main=3, cex.text=2,
 arrow=TRUE, xshift=0.02, coefs=TRUE, round.c=2 )
 plot(am2, "ITS", add.legend="top", xlim=c(-.5, 13), ylim=c(2, 8), main="ITS study",
 col=c("cyan","hotpink"), lwd=7, arrow=TRUE, xshift=c(.5, 1.5), cex=2, cex.axis=2, cex.lab=2,
-cex.main=3, cex.text=1.2, cex.legend=1.25, coefs=TRUE, round.c=1, pos.text= list("txp1"=3,
-"post2"=4))
+cex.main=3, cex.text=1.2, cex.legend=1.25, name=FALSE, coefs=TRUE, round.c=1,
+pos.text= list("txp1"=3, "post2"=4))
 }

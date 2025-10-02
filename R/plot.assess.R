@@ -21,18 +21,20 @@
 #' @param cex.legend The magnification to be used for the legend added into the plot relative to the current setting of 1.
 #' @param arrow logical TRUE or FALSE that indicates whether arrows and
 #' coefficient names should be added to visualize effects. Default is FALSE.
-#' @param xshift shifts one or two of some if the overlapping intervention associated arrows
+#' @param xshift shifts one or two of some of the overlapping intervention associated arrows
 #' along the x-axis for a better view. Vector values of at least length 1 or 2 can be positive
 #' or negative. And xshift should be specified in the order of the coefficients. Only 1 or 2
 #' of the furthest right, vertical lines for the intervention group is shifted (i.e., not left).
 #' One line is shifted when there is 1 treatment/interruption period and 2 shifts for 2 periods.
 #' (e.g., "DID" before "DID.Trend" for DID models with argument did="many").
-#' @param coefs if 'arrow' is TRUE, logical TRUE or FALSE that indicates whether coefficient values
+#' @param name logical TRUE or FALSE that indicates whether coefficient names
+#' should be added to the plot. Default is FALSE. It is overridden if coefs = TRUE.
+#' @param coefs logical TRUE or FALSE that indicates whether coefficient names, values,
 #' and p-value significance symbols ('+' p<0.10; '*' p<0.05; '**' p<0.01; '***' p<0.001) should be
-#' added to the plot. Default is FALSE.
-#' @param round.c if 'arrow' and 'coefs' are TRUE, an integer indicating the number of decimal places
+#' added to the plot. Default is FALSE. coefs = TRUE overrides name = FALSE.
+#' @param round.c an integer indicating the number of decimal places
 #' to be used for rounding coefficient values.
-#' @param pos.text if 'arrow' and 'coefs' are TRUE, a list of named integer value(s) between 1 to 4 indicating
+#' @param pos.text a list of named integer value(s) between 1 to 4 indicating
 #' the position of the text added into the plot. List name(s) should use existing generic time references
 #' (e.g., "post1" and "post2").
 #' @param add.legend add a legend by selecting the location as "bottomright", "bottom", "bottomleft",
@@ -56,11 +58,11 @@
 #' arrow=TRUE, xshift=0.02, coefs=TRUE, round.c=2 )
 #' plot(am2, "ITS", add.legend="top", xlim=c(-.5, 13), ylim=c(2, 8), main="ITS study",
 #' col=c("cyan","hotpink"), lwd=7, arrow=TRUE, xshift=c(.5, 1.5), cex=2, cex.axis=2, cex.lab=2,
-#' cex.main=3, cex.text=1.2, cex.legend=1.25, coefs=TRUE, round.c=1, pos.text= list("txp1"=3,
-#' "post2"=4))
+#' cex.main=3, cex.text=1.2, cex.legend=1.25, name=FALSE, coefs=TRUE, round.c=1,
+#' pos.text= list("txp1"=3, "post2"=4))
 plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NULL,
                         cex=NULL, cex.axis=NULL, cex.lab=NULL, cex.main=NULL, cex.text=NULL,
-                        cex.legend=NULL, arrow=FALSE, xshift=NULL, coefs=FALSE, round.c=NULL,
+                        cex.legend=NULL, arrow=FALSE, xshift=NULL, name=FALSE, coefs=FALSE, round.c=NULL,
                         pos.text=NULL, add.legend=NULL, ...) {
   if(any(is.null(c(x, y)) == TRUE)) {
     stop("Error: Expecting both an x and y argument.")
@@ -289,7 +291,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
     #Counter factual lines
     lines(c(0, 1), c(mean(t0, cft1), cft1), col=lcol[1], lty=2, lwd=lwidth)
     # Arrows and coefficient names #
-    if (arrow == TRUE) {
+    if(arrow == TRUE) {
       # c0 Intercept
       points(0, c0, col=lcol[2], cex=arwCEX)  # intercept: control group pre-test
       # c1 effect Post.All
@@ -301,7 +303,9 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
       # t1 effect
       arrows(x0 = 1 + axshift, y0 = cft1, x1 = 1 + axshift, y1 = t1, code=2, #code=arrow_code[3],
              angle=30, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+    }
       ## text positions ##
+    if(any(c(coefs, name) == TRUE)) {
       postwo <- list("Intercept"=4, "Post.All"=2, "Int.Var"=4,  "DID"=2)
       #User submitted cpos
       makechange <- pos.text
@@ -330,7 +334,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
       text(0, t0, labels =if(coefs == TRUE) paste0("Int.Var= ", round(coef(cmodel)[3], round.c), model_summary_p[3]) else "Int.Var", pos=postwo[[3]], cex=textCEX)
       # intervention group post-test
       text(1, t1, labels =if(coefs == TRUE) paste0("DID= ", round(coef(cmodel)[4], round.c), model_summary_p[4]) else "DID", pos=postwo[[4]], cex=textCEX)
-    }
+      }
     if (!is.null(add.legend)) {
       legend(x=add.legend, legend=c("Intervention", "Control","Counterfactual", "Treated"),
              lty= c(1,1,2,3),
@@ -413,26 +417,27 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
       arrows(x0 = max_time + axshift[2], y0 = atet0, x1 = max_time + axshift[2],
              y1 = atet1, code=2, #code=arrow_code[3],
              angle=30, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
-
+    }
+    if(any(c(coefs, name) == TRUE)) {
       ## text positions ##
       posmany <- list("Intercept"=4, "Period"=2, "DID"=((mdlcoefsign[2]-3)*-1) -1,"DID.Trend"= 2)
-#User submitted cpos
-makechange <- pos.text
-# identifies which elements to change in original positions
-newposlist <- vector()
-if(!is.null(pos.text)) {
-  for (i in 1:length(names(makechange))) {
-    newposlist[i] <- grep(paste0("^", names(makechange)[i], "$"), names(posmany))
-  }
-}
-# changes values
-if(!is.null(pos.text)) {
-  for (i in 1:length(newposlist)) {
-    posmany[[newposlist[i]]] <- makechange[[i]]
-  }
-} else {
-  posmany <- posmany
-}
+      #User submitted cpos
+      makechange <- pos.text
+      # identifies which elements to change in original positions
+      newposlist <- vector()
+      if(!is.null(pos.text)) {
+        for (i in 1:length(names(makechange))) {
+          newposlist[i] <- grep(paste0("^", names(makechange)[i], "$"), names(posmany))
+        }
+      }
+      # changes values
+      if(!is.null(pos.text)) {
+        for (i in 1:length(newposlist)) {
+          posmany[[newposlist[i]]] <- makechange[[i]]
+        }
+      } else {
+        posmany <- posmany
+      }
 
       # Add in coefficient names
       text(1, c0, labels = if(coefs == TRUE) paste0("Intercept= ", round(coef(cmodel)[1], round.c), model_summary_p[1]) else "Intercept", pos=posmany[[1]], cex=textCEX)
@@ -507,7 +512,7 @@ if(!is.null(pos.text)) {
              lwd=cex.legend, col=c(lcol[1],lcol[1],"gray"), bty="n", cex=cex.legend)
     }
     # Arrows and coefficient names #
-    if (arrow == TRUE) {
+    if(any(c(arrow,coefs, name) == TRUE)) {
       ################
       ## 1st Period ##
       ################
@@ -517,7 +522,6 @@ if(!is.null(pos.text)) {
       ## Time 1, Pre-intervention ##
       #What to do if the treatment group has the highest pre-intervention scores
       #ITS.int variable name position
-      posIntercept <- 1
       #treatment group
       if(t00 >= t01) {
         time1thi <- t00
@@ -538,7 +542,9 @@ if(!is.null(pos.text)) {
       } else {
         time2thi <- t11
       }
+    }
       ## Period 1 ##
+      if (arrow == TRUE) {
       # Intercept
       points(1, t00, col=lcol[1], cex=arwCEX)  # intercept: control group pre-test
       # ITS.Time
@@ -551,9 +557,10 @@ if(!is.null(pos.text)) {
       # txp1
       arrows(x0 = timeqtrp2, y0 = time2thi, x1 = timemidp2, y1 = time2thi, code=2,
              angle=30, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
-
+    }
       ## text positions ##
-      possgst <- list("Intercept"=posIntercept, "ITS.Time"=4, "post1"=2, "txp1"=4)
+      if(any(c(coefs, name) == TRUE)) {
+        possgst <- list("Intercept"=1, "ITS.Time"=4, "post1"=2, "txp1"=4)
       #User submitted cpos
       makechange <- pos.text
       # identifies which elements to change in original positions
@@ -587,7 +594,6 @@ if(!is.null(pos.text)) {
       # txp1
       text(timemidp2, time2thi, labels =if(coefs == TRUE) paste0("txp1= ", round(coef(cmodel)[4], round.c), model_summary_p[4]) else "txp1",
            pos=possgst[[4]], cex=textCEX)
-
     }
   }
 
@@ -668,7 +674,7 @@ if(!is.null(pos.text)) {
              lwd=cex.legend, col=c(lcol[1],lcol[1],"gray"), bty="n", cex=cex.legend)
     }
     # Arrows and coefficient names #
-    if (arrow == TRUE) {
+    if(any(c(arrow,coefs, name) == TRUE)) {
       #Add a 0 to axshift if length == 1
       if (length(axshift) == 1) {
         axshift <- c(axshift, 0)
@@ -681,8 +687,6 @@ if(!is.null(pos.text)) {
       #ITS y-axis
       ## Time 1, Pre-intervention ##
       #What to do if the treatment group has the highest pre-intervention scores
-      #ITS.int variable name position
-      posIntercept <- 1
       #treatment group
       if(t00 >= t01) {
         time1thi <- t00
@@ -717,7 +721,9 @@ if(!is.null(pos.text)) {
       } else {
         time3thi <- t21
       }
+    }
       ## Period 1 ##
+    if (arrow == TRUE) {
       # Intercept
       points(1, t00, col=lcol[1], cex=arwCEX)  # intercept: control group pre-test
       # ITS.Time
@@ -737,9 +743,10 @@ if(!is.null(pos.text)) {
       # txp2
       arrows(x0 = timeqtrp3, y0 = time3thi, x1 = timemidp3, y1 = time3thi, code=2,
              angle=30, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
-
+}
       ## text positions ##
-      possgmt <- list("Intercept"=posIntercept, "ITS.Time"=4, "post1"=2,
+    if(any(c(coefs, name) == TRUE)) {
+      possgmt <- list("Intercept"=1, "ITS.Time"=4, "post1"=2,
                       "txp1"=4, "post2"=2, "txp2"=4)
       #User submitted cpos
       makechange <- pos.text
@@ -838,6 +845,15 @@ if(!is.null(pos.text)) {
       coef(cmodel)[[5]]*1 + coef(cmodel)[[6]]*0 + coef(cmodel)[[7]]*1 + coef(cmodel)[[8]]*0
     t11 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per2[2] + coef(cmodel)[[3]]*1 + coef(cmodel)[[4]]*time_per2[2] +
       coef(cmodel)[[5]]*1 + coef(cmodel)[[6]]*(time_per2[2]-interrupt_1) + coef(cmodel)[[7]]*1 + coef(cmodel)[[8]]*(time_per2[2]-interrupt_1)
+    #ITS.int variable name position
+    if(t00 >= c00) {
+      posITS.int <- 3
+      posIntercept <- 1
+    }
+    if(c00 > t00) {
+      posITS.int <- 1
+      posIntercept <- 3
+    }
 
     plot(range(aggr_mns[, 1]), range(c(cmodel[["fitted.values"]], t00)), type="n",
          main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim,
@@ -858,7 +874,7 @@ if(!is.null(pos.text)) {
              lwd=cex.legend, col=c(lcol[1],lcol[2],"gray"), bty="n", cex=cex.legend)
     }
     # Arrows and coefficient names #
-    if (arrow == TRUE) {
+    if(any(c(arrow,coefs, name) == TRUE)) {
       ################
       ## 1st Period ##
       ################
@@ -868,9 +884,6 @@ if(!is.null(pos.text)) {
       ## Time 1, Pre-intervention ##
       #What to do if the treatment group has the highest pre-intervention scores
       if(t00 >= c00) {
-        #ITS.int variable name position
-        posITS.int <- 3
-        posIntercept <- 1
         #treatment group
         if(t00 >= t01) {
           time1thi <- t00
@@ -886,9 +899,6 @@ if(!is.null(pos.text)) {
       }
       #What to do if the control group has the highest pre-intervention scores
       if(c00 >= t00) {
-        #ITS.int variable name position
-        posIntercept <- 3
-        posITS.int <- 1
         #treatment group
         if(t00 >= t01) {
           time1thi <- t01
@@ -939,7 +949,9 @@ if(!is.null(pos.text)) {
           time2chi <- c11
         }
       }
+    }
       ## Period 1 ##
+    if (arrow == TRUE) {
       # Intercept
       points(1, c00, col=lcol[2], cex=arwCEX)  # intercept: control group pre-test
       # ITS.Time
@@ -965,8 +977,9 @@ if(!is.null(pos.text)) {
       # txip1
       arrows(x0 = timeqtrp2, y0 = time2thi, x1 = timemidp2, y1 = time2thi,
              code=2, angle=30, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
-
+}
       ## text positions ##
+    if(any(c(coefs, name) == TRUE)) {
       posmgst <- list("Intercept"=posIntercept, "ITS.Time"=4, "ITS.Int"=posITS.int, "txi"=4,
                       "post1"=4, "txp1"=4, "ixp1"=4, "txip1"=4)
       #User submitted cpos
@@ -1101,6 +1114,15 @@ if(!is.null(pos.text)) {
     t21 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per3[2] + coef(cmodel)[[3]]*1 + coef(cmodel)[[4]]*time_per3[2] +
       coef(cmodel)[[5]]*1 + coef(cmodel)[[6]]*(time_per3[2]-interrupt_1) + coef(cmodel)[[7]]*1 + coef(cmodel)[[8]]*(time_per3[2]-interrupt_1) +
       coef(cmodel)[[9]]*1 + coef(cmodel)[[10]]*(time_per3[2]-interrupt_2) + coef(cmodel)[[11]]*1 + coef(cmodel)[[12]]*(time_per3[2]-interrupt_2)
+    #ITS.int variable name position
+    if(t00 >= c00) {
+      posITS.int <- 3
+      posIntercept <- 1
+    }
+    if(c00 > t00) {
+      posIntercept <- 3
+      posITS.int <- 1
+    }
 
     plot(range(aggr_mns[, 1]), range(c(cmodel[["fitted.values"]], t00)), type="n",
          main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim,
@@ -1126,7 +1148,7 @@ if(!is.null(pos.text)) {
              lwd=cex.legend, col=c(lcol[1],lcol[2],"gray"), bty="n", cex=cex.legend)
     }
     # Arrows and coefficient names #
-    if (arrow == TRUE) {
+    if(any(c(arrow,coefs, name) == TRUE)) {
       #Add a 0 to axshift if length == 1
       if (length(axshift) == 1) {
         axshift <- c(axshift, 0)
@@ -1140,9 +1162,6 @@ if(!is.null(pos.text)) {
       ## Time 1, Pre-intervention ##
       #What to do if the treatment group has the highest pre-intervention scores
       if(t00 >= c00) {
-        #ITS.int variable name position
-        posITS.int <- 3
-        posIntercept <- 1
         #treatment group
         if(t00 >= t01) {
           time1thi <- t00
@@ -1158,9 +1177,6 @@ if(!is.null(pos.text)) {
       }
       #What to do if the control group has the highest pre-intervention scores
       if(c00 >= t00) {
-        #ITS.int variable name position
-        posIntercept <- 3
-        posITS.int <- 1
         #treatment group
         if(t00 >= t01) {
           time1thi <- t01
@@ -1248,7 +1264,9 @@ if(!is.null(pos.text)) {
           time3chi <- c21
         }
       }
+    }
       ## Period 1 ##
+    if (arrow == TRUE) {
       # Intercept
       points(1, c00, col=lcol[2], cex=arwCEX)  # intercept: control group pre-test
       # ITS.Time
@@ -1288,7 +1306,9 @@ if(!is.null(pos.text)) {
       # txip2
       arrows(x0 = timeqtrp3, y0 = time3thi, x1 = timemidp3, y1 = time3thi,
              code=2, angle=30, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+    }
       ## text positions ##
+      if(any(c(coefs, name) == TRUE)) {
       posmgmt <- list("Intercept"=posIntercept, "ITS.Time"=4, "ITS.Int"=posITS.int, "txi"=4,
                       "post1"=2, "txp1"=4,"ixp1"=4, "txip1"=4, "post2"=2,"txp2"=4,"ixp2"=4, "txip2"=4)
       #User submitted cpos
