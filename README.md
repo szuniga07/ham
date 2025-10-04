@@ -895,7 +895,7 @@ Using all plot options
 
 ``` r
 plot(im22, "ITS", add.legend="top", xlim=c(-.75, 13.1), ylim=c(2, 8), 
-     main="ITS study: MGMT", col=c("dodgerblue","goldenrod"), lwd=7, cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, cex.legend=1.25, arrow=TRUE, xshift=c(0, .5), cex.text=1.25, name=F, coefs=TRUE, round.c=2, pos.text= list("txp1"=3, "post2"=4))
+     main="ITS study: MGMT", col=c("dodgerblue","goldenrod"), lwd=7, cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, cex.legend=1.25, arrow=TRUE, xshift=c(0, .5), cex.text=1.25, name=F, coefs=TRUE, round.c=2, pos.text= list("txp1"=3, "post2"=4), tcol="springgreen")
 ```
 
 <img src="man/figures/README-revITS4-1.png" width="100%" />

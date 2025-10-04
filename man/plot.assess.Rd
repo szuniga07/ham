@@ -10,8 +10,10 @@
   xlim = NULL,
   ylim = NULL,
   main = NULL,
-  col = NULL,
   lwd = NULL,
+  col = NULL,
+  tcol = NULL,
+  add.legend = NULL,
   cex = NULL,
   cex.axis = NULL,
   cex.lab = NULL,
@@ -24,7 +26,6 @@
   coefs = FALSE,
   round.c = NULL,
   pos.text = NULL,
-  add.legend = NULL,
   ...
 )
 }
@@ -39,9 +40,14 @@
 
 \item{main}{the main title of the plot.}
 
-\item{col}{specify intervention and control group colors in a vector. Defaults are c("blue", "red") or "blue" for single-group Interrupted Time Series models.}
-
 \item{lwd}{select the line width.}
+
+\item{col}{specify intervention and control group colors in a vector. Defaults to, if nothing selected, c("blue", "red") or "blue" for single-group Interrupted Time Series models.}
+
+\item{tcol}{specify treatment or interruption line color as a single character vector. Defaults to "gray" if nothing selected.}
+
+\item{add.legend}{add a legend by selecting the location as "bottomright", "bottom", "bottomleft",
+"left", "topleft", "top", "topright", "right", "center". No legend if nothing selected.}
 
 \item{cex}{A numerical value giving the amount by which plotting text and symbols should be magnified relative to the default of 1.}
 
@@ -79,9 +85,6 @@ to be used for rounding coefficient values.}
 the position of the text added into the plot. List name(s) should use existing generic time references
 (e.g., "post1" and "post2").}
 
-\item{add.legend}{add a legend by selecting the location as "bottomright", "bottom", "bottomleft",
-"left", "topleft", "top", "topright", "right", "center". No legend if nothing selected.}
-
 \item{...}{additional arguments.}
 }
 \value{
@@ -106,5 +109,5 @@ arrow=TRUE, xshift=0.02, coefs=TRUE, round.c=2 )
 plot(am2, "ITS", add.legend="top", xlim=c(-.5, 13), ylim=c(2, 8), main="ITS study",
 col=c("cyan","hotpink"), lwd=7, arrow=TRUE, xshift=c(.5, 1.5), cex=2, cex.axis=2, cex.lab=2,
 cex.main=3, cex.text=1.2, cex.legend=1.25, name=FALSE, coefs=TRUE, round.c=1,
-pos.text= list("txp1"=3, "post2"=4))
+pos.text= list("txp1"=3, "post2"=4), tcol="springgreen")
 }

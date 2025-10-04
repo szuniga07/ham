@@ -11,8 +11,11 @@
 #' @param xlim specify plot's x-axis limits with a 2 value vector.
 #' @param ylim specify plot's y-axis limits with a 2 value vector.
 #' @param main the main title of the plot.
-#' @param col specify intervention and control group colors in a vector. Defaults are c("blue", "red") or "blue" for single-group Interrupted Time Series models.
 #' @param lwd select the line width.
+#' @param col specify intervention and control group colors in a vector. Defaults to, if nothing selected, c("blue", "red") or "blue" for single-group Interrupted Time Series models.
+#' @param tcol specify treatment or interruption line color as a single character vector. Defaults to "gray" if nothing selected.
+#' @param add.legend add a legend by selecting the location as "bottomright", "bottom", "bottomleft",
+#' "left", "topleft", "top", "topright", "right", "center". No legend if nothing selected.
 #' @param cex A numerical value giving the amount by which plotting text and symbols should be magnified relative to the default of 1.
 #' @param cex.axis The magnification to be used for axis annotation relative to the current setting of cex.
 #' @param cex.lab The magnification to be used for x and y labels relative to the current setting of cex.
@@ -37,8 +40,6 @@
 #' @param pos.text a list of named integer value(s) between 1 to 4 indicating
 #' the position of the text added into the plot. List name(s) should use existing generic time references
 #' (e.g., "post1" and "post2").
-#' @param add.legend add a legend by selecting the location as "bottomright", "bottom", "bottomleft",
-#' "left", "topleft", "top", "topright", "right", "center". No legend if nothing selected.
 #' @param ... additional arguments.
 #'
 #' @return plot of partial predictions for treatment and control groups.
@@ -59,11 +60,11 @@
 #' plot(am2, "ITS", add.legend="top", xlim=c(-.5, 13), ylim=c(2, 8), main="ITS study",
 #' col=c("cyan","hotpink"), lwd=7, arrow=TRUE, xshift=c(.5, 1.5), cex=2, cex.axis=2, cex.lab=2,
 #' cex.main=3, cex.text=1.2, cex.legend=1.25, name=FALSE, coefs=TRUE, round.c=1,
-#' pos.text= list("txp1"=3, "post2"=4))
-plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NULL,
+#' pos.text= list("txp1"=3, "post2"=4), tcol="springgreen")
+plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NULL, tcol=NULL, add.legend=NULL,
                         cex=NULL, cex.axis=NULL, cex.lab=NULL, cex.main=NULL, cex.text=NULL,
                         cex.legend=NULL, arrow=FALSE, xshift=NULL, name=FALSE, coefs=FALSE, round.c=NULL,
-                        pos.text=NULL, add.legend=NULL, ...) {
+                        pos.text=NULL, ...) {
   if(any(is.null(c(x, y)) == TRUE)) {
     stop("Error: Expecting both an x and y argument.")
   }
@@ -180,9 +181,15 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
   #Line colors
   if(is.null(col)) {
     lcol <- c("blue", "red")
-    } else {
-      lcol <- col
-      }
+  } else {
+    lcol <- col
+  }
+  #Treatment or Intervention Line colors
+  if(is.null(tcol)) {
+    ticol <- c("gray")
+  } else {
+    ticol <- tcol
+  }
   # Cex settings cex, cex.axis, cex.lab, cex.main
   if(!is.null(cex)) {
     cex <- cex
@@ -285,7 +292,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
          main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim,
          cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
     #Intervention line
-    abline(v=.5, col="gray", lty=3, lwd=lwidth)
+    abline(v=.5, col= ticol, lty=3, lwd=lwidth)
     lines(0:1, c(t0, t1), type="l", col=lcol[1], lwd=lwidth)
     lines(0:1, c(c0, c1), type="l", col=lcol[2], lwd=lwidth)
     #Counter factual lines
@@ -338,7 +345,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
     if (!is.null(add.legend)) {
       legend(x=add.legend, legend=c("Intervention", "Control","Counterfactual", "Treated"),
              lty= c(1,1,2,3),
-             lwd=cex.legend, col=c(lcol[1],lcol[2],lcol[1],"gray"), bty="n", cex=cex.legend)
+             lwd=cex.legend, col=c(lcol[1],lcol[2],lcol[1], ticol), bty="n", cex=cex.legend)
     }
   }
 
@@ -392,7 +399,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
          main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim,
          cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
     #Intervention line
-    abline(v=treat_start, col="gray", lty=3, lwd=lwidth)
+    abline(v=treat_start, col= ticol, lty=3, lwd=lwidth)
     lines(c(1, max_time), c(c0, c1), type="l", col=lcol[2], lwd=lwidth)
     #Counter factual line
     lines(c(1, max_time), c(t0, cft1), type="l", col=lcol[1], lty=2, lwd=lwidth)
@@ -449,7 +456,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
     if (!is.null(add.legend)) {
       legend(x=add.legend, legend=c("Intervention", "Control","Counterfactual", "Treated"),
              lty= c(1,1,2,3),
-             lwd=cex.legend, col=c(lcol[1],lcol[2],lcol[1],"gray"), bty="n", cex=cex.legend)
+             lwd=cex.legend, col=c(lcol[1],lcol[2],lcol[1], ticol), bty="n", cex=cex.legend)
     }
   }
 
@@ -500,7 +507,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
          main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim,
          cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
     #Intervention line
-    abline(v=interrupt_1, col="gray", lty=3, lwd=lwidth)
+    abline(v=interrupt_1, col= ticol, lty=3, lwd=lwidth)
     lines(time_per1, c(t00, t01), lty=1, col=lcol[1], lwd=lwidth)
     # counterfactual
     segments(x0 = interrupt_1, y0 = cft10, x1 = time_per2[2], y1 = cft11, col = lcol[1], lwd = lwidth, lty=2)
@@ -509,7 +516,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
     if (!is.null(add.legend)) {
       legend(x=add.legend, legend=c("Intervention", "Counterfactual", "Treated"),
              lty= c(1,2,3),
-             lwd=cex.legend, col=c(lcol[1],lcol[1],"gray"), bty="n", cex=cex.legend)
+             lwd=cex.legend, col=c(lcol[1],lcol[1], ticol), bty="n", cex=cex.legend)
     }
     # Arrows and coefficient names #
     if(any(c(arrow,coefs, name) == TRUE)) {
@@ -657,8 +664,8 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
          main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim,
          cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
     #Intervention line
-    abline(v= interrupt_1, col="gray", lty=3, lwd=lwidth)
-    abline(v= interrupt_2, col="gray", lty=3, lwd=lwidth)
+    abline(v= interrupt_1, col= ticol, lty=3, lwd=lwidth)
+    abline(v= interrupt_2, col= ticol, lty=3, lwd=lwidth)
     lines(time_per1, c(t00, t01), lty=1, col=lcol[1], lwd=lwidth)
     # counterfactual in period 2
     segments(x0 = interrupt_1, y0 = cft10, x1 = time_per2[2], y1 = cft11, col = lcol[1], lwd = lwidth, lty=2)
@@ -671,7 +678,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
     if (!is.null(add.legend)) {
       legend(x=add.legend, legend=c("Intervention", "Counterfactual", "Treated"),
              lty= c(1,2,3),
-             lwd=cex.legend, col=c(lcol[1],lcol[1],"gray"), bty="n", cex=cex.legend)
+             lwd=cex.legend, col=c(lcol[1],lcol[1], ticol), bty="n", cex=cex.legend)
     }
     # Arrows and coefficient names #
     if(any(c(arrow,coefs, name) == TRUE)) {
@@ -859,7 +866,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
          main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim,
          cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
     #Intervention line
-    abline(v= interrupt_1, col="gray", lty=3, lwd=lwidth)
+    abline(v= interrupt_1, col= ticol, lty=3, lwd=lwidth)
     # control period 1
     lines(time_per1, c(c00, c01), lty=1, col=lcol[2], lwd=lwidth)
     # control line period 2
@@ -871,7 +878,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
     if (!is.null(add.legend)) {
       legend(x=add.legend, legend=c("Intervention", "Control", "Treated"),
              lty= c(1,1,3),
-             lwd=cex.legend, col=c(lcol[1],lcol[2],"gray"), bty="n", cex=cex.legend)
+             lwd=cex.legend, col=c(lcol[1],lcol[2], ticol), bty="n", cex=cex.legend)
     }
     # Arrows and coefficient names #
     if(any(c(arrow,coefs, name) == TRUE)) {
@@ -1128,8 +1135,8 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
          main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim,
          cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
     #Intervention line
-    abline(v= interrupt_1, col="gray", lty=3, lwd=lwidth)
-    abline(v= interrupt_2, col="gray", lty=3, lwd=lwidth)
+    abline(v= interrupt_1, col= ticol, lty=3, lwd=lwidth)
+    abline(v= interrupt_2, col= ticol, lty=3, lwd=lwidth)
     # control period 1
     lines(time_per1, c(c00, c01), lty=1, col=lcol[2], lwd=lwidth)
     # control line period 2
@@ -1145,7 +1152,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, col=NULL, lwd=NUL
     if (!is.null(add.legend)) {
       legend(x=add.legend, legend=c("Intervention", "Control", "Treated"),
              lty= c(1,1,3),
-             lwd=cex.legend, col=c(lcol[1],lcol[2],"gray"), bty="n", cex=cex.legend)
+             lwd=cex.legend, col=c(lcol[1],lcol[2], ticol), bty="n", cex=cex.legend)
     }
     # Arrows and coefficient names #
     if(any(c(arrow,coefs, name) == TRUE)) {
