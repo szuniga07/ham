@@ -14,6 +14,9 @@
 #' @param lwd select the line width.
 #' @param col specify intervention and control group colors in a vector. Defaults to, if nothing selected, c("blue", "red") or "blue" for single-group Interrupted Time Series models.
 #' @param tcol specify treatment or interruption line color as a single character vector. Defaults to "gray" if nothing selected.
+#' @param cfact logical TRUE or FALSE that indicates whether a counterfactual line should be included. Defaults to FALSE.
+#' @param conf.int logical TRUE or FALSE that indicates whether a 95% confidence interval bars should be included. Defaults to FALSE.
+#' @param adj.alpha factor modifying the opacity alpha of the confidence interval bars, in the range of 0 to 1. Default is NULL; if conf.int=TRUE, defaults to 0.4.
 #' @param add.legend add a legend by selecting the location as "bottomright", "bottom", "bottomleft",
 #' "left", "topleft", "top", "topright", "right", "center". No legend if nothing selected.
 #' @param cex A numerical value giving the amount by which plotting text and symbols should be magnified relative to the default of 1.
@@ -22,14 +25,6 @@
 #' @param cex.main The magnification to be used for main titles relative to the current setting of cex.
 #' @param cex.text The magnification to be used for the text added into the plot relative to the current setting of 1.
 #' @param cex.legend The magnification to be used for the legend added into the plot relative to the current setting of 1.
-#' @param arrow logical TRUE or FALSE that indicates whether arrows and
-#' coefficient names should be added to visualize effects. Default is FALSE.
-#' @param xshift shifts one or two of some of the overlapping intervention associated arrows
-#' along the x-axis for a better view. Vector values of at least length 1 or 2 can be positive
-#' or negative. And xshift should be specified in the order of the coefficients. Only 1 or 2
-#' of the furthest right, vertical lines for the intervention group is shifted (i.e., not left).
-#' One line is shifted when there is 1 treatment/interruption period and 2 shifts for 2 periods.
-#' (e.g., "DID" before "DID.Trend" for DID models with argument did="many").
 #' @param name logical TRUE or FALSE that indicates whether coefficient names
 #' should be added to the plot. Default is FALSE. It is overridden if coefs = TRUE.
 #' @param coefs logical TRUE or FALSE that indicates whether coefficient names, values,
@@ -40,10 +35,19 @@
 #' @param pos.text a list of named integer value(s) between 1 to 4 indicating
 #' the position of the text added into the plot. List name(s) should use existing generic time references
 #' (e.g., "post1" and "post2").
+#' @param arrow logical TRUE or FALSE that indicates whether arrows and
+#' coefficient names should be added to visualize effects. Default is FALSE.
+#' @param xshift shifts one or two of some of the overlapping intervention associated arrows
+#' along the x-axis for a better view. Vector values of at least length 1 or 2 can be positive
+#' or negative. And xshift should be specified in the order of the coefficients. Only 1 or 2
+#' of the furthest right, vertical lines for the intervention group is shifted (i.e., not left).
+#' One line is shifted when there is 1 treatment/interruption period and 2 shifts for 2 periods.
+#' (e.g., "DID" before "DID.Trend" for DID models with argument did="many").
 #' @param ... additional arguments.
 #'
 #' @return plot of partial predictions for treatment and control groups.
-#' @importFrom graphics lines plot legend abline segments arrows points text
+#' @importFrom graphics lines plot legend abline segments arrows points text polygon
+#' @importFrom grDevices adjustcolor
 #' @importFrom utils head tail
 #' @importFrom methods is
 #' @export
@@ -58,13 +62,15 @@
 #' ylim=c(2, 8), lwd=6, cex=3, cex.axis=2, cex.lab=1.5, cex.main=3, cex.text=2,
 #' arrow=TRUE, xshift=0.02, coefs=TRUE, round.c=2 )
 #' plot(am2, "ITS", add.legend="top", xlim=c(-.5, 13), ylim=c(2, 8), main="ITS study",
-#' col=c("cyan","hotpink"), lwd=7, arrow=TRUE, xshift=c(.5, 1.5), cex=2, cex.axis=2, cex.lab=2,
+#' col=c("cyan","hotpink"), tcol="springgreen", lwd=7, cex=2, cex.axis=2, cex.lab=2,
 #' cex.main=3, cex.text=1.2, cex.legend=1.25, name=FALSE, coefs=TRUE, round.c=1,
-#' pos.text= list("txp1"=3, "post2"=4), tcol="springgreen")
-plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NULL, tcol=NULL, add.legend=NULL,
+#' pos.text= list("txp1"=3, "post2"=4), arrow=TRUE, xshift=c(.5, 1.5),
+#' cfact=T, conf.int=TRUE, adj.alpha=0.2)
+plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NULL, tcol=NULL,
+                        cfact=FALSE, conf.int=FALSE, adj.alpha=NULL, add.legend=NULL,
                         cex=NULL, cex.axis=NULL, cex.lab=NULL, cex.main=NULL, cex.text=NULL,
-                        cex.legend=NULL, arrow=FALSE, xshift=NULL, name=FALSE, coefs=FALSE, round.c=NULL,
-                        pos.text=NULL, ...) {
+                        cex.legend=NULL, name=FALSE, coefs=FALSE, round.c=NULL,
+                        pos.text=NULL, arrow=FALSE, xshift=NULL, ...) {
   if(any(is.null(c(x, y)) == TRUE)) {
     stop("Error: Expecting both an x and y argument.")
   }
@@ -243,6 +249,15 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
   } else {
     cex.legend <- 1
   }
+  #polygon() alpha f color
+  if(!is.null(adj.alpha)) {
+    adj.alpha <- adj.alpha
+  } else {
+    adj.alpha <- 0.4
+  }
+  #List of legend locations
+  leg_locate <- c("bottomright", "bottom", "bottomleft", "left",
+                  "topleft", "top", "topright", "right", "center")
   #This gets the sign of the coefficients to assign the arrow codes
   #cmodel will work for DID and ITS models
   mdlcoefsign <- sign(coef(cmodel))[-1]
@@ -291,12 +306,36 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
     plot(0:1, range(c(cmodel[["fitted.values"]], t0)), type="n",
          main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim,
          cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
+    #Add in confidence bars
+    if(conf.int==TRUE) {
+      # Margin of Errors #
+      #Control
+      moe00 <- qt(.975, nrow(cmodel$model)) *
+        predict(cmodel, newdata = data.frame(Post.All = 0, Int.Var=0, DID=0), se.fit = TRUE)[["se.fit"]]
+      moe01 <- qt(.975, nrow(cmodel$model)) *
+        predict(cmodel, newdata = data.frame(Post.All = 1, Int.Var=0, DID=0), se.fit = TRUE)[["se.fit"]]
+      #treatment
+      moe10 <- qt(.975, nrow(cmodel$model)) *
+        predict(cmodel, newdata = data.frame(Post.All = 0, Int.Var=1, DID=0), se.fit = TRUE)[["se.fit"]]
+      moe11 <- qt(.975, nrow(cmodel$model)) *
+        predict(cmodel, newdata = data.frame(Post.All = 1, Int.Var=1, DID=1), se.fit = TRUE)[["se.fit"]]
+      #Control
+      polygon(c(0:1, rev(0:1)), c(c0+moe00, c1+moe01, c1-moe01, c0-moe00),
+              col= adjustcolor(lcol[2], alpha.f = adj.alpha),
+              border=adjustcolor(lcol[2], alpha.f = adj.alpha))
+      #treatment
+      polygon(c(0:1, rev(0:1)), c(t0+moe10, t1+moe11, t1-moe11, t0-moe10),
+              col=adjustcolor(lcol[1], alpha.f = adj.alpha),
+              border=adjustcolor(lcol[1], alpha.f = adj.alpha))
+    }
     #Intervention line
     abline(v=.5, col= ticol, lty=3, lwd=lwidth)
     lines(0:1, c(t0, t1), type="l", col=lcol[1], lwd=lwidth)
     lines(0:1, c(c0, c1), type="l", col=lcol[2], lwd=lwidth)
     #Counter factual lines
-    lines(c(0, 1), c(mean(t0, cft1), cft1), col=lcol[1], lty=2, lwd=lwidth)
+    if(cfact==TRUE) {
+      lines(c(0, 1), c(mean(t0, cft1), cft1), col=lcol[1], lty=2, lwd=lwidth)
+    }
     # Arrows and coefficient names #
     if(arrow == TRUE) {
       # c0 Intercept
@@ -342,10 +381,11 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
       # intervention group post-test
       text(1, t1, labels =if(coefs == TRUE) paste0("DID= ", round(coef(cmodel)[4], round.c), model_summary_p[4]) else "DID", pos=postwo[[4]], cex=textCEX)
       }
-    if (!is.null(add.legend)) {
-      legend(x=add.legend, legend=c("Intervention", "Control","Counterfactual", "Treated"),
-             lty= c(1,1,2,3),
-             lwd=cex.legend, col=c(lcol[1],lcol[2],lcol[1], ticol), bty="n", cex=cex.legend)
+    if (add.legend %in% leg_locate) {
+      legend(x=add.legend, legend= if(cfact==TRUE) c("Intervention", "Control","Counterfactual", "Treated") else
+        c("Intervention", "Control","Treated"), lty= if(cfact==TRUE) c(1,1,2,3) else c(1,1,3),
+             lwd=cex.legend, bty="n", cex=cex.legend,
+        col= if(cfact==TRUE) c(lcol[1],lcol[2],lcol[1], ticol) else c(lcol[1],lcol[2], ticol))
     }
   }
 
@@ -398,11 +438,35 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
     plot(range(aggr_mns[, 1]), range(c(cmodel[["fitted.values"]], t0)), type="n",
          main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim,
          cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
+    #Add in confidence bars
+    if(conf.int==TRUE) {
+      # Margin of Errors #
+      #Control
+      moe00 <- qt(.975, nrow(cmodel$model)) *
+        predict(cmodel, newdata = data.frame(Period = 0, DID=0, DID.Trend=0), se.fit = TRUE)[["se.fit"]]
+      moe01 <- qt(.975, nrow(cmodel$model)) *
+        predict(cmodel, newdata = data.frame(Period = max_time, DID=0, DID.Trend=0), se.fit = TRUE)[["se.fit"]]
+      #treatment
+      moe10 <- qt(.975, nrow(cmodel$model)) *
+        predict(cmodel, newdata = data.frame(Period = treat_start, DID=1, DID.Trend=treat_start), se.fit = TRUE)[["se.fit"]]
+      moe11 <- qt(.975, nrow(cmodel$model)) *
+        predict(cmodel, newdata = data.frame(Period = max_time, DID=1, DID.Trend=max_time), se.fit = TRUE)[["se.fit"]]
+      #Control
+      polygon(c(c(1,max_time), c(max_time,1)), c(c0+moe00, c1+moe01, c1-moe01, c0-moe00),
+              col= adjustcolor(lcol[2], alpha.f = adj.alpha),
+              border=adjustcolor(lcol[2], alpha.f = adj.alpha))
+      #treatment
+      polygon(c(c(treat_start,max_time), c(max_time,treat_start)), c(atet0+moe10, t1+moe11, t1-moe11, atet0-moe10),
+              col=adjustcolor(lcol[1], alpha.f = adj.alpha),
+              border=adjustcolor(lcol[1], alpha.f = adj.alpha))
+    }
     #Intervention line
     abline(v=treat_start, col= ticol, lty=3, lwd=lwidth)
     lines(c(1, max_time), c(c0, c1), type="l", col=lcol[2], lwd=lwidth)
     #Counter factual line
-    lines(c(1, max_time), c(t0, cft1), type="l", col=lcol[1], lty=2, lwd=lwidth)
+    if(cfact==TRUE) {
+      lines(c(1, max_time), c(t0, cft1), type="l", col=lcol[1], lty=2, lwd=lwidth)
+    }
     #ATET line
     segments(x0 = treat_start, y0 = atet0, x1 = max_time, y1 = atet1, col = lcol[1], lwd = lwidth, lty=1)
 
@@ -453,7 +517,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
            pos= posmany[[3]], cex=textCEX) # how to place text
       text(max_time, atet0, labels =if(coefs == TRUE) paste0("DID.Trend= ", round(coef(cmodel)[4], round.c), model_summary_p[4]) else "DID.Trend", pos=posmany[[4]], cex=textCEX)
     }
-    if (!is.null(add.legend)) {
+    if (add.legend %in% leg_locate) {
       legend(x=add.legend, legend=c("Intervention", "Control","Counterfactual", "Treated"),
              lty= c(1,1,2,3),
              lwd=cex.legend, col=c(lcol[1],lcol[2],lcol[1], ticol), bty="n", cex=cex.legend)
@@ -506,14 +570,51 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
     plot(range(aggr_mns[, 1]), range(c(cmodel[["fitted.values"]], t00)), type="n",
          main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim,
          cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
+    #Add in confidence bars
+    if(conf.int==TRUE) {
+      tmpdf_names <- names(coef(cmodel))[1:4][-1]
+      tmpdf00 <- data.frame(ITS.Time = 1, post1=0, txp1=0)
+      tmpdf01 <- data.frame(ITS.Time = time_per1[2], post1=0, txp1=0)
+      tmpdf10 <- data.frame(ITS.Time = time_per2[1], post1=1, txp1=0)
+      tmpdf11 <- data.frame(ITS.Time = time_per2[2], post1=1, txp1= (time_per2[2]-interrupt_1))
+      colnames(tmpdf00) <- tmpdf_names
+      colnames(tmpdf01) <- tmpdf_names
+      colnames(tmpdf10) <- tmpdf_names
+      colnames(tmpdf11) <- tmpdf_names
+
+      # Margin of Errors #
+      #period 1
+      moe00 <- qt(.975, nrow(cmodel$model)) *
+        predict(cmodel, newdata = tmpdf00, se.fit = TRUE)[["se.fit"]]
+      moe01 <- qt(.975, nrow(cmodel$model)) *
+        predict(cmodel, newdata = tmpdf01, se.fit = TRUE)[["se.fit"]]
+      #period 2
+      moe10 <- qt(.975, nrow(cmodel$model)) *
+        predict(cmodel, newdata = tmpdf10, se.fit = TRUE)[["se.fit"]]
+      moe11 <- qt(.975, nrow(cmodel$model)) *
+        predict(cmodel, newdata = tmpdf11, se.fit = TRUE)[["se.fit"]]
+      ## treatment ##
+      #period 1
+      polygon(c(c(1, time_per1[2]), rev(c(1, time_per1[2]))),
+              c(t00+moe00, t01+moe01, t01-moe01, t00-moe00),
+              col=adjustcolor(lcol[1], alpha.f = adj.alpha),
+              border=adjustcolor(lcol[1], alpha.f = adj.alpha))
+      #period 2
+      polygon(c(c(time_per2[1], time_per2[2]), rev(c(time_per2[1], time_per2[2]))),
+              c(t10+moe10, t11+moe11, t11-moe11, t10-moe10),
+              col=adjustcolor(lcol[1], alpha.f = adj.alpha),
+              border=adjustcolor(lcol[1], alpha.f = adj.alpha))
+    }
     #Intervention line
     abline(v=interrupt_1, col= ticol, lty=3, lwd=lwidth)
     lines(time_per1, c(t00, t01), lty=1, col=lcol[1], lwd=lwidth)
     # counterfactual
-    segments(x0 = interrupt_1, y0 = cft10, x1 = time_per2[2], y1 = cft11, col = lcol[1], lwd = lwidth, lty=2)
+    if(cfact==TRUE) {
+      segments(x0 = interrupt_1, y0 = cft10, x1 = time_per2[2], y1 = cft11, col = lcol[1], lwd = lwidth, lty=2)
+    }
     # intervention line
     segments(x0 = interrupt_1, y0 = t10, x1 = time_per2[2], y1 = t11, col = lcol[1], lwd = lwidth, lty=1)
-    if (!is.null(add.legend)) {
+    if (add.legend %in% leg_locate) {
       legend(x=add.legend, legend=c("Intervention", "Counterfactual", "Treated"),
              lty= c(1,2,3),
              lwd=cex.legend, col=c(lcol[1],lcol[1], ticol), bty="n", cex=cex.legend)
@@ -646,7 +747,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
       coef(cmodel)[[4]]*(time_per2[2]-interrupt_1) + coef(cmodel)[[5]]*0 + coef(cmodel)[[6]]*0
     #Period 3's (post-intervention) start and stop values
     t20 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per3[1] + coef(cmodel)[[3]]*1 +
-      coef(cmodel)[[4]]*(time_per2[2]-interrupt_1) + coef(cmodel)[[5]]*1 + coef(cmodel)[[6]]*0
+      coef(cmodel)[[4]]*(time_per3[1]-interrupt_1) + coef(cmodel)[[5]]*1 + coef(cmodel)[[6]]*0
     t21 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per3[2] + coef(cmodel)[[3]]*1 +
       coef(cmodel)[[4]]*(time_per3[2]-interrupt_1) + coef(cmodel)[[5]]*1 + coef(cmodel)[[6]]*(time_per3[2]-interrupt_2)
     #Counterfactual for treated in period 2
@@ -663,19 +764,72 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
     plot(range(aggr_mns[, 1]), range(c(cmodel[["fitted.values"]], t00)), type="n",
          main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim,
          cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
+    #Add in confidence bars
+    if(conf.int==TRUE) {
+      tmpdf_names <- names(coef(cmodel))[1:6][-1]
+      tmpdf00 <- data.frame(ITS.Time = 1, post1=0, txp1=0, post2=0, txp2=0)
+      tmpdf01 <- data.frame(ITS.Time = time_per1[2], post1=0, txp1=0, post2=0, txp2=0)
+      tmpdf10 <- data.frame(ITS.Time = time_per2[1], post1=1, txp1=0, post2=0, txp2=0)
+      tmpdf11 <- data.frame(ITS.Time = time_per2[2], post1=1, txp1= (time_per2[2]-interrupt_1), post2=0, txp2=0)
+      tmpdf20 <- data.frame(ITS.Time = time_per3[1], post1=1, txp1= (time_per3[1]-interrupt_1), post2=1, txp2=0)
+      tmpdf21 <- data.frame(ITS.Time = time_per3[2], post1=1, txp1= (time_per3[2]-interrupt_1), post2=1, txp2=(time_per3[2]-interrupt_2))
+      colnames(tmpdf00) <- tmpdf_names
+      colnames(tmpdf01) <- tmpdf_names
+      colnames(tmpdf10) <- tmpdf_names
+      colnames(tmpdf11) <- tmpdf_names
+      colnames(tmpdf20) <- tmpdf_names
+      colnames(tmpdf21) <- tmpdf_names
+
+      # Margin of Errors #
+      #period 1
+      moe00 <- qt(.975, nrow(cmodel$model)) *
+        predict(cmodel, newdata = tmpdf00, se.fit = TRUE)[["se.fit"]]
+      moe01 <- qt(.975, nrow(cmodel$model)) *
+        predict(cmodel, newdata = tmpdf01, se.fit = TRUE)[["se.fit"]]
+      #period 2
+      moe10 <- qt(.975, nrow(cmodel$model)) *
+        predict(cmodel, newdata = tmpdf10, se.fit = TRUE)[["se.fit"]]
+      moe11 <- qt(.975, nrow(cmodel$model)) *
+        predict(cmodel, newdata = tmpdf11, se.fit = TRUE)[["se.fit"]]
+      #period 3
+      moe20 <- qt(.975, nrow(cmodel$model)) *
+        predict(cmodel, newdata = tmpdf20, se.fit = TRUE)[["se.fit"]]
+      moe21 <- qt(.975, nrow(cmodel$model)) *
+        predict(cmodel, newdata = tmpdf21, se.fit = TRUE)[["se.fit"]]
+      ## treatment ##
+      #period 1
+      polygon(c(c(1, time_per1[2]), rev(c(1, time_per1[2]))),
+              c(t00+moe00, t01+moe01, t01-moe01, t00-moe00),
+              col=adjustcolor(lcol[1], alpha.f = adj.alpha),
+              border=adjustcolor(lcol[1], alpha.f = adj.alpha))
+      #period 2
+      polygon(c(c(time_per2[1], time_per2[2]), rev(c(time_per2[1], time_per2[2]))),
+              c(t10+moe10, t11+moe11, t11-moe11, t10-moe10),
+              col=adjustcolor(lcol[1], alpha.f = adj.alpha),
+              border=adjustcolor(lcol[1], alpha.f = adj.alpha))
+      #period 3
+      polygon(c(c(time_per3[1], time_per3[2]), rev(c(time_per3[1], time_per3[2]))),
+              c(t20+moe20, t21+moe21, t21-moe21, t20-moe20),
+              col=adjustcolor(lcol[1], alpha.f = adj.alpha),
+              border=adjustcolor(lcol[1], alpha.f = adj.alpha))
+    }
     #Intervention line
     abline(v= interrupt_1, col= ticol, lty=3, lwd=lwidth)
     abline(v= interrupt_2, col= ticol, lty=3, lwd=lwidth)
     lines(time_per1, c(t00, t01), lty=1, col=lcol[1], lwd=lwidth)
     # counterfactual in period 2
-    segments(x0 = interrupt_1, y0 = cft10, x1 = time_per2[2], y1 = cft11, col = lcol[1], lwd = lwidth, lty=2)
+    if(cfact==TRUE) {
+      segments(x0 = interrupt_1, y0 = cft10, x1 = time_per2[2], y1 = cft11, col = lcol[1], lwd = lwidth, lty=2)
+    }
     # counterfactual in period 3
-    segments(x0 = interrupt_2, y0 = cft20, x1 = time_per3[2], y1 = cft21, col = lcol[1], lwd = lwidth, lty=2)
+    if(cfact==TRUE) {
+      segments(x0 = interrupt_2, y0 = cft20, x1 = time_per3[2], y1 = cft21, col = lcol[1], lwd = lwidth, lty=2)
+    }
     # intervention line period 2
     segments(x0 = interrupt_1, y0 = t10, x1 = time_per2[2], y1 = t11, col = lcol[1], lwd = lwidth, lty=1)
     # intervention line period 3
     segments(x0 = interrupt_2, y0 = t20, x1 = time_per3[2], y1 = t21, col = lcol[1], lwd = lwidth, lty=1)
-    if (!is.null(add.legend)) {
+    if (add.legend %in% leg_locate) {
       legend(x=add.legend, legend=c("Intervention", "Counterfactual", "Treated"),
              lty= c(1,2,3),
              lwd=cex.legend, col=c(lcol[1],lcol[1], ticol), bty="n", cex=cex.legend)
@@ -865,6 +1019,73 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
     plot(range(aggr_mns[, 1]), range(c(cmodel[["fitted.values"]], t00)), type="n",
          main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim,
          cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
+    if(conf.int==TRUE) {
+      tmpdf_names <- names(coef(cmodel))[1:12][-1]
+      #Treatment group
+      tmpdf00 <- data.frame(ITS.Time=time_per1[1], ITS.Int=1, txi=time_per1[1], post1=0, txp1=0, ixp1=0, txip1=0, post2=0, txp2=0, ixp2=0, txip2=0)
+      tmpdf01 <- data.frame(ITS.Time=time_per1[2], ITS.Int=1, txi=time_per1[2], post1=0, txp1=0, ixp1=0, txip1=0, post2=0, txp2=0, ixp2=0, txip2=0)
+      tmpdf10 <- data.frame(ITS.Time=time_per2[1], ITS.Int=1, txi=time_per2[1], post1=1, txp1=0, ixp1=1, txip1=0, post2=0, txp2=0, ixp2=0, txip2=0)
+      tmpdf11 <- data.frame(ITS.Time=time_per2[2], ITS.Int=1, txi=time_per2[2], post1=1, txp1=(time_per2[2]-interrupt_1), ixp1=1, txip1=(time_per2[2]-interrupt_1), post2=0, txp2=0, ixp2=0, txip2=0)
+      colnames(tmpdf00) <- tmpdf_names
+      colnames(tmpdf01) <- tmpdf_names
+      colnames(tmpdf10) <- tmpdf_names
+      colnames(tmpdf11) <- tmpdf_names
+      #Control group
+      ctmpdf00 <- data.frame(ITS.Time=time_per1[1], ITS.Int=0, txi=0, post1=0, txp1=0, ixp1=0, txip1=0, post2=0, txp2=0, ixp2=0, txip2=0)
+      ctmpdf01 <- data.frame(ITS.Time=time_per1[2], ITS.Int=0, txi=0, post1=0, txp1=0, ixp1=0, txip1=0, post2=0, txp2=0, ixp2=0, txip2=0)
+      ctmpdf10 <- data.frame(ITS.Time=time_per2[1], ITS.Int=0, txi=0, post1=1, txp1=0, ixp1=0, txip1=0, post2=0, txp2=0, ixp2=0, txip2=0)
+      ctmpdf11 <- data.frame(ITS.Time=time_per2[2], ITS.Int=0, txi=0, post1=1, txp1=(time_per2[2]-interrupt_1), ixp1=0, txip1=0, post2=0, txp2=0, ixp2=0, txip2=0)
+      colnames(ctmpdf00) <- tmpdf_names
+      colnames(ctmpdf01) <- tmpdf_names
+      colnames(ctmpdf10) <- tmpdf_names
+      colnames(ctmpdf11) <- tmpdf_names
+
+      # Margin of Errors #
+      # Treatment
+      #period 1
+      moe00 <- qt(.975, nrow(cmodel$model)) *
+        predict(cmodel, newdata = tmpdf00, se.fit = TRUE)[["se.fit"]]
+      moe01 <- qt(.975, nrow(cmodel$model)) *
+        predict(cmodel, newdata = tmpdf01, se.fit = TRUE)[["se.fit"]]
+      #period 2
+      moe10 <- qt(.975, nrow(cmodel$model)) *
+        predict(cmodel, newdata = tmpdf10, se.fit = TRUE)[["se.fit"]]
+      moe11 <- qt(.975, nrow(cmodel$model)) *
+        predict(cmodel, newdata = tmpdf11, se.fit = TRUE)[["se.fit"]]
+      # Control group
+      #period 1
+      cmoe00 <- qt(.975, nrow(cmodel$model)) *
+        predict(cmodel, newdata = ctmpdf00, se.fit = TRUE)[["se.fit"]]
+      cmoe01 <- qt(.975, nrow(cmodel$model)) *
+        predict(cmodel, newdata = ctmpdf01, se.fit = TRUE)[["se.fit"]]
+      #period 2
+      cmoe10 <- qt(.975, nrow(cmodel$model)) *
+        predict(cmodel, newdata = ctmpdf10, se.fit = TRUE)[["se.fit"]]
+      cmoe11 <- qt(.975, nrow(cmodel$model)) *
+        predict(cmodel, newdata = ctmpdf11, se.fit = TRUE)[["se.fit"]]
+      # Control group
+      #period 1
+      polygon(c(c(1, time_per1[2]), rev(c(1, time_per1[2]))),
+              c(c00+cmoe00, c01+cmoe01, c01-cmoe01, c00-cmoe00),
+              col=adjustcolor(lcol[2], alpha.f = adj.alpha),
+              border=adjustcolor(lcol[2], alpha.f = adj.alpha))
+      #period 2
+      polygon(c(c(time_per2[1], time_per2[2]), rev(c(time_per2[1], time_per2[2]))),
+              c(c10+cmoe10, c11+cmoe11, c11-cmoe11, c10-cmoe10),
+              col=adjustcolor(lcol[2], alpha.f = adj.alpha),
+              border=adjustcolor(lcol[2], alpha.f = adj.alpha))
+      ## treatment ##
+      #period 1
+      polygon(c(c(1, time_per1[2]), rev(c(1, time_per1[2]))),
+              c(t00+moe00, t01+moe01, t01-moe01, t00-moe00),
+              col=adjustcolor(lcol[1], alpha.f = adj.alpha),
+              border=adjustcolor(lcol[1], alpha.f = adj.alpha))
+      #period 2
+      polygon(c(c(time_per2[1], time_per2[2]), rev(c(time_per2[1], time_per2[2]))),
+              c(t10+moe10, t11+moe11, t11-moe11, t10-moe10),
+              col=adjustcolor(lcol[1], alpha.f = adj.alpha),
+              border=adjustcolor(lcol[1], alpha.f = adj.alpha))
+    }
     #Intervention line
     abline(v= interrupt_1, col= ticol, lty=3, lwd=lwidth)
     # control period 1
@@ -875,7 +1096,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
     lines(time_per1, c(t00, t01), lty=1, col=lcol[1], lwd=lwidth)
     # intervention line period 2
     segments(x0 = interrupt_1, y0 = t10, x1 = time_per2[2], y1 = t11, col = lcol[1], lwd = lwidth, lty=1)
-    if (!is.null(add.legend)) {
+    if (add.legend %in% leg_locate) {
       legend(x=add.legend, legend=c("Intervention", "Control", "Treated"),
              lty= c(1,1,3),
              lwd=cex.legend, col=c(lcol[1],lcol[2], ticol), bty="n", cex=cex.legend)
@@ -1134,6 +1355,101 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
     plot(range(aggr_mns[, 1]), range(c(cmodel[["fitted.values"]], t00)), type="n",
          main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim,
          cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
+    if(conf.int==TRUE) {
+      tmpdf_names <- names(coef(cmodel))[1:12][-1]
+      #Treatment group
+      tmpdf00 <- data.frame(ITS.Time=time_per1[1], ITS.Int=1, txi=time_per1[1], post1=0, txp1=0, ixp1=0, txip1=0, post2=0, txp2=0, ixp2=0, txip2=0)
+      tmpdf01 <- data.frame(ITS.Time=time_per1[2], ITS.Int=1, txi=time_per1[2], post1=0, txp1=0, ixp1=0, txip1=0, post2=0, txp2=0, ixp2=0, txip2=0)
+      tmpdf10 <- data.frame(ITS.Time=time_per2[1], ITS.Int=1, txi=time_per2[1], post1=1, txp1=0, ixp1=1, txip1=0, post2=0, txp2=0, ixp2=0, txip2=0)
+      tmpdf11 <- data.frame(ITS.Time=time_per2[2], ITS.Int=1, txi=time_per2[2], post1=1, txp1=(time_per2[2]-interrupt_1), ixp1=1, txip1=(time_per2[2]-interrupt_1), post2=0, txp2=0, ixp2=0, txip2=0)
+      tmpdf20 <- data.frame(ITS.Time=time_per3[1], ITS.Int=1, txi=time_per3[1], post1=1, txp1=(time_per3[1]-interrupt_1), ixp1=1, txip1=(time_per3[1]-interrupt_1), post2=1, txp2=0, ixp2=1, txip2=0)
+      tmpdf21 <- data.frame(ITS.Time=time_per3[2], ITS.Int=1, txi=time_per3[2], post1=1, txp1=(time_per3[2]-interrupt_1), ixp1=1, txip1=(time_per3[2]-interrupt_1), post2=1, txp2=(time_per3[2]-interrupt_2), ixp2=1, txip2=(time_per3[2]-interrupt_2))
+      colnames(tmpdf00) <- tmpdf_names
+      colnames(tmpdf01) <- tmpdf_names
+      colnames(tmpdf10) <- tmpdf_names
+      colnames(tmpdf11) <- tmpdf_names
+      colnames(tmpdf20) <- tmpdf_names
+      colnames(tmpdf21) <- tmpdf_names
+      #Control group
+      ctmpdf00 <- data.frame(ITS.Time=time_per1[1], ITS.Int=0, txi=0, post1=0, txp1=0, ixp1=0, txip1=0, post2=0, txp2=0, ixp2=0, txip2=0)
+      ctmpdf01 <- data.frame(ITS.Time=time_per1[2], ITS.Int=0, txi=0, post1=0, txp1=0, ixp1=0, txip1=0, post2=0, txp2=0, ixp2=0, txip2=0)
+      ctmpdf10 <- data.frame(ITS.Time=time_per2[1], ITS.Int=0, txi=0, post1=1, txp1=0, ixp1=0, txip1=0, post2=0, txp2=0, ixp2=0, txip2=0)
+      ctmpdf11 <- data.frame(ITS.Time=time_per2[2], ITS.Int=0, txi=0, post1=1, txp1=(time_per2[2]-interrupt_1), ixp1=0, txip1=0, post2=0, txp2=0, ixp2=0, txip2=0)
+      ctmpdf20 <- data.frame(ITS.Time=time_per3[1], ITS.Int=0, txi=0, post1=1, txp1=(time_per3[1]-interrupt_1), ixp1=0, txip1=0, post2=1, txp2=0, ixp2=0, txip2=0)
+      ctmpdf21 <- data.frame(ITS.Time=time_per3[2], ITS.Int=0, txi=0, post1=1, txp1=(time_per3[2]-interrupt_1), ixp1=0, txip1=0, post2=1, txp2=(time_per3[2]-interrupt_2), ixp2=0, txip2=0)
+      colnames(ctmpdf00) <- tmpdf_names
+      colnames(ctmpdf01) <- tmpdf_names
+      colnames(ctmpdf10) <- tmpdf_names
+      colnames(ctmpdf11) <- tmpdf_names
+      colnames(ctmpdf20) <- tmpdf_names
+      colnames(ctmpdf21) <- tmpdf_names
+
+      # Margin of Errors #
+      # Treatment
+      #period 1
+      moe00 <- qt(.975, nrow(cmodel$model)) *
+        predict(cmodel, newdata = tmpdf00, se.fit = TRUE)[["se.fit"]]
+      moe01 <- qt(.975, nrow(cmodel$model)) *
+        predict(cmodel, newdata = tmpdf01, se.fit = TRUE)[["se.fit"]]
+      #period 2
+      moe10 <- qt(.975, nrow(cmodel$model)) *
+        predict(cmodel, newdata = tmpdf10, se.fit = TRUE)[["se.fit"]]
+      moe11 <- qt(.975, nrow(cmodel$model)) *
+        predict(cmodel, newdata = tmpdf11, se.fit = TRUE)[["se.fit"]]
+      #period 3
+      moe20 <- qt(.975, nrow(cmodel$model)) *
+        predict(cmodel, newdata = tmpdf20, se.fit = TRUE)[["se.fit"]]
+      moe21 <- qt(.975, nrow(cmodel$model)) *
+        predict(cmodel, newdata = tmpdf21, se.fit = TRUE)[["se.fit"]]
+      # Control group
+      #period 1
+      cmoe00 <- qt(.975, nrow(cmodel$model)) *
+        predict(cmodel, newdata = ctmpdf00, se.fit = TRUE)[["se.fit"]]
+      cmoe01 <- qt(.975, nrow(cmodel$model)) *
+        predict(cmodel, newdata = ctmpdf01, se.fit = TRUE)[["se.fit"]]
+      #period 2
+      cmoe10 <- qt(.975, nrow(cmodel$model)) *
+        predict(cmodel, newdata = ctmpdf10, se.fit = TRUE)[["se.fit"]]
+      cmoe11 <- qt(.975, nrow(cmodel$model)) *
+        predict(cmodel, newdata = ctmpdf11, se.fit = TRUE)[["se.fit"]]
+      #period 3
+      cmoe20 <- qt(.975, nrow(cmodel$model)) *
+        predict(cmodel, newdata = ctmpdf20, se.fit = TRUE)[["se.fit"]]
+      cmoe21 <- qt(.975, nrow(cmodel$model)) *
+        predict(cmodel, newdata = ctmpdf21, se.fit = TRUE)[["se.fit"]]
+      # Control group
+      #period 1
+      polygon(c(c(1, time_per1[2]), rev(c(1, time_per1[2]))),
+              c(c00+cmoe00, c01+cmoe01, c01-cmoe01, c00-cmoe00),
+              col=adjustcolor(lcol[2], alpha.f = adj.alpha),
+              border=adjustcolor(lcol[2], alpha.f = adj.alpha))
+      #period 2
+      polygon(c(c(time_per2[1], time_per2[2]), rev(c(time_per2[1], time_per2[2]))),
+              c(c10+cmoe10, c11+cmoe11, c11-cmoe11, c10-cmoe10),
+              col=adjustcolor(lcol[2], alpha.f = adj.alpha),
+              border=adjustcolor(lcol[2], alpha.f = adj.alpha))
+      #period 3
+      polygon(c(c(time_per3[1], time_per3[2]), rev(c(time_per3[1], time_per3[2]))),
+              c(c20+cmoe20, c21+cmoe21, c21-cmoe21, c20-cmoe20),
+              col=adjustcolor(lcol[2], alpha.f = adj.alpha),
+              border=adjustcolor(lcol[2], alpha.f = adj.alpha))
+      ## treatment ##
+      #period 1
+      polygon(c(c(1, time_per1[2]), rev(c(1, time_per1[2]))),
+              c(t00+moe00, t01+moe01, t01-moe01, t00-moe00),
+              col=adjustcolor(lcol[1], alpha.f = adj.alpha),
+              border=adjustcolor(lcol[1], alpha.f = adj.alpha))
+      #period 2
+      polygon(c(c(time_per2[1], time_per2[2]), rev(c(time_per2[1], time_per2[2]))),
+              c(t10+moe10, t11+moe11, t11-moe11, t10-moe10),
+              col=adjustcolor(lcol[1], alpha.f = adj.alpha),
+              border=adjustcolor(lcol[1], alpha.f = adj.alpha))
+      #period 3
+      polygon(c(c(time_per3[1], time_per3[2]), rev(c(time_per3[1], time_per3[2]))),
+              c(t20+moe20, t21+moe21, t21-moe21, t20-moe20),
+              col=adjustcolor(lcol[1], alpha.f = adj.alpha),
+              border=adjustcolor(lcol[1], alpha.f = adj.alpha))
+    }
     #Intervention line
     abline(v= interrupt_1, col= ticol, lty=3, lwd=lwidth)
     abline(v= interrupt_2, col= ticol, lty=3, lwd=lwidth)
@@ -1149,7 +1465,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
     segments(x0 = interrupt_1, y0 = t10, x1 = time_per2[2], y1 = t11, col = lcol[1], lwd = lwidth, lty=1)
     # intervention line period 3
     segments(x0 = interrupt_2, y0 = t20, x1 = time_per3[2], y1 = t21, col = lcol[1], lwd = lwidth, lty=1)
-    if (!is.null(add.legend)) {
+    if (add.legend %in% leg_locate) {
       legend(x=add.legend, legend=c("Intervention", "Control", "Treated"),
              lty= c(1,1,3),
              lwd=cex.legend, col=c(lcol[1],lcol[2], ticol), bty="n", cex=cex.legend)

@@ -850,8 +850,7 @@ Examples of new plotting options are below.
 ### Differences-in-Differences
 
 ``` r
-plot(dm1, "DID", add.legend="bottom", ylim=c(2, 8), main="DID: Two No Coefficients",
-     col=c("dodgerblue","magenta"), lwd=7, cex=2, cex.axis=2, cex.lab=1.5,  cex.main=3, name=TRUE, )
+plot(dm1, "DID", add.legend="bottom", ylim=c(2, 8), main="DID: Two No Coefficients", col=c("dodgerblue","magenta"), lwd=7, cex=2, cex.axis=2, cex.lab=1.5,  cex.main=3, name=TRUE, )
 ```
 
 <img src="man/figures/README-revDID0-1.png" width="100%" />
@@ -871,22 +870,19 @@ plot(dm2, "DID", add.legend="topleft", xlim=c(-.5, 12), ylim=c(2, 8), main="DID:
 ### Interrupted Time Series
 
 ``` r
-plot(im11, "ITS", add.legend="topleft", xlim=c(-1, 14), ylim=c(2, 8), 
-     main="ITS study: SGST", col="thistle", lwd=7, cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(.25, .25), cex.text=1.5, coefs=TRUE, round.c=2 )
+plot(im11, "ITS", add.legend="topleft", xlim=c(-1, 14), ylim=c(2, 8), main="ITS study: SGST", col="thistle", lwd=7, cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(.25, .25), cex.text=1.5, coefs=TRUE, round.c=2 )
 ```
 
 <img src="man/figures/README-revITS1-1.png" width="100%" />
 
 ``` r
-plot(im12, "ITS", add.legend="topleft", xlim=c(-1, 14), ylim=c(2, 8), 
-     main="ITS study: SGMT", col="hotpink", lwd=7, cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(.25, .25), cex.text=1.5, coefs=TRUE, round.c=2 )
+plot(im12, "ITS", add.legend="topleft", xlim=c(-1, 14), ylim=c(2, 8), main="ITS study: SGMT", col="hotpink", lwd=7, cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(.25, .25), cex.text=1.5, coefs=TRUE, round.c=2 )
 ```
 
 <img src="man/figures/README-revITS2-1.png" width="100%" />
 
 ``` r
-plot(im21, "ITS", add.legend="top", xlim=c(-1, 14), ylim=c(2, 8), 
-     main="ITS study: MGST", col=c("springgreen","salmon"), lwd=7, cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(.25, .25), cex.text=1.5, coefs=TRUE, round.c=2, pos.text= list("post1"=2) )
+plot(im21, "ITS", add.legend="top", xlim=c(-1, 14), ylim=c(2, 8), main="ITS study: MGST", col=c("springgreen","salmon"), lwd=7, cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(.25, .25), cex.text=1.5, coefs=TRUE, round.c=2, pos.text= list("post1"=2) )
 ```
 
 <img src="man/figures/README-revITS3-1.png" width="100%" />
@@ -894,8 +890,7 @@ plot(im21, "ITS", add.legend="top", xlim=c(-1, 14), ylim=c(2, 8),
 Using all plot options
 
 ``` r
-plot(im22, "ITS", add.legend="top", xlim=c(-.75, 13.1), ylim=c(2, 8), 
-     main="ITS study: MGMT", col=c("dodgerblue","goldenrod"), lwd=7, cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, cex.legend=1.25, arrow=TRUE, xshift=c(0, .5), cex.text=1.25, name=F, coefs=TRUE, round.c=2, pos.text= list("txp1"=3, "post2"=4), tcol="springgreen")
+plot(im22, "ITS", add.legend="top", xlim=c(-.75, 13.1), ylim=c(2, 8), main="ITS study: MGMT", col=c("dodgerblue","goldenrod"), lwd=7, cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, cex.legend=1.25, arrow=TRUE, xshift=c(0, .5), cex.text=1.25, name=F, coefs=TRUE, round.c=2, pos.text= list("txp1"=3, "post2"=4), tcol="springgreen", cfact=T, conf.int=TRUE, adj.alpha=0.3)
 ```
 
 <img src="man/figures/README-revITS4-1.png" width="100%" />
