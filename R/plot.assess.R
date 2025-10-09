@@ -1020,21 +1020,21 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
          main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim,
          cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
     if(conf.int==TRUE) {
-      tmpdf_names <- names(coef(cmodel))[1:12][-1]
+      tmpdf_names <- names(coef(cmodel))[1:8][-1]
       #Treatment group
-      tmpdf00 <- data.frame(ITS.Time=time_per1[1], ITS.Int=1, txi=time_per1[1], post1=0, txp1=0, ixp1=0, txip1=0, post2=0, txp2=0, ixp2=0, txip2=0)
-      tmpdf01 <- data.frame(ITS.Time=time_per1[2], ITS.Int=1, txi=time_per1[2], post1=0, txp1=0, ixp1=0, txip1=0, post2=0, txp2=0, ixp2=0, txip2=0)
-      tmpdf10 <- data.frame(ITS.Time=time_per2[1], ITS.Int=1, txi=time_per2[1], post1=1, txp1=0, ixp1=1, txip1=0, post2=0, txp2=0, ixp2=0, txip2=0)
-      tmpdf11 <- data.frame(ITS.Time=time_per2[2], ITS.Int=1, txi=time_per2[2], post1=1, txp1=(time_per2[2]-interrupt_1), ixp1=1, txip1=(time_per2[2]-interrupt_1), post2=0, txp2=0, ixp2=0, txip2=0)
+      tmpdf00 <- data.frame(ITS.Time=time_per1[1], ITS.Int=1, txi=time_per1[1], post1=0, txp1=0, ixp1=0, txip1=0)
+      tmpdf01 <- data.frame(ITS.Time=time_per1[2], ITS.Int=1, txi=time_per1[2], post1=0, txp1=0, ixp1=0, txip1=0)
+      tmpdf10 <- data.frame(ITS.Time=time_per2[1], ITS.Int=1, txi=time_per2[1], post1=1, txp1=0, ixp1=1, txip1=0)
+      tmpdf11 <- data.frame(ITS.Time=time_per2[2], ITS.Int=1, txi=time_per2[2], post1=1, txp1=(time_per2[2]-interrupt_1), ixp1=1, txip1=(time_per2[2]-interrupt_1))
       colnames(tmpdf00) <- tmpdf_names
       colnames(tmpdf01) <- tmpdf_names
       colnames(tmpdf10) <- tmpdf_names
       colnames(tmpdf11) <- tmpdf_names
       #Control group
-      ctmpdf00 <- data.frame(ITS.Time=time_per1[1], ITS.Int=0, txi=0, post1=0, txp1=0, ixp1=0, txip1=0, post2=0, txp2=0, ixp2=0, txip2=0)
-      ctmpdf01 <- data.frame(ITS.Time=time_per1[2], ITS.Int=0, txi=0, post1=0, txp1=0, ixp1=0, txip1=0, post2=0, txp2=0, ixp2=0, txip2=0)
-      ctmpdf10 <- data.frame(ITS.Time=time_per2[1], ITS.Int=0, txi=0, post1=1, txp1=0, ixp1=0, txip1=0, post2=0, txp2=0, ixp2=0, txip2=0)
-      ctmpdf11 <- data.frame(ITS.Time=time_per2[2], ITS.Int=0, txi=0, post1=1, txp1=(time_per2[2]-interrupt_1), ixp1=0, txip1=0, post2=0, txp2=0, ixp2=0, txip2=0)
+      ctmpdf00 <- data.frame(ITS.Time=time_per1[1], ITS.Int=0, txi=0, post1=0, txp1=0, ixp1=0, txip1=0)
+      ctmpdf01 <- data.frame(ITS.Time=time_per1[2], ITS.Int=0, txi=0, post1=0, txp1=0, ixp1=0, txip1=0)
+      ctmpdf10 <- data.frame(ITS.Time=time_per2[1], ITS.Int=0, txi=0, post1=1, txp1=0, ixp1=0, txip1=0)
+      ctmpdf11 <- data.frame(ITS.Time=time_per2[2], ITS.Int=0, txi=0, post1=1, txp1=(time_per2[2]-interrupt_1), ixp1=0, txip1=0)
       colnames(ctmpdf00) <- tmpdf_names
       colnames(ctmpdf01) <- tmpdf_names
       colnames(ctmpdf10) <- tmpdf_names
