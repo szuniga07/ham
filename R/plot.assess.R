@@ -265,6 +265,28 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
   arrow_code <- mdlcoefsign
   arrow_code[arrow_code == 1] <- 2
   arrow_code[arrow_code == -1] <- 1
+  # predSE function to get predicted standard errors for confidence bands #
+  predSE <- function(Model, Data) {
+    #Get model data
+    tmoddf <- Model$model
+    #Create list with TRUE/FALSE on identical rows I am looking for
+    tdup <- list()
+    #Function to identify which are identical for just 1 row of data
+    dupFnc <- function(xdf,ydf) {
+      dup1 <- duplicated(rbind(
+        ydf,
+        xdf[  2:(ncol(ydf) +1)] ))
+      return(dup1)
+    }
+    #Use apply function for each row
+    dupls <- apply(Model$model, 1, dupFnc, ydf=Data)
+    dup2 <- dupls[2, ]
+    #Narrow down to TRUE only
+    true_tlep <- which(dup2==TRUE)
+    #Return the first true row standard error, first needed with aggregated data
+    pred_SE <- predict(Model, newdata=tmoddf[true_tlep[1], -1], se.fit=TRUE)[["se.fit"]]
+    return(pred_SE)
+  }
 
   #############
   ## DID Two ##
@@ -308,17 +330,18 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
          cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
     #Add in confidence bars
     if(conf.int==TRUE) {
+      # temp data frame #
+      tmpdf00 <- data.frame(Post.All = 0, Int.Var=0, DID=0)
+      tmpdf01 <- data.frame(Post.All = 1, Int.Var=0, DID=0)
+      tmpdf10 <- data.frame(Post.All = 0, Int.Var=1, DID=0)
+      tmpdf11 <- data.frame(Post.All = 1, Int.Var=1, DID=1)
       # Margin of Errors #
       #Control
-      moe00 <- qt(.975, nrow(cmodel$model)) *
-        predict(cmodel, newdata = data.frame(Post.All = 0, Int.Var=0, DID=0), se.fit = TRUE)[["se.fit"]]
-      moe01 <- qt(.975, nrow(cmodel$model)) *
-        predict(cmodel, newdata = data.frame(Post.All = 1, Int.Var=0, DID=0), se.fit = TRUE)[["se.fit"]]
+      moe00 <- qt(.975, nrow(cmodel$model)) * predSE(cmodel, tmpdf00)
+      moe01 <- qt(.975, nrow(cmodel$model)) * predSE(cmodel, tmpdf01)
       #treatment
-      moe10 <- qt(.975, nrow(cmodel$model)) *
-        predict(cmodel, newdata = data.frame(Post.All = 0, Int.Var=1, DID=0), se.fit = TRUE)[["se.fit"]]
-      moe11 <- qt(.975, nrow(cmodel$model)) *
-        predict(cmodel, newdata = data.frame(Post.All = 1, Int.Var=1, DID=1), se.fit = TRUE)[["se.fit"]]
+      moe10 <- qt(.975, nrow(cmodel$model)) * predSE(cmodel, tmpdf10)
+      moe11 <- qt(.975, nrow(cmodel$model)) * predSE(cmodel, tmpdf11)
       #Control
       polygon(c(0:1, rev(0:1)), c(c0+moe00, c1+moe01, c1-moe01, c0-moe00),
               col= adjustcolor(lcol[2], alpha.f = adj.alpha),
@@ -440,17 +463,18 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
          cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
     #Add in confidence bars
     if(conf.int==TRUE) {
+      # temp data frame #
+      tmpdf00 <- data.frame(Period = 1, DID=0, DID.Trend=0)
+      tmpdf01 <- data.frame(Period = max_time, DID=0, DID.Trend=0)
+      tmpdf10 <- data.frame(Period = treat_start, DID=1, DID.Trend=treat_start)
+      tmpdf11 <- data.frame(Period = max_time, DID=1, DID.Trend=max_time)
       # Margin of Errors #
       #Control
-      moe00 <- qt(.975, nrow(cmodel$model)) *
-        predict(cmodel, newdata = data.frame(Period = 0, DID=0, DID.Trend=0), se.fit = TRUE)[["se.fit"]]
-      moe01 <- qt(.975, nrow(cmodel$model)) *
-        predict(cmodel, newdata = data.frame(Period = max_time, DID=0, DID.Trend=0), se.fit = TRUE)[["se.fit"]]
+      moe00 <- qt(.975, nrow(cmodel$model)) * predSE(cmodel, tmpdf00)
+      moe01 <- qt(.975, nrow(cmodel$model)) * predSE(cmodel, tmpdf01)
       #treatment
-      moe10 <- qt(.975, nrow(cmodel$model)) *
-        predict(cmodel, newdata = data.frame(Period = treat_start, DID=1, DID.Trend=treat_start), se.fit = TRUE)[["se.fit"]]
-      moe11 <- qt(.975, nrow(cmodel$model)) *
-        predict(cmodel, newdata = data.frame(Period = max_time, DID=1, DID.Trend=max_time), se.fit = TRUE)[["se.fit"]]
+      moe10 <- qt(.975, nrow(cmodel$model)) * predSE(cmodel, tmpdf10)
+      moe11 <- qt(.975, nrow(cmodel$model)) * predSE(cmodel, tmpdf11)
       #Control
       polygon(c(c(1,max_time), c(max_time,1)), c(c0+moe00, c1+moe01, c1-moe01, c0-moe00),
               col= adjustcolor(lcol[2], alpha.f = adj.alpha),
@@ -584,15 +608,11 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
 
       # Margin of Errors #
       #period 1
-      moe00 <- qt(.975, nrow(cmodel$model)) *
-        predict(cmodel, newdata = tmpdf00, se.fit = TRUE)[["se.fit"]]
-      moe01 <- qt(.975, nrow(cmodel$model)) *
-        predict(cmodel, newdata = tmpdf01, se.fit = TRUE)[["se.fit"]]
+      moe00 <- qt(.975, nrow(cmodel$model)) * predSE(cmodel, tmpdf00)
+      moe01 <- qt(.975, nrow(cmodel$model)) * predSE(cmodel, tmpdf01)
       #period 2
-      moe10 <- qt(.975, nrow(cmodel$model)) *
-        predict(cmodel, newdata = tmpdf10, se.fit = TRUE)[["se.fit"]]
-      moe11 <- qt(.975, nrow(cmodel$model)) *
-        predict(cmodel, newdata = tmpdf11, se.fit = TRUE)[["se.fit"]]
+      moe10 <- qt(.975, nrow(cmodel$model)) * predSE(cmodel, tmpdf10)
+      moe11 <- qt(.975, nrow(cmodel$model)) * predSE(cmodel, tmpdf11)
       ## treatment ##
       #period 1
       polygon(c(c(1, time_per1[2]), rev(c(1, time_per1[2]))),
@@ -782,20 +802,14 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
 
       # Margin of Errors #
       #period 1
-      moe00 <- qt(.975, nrow(cmodel$model)) *
-        predict(cmodel, newdata = tmpdf00, se.fit = TRUE)[["se.fit"]]
-      moe01 <- qt(.975, nrow(cmodel$model)) *
-        predict(cmodel, newdata = tmpdf01, se.fit = TRUE)[["se.fit"]]
+      moe00 <- qt(.975, nrow(cmodel$model)) * predSE(cmodel, tmpdf00)
+      moe01 <- qt(.975, nrow(cmodel$model)) * predSE(cmodel, tmpdf01)
       #period 2
-      moe10 <- qt(.975, nrow(cmodel$model)) *
-        predict(cmodel, newdata = tmpdf10, se.fit = TRUE)[["se.fit"]]
-      moe11 <- qt(.975, nrow(cmodel$model)) *
-        predict(cmodel, newdata = tmpdf11, se.fit = TRUE)[["se.fit"]]
+      moe10 <- qt(.975, nrow(cmodel$model)) * predSE(cmodel, tmpdf10)
+      moe11 <- qt(.975, nrow(cmodel$model)) * predSE(cmodel, tmpdf11)
       #period 3
-      moe20 <- qt(.975, nrow(cmodel$model)) *
-        predict(cmodel, newdata = tmpdf20, se.fit = TRUE)[["se.fit"]]
-      moe21 <- qt(.975, nrow(cmodel$model)) *
-        predict(cmodel, newdata = tmpdf21, se.fit = TRUE)[["se.fit"]]
+      moe20 <- qt(.975, nrow(cmodel$model)) * predSE(cmodel, tmpdf20)
+      moe21 <- qt(.975, nrow(cmodel$model)) * predSE(cmodel, tmpdf21)
       ## treatment ##
       #period 1
       polygon(c(c(1, time_per1[2]), rev(c(1, time_per1[2]))),
@@ -1043,26 +1057,18 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
       # Margin of Errors #
       # Treatment
       #period 1
-      moe00 <- qt(.975, nrow(cmodel$model)) *
-        predict(cmodel, newdata = tmpdf00, se.fit = TRUE)[["se.fit"]]
-      moe01 <- qt(.975, nrow(cmodel$model)) *
-        predict(cmodel, newdata = tmpdf01, se.fit = TRUE)[["se.fit"]]
+      moe00 <- qt(.975, nrow(cmodel$model)) * predSE(cmodel, tmpdf00)
+      moe01 <- qt(.975, nrow(cmodel$model)) * predSE(cmodel, tmpdf01)
       #period 2
-      moe10 <- qt(.975, nrow(cmodel$model)) *
-        predict(cmodel, newdata = tmpdf10, se.fit = TRUE)[["se.fit"]]
-      moe11 <- qt(.975, nrow(cmodel$model)) *
-        predict(cmodel, newdata = tmpdf11, se.fit = TRUE)[["se.fit"]]
+      moe10 <- qt(.975, nrow(cmodel$model)) * predSE(cmodel, tmpdf10)
+      moe11 <- qt(.975, nrow(cmodel$model)) * predSE(cmodel, tmpdf11)
       # Control group
       #period 1
-      cmoe00 <- qt(.975, nrow(cmodel$model)) *
-        predict(cmodel, newdata = ctmpdf00, se.fit = TRUE)[["se.fit"]]
-      cmoe01 <- qt(.975, nrow(cmodel$model)) *
-        predict(cmodel, newdata = ctmpdf01, se.fit = TRUE)[["se.fit"]]
+      cmoe00 <- qt(.975, nrow(cmodel$model)) * predSE(cmodel, ctmpdf00)
+      cmoe01 <- qt(.975, nrow(cmodel$model)) * predSE(cmodel, ctmpdf01)
       #period 2
-      cmoe10 <- qt(.975, nrow(cmodel$model)) *
-        predict(cmodel, newdata = ctmpdf10, se.fit = TRUE)[["se.fit"]]
-      cmoe11 <- qt(.975, nrow(cmodel$model)) *
-        predict(cmodel, newdata = ctmpdf11, se.fit = TRUE)[["se.fit"]]
+      cmoe10 <- qt(.975, nrow(cmodel$model)) * predSE(cmodel, ctmpdf10)
+      cmoe11 <- qt(.975, nrow(cmodel$model)) * predSE(cmodel, ctmpdf11)
       # Control group
       #period 1
       polygon(c(c(1, time_per1[2]), rev(c(1, time_per1[2]))),
@@ -1387,36 +1393,24 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
       # Margin of Errors #
       # Treatment
       #period 1
-      moe00 <- qt(.975, nrow(cmodel$model)) *
-        predict(cmodel, newdata = tmpdf00, se.fit = TRUE)[["se.fit"]]
-      moe01 <- qt(.975, nrow(cmodel$model)) *
-        predict(cmodel, newdata = tmpdf01, se.fit = TRUE)[["se.fit"]]
+      moe00 <- qt(.975, nrow(cmodel$model)) * predSE(cmodel, tmpdf00)
+      moe01 <- qt(.975, nrow(cmodel$model)) * predSE(cmodel, tmpdf01)
       #period 2
-      moe10 <- qt(.975, nrow(cmodel$model)) *
-        predict(cmodel, newdata = tmpdf10, se.fit = TRUE)[["se.fit"]]
-      moe11 <- qt(.975, nrow(cmodel$model)) *
-        predict(cmodel, newdata = tmpdf11, se.fit = TRUE)[["se.fit"]]
+      moe10 <- qt(.975, nrow(cmodel$model)) * predSE(cmodel, tmpdf10)
+      moe11 <- qt(.975, nrow(cmodel$model)) * predSE(cmodel, tmpdf11)
       #period 3
-      moe20 <- qt(.975, nrow(cmodel$model)) *
-        predict(cmodel, newdata = tmpdf20, se.fit = TRUE)[["se.fit"]]
-      moe21 <- qt(.975, nrow(cmodel$model)) *
-        predict(cmodel, newdata = tmpdf21, se.fit = TRUE)[["se.fit"]]
+      moe20 <- qt(.975, nrow(cmodel$model)) * predSE(cmodel, tmpdf20)
+      moe21 <- qt(.975, nrow(cmodel$model)) * predSE(cmodel, tmpdf21)
       # Control group
       #period 1
-      cmoe00 <- qt(.975, nrow(cmodel$model)) *
-        predict(cmodel, newdata = ctmpdf00, se.fit = TRUE)[["se.fit"]]
-      cmoe01 <- qt(.975, nrow(cmodel$model)) *
-        predict(cmodel, newdata = ctmpdf01, se.fit = TRUE)[["se.fit"]]
+      cmoe00 <- qt(.975, nrow(cmodel$model)) * predSE(cmodel, ctmpdf00)
+      cmoe01 <- qt(.975, nrow(cmodel$model)) * predSE(cmodel, ctmpdf01)
       #period 2
-      cmoe10 <- qt(.975, nrow(cmodel$model)) *
-        predict(cmodel, newdata = ctmpdf10, se.fit = TRUE)[["se.fit"]]
-      cmoe11 <- qt(.975, nrow(cmodel$model)) *
-        predict(cmodel, newdata = ctmpdf11, se.fit = TRUE)[["se.fit"]]
+      cmoe10 <- qt(.975, nrow(cmodel$model)) * predSE(cmodel, ctmpdf10)
+      cmoe11 <- qt(.975, nrow(cmodel$model)) * predSE(cmodel, ctmpdf11)
       #period 3
-      cmoe20 <- qt(.975, nrow(cmodel$model)) *
-        predict(cmodel, newdata = ctmpdf20, se.fit = TRUE)[["se.fit"]]
-      cmoe21 <- qt(.975, nrow(cmodel$model)) *
-        predict(cmodel, newdata = ctmpdf21, se.fit = TRUE)[["se.fit"]]
+      cmoe20 <- qt(.975, nrow(cmodel$model)) * predSE(cmodel, ctmpdf20)
+      cmoe21 <- qt(.975, nrow(cmodel$model)) * predSE(cmodel, ctmpdf21)
       # Control group
       #period 1
       polygon(c(c(1, time_per1[2]), rev(c(1, time_per1[2]))),
