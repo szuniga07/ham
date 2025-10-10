@@ -272,17 +272,20 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
     #Create list with TRUE/FALSE on identical rows I am looking for
     tdup <- list()
     #Function to identify which are identical for just 1 row of data
-    dupFnc <- function(xdf,ydf) {
-      dup1 <- duplicated(rbind(
-        ydf,
-        xdf[  2:(ncol(ydf) +1)] ))
-      return(dup1)
+    dupFnc <- function(xdf, ydf) {
+      i <- 1
+      tcnt_ls <- vector(length = 1)
+      while (i < nrow(xdf)) {
+        tcnt_ls[1] <- i+1
+        i <- i + 1
+        if (all(xdf[i, 2:(ncol(ydf) +1)] == ydf) == TRUE) {
+          break
+        }
+      }
+      return(tcnt_ls)
     }
-    #Use apply function for each row
-    dupls <- apply(Model$model, 1, dupFnc, ydf=Data)
-    dup2 <- dupls[2, ]
     #Narrow down to TRUE only
-    true_tlep <- which(dup2==TRUE)
+    true_tlep <- dupFnc(xdf=Model$model, ydf=Data)
     #Return the first true row standard error, first needed with aggregated data
     pred_SE <- predict(Model, newdata=tmoddf[true_tlep[1], -1], se.fit=TRUE)[["se.fit"]]
     return(pred_SE)

@@ -856,13 +856,13 @@ plot(dm1, "DID", add.legend="bottom", ylim=c(2, 8), main="DID: Two No Coefficien
 <img src="man/figures/README-revDID0-1.png" width="100%" />
 
 ``` r
-plot(dm1, "DID", add.legend="bottom", xlim=c(-.1, 1.1), ylim=c(2, 8), main="DID: Two", col=c("dodgerblue","magenta"), lwd=7, cex=2, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(.02), cex.text=1.5, coefs=TRUE, round.c=2 )
+plot(dm1, "DID", add.legend="bottom", xlim=c(-.1, 1.1), ylim=c(2, 8), main="DID: Two", col=c("dodgerblue","magenta"), lwd=7, cex=2, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(.02), cex.text=1.5, coefs=TRUE, round.c=2, cfact=T, conf.int=TRUE, adj.alpha=0.2 )
 ```
 
 <img src="man/figures/README-revDID1-1.png" width="100%" />
 
 ``` r
-plot(dm2, "DID", add.legend="topleft", xlim=c(-.5, 12), ylim=c(2, 8), main="DID: Many", col=c("purple","green"), lwd=7, cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(.25, .1), cex.text=1.5, coefs=TRUE, round.c=2 )
+plot(dm2, "DID", add.legend="topleft", xlim=c(-.5, 12), ylim=c(2, 8), main="DID: Many", col=c("purple","green"), lwd=7, cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(.25, .1), cex.text=1.5, coefs=TRUE, round.c=2, cfact=T, conf.int=TRUE, adj.alpha=0.2 )
 ```
 
 <img src="man/figures/README-revDID2-1.png" width="100%" />
@@ -870,19 +870,19 @@ plot(dm2, "DID", add.legend="topleft", xlim=c(-.5, 12), ylim=c(2, 8), main="DID:
 ### Interrupted Time Series
 
 ``` r
-plot(im11, "ITS", add.legend="topleft", xlim=c(-1, 14), ylim=c(2, 8), main="ITS study: SGST", col="thistle", lwd=7, cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(.25, .25), cex.text=1.5, coefs=TRUE, round.c=2 )
+plot(im11, "ITS", add.legend="topleft", xlim=c(-1, 14), ylim=c(2, 8), main="ITS study: SGST", col="thistle", lwd=7, cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(.25, .25), cex.text=1.5, coefs=TRUE, round.c=2, cfact=T, conf.int=TRUE, adj.alpha=0.2 )
 ```
 
 <img src="man/figures/README-revITS1-1.png" width="100%" />
 
 ``` r
-plot(im12, "ITS", add.legend="topleft", xlim=c(-1, 14), ylim=c(2, 8), main="ITS study: SGMT", col="hotpink", lwd=7, cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(.25, .25), cex.text=1.5, coefs=TRUE, round.c=2 )
+plot(im12, "ITS", add.legend="topleft", xlim=c(-1, 14), ylim=c(2, 8), main="ITS study: SGMT", col="hotpink", lwd=7, cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(.25, .25), cex.text=1.5, coefs=TRUE, round.c=2, cfact=T, conf.int=TRUE, adj.alpha=0.2 )
 ```
 
 <img src="man/figures/README-revITS2-1.png" width="100%" />
 
 ``` r
-plot(im21, "ITS", add.legend="top", xlim=c(-1, 14), ylim=c(2, 8), main="ITS study: MGST", col=c("springgreen","salmon"), lwd=7, cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(.25, .25), cex.text=1.5, coefs=TRUE, round.c=2, pos.text= list("post1"=2) )
+plot(im21, "ITS", add.legend="top", xlim=c(-1, 14), ylim=c(2, 8), main="ITS study: MGST", col=c("springgreen","salmon"), lwd=7, cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(.25, .25), cex.text=1.5, coefs=TRUE, round.c=2, pos.text= list("post1"=2), conf.int=TRUE, adj.alpha=0.2 )
 ```
 
 <img src="man/figures/README-revITS3-1.png" width="100%" />
