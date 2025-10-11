@@ -407,7 +407,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
       # intervention group post-test
       text(1, t1, labels =if(coefs == TRUE) paste0("DID= ", round(coef(cmodel)[4], round.c), model_summary_p[4]) else "DID", pos=postwo[[4]], cex=textCEX)
       }
-    if (add.legend %in% leg_locate) {
+    if (!is.null(add.legend)) {
       legend(x=add.legend, legend= if(cfact==TRUE) c("Intervention", "Control","Counterfactual", "Treated") else
         c("Intervention", "Control","Treated"), lty= if(cfact==TRUE) c(1,1,2,3) else c(1,1,3),
              lwd=cex.legend, bty="n", cex=cex.legend,
@@ -544,7 +544,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
            pos= posmany[[3]], cex=textCEX) # how to place text
       text(max_time, atet0, labels =if(coefs == TRUE) paste0("DID.Trend= ", round(coef(cmodel)[4], round.c), model_summary_p[4]) else "DID.Trend", pos=posmany[[4]], cex=textCEX)
     }
-    if (add.legend %in% leg_locate) {
+    if (!is.null(add.legend)) {
       legend(x=add.legend, legend=c("Intervention", "Control","Counterfactual", "Treated"),
              lty= c(1,1,2,3),
              lwd=cex.legend, col=c(lcol[1],lcol[2],lcol[1], ticol), bty="n", cex=cex.legend)
@@ -637,7 +637,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
     }
     # intervention line
     segments(x0 = interrupt_1, y0 = t10, x1 = time_per2[2], y1 = t11, col = lcol[1], lwd = lwidth, lty=1)
-    if (add.legend %in% leg_locate) {
+    if (!is.null(add.legend)) {
       legend(x=add.legend, legend=c("Intervention", "Counterfactual", "Treated"),
              lty= c(1,2,3),
              lwd=cex.legend, col=c(lcol[1],lcol[1], ticol), bty="n", cex=cex.legend)
@@ -846,7 +846,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
     segments(x0 = interrupt_1, y0 = t10, x1 = time_per2[2], y1 = t11, col = lcol[1], lwd = lwidth, lty=1)
     # intervention line period 3
     segments(x0 = interrupt_2, y0 = t20, x1 = time_per3[2], y1 = t21, col = lcol[1], lwd = lwidth, lty=1)
-    if (add.legend %in% leg_locate) {
+    if (!is.null(add.legend)) {
       legend(x=add.legend, legend=c("Intervention", "Counterfactual", "Treated"),
              lty= c(1,2,3),
              lwd=cex.legend, col=c(lcol[1],lcol[1], ticol), bty="n", cex=cex.legend)
@@ -1105,7 +1105,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
     lines(time_per1, c(t00, t01), lty=1, col=lcol[1], lwd=lwidth)
     # intervention line period 2
     segments(x0 = interrupt_1, y0 = t10, x1 = time_per2[2], y1 = t11, col = lcol[1], lwd = lwidth, lty=1)
-    if (add.legend %in% leg_locate) {
+    if (!is.null(add.legend)) {
       legend(x=add.legend, legend=c("Intervention", "Control", "Treated"),
              lty= c(1,1,3),
              lwd=cex.legend, col=c(lcol[1],lcol[2], ticol), bty="n", cex=cex.legend)
@@ -1462,7 +1462,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
     segments(x0 = interrupt_1, y0 = t10, x1 = time_per2[2], y1 = t11, col = lcol[1], lwd = lwidth, lty=1)
     # intervention line period 3
     segments(x0 = interrupt_2, y0 = t20, x1 = time_per3[2], y1 = t21, col = lcol[1], lwd = lwidth, lty=1)
-    if (add.legend %in% leg_locate) {
+    if (!is.null(add.legend)) {
       legend(x=add.legend, legend=c("Intervention", "Control", "Treated"),
              lty= c(1,1,3),
              lwd=cex.legend, col=c(lcol[1],lcol[2], ticol), bty="n", cex=cex.legend)
