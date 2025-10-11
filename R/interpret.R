@@ -169,6 +169,7 @@ interpret <- function(object) {
   if("assess" %in% class(object) ) {
     if(object$analysis_type$itsa_type == "sgst") {
       Y_var_its <- all.vars(object$formula$ITS_formula)[1]
+      X_var_its <- all.vars(object$formula$ITS_formula)[-1][1:3]
       # Coefficients
       its_b0_coef <- summary(object$ITS)[["coefficients"]][1, "Estimate"]
       its_b1_coef <- summary(object$ITS)[["coefficients"]][2, "Estimate"]
@@ -182,17 +183,18 @@ interpret <- function(object) {
       its_b3_sig <- ifelse(summary(object$ITS)[["coefficients"]][4, "Pr(>|t|)"] < .05, "significant", "non-significant")
       Smry_int_sig <- ifelse(object$ITS.Effects[1, "p.value"] < .05, "significant", "non-significant")
       # Interpretations
-      its_intro <- c("Note: Variable names below based on time points (or 'interruptions') \nwon't match identically with the output (e.g., if time 1 = 12 months, \nthe corresponding variables are post1 = post12). \nThis analysis is for a one-group, single intervention period (interruption).")
+      its_intro <- c("Note: Some variable names below based on time points (or 'interruptions'). \nThis analysis is for a one-group, single intervention period (interruption).")
       B0 <- paste0("Intercept is ", round(its_b0_coef, 3), " and the starting value of the trend \nfor the intervention group.")
       B1 <- paste0("ITS.Time is ", round(its_b1_coef, 3), " and the slope prior to intervention. \nThe coefficient is ", its_b1_sig, ".")
-      B2 <- paste0("post1 is ", round(its_b2_coef, 3), " and the immediate shift in the trend line \nafter the intervention start (e.g., 1st year of intervention). \nThe coefficient is ", its_b2_sig, ".")
-      B3 <- paste0("txp1 is ", round(its_b3_coef, 3), " and the difference between pre- and \npost-intervention slopes (e.g., change in the pre-intervention \nslope). The coefficient is ", its_b3_sig,".")
+      B2 <- paste0(X_var_its[2], " is ", round(its_b2_coef, 3), " and the immediate shift in the trend line \nafter the intervention start (e.g., 1st year of intervention). \nThe coefficient is ", its_b2_sig, ".")
+      B3 <- paste0(X_var_its[3], " is ", round(its_b3_coef, 3), " and the difference between pre- and \npost-intervention slopes (e.g., change in the pre-intervention \nslope). The coefficient is ", its_b3_sig,".")
       its_Summary <- paste0("Summary: The results show that after the start of the intervention, \nthere was a ", Smry_int_sig, " change in the ", Y_var_its, " trend. This gives \na total post-intervention trend in the ", Y_var_its, " of ", round(Smry_int_coef, 3), " \nover time (i.e., the total combined value of change not the \nchange relative to pre-intervention).")
       its_covariates <- c("If there are additional variables in the model then the coefficients \nabove represent effects after controlling for the other variables.")
     }
     # mgst
     if(object$analysis_type$itsa_type == "mgst") {
       Y_var_its <- all.vars(object$formula$ITS_formula)[1]
+      X_var_its <- all.vars(object$formula$ITS_formula)[-1][1:7]
       # Coefficients
       its_b0_coef <- summary(object$ITS)[["coefficients"]][1, "Estimate"]
       its_b1_coef <- summary(object$ITS)[["coefficients"]][2, "Estimate"]
@@ -218,21 +220,22 @@ interpret <- function(object) {
       Smry_con_sig <- ifelse(object$ITS.Effects[2, "p.value"] < .05, "significant", "non-significant")
       Smry_diff_sig <- ifelse(object$ITS.Effects[3, "p.value"] < .05, "significant", "non-significant")
       # Interpretations
-      its_intro <- c("Note: Variable names below based on time points (or 'interruptions') \nwon't match identically with the output (e.g., if time 1 = 12 months, \nThis analysis is for a two-group, single intervention period (interruption). \nPositive values indicate higher intervention group values and vice-versa for: \npost1, txp1, ixp1, txip1.")
+      its_intro <- c("Note: Some variable names below based on time points (or 'interruptions'). \nThis analysis is for a two-group, single intervention period (interruption). \nPositive values indicate higher intervention group values and vice-versa for: \npost1, txp1, ixp1, txip1.")
       B0 <- paste0("Intercept is ", round(its_b0_coef, 3), " and the starting value of the trend for the \ncontrol group.")
       B1 <- paste0("ITS.Time is ", round(its_b1_coef, 3), " and the control group\'s slope prior to intervention. \nThe coefficient is ", its_b1_sig, ".")
       B2 <- paste0("ITS.Int is ", round(its_b2_coef, 3), " and the difference in the level between intervention \nand control group prior to intervention (intervention - control). \nThe coefficient is ", its_b2_sig, ".")
       B3 <- paste0("txi is ", round(its_b3_coef, 3), " and the difference between the intervention and \ncontrol group\'s pre-intervention slopes (intervention - control). \nThe coefficient is ", its_b3_sig, ".")
-      B4 <- paste0("post1 is ", round(its_b4_coef, 3), " and the immediate shift in the control group \ntrend line after the intervention start. The coefficient is \n", its_b4_sig, ".")
-      B5 <- paste0("txp1 is ", round(its_b5_coef, 3), " and the difference between pre- and post- \ncontrol group slopes (e.g., change in the pre-intervention \nslope). The coefficient is ", its_b5_sig, ".")
-      B6 <- paste0("ixp1 is ", round(its_b6_coef, 3), " and the difference between the intervention and \ncontrol groups (intervention - control) in the period immediately \nafter the intervention started (e.g., 1st year of intervention). \nThe coefficient is ", its_b6_sig, ".")
-      B7 <- paste0("txip1 is ", round(its_b7_coef, 3), " and ", its_b7_sig, "."," This is the difference in both \ngroup\'s slope changes since pre-intervention (pre-slopes compared \nto post-slopes). For example, both have pre-intervention slopes \nof 2, the control group\'s slope remained the same, therefore the \npost-intervention slope is 0. And the intervention group's slope \nincreased by 2, then txip1 = 2 (= 2 - 0).")
+      B4 <- paste0(X_var_its[4], " is ", round(its_b4_coef, 3), " and the immediate shift in the control group \ntrend line after the intervention start. The coefficient is \n", its_b4_sig, ".")
+      B5 <- paste0(X_var_its[5], " is ", round(its_b5_coef, 3), " and the difference between pre- and post- \ncontrol group slopes (e.g., change in the pre-intervention \nslope). The coefficient is ", its_b5_sig, ".")
+      B6 <- paste0(X_var_its[6], " is ", round(its_b6_coef, 3), " and the difference between the intervention and \ncontrol groups (intervention - control) in the period immediately \nafter the intervention started (e.g., 1st year of intervention). \nThe coefficient is ", its_b6_sig, ".")
+      B7 <- paste0(X_var_its[7], " is ", round(its_b7_coef, 3), " and ", its_b7_sig, "."," This is the difference in both \ngroup\'s slope changes since pre-intervention (pre-slopes compared \nto post-slopes). For example, both have pre-intervention slopes \nof 2, the control group\'s slope remained the same, therefore the \npost-intervention slope is 0. And the intervention group's slope \nincreased by 2, then txip1 = 2 (= 2 - 0).")
       its_Summary <- paste0("Summary: For the intervention period, the results show that the \nintervention group\'s ", Smry_int_sig, " shift in ",Y_var_its, ", \npost-intervention was ", round(Smry_int_coef, 3), ". The control group\'s ",Smry_con_sig, " \nshift in ",Y_var_its, ", post-intervention was ", round(Smry_con_coef, 3), ". The ", Smry_diff_sig, " \ndifference between both groups is ", round(Smry_diff_coef, 3), ".")
       its_covariates <- c("If there are additional variables in the model then the coefficients \nabove represent effects after controlling for the other variables.")
     }
     # sgmt
     if(object$analysis_type$itsa_type == "sgmt") {
       Y_var_its <- all.vars(object$formula$ITS_formula)[1]
+      X_var_its <- all.vars(object$formula$ITS_formula)[-1][1:5]
       # Coefficients
       its_b0_coef <- summary(object$ITS)[["coefficients"]][1, "Estimate"]
       its_b1_coef <- summary(object$ITS)[["coefficients"]][2, "Estimate"]
@@ -252,13 +255,13 @@ interpret <- function(object) {
       Smry_int1_sig <- ifelse(object$ITS.Effects[1, "p.value"] < .05, "significant", "non-significant")
       Smry_int2_sig <- ifelse(object$ITS.Effects[2, "p.value"] < .05, "significant", "non-significant")
       # Interpretations
-      its_intro <- c("Note: Variable names below based on time points (or 'interruptions') \nwon't match identically with the output (e.g., if time 1 = 12 months, \nthe corresponding variables are post1 = post12). \nThis analysis is for a one-group, double intervention period (2 interruptions).")
+      its_intro <- c("Note: Some variable names below based on time points (or 'interruptions'). \nThis analysis is for a one-group, double intervention period (2 interruptions).")
       B0 <- paste0("Intercept is ", round(its_b0_coef, 3), " and the starting value of the trend \nfor the intervention group.")
       B1 <- paste0("ITS.Time is ", round(its_b1_coef, 3), " and the slope prior to intervention. \nThe coefficient is ", its_b1_sig, ".")
-      B2 <- paste0("post1 is ", round(its_b2_coef, 3), " and the immediate shift in the trend line \nafter the intervention start (e.g., 1st year of intervention). \nThe coefficient is ", its_b2_sig, ".")
-      B3 <- paste0("txp1 is ", round(its_b3_coef, 3), " and the difference between pre- and \npost-intervention slopes (e.g., change in the pre-intervention \nslope). The coefficient is ", its_b3_sig,".")
-      B4 <- paste0("post2 is ", round(its_b4_coef, 3), " and the immediate shift in the trend line \nafter the first intervention (e.g., 1st year of 2nd intervention). \nThe coefficient is ", its_b4_sig, ".")
-      B5 <- paste0("txp2 is ", round(its_b5_coef, 3), " and the difference between 1st- and \n2nd-intervention slopes (e.g., change in the pre-intervention \nslope). The coefficient is ", its_b5_sig,".")
+      B2 <- paste0(X_var_its[2], " is ", round(its_b2_coef, 3), " and the immediate shift in the trend line \nafter the intervention start (e.g., 1st year of intervention). \nThe coefficient is ", its_b2_sig, ".")
+      B3 <- paste0(X_var_its[3], " is ", round(its_b3_coef, 3), " and the difference between pre- and \npost-intervention slopes (e.g., change in the pre-intervention \nslope). The coefficient is ", its_b3_sig,".")
+      B4 <- paste0(X_var_its[4], " is ", round(its_b4_coef, 3), " and the immediate shift in the trend line \nafter the first intervention (e.g., 1st year of 2nd intervention). \nThe coefficient is ", its_b4_sig, ".")
+      B5 <- paste0(X_var_its[5], " is ", round(its_b5_coef, 3), " and the difference between 1st- and \n2nd-intervention slopes (e.g., change in the pre-intervention \nslope). The coefficient is ", its_b5_sig,".")
       its_Summary1 <- paste0("Summary 1: The results show that after the start of the 1st intervention, \nthere was a ", Smry_int1_sig, " change in the ", Y_var_its, " trend. This gives \na total post 1st intervention trend in the ", Y_var_its, " of ", round(Smry_int1_coef, 3), " \nover time (i.e., the total combined value of change not the \nchange relative to pre-intervention).")
       its_Summary2 <- paste0("Summary 2: The results show that after the start of the 2nd intervention, \nthere was a ", Smry_int2_sig, " change in the ", Y_var_its, " trend. This gives \na total post 2nd intervention trend in the ", Y_var_its, " of ", round(Smry_int2_coef, 3), " \nover time (i.e., the total combined value of change not the \nchange relative to the 1st intervention).")
       its_covariates <- c("If there are additional variables in the model then the coefficients \nabove represent effects after controlling for the other variables.")
@@ -266,6 +269,7 @@ interpret <- function(object) {
     # mgmt
     if(object$analysis_type$itsa_type == "mgmt") {
       Y_var_its <- all.vars(object$formula$ITS_formula)[1]
+      X_var_its <- all.vars(object$formula$ITS_formula)[-1][1:11]
       # Coefficients
       its_b0_coef <- summary(object$ITS)[["coefficients"]][1, "Estimate"]
       its_b1_coef <- summary(object$ITS)[["coefficients"]][2, "Estimate"]
@@ -305,19 +309,19 @@ interpret <- function(object) {
       Smry_con2_sig <- ifelse(object$ITS.Effects[5, "p.value"] < .05, "significant", "non-significant")
       Smry_diff2_sig <- ifelse(object$ITS.Effects[6, "p.value"] < .05, "significant", "non-significant")
       # Interpretations
-      its_intro <- c("Note: Variable names below based on time points (or 'interruptions') \nwon't match identically with the output (e.g., if time 1 = 12 months, \nThis analysis is for a two-group, single intervention period (interruption). \nPositive values indicate higher intervention group values and vice-versa for: \npost1, txp1, ixp1, txip1, post2, txp2, ixp2, txip2.")
+      its_intro <- c("Note: Some variable names below based on time points (or 'interruptions'). \nThis analysis is for a two-group, single intervention period (interruption). \nPositive values indicate higher intervention group values and vice-versa for: \npost1, txp1, ixp1, txip1, post2, txp2, ixp2, txip2.")
       B0 <- paste0("Intercept is ", round(its_b0_coef, 3), " and the starting value of the trend for the \ncontrol group.")
       B1 <- paste0("ITS.Time is ", round(its_b1_coef, 3), " and the control group\'s slope prior to intervention. \nThe coefficient is ", its_b1_sig, ".")
       B2 <- paste0("ITS.Int is ", round(its_b2_coef, 3), " and the difference in the level between intervention \nand control group prior to intervention 1 (intervention - control). \nThe coefficient is ", its_b2_sig, ".")
       B3 <- paste0("txi is ", round(its_b3_coef, 3), " and the difference between the intervention and \ncontrol group\'s pre-intervention slopes (intervention - control). \nThe coefficient is ", its_b3_sig, ".")
-      B4 <- paste0("post1 is ", round(its_b4_coef, 3), " and the immediate shift in the control group \ntrend line after the 1st intervention start. The coefficient is \n", its_b4_sig, ".")
-      B5 <- paste0("txp1 is ", round(its_b5_coef, 3), " and the difference between pre- and post-intervention \ncontrol group slopes (e.g., change in the pre-intervention \nslope). The coefficient is ", its_b5_sig, ".")
-      B6 <- paste0("ixp1 is ", round(its_b6_coef, 3), " and the difference between the intervention and \ncontrol groups (intervention - control) in the period immediately \nafter the intervention started (e.g., 1st year of intervention 1). \nThe coefficient is ", its_b6_sig, ".")
-      B7 <- paste0("txip1 is ", round(its_b7_coef, 3), " and ", its_b7_sig, "."," This is the difference in both \ngroup\'s slope changes since pre-intervention (pre-slopes compared \nto post-slopes). For example, both have pre-intervention slopes \nof 2, the control group\'s slope remained the same, therefore the \npost 1st intervention slope is 0. And the intervention group's slope \nincreased by 2, then txip1 = 2 (= 2 - 0).")
-      B8 <- paste0("post2 is ", round(its_b8_coef, 3), " and the immediate shift in the control group \ntrend line after the 2nd intervention start. The coefficient is \n", its_b8_sig, ".")
-      B9 <- paste0("txp2 is ", round(its_b9_coef, 3), " and the difference between 1st and 2nd intervention \ncontrol group slopes (e.g., change in the 1st intervention \nslope). The coefficient is ", its_b9_sig, ".")
-      B10 <- paste0("ixp2 is ", round(its_b10_coef, 3), " and the difference between the intervention and \ncontrol groups (intervention - control) in the period immediately \nafter the 2nd intervention started (e.g., 1st year of intervention 2). \nThe coefficient is ", its_b10_sig, ".")
-      B11 <- paste0("txip2 is ", round(its_b11_coef, 3), " and ", its_b11_sig, "."," This is the difference in both group\'s \nslope changes since the 1st intervention (1st intervention slope compared \nto the 2nd). For example, both have 1st intervention slopes of 2, the control \ngroup\'s slope remained the same, therefore the 2nd intervention slope is 0. And \nthe intervention group's slope increased by 2, then txip2 = 2 (= 2 - 0).")
+      B4 <- paste0(X_var_its[4], " is ", round(its_b4_coef, 3), " and the immediate shift in the control group \ntrend line after the 1st intervention start. The coefficient is \n", its_b4_sig, ".")
+      B5 <- paste0(X_var_its[5], " is ", round(its_b5_coef, 3), " and the difference between pre- and post-intervention \ncontrol group slopes (e.g., change in the pre-intervention \nslope). The coefficient is ", its_b5_sig, ".")
+      B6 <- paste0(X_var_its[6], " is ", round(its_b6_coef, 3), " and the difference between the intervention and \ncontrol groups (intervention - control) in the period immediately \nafter the intervention started (e.g., 1st year of intervention 1). \nThe coefficient is ", its_b6_sig, ".")
+      B7 <- paste0(X_var_its[7], " is ", round(its_b7_coef, 3), " and ", its_b7_sig, "."," This is the difference in both \ngroup\'s slope changes since pre-intervention (pre-slopes compared \nto post-slopes). For example, both have pre-intervention slopes \nof 2, the control group\'s slope remained the same, therefore the \npost 1st intervention slope is 0. And the intervention group's slope \nincreased by 2, then txip1 = 2 (= 2 - 0).")
+      B8 <- paste0(X_var_its[8], " is ", round(its_b8_coef, 3), " and the immediate shift in the control group \ntrend line after the 2nd intervention start. The coefficient is \n", its_b8_sig, ".")
+      B9 <- paste0(X_var_its[9], " is ", round(its_b9_coef, 3), " and the difference between 1st and 2nd intervention \ncontrol group slopes (e.g., change in the 1st intervention \nslope). The coefficient is ", its_b9_sig, ".")
+      B10 <- paste0(X_var_its[10], " is ", round(its_b10_coef, 3), " and the difference between the intervention and \ncontrol groups (intervention - control) in the period immediately \nafter the 2nd intervention started (e.g., 1st year of intervention 2). \nThe coefficient is ", its_b10_sig, ".")
+      B11 <- paste0(X_var_its[11], " is ", round(its_b11_coef, 3), " and ", its_b11_sig, "."," This is the difference in both group\'s \nslope changes since the 1st intervention (1st intervention slope compared \nto the 2nd). For example, both have 1st intervention slopes of 2, the control \ngroup\'s slope remained the same, therefore the 2nd intervention slope is 0. And \nthe intervention group's slope increased by 2, then txip2 = 2 (= 2 - 0).")
       its_Summary1 <- paste0("Summary 1: For the 1st intervention period, the results show that the \nintervention group\'s ", Smry_int1_sig, " shift in ", Y_var_its, ", \npost 1st intervention was ", round(Smry_int1_coef, 3), ". The control group\'s ",Smry_con1_sig, " \nshift in ", Y_var_its, ", post 1st intervention was ", round(Smry_con1_coef, 3), ". The ", Smry_diff1_sig, " \ndifference between both groups is ", round(Smry_diff1_coef, 3), ".")
       its_Summary2 <- paste0("Summary 2: For the 2nd intervention period, the results show that the \nintervention group\'s ", Smry_int2_sig, " shift in ", Y_var_its, ", \npost 2nd intervention was ", round(Smry_int2_coef, 3), ". The control group\'s ",Smry_con2_sig, " \nshift in ", Y_var_its, ", post 2nd intervention was ", round(Smry_con2_coef, 3), ". The ", Smry_diff2_sig, " \ndifference between both groups is ", round(Smry_diff2_coef, 3), ".")
       its_covariates <- c("If there are additional variables in the model then the coefficients \nabove represent effects after controlling for the other variables.")

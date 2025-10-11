@@ -81,8 +81,7 @@ added to the plot. Default is FALSE. coefs = TRUE overrides name = FALSE.}
 to be used for rounding coefficient values.}
 
 \item{pos.text}{a list of named integer value(s) between 1 to 4 indicating
-the position of the text added into the plot. List name(s) should use existing generic time references
-(e.g., "post1" and "post2").}
+the position of the text added into the plot. List name(s) should use coefficient variable names.}
 
 \item{arrow}{logical TRUE or FALSE that indicates whether arrows and
 coefficient names should be added to visualize effects. Default is FALSE.}
@@ -103,8 +102,8 @@ plot of partial predictions for treatment and control groups.
 Provides partial prediction plots for treatment and control groups from difference-in-difference (DID)
 and interrupted time series (ITS) models. The graph will produce lines for treatment/intervention and
 control groups to gain understanding through a visual representation of the regression coefficients.
-The treatment/intervention group is represented with a blue line, the control group is represented with
-a red line, and the counterfactual line, when available, is a dashed line.
+By default, the treatment/intervention group is represented with a blue line, the control group is represented with
+a red line, and the counterfactual line, when available, is a dashed line. There are many options to change the plot.
 }
 \examples{
 am2 <- assess(formula= los ~ ., data=hosprog, intervention = "program",
@@ -118,6 +117,6 @@ arrow=TRUE, xshift=0.02, coefs=TRUE, round.c=2 )
 plot(am2, "ITS", add.legend="top", xlim=c(-.5, 13), ylim=c(2, 8), main="ITS study",
 col=c("cyan","hotpink"), tcol="springgreen", lwd=7, cex=2, cex.axis=2, cex.lab=2,
 cex.main=3, cex.text=1.2, cex.legend=1.25, name=FALSE, coefs=TRUE, round.c=1,
-pos.text= list("txp1"=3, "post2"=4), arrow=TRUE, xshift=c(.5, 1.5),
+pos.text= list("txp5"=3, "post9"=4), arrow=TRUE, xshift=c(.5, 1.5),
 cfact=T, conf.int=TRUE, adj.alpha=0.2)
 }

@@ -3,8 +3,8 @@
 #' Provides partial prediction plots for treatment and control groups from difference-in-difference (DID)
 #' and interrupted time series (ITS) models. The graph will produce lines for treatment/intervention and
 #' control groups to gain understanding through a visual representation of the regression coefficients.
-#' The treatment/intervention group is represented with a blue line, the control group is represented with
-#' a red line, and the counterfactual line, when available, is a dashed line.
+#' By default, the treatment/intervention group is represented with a blue line, the control group is represented with
+#' a red line, and the counterfactual line, when available, is a dashed line. There are many options to change the plot.
 #'
 #' @param x assess object. Either difference-in-difference or interrupted time series model with no covariate adjustment.
 #' @param y type of model, specify either 'DID' (difference-in-difference) or 'ITS' (interrupted time series). Will not accept other models.
@@ -33,8 +33,7 @@
 #' @param round.c an integer indicating the number of decimal places
 #' to be used for rounding coefficient values.
 #' @param pos.text a list of named integer value(s) between 1 to 4 indicating
-#' the position of the text added into the plot. List name(s) should use existing generic time references
-#' (e.g., "post1" and "post2").
+#' the position of the text added into the plot. List name(s) should use coefficient variable names.
 #' @param arrow logical TRUE or FALSE that indicates whether arrows and
 #' coefficient names should be added to visualize effects. Default is FALSE.
 #' @param xshift shifts one or two of some of the overlapping intervention associated arrows
@@ -64,7 +63,7 @@
 #' plot(am2, "ITS", add.legend="top", xlim=c(-.5, 13), ylim=c(2, 8), main="ITS study",
 #' col=c("cyan","hotpink"), tcol="springgreen", lwd=7, cex=2, cex.axis=2, cex.lab=2,
 #' cex.main=3, cex.text=1.2, cex.legend=1.25, name=FALSE, coefs=TRUE, round.c=1,
-#' pos.text= list("txp1"=3, "post2"=4), arrow=TRUE, xshift=c(.5, 1.5),
+#' pos.text= list("txp5"=3, "post9"=4), arrow=TRUE, xshift=c(.5, 1.5),
 #' cfact=T, conf.int=TRUE, adj.alpha=0.2)
 plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NULL, tcol=NULL,
                         cfact=FALSE, conf.int=FALSE, adj.alpha=NULL, add.legend=NULL,
@@ -141,34 +140,6 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
     if (!is.null(pos.text)) {
       if (all(names(pos.text) %in% c("Intercept","Period","DID","DID.Trend")) == FALSE) {
         stop("Error: Expecting pos.text variable names and values for 'Intercept', 'Period', 'DID', and/or 'DID.Trend'.")
-      }
-    }
-  }
-  if (model_type == "sgst") {
-    if (!is.null(pos.text)) {
-      if (all(names(pos.text) %in% c('Intercept','ITS.Time', 'post1', 'txp1')) == FALSE) {
-        stop("Error: Expecting pos.text variable names and values for 'Intercept', 'ITS.Time', 'post1', and/or 'txp1'.")
-      }
-    }
-  }
-  if (model_type == "sgmt") {
-    if (!is.null(pos.text)) {
-      if (all(names(pos.text) %in% c('Intercept','ITS.Time', 'post1', 'txp1', 'post2','txp2')) == FALSE) {
-        stop("Error: Expecting pos.text variable names and values for 'Intercept', 'ITS.Time', 'post1', 'txp1', 'post2', and/or 'txp2'.")
-      }
-    }
-  }
-  if (model_type == "mgst") {
-    if (!is.null(pos.text)) {
-      if (all(names(pos.text) %in% c('Intercept', 'ITS.Time', 'ITS.Int', 'txi', 'post1', 'txp1', 'ixp1', 'txip1')) == FALSE) {
-        stop("Error: Expecting pos.text variable names and values for 'Intercept', 'ITS.Time', 'ITS.Int', 'txi', 'post1', 'txp1', 'ixp1', and/or 'txip1'.")
-      }
-    }
-  }
-  if (model_type == "mgmt") {
-    if (!is.null(pos.text)) {
-      if (all(names(pos.text) %in% c('Intercept', 'ITS.Time', 'ITS.Int', 'txi', 'post1', 'txp1', 'ixp1', 'txip1', 'post2', 'txp2', 'ixp2', 'txip2')) == FALSE) {
-        stop("Error: Expecting pos.text variable names and values for 'Intercept', 'ITS.Time', 'ITS.Int', 'txi', 'post1', 'txp1', 'ixp1', 'txip1', 'post2', 'txp2', 'ixp2', and/or 'txip2'.")
       }
     }
   }
@@ -598,8 +569,8 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
          main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim,
          cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
     #Add in confidence bars
+    tmpdf_names <- names(coef(cmodel))[1:4][-1]
     if(conf.int==TRUE) {
-      tmpdf_names <- names(coef(cmodel))[1:4][-1]
       tmpdf00 <- data.frame(ITS.Time = 1, post1=0, txp1=0)
       tmpdf01 <- data.frame(ITS.Time = time_per1[2], post1=0, txp1=0)
       tmpdf10 <- data.frame(ITS.Time = time_per2[1], post1=1, txp1=0)
@@ -692,6 +663,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
       ## text positions ##
       if(any(c(coefs, name) == TRUE)) {
         possgst <- list("Intercept"=1, "ITS.Time"=4, "post1"=2, "txp1"=4)
+        names(possgst)[-1] <- tmpdf_names
       #User submitted cpos
       makechange <- pos.text
       # identifies which elements to change in original positions
@@ -720,10 +692,10 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
            pos=possgst[[2]], cex=textCEX)
       # Period 2
       # post1
-      text(time_per2[1] + axshift[1], mean(c(t10, cft10)), labels =if(coefs == TRUE) paste0("post1= ", round(coef(cmodel)[3], round.c), model_summary_p[3]) else "post1",
+      text(time_per2[1] + axshift[1], mean(c(t10, cft10)), labels =if(coefs == TRUE) paste0(tmpdf_names[2], "= ", round(coef(cmodel)[3], round.c), model_summary_p[3]) else tmpdf_names[2],
            pos=possgst[[3]], cex=textCEX)
       # txp1
-      text(timemidp2, time2thi, labels =if(coefs == TRUE) paste0("txp1= ", round(coef(cmodel)[4], round.c), model_summary_p[4]) else "txp1",
+      text(timemidp2, time2thi, labels =if(coefs == TRUE) paste0(tmpdf_names[3],"= ", round(coef(cmodel)[4], round.c), model_summary_p[4]) else tmpdf_names[3],
            pos=possgst[[4]], cex=textCEX)
     }
   }
@@ -788,8 +760,8 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
          main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim,
          cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
     #Add in confidence bars
+    tmpdf_names <- names(coef(cmodel))[1:6][-1]
     if(conf.int==TRUE) {
-      tmpdf_names <- names(coef(cmodel))[1:6][-1]
       tmpdf00 <- data.frame(ITS.Time = 1, post1=0, txp1=0, post2=0, txp2=0)
       tmpdf01 <- data.frame(ITS.Time = time_per1[2], post1=0, txp1=0, post2=0, txp2=0)
       tmpdf10 <- data.frame(ITS.Time = time_per2[1], post1=1, txp1=0, post2=0, txp2=0)
@@ -926,6 +898,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
     if(any(c(coefs, name) == TRUE)) {
       possgmt <- list("Intercept"=1, "ITS.Time"=4, "post1"=2,
                       "txp1"=4, "post2"=2, "txp2"=4)
+      names(possgmt)[-1] <- tmpdf_names
       #User submitted cpos
       makechange <- pos.text
       # identifies which elements to change in original positions
@@ -954,18 +927,18 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
            pos=possgmt[[2]], cex=textCEX)
       # Period 2
       # post1
-      text(time_per2[1] + axshift[1], mean(c(t10, cft10)), labels =if(coefs == TRUE) paste0("post1= ", round(coef(cmodel)[3], round.c), model_summary_p[3]) else "post1",
+      text(time_per2[1] + axshift[1], mean(c(t10, cft10)), labels =if(coefs == TRUE) paste0(tmpdf_names[2], "= ", round(coef(cmodel)[3], round.c), model_summary_p[3]) else tmpdf_names[2],
            pos=possgmt[[3]], cex=textCEX)
       # txp1
-      text(timemidp2, time2thi, labels =if(coefs == TRUE) paste0("txp1= ", round(coef(cmodel)[4], round.c), model_summary_p[4]) else "txp1",
+      text(timemidp2, time2thi, labels =if(coefs == TRUE) paste0(tmpdf_names[3],"= ", round(coef(cmodel)[4], round.c), model_summary_p[4]) else tmpdf_names[3],
            pos=possgmt[[4]], cex=textCEX)
       # Period 3
       # post2
       text(time_per3[1] + axshift[2], mean(c(t20, cft20)),
-           labels =if(coefs == TRUE) paste0("post2= ", round(coef(cmodel)[5], round.c), model_summary_p[5]) else "post2",
+           labels =if(coefs == TRUE) paste0(tmpdf_names[4],"= ", round(coef(cmodel)[5], round.c), model_summary_p[5]) else tmpdf_names[4],
            pos=possgmt[[5]], cex=textCEX)
       # txp2
-      text(timemidp3, time3thi, labels =if(coefs == TRUE) paste0("txp2= ", round(coef(cmodel)[6], round.c), model_summary_p[6]) else "txp2",
+      text(timemidp3, time3thi, labels =if(coefs == TRUE) paste0(tmpdf_names[5],"= ", round(coef(cmodel)[6], round.c), model_summary_p[6]) else tmpdf_names[5],
            pos=possgmt[[6]], cex=textCEX)
     }
     }
@@ -1036,8 +1009,9 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
     plot(range(aggr_mns[, 1]), range(c(cmodel[["fitted.values"]], t00)), type="n",
          main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim,
          cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
+    #Add in confidence bars
+    tmpdf_names <- names(coef(cmodel))[1:8][-1]
     if(conf.int==TRUE) {
-      tmpdf_names <- names(coef(cmodel))[1:8][-1]
       #Treatment group
       tmpdf00 <- data.frame(ITS.Time=time_per1[1], ITS.Int=1, txi=time_per1[1], post1=0, txp1=0, ixp1=0, txip1=0)
       tmpdf01 <- data.frame(ITS.Time=time_per1[2], ITS.Int=1, txi=time_per1[2], post1=0, txp1=0, ixp1=0, txip1=0)
@@ -1219,6 +1193,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
     if(any(c(coefs, name) == TRUE)) {
       posmgst <- list("Intercept"=posIntercept, "ITS.Time"=4, "ITS.Int"=posITS.int, "txi"=4,
                       "post1"=4, "txp1"=4, "ixp1"=4, "txip1"=4)
+      names(posmgst)[-1] <- tmpdf_names
       #User submitted cpos
       makechange <- pos.text
       # identifies which elements to change in original positions
@@ -1253,16 +1228,16 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
            pos=posmgst[[4]], cex=textCEX)
       # Period 2
       # post1
-      text(time_per2[1], mean(c(c10, cfc10)), labels =if(coefs == TRUE) paste0("post1= ", round(coef(cmodel)[5], round.c), model_summary_p[5]) else "post1",
+      text(time_per2[1], mean(c(c10, cfc10)), labels =if(coefs == TRUE) paste0(tmpdf_names[4], "= ", round(coef(cmodel)[5], round.c), model_summary_p[5]) else tmpdf_names[4],
            pos=posmgst[[5]], cex=textCEX)
       # txp1
-      text(timemidp2, time2chi, labels =if(coefs == TRUE) paste0("txp1= ", round(coef(cmodel)[6], round.c), model_summary_p[6]) else "txp1",
+      text(timemidp2, time2chi, labels =if(coefs == TRUE) paste0(tmpdf_names[5], "= ", round(coef(cmodel)[6], round.c), model_summary_p[6]) else tmpdf_names[5],
            pos=posmgst[[6]], cex=textCEX)
       # ixp1
-      text(time_per2[1] + axshift[1], mean(c(c10, t10)), labels =if(coefs == TRUE) paste0("ixp1= ", round(coef(cmodel)[7], round.c), model_summary_p[7]) else "ixp1",
+      text(time_per2[1] + axshift[1], mean(c(c10, t10)), labels =if(coefs == TRUE) paste0(tmpdf_names[6], "= ", round(coef(cmodel)[7], round.c), model_summary_p[7]) else tmpdf_names[6],
            pos=posmgst[[7]], cex=textCEX)
       # txip1
-      text(timemidp2, time2thi, labels =if(coefs == TRUE) paste0("txip1= ", round(coef(cmodel)[8], round.c), model_summary_p[8]) else "txip1",
+      text(timemidp2, time2thi, labels =if(coefs == TRUE) paste0(tmpdf_names[7], "= ", round(coef(cmodel)[8], round.c), model_summary_p[8]) else tmpdf_names[7],
            pos=posmgst[[8]], cex=textCEX)
     }
   }
@@ -1364,8 +1339,9 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
     plot(range(aggr_mns[, 1]), range(c(cmodel[["fitted.values"]], t00)), type="n",
          main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim,
          cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
+    #Add in confidence bars
+    tmpdf_names <- names(coef(cmodel))[1:12][-1]
     if(conf.int==TRUE) {
-      tmpdf_names <- names(coef(cmodel))[1:12][-1]
       #Treatment group
       tmpdf00 <- data.frame(ITS.Time=time_per1[1], ITS.Int=1, txi=time_per1[1], post1=0, txp1=0, ixp1=0, txip1=0, post2=0, txp2=0, ixp2=0, txip2=0)
       tmpdf01 <- data.frame(ITS.Time=time_per1[2], ITS.Int=1, txi=time_per1[2], post1=0, txp1=0, ixp1=0, txip1=0, post2=0, txp2=0, ixp2=0, txip2=0)
@@ -1631,6 +1607,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
       if(any(c(coefs, name) == TRUE)) {
       posmgmt <- list("Intercept"=posIntercept, "ITS.Time"=4, "ITS.Int"=posITS.int, "txi"=4,
                       "post1"=2, "txp1"=4,"ixp1"=4, "txip1"=4, "post2"=2,"txp2"=4,"ixp2"=4, "txip2"=4)
+      names(posmgmt)[-1] <- tmpdf_names
       #User submitted cpos
       makechange <- pos.text
       # identifies which elements to change in original positions
@@ -1665,29 +1642,29 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
            pos=posmgmt[[4]], cex=textCEX)
       # Period 2
       # post1
-      text(time_per2[1], mean(c(c10, cfc10)), labels =if(coefs == TRUE) paste0("post1= ", round(coef(cmodel)[5], round.c), model_summary_p[5]) else "post1",
+      text(time_per2[1], mean(c(c10, cfc10)), labels =if(coefs == TRUE) paste0(tmpdf_names[4], "= ", round(coef(cmodel)[5], round.c), model_summary_p[5]) else tmpdf_names[4],
            pos=posmgmt[[5]], cex=textCEX)
       # txp1
-      text(timemidp2, time2chi, labels =if(coefs == TRUE) paste0("txp1= ", round(coef(cmodel)[6], round.c), model_summary_p[6]) else "txp1",
+      text(timemidp2, time2chi, labels =if(coefs == TRUE) paste0(tmpdf_names[5], "= ", round(coef(cmodel)[6], round.c), model_summary_p[6]) else tmpdf_names[5],
            pos=posmgmt[[6]], cex=textCEX)
       # ixp1
-      text(time_per2[1] + axshift[1], mean(c(c10, t10)), labels =if(coefs == TRUE) paste0("ixp1= ", round(coef(cmodel)[7], round.c), model_summary_p[7]) else "ixp1",
+      text(time_per2[1] + axshift[1], mean(c(c10, t10)), labels =if(coefs == TRUE) paste0(tmpdf_names[6], "= ", round(coef(cmodel)[7], round.c), model_summary_p[7]) else tmpdf_names[6],
            pos=posmgmt[[7]], cex=textCEX)
       # txip1
-      text(timemidp2, time2thi, labels =if(coefs == TRUE) paste0("txip1= ", round(coef(cmodel)[8], round.c), model_summary_p[8]) else "txip1",
+      text(timemidp2, time2thi, labels =if(coefs == TRUE) paste0(tmpdf_names[7], "= ", round(coef(cmodel)[8], round.c), model_summary_p[8]) else tmpdf_names[7],
            pos=posmgmt[[8]], cex=textCEX)
       # Period 3
       # post2
-      text(time_per3[1], mean(c(c20, cfc20)), labels =if(coefs == TRUE) paste0("post2= ", round(coef(cmodel)[9], round.c), model_summary_p[9]) else "post2",
+      text(time_per3[1], mean(c(c20, cfc20)), labels =if(coefs == TRUE) paste0(tmpdf_names[8], "= ", round(coef(cmodel)[9], round.c), model_summary_p[9]) else tmpdf_names[8],
            pos=posmgmt[[9]], cex=textCEX)
       # txp2
-      text(timemidp3, time3chi, labels =if(coefs == TRUE) paste0("txp2= ", round(coef(cmodel)[10], round.c), model_summary_p[10]) else "txp2",
+      text(timemidp3, time3chi, labels =if(coefs == TRUE) paste0(tmpdf_names[9], "= ", round(coef(cmodel)[10], round.c), model_summary_p[10]) else tmpdf_names[9],
            pos=posmgmt[[10]], cex=textCEX)
       # ixp2
-      text(time_per3[1] + axshift[2], mean(c(c20, t20)), labels =if(coefs == TRUE) paste0("ixp2= ", round(coef(cmodel)[11], round.c), model_summary_p[11]) else "ixp2",
+      text(time_per3[1] + axshift[2], mean(c(c20, t20)), labels =if(coefs == TRUE) paste0(tmpdf_names[10], "= ", round(coef(cmodel)[11], round.c), model_summary_p[11]) else tmpdf_names[10],
            pos=posmgmt[[11]], cex=textCEX)
       # txip2
-      text(timemidp3, time3thi, labels =if(coefs == TRUE) paste0("txip2= ", round(coef(cmodel)[12], round.c), model_summary_p[12]) else "txip2",
+      text(timemidp3, time3thi, labels =if(coefs == TRUE) paste0(tmpdf_names[11], "= ", round(coef(cmodel)[12], round.c), model_summary_p[12]) else tmpdf_names[11],
            pos=posmgmt[[12]], cex=textCEX)
     }
   }

@@ -538,9 +538,7 @@ summary(im11$ITS)
 interpret(im11)$its
 #> Interpretations: ITS 
 #> -------------------- 
-#> Note: Variable names below based on time points (or 'interruptions') 
-#> won't match identically with the output (e.g., if time 1 = 12 months, 
-#> the corresponding variables are post1 = post12). 
+#> Note: Some variable names below based on time points (or 'interruptions'). 
 #> This analysis is for a one-group, single intervention period (interruption). 
 #> 
 #> Intercept is 6.33 and the starting value of the trend 
@@ -549,11 +547,11 @@ interpret(im11)$its
 #> ITS.Time is -0.289 and the slope prior to intervention. 
 #> The coefficient is significant. 
 #> 
-#> post1 is -1.003 and the immediate shift in the trend line 
+#> post5 is -1.003 and the immediate shift in the trend line 
 #> after the intervention start (e.g., 1st year of intervention). 
 #> The coefficient is significant. 
 #> 
-#> txp1 is 0.201 and the difference between pre- and 
+#> txp5 is 0.201 and the difference between pre- and 
 #> post-intervention slopes (e.g., change in the pre-intervention 
 #> slope). The coefficient is non-significant. 
 #> 
@@ -748,8 +746,7 @@ summary(id22$ITS)
 interpret(id22)$its
 #> Interpretations: ITS 
 #> -------------------- 
-#> Note: Variable names below based on time points (or 'interruptions') 
-#> won't match identically with the output (e.g., if time 1 = 12 months, 
+#> Note: Some variable names below based on time points (or 'interruptions'). 
 #> This analysis is for a two-group, single intervention period (interruption). 
 #> Positive values indicate higher intervention group values and vice-versa for: 
 #> post1, txp1, ixp1, txip1, post2, txp2, ixp2, txip2. 
@@ -768,40 +765,40 @@ interpret(id22)$its
 #> control group's pre-intervention slopes (intervention - control). 
 #> The coefficient is non-significant. 
 #> 
-#> post1 is 0.198 and the immediate shift in the control group 
+#> post5 is 0.198 and the immediate shift in the control group 
 #> trend line after the 1st intervention start. The coefficient is 
 #> significant. 
 #> 
-#> txp1 is -0.026 and the difference between pre- and post-intervention 
+#> txp5 is -0.026 and the difference between pre- and post-intervention 
 #> control group slopes (e.g., change in the pre-intervention 
 #> slope). The coefficient is non-significant. 
 #> 
-#> ixp1 is -0.302 and the difference between the intervention and 
+#> ixp5 is -0.302 and the difference between the intervention and 
 #> control groups (intervention - control) in the period immediately 
 #> after the intervention started (e.g., 1st year of intervention 1). 
 #> The coefficient is significant. 
 #> 
-#> txip1 is 0.072 and non-significant. This is the difference in both 
+#> txip5 is 0.072 and non-significant. This is the difference in both 
 #> group's slope changes since pre-intervention (pre-slopes compared 
 #> to post-slopes). For example, both have pre-intervention slopes 
 #> of 2, the control group's slope remained the same, therefore the 
 #> post 1st intervention slope is 0. And the intervention group's slope 
 #> increased by 2, then txip1 = 2 (= 2 - 0). 
 #> 
-#> post2 is 0.17 and the immediate shift in the control group 
+#> post9 is 0.17 and the immediate shift in the control group 
 #> trend line after the 2nd intervention start. The coefficient is 
 #> non-significant. 
 #> 
-#> txp2 is -0.014 and the difference between 1st and 2nd intervention 
+#> txp9 is -0.014 and the difference between 1st and 2nd intervention 
 #> control group slopes (e.g., change in the 1st intervention 
 #> slope). The coefficient is non-significant. 
 #> 
-#> ixp2 is -0.306 and the difference between the intervention and 
+#> ixp9 is -0.306 and the difference between the intervention and 
 #> control groups (intervention - control) in the period immediately 
 #> after the 2nd intervention started (e.g., 1st year of intervention 2). 
 #> The coefficient is significant. 
 #> 
-#> txip2 is 0.02 and non-significant. This is the difference in both group's 
+#> txip9 is 0.02 and non-significant. This is the difference in both group's 
 #> slope changes since the 1st intervention (1st intervention slope compared 
 #> to the 2nd). For example, both have 1st intervention slopes of 2, the control 
 #> group's slope remained the same, therefore the 2nd intervention slope is 0. And 
@@ -882,7 +879,7 @@ plot(im12, "ITS", add.legend="topleft", xlim=c(-1, 14), ylim=c(2, 8), main="ITS 
 <img src="man/figures/README-revITS2-1.png" width="100%" />
 
 ``` r
-plot(im21, "ITS", add.legend="top", xlim=c(-1, 14), ylim=c(2, 8), main="ITS study: MGST", col=c("springgreen","salmon"), lwd=7, cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(.25, .25), cex.text=1.5, coefs=TRUE, round.c=2, pos.text= list("post1"=2), conf.int=TRUE, adj.alpha=0.2 )
+plot(im21, "ITS", add.legend="top", xlim=c(-1, 14), ylim=c(2, 8), main="ITS study: MGST", col=c("springgreen","salmon"), lwd=7, cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(.25, .25), cex.text=1.5, coefs=TRUE, round.c=2, pos.text= list("post5"=2), conf.int=TRUE, adj.alpha=0.2 )
 ```
 
 <img src="man/figures/README-revITS3-1.png" width="100%" />
@@ -890,7 +887,7 @@ plot(im21, "ITS", add.legend="top", xlim=c(-1, 14), ylim=c(2, 8), main="ITS stud
 Using all plot options
 
 ``` r
-plot(im22, "ITS", add.legend="top", xlim=c(-.75, 13.1), ylim=c(2, 8), main="ITS study: MGMT", col=c("dodgerblue","goldenrod"), lwd=7, cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, cex.legend=1.25, arrow=TRUE, xshift=c(0, .5), cex.text=1.25, name=F, coefs=TRUE, round.c=2, pos.text= list("txp1"=3, "post2"=4), tcol="springgreen", cfact=T, conf.int=TRUE, adj.alpha=0.3)
+plot(im22, "ITS", add.legend="top", xlim=c(-.75, 13.1), ylim=c(2, 8), main="ITS study: MGMT", col=c("dodgerblue","goldenrod"), lwd=7, cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, cex.legend=1.25, arrow=TRUE, xshift=c(0, .5), cex.text=1.25, name=F, coefs=TRUE, round.c=2, pos.text= list("txp5"=3, "post9"=4), tcol="springgreen", cfact=T, conf.int=TRUE, adj.alpha=0.3)
 ```
 
 <img src="man/figures/README-revITS4-1.png" width="100%" />
