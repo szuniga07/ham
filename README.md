@@ -13,10 +13,10 @@ linear (OLS) and logistic regression. And ham adds options for
 differences-in-differences models as well as interrupted time-series
 analysis. DID and ITS models offer options for causal modeling. What is
 unique about ham is that it creates datasets with constructed variables
-for DID and ITS models, optionally can add top coded outcome variables,
-propensity scores, and provides some interpretation of model results.
-Additionally, Cronbach’s alpha can be calculated for such things as
-patient surveys.
+for DID and ITS models, optionally it can add top coded outcome
+variables, propensity scores, and provides some interpretation of model
+results. Additionally, Cronbach’s alpha can be calculated for such
+things as patient surveys.
 
 <img src="man/figures/logo.png" width="20%" style="display: block; margin: auto;" />
 
@@ -887,7 +887,7 @@ plot(im21, "ITS", add.legend="top", xlim=c(-1, 14), ylim=c(2, 8), main="ITS stud
 Using all plot options
 
 ``` r
-plot(im22, "ITS", add.legend="top", xlim=c(-.75, 13.1), ylim=c(2, 8), main="ITS study: MGMT", col=c("dodgerblue","goldenrod"), lwd=7, cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, cex.legend=1.25, arrow=TRUE, xshift=c(0, .5), cex.text=1.25, name=F, coefs=TRUE, round.c=2, pos.text= list("txp5"=3, "post9"=4), tcol="springgreen", cfact=T, conf.int=TRUE, adj.alpha=0.3)
+plot(im22, "ITS", add.legend="top", xlim=c(-.75, 13.1), ylim=c(2, 8), main="ITS study: MGMT", col=c("dodgerblue","goldenrod"), lwd=7, cex=2, cex.axis=2, cex.lab=1.5,  cex.main=3, cex.legend=1.25, arrow=TRUE, xshift=c(0, .5), cex.text=1.25, name=F, coefs=TRUE, round.c=2, pos.text= list("txp5"=3, "post9"=4), tcol="springgreen", cfact=T, conf.int=TRUE, adj.alpha=0.3, add.means=TRUE)
 ```
 
 <img src="man/figures/README-revITS4-1.png" width="100%" />

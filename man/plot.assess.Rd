@@ -16,6 +16,7 @@
   cfact = FALSE,
   conf.int = FALSE,
   adj.alpha = NULL,
+  add.means = FALSE,
   add.legend = NULL,
   cex = NULL,
   cex.axis = NULL,
@@ -54,6 +55,8 @@
 \item{conf.int}{logical TRUE or FALSE that indicates whether a 95\% confidence interval bars should be included. Defaults to FALSE.}
 
 \item{adj.alpha}{factor modifying the opacity alpha of the confidence interval bars, in the range of 0 to 1. Default is NULL; if conf.int=TRUE, defaults to 0.4.}
+
+\item{add.means}{adds group means by time period based on model data. Default is FALSE}
 
 \item{add.legend}{add a legend by selecting the location as "bottomright", "bottom", "bottomleft",
 "left", "topleft", "top", "topright", "right", "center". No legend if nothing selected.}

@@ -17,6 +17,7 @@
 #' @param cfact logical TRUE or FALSE that indicates whether a counterfactual line should be included. Defaults to FALSE.
 #' @param conf.int logical TRUE or FALSE that indicates whether a 95% confidence interval bars should be included. Defaults to FALSE.
 #' @param adj.alpha factor modifying the opacity alpha of the confidence interval bars, in the range of 0 to 1. Default is NULL; if conf.int=TRUE, defaults to 0.4.
+#' @param add.means adds group means by time period based on model data. Default is FALSE
 #' @param add.legend add a legend by selecting the location as "bottomright", "bottom", "bottomleft",
 #' "left", "topleft", "top", "topright", "right", "center". No legend if nothing selected.
 #' @param cex A numerical value giving the amount by which plotting text and symbols should be magnified relative to the default of 1.
@@ -66,7 +67,7 @@
 #' pos.text= list("txp5"=3, "post9"=4), arrow=TRUE, xshift=c(.5, 1.5),
 #' cfact=T, conf.int=TRUE, adj.alpha=0.2)
 plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NULL, tcol=NULL,
-                        cfact=FALSE, conf.int=FALSE, adj.alpha=NULL, add.legend=NULL,
+                        cfact=FALSE, conf.int=FALSE, adj.alpha=NULL, add.means=FALSE, add.legend=NULL,
                         cex=NULL, cex.axis=NULL, cex.lab=NULL, cex.main=NULL, cex.text=NULL,
                         cex.legend=NULL, name=FALSE, coefs=FALSE, round.c=NULL,
                         pos.text=NULL, arrow=FALSE, xshift=NULL, ...) {
@@ -82,14 +83,16 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
   }
 
   # Get assess objects
-
-  # Get aggregated values
-  aggr_mns <-  x[["study"]][["group_means"]]
-  #Correct for time increments that don't begin at 1
+if(y == "DID") {
+  aggr_mns <-  x[["study"]][["group_means_did"]]   #model data
+  aggr_mns_real <-  x[["study"]][["group_means"]]  #actual data
+  }
+if(y == "ITS") {
+  aggr_mns <-  x[["study"]][["group_means_its"]]
+    }
+    #Correct for time increments that don't begin at 1
   aggr_mns[, "time.2.backup.var"] <- aggr_mns[, 1]
   aggr_mns[, 1] <- as.numeric(ordered(aggr_mns[, 1]))
-  int_start_y <- aggr_mns[which(aggr_mns[, 1] == min(aggr_mns[, 1]) &
-                                  aggr_mns[, 2] == max(aggr_mns[, 2])), 3]
   # formula type
   if(y == "DID") {
     formula_type <- "DID_formula"
@@ -367,7 +370,14 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
       } else {
         postwo <- postwo
       }
-
+      #Add in group means based on the model data
+      if(add.means == TRUE) {
+        did_grps <- x$study$group_means_did
+        points(did_grps[did_grps[, 2]==0, 1], did_grps[did_grps[, 2]==0, 3],
+               col=lcol[2], pch=20, cex=cex)
+        points(did_grps[did_grps[, 2]==1, 1], did_grps[did_grps[, 2]==1, 3],
+               col=lcol[1], pch=20, cex=cex)
+      }
       # Add in coefficient names
       # intercept: control group pre-test
       text(0, c0, labels = if(coefs == TRUE) paste0("Intercept= ", round(coef(cmodel)[1], round.c), model_summary_p[1]) else "Intercept", pos=postwo[[1]], cex=textCEX)
@@ -379,10 +389,18 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
       text(1, t1, labels =if(coefs == TRUE) paste0("DID= ", round(coef(cmodel)[4], round.c), model_summary_p[4]) else "DID", pos=postwo[[4]], cex=textCEX)
       }
     if (!is.null(add.legend)) {
-      legend(x=add.legend, legend= if(cfact==TRUE) c("Intervention", "Control","Counterfactual", "Treated") else
+      if (add.means == TRUE) {
+        legend(x=add.legend, legend= if(cfact==TRUE) c("Intervention", "Control","Counterfactual", "Treated", "Means") else
+        c("Intervention", "Control","Treated", "Means"), lty= if(cfact==TRUE) c(1,1,2,3, NA) else c(1,1,3, NA),
+        lwd=cex.legend, bty="n", cex=cex.legend, pch= if(cfact==TRUE) c(NA,NA,NA,NA,20) else c(NA,NA,NA, 20),
+        col= if(cfact==TRUE) c(lcol[1],lcol[2],lcol[1], ticol, "black") else c(lcol[1],lcol[2], ticol, "black"))
+      }
+      if (add.means == FALSE) {
+        legend(x=add.legend, legend= if(cfact==TRUE) c("Intervention", "Control","Counterfactual", "Treated") else
         c("Intervention", "Control","Treated"), lty= if(cfact==TRUE) c(1,1,2,3) else c(1,1,3),
              lwd=cex.legend, bty="n", cex=cex.legend,
         col= if(cfact==TRUE) c(lcol[1],lcol[2],lcol[1], ticol) else c(lcol[1],lcol[2], ticol))
+      }
     }
   }
 
@@ -412,6 +430,12 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
     treat_start <- which(aggr_mns[, "time.2.backup.var"] == treat_start )[1]
     max_time <- max(cmodel[["model"]][["Period"]]) # max study time
     #Fitted values
+    #For the issue of no pre-intervention values for DID==1, get Y value at treatment
+      int_start_y <- aggr_mns_real[which(aggr_mns_real[, 1] == min(aggr_mns_real[, 1]) &
+                                           aggr_mns_real[, 2] == max(aggr_mns_real[, 2])), 3]
+      #Trying out counterfactual at start of treatment period
+      #int_start_y <- aggr_mns[which(aggr_mns[, 1] == treat_start &
+      #                              aggr_mns[, 2] == max(aggr_mns[, 2])), 3]
     c0 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*1 + coef(cmodel)[[3]]*0 +
       coef(cmodel)[[4]]*0 #control group time 0
     c1 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*max_time + coef(cmodel)[[3]]*0 +
@@ -420,12 +444,13 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
       coef(cmodel)[[4]]*0 #control group at time of the treatment start
     t0 <- int_start_y + coef(cmodel)[[2]]*1 + coef(cmodel)[[3]]*0 +
       coef(cmodel)[[4]]*0   #intervention group time 0
+    #t0.5 <- int_start_y
     t1 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*max_time + coef(cmodel)[[3]]*1 +
       coef(cmodel)[[4]]*max_time   #intervention group time 1
     #Counterfactual for treated
     # use int_start_y here
     cft1 <- int_start_y + coef(cmodel)[[2]]*max_time + coef(cmodel)[[3]]*0 +
-      coef(cmodel)[[4]]*0   #intervention group time 1
+      coef(cmodel)[[4]]*0   #intervention group time max
     #Average treatment effect on the treated
     atet0 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*treat_start + coef(cmodel)[[3]]*1 +
       coef(cmodel)[[4]]*treat_start   #intervention group time 1
@@ -464,6 +489,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
     #Counter factual line
     if(cfact==TRUE) {
       lines(c(1, max_time), c(t0, cft1), type="l", col=lcol[1], lty=2, lwd=lwidth)
+#      segments(x0 = treat_start, y0 = t0.5, x1 = max_time, y1 = cft1, col = lcol[1], lwd = lwidth, lty=2)
     }
     #ATET line
     segments(x0 = treat_start, y0 = atet0, x1 = max_time, y1 = atet1, col = lcol[1], lwd = lwidth, lty=1)
@@ -507,7 +533,14 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
       } else {
         posmany <- posmany
       }
-
+      #Add in group means based on the model data
+      if(add.means == TRUE) {
+        did_grps <- x$study$group_means_did
+        points(did_grps[did_grps[, 2]==0, 1], did_grps[did_grps[, 2]==0, 3],
+               col=lcol[2], pch=20, cex=cex)
+        points(did_grps[did_grps[, 2]==1, 1], did_grps[did_grps[, 2]==1, 3],
+               col=lcol[1], pch=20, cex=cex)
+      }
       # Add in coefficient names
       text(1, c0, labels = if(coefs == TRUE) paste0("Intercept= ", round(coef(cmodel)[1], round.c), model_summary_p[1]) else "Intercept", pos=posmany[[1]], cex=textCEX)
       text(max_time, c1, labels =if(coefs == TRUE) paste0("Period= ", round(coef(cmodel)[2], round.c), model_summary_p[2]) else "Period", pos=posmany[[2]], cex=textCEX)
@@ -516,9 +549,18 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
       text(max_time, atet0, labels =if(coefs == TRUE) paste0("DID.Trend= ", round(coef(cmodel)[4], round.c), model_summary_p[4]) else "DID.Trend", pos=posmany[[4]], cex=textCEX)
     }
     if (!is.null(add.legend)) {
-      legend(x=add.legend, legend=c("Intervention", "Control","Counterfactual", "Treated"),
-             lty= c(1,1,2,3),
-             lwd=cex.legend, col=c(lcol[1],lcol[2],lcol[1], ticol), bty="n", cex=cex.legend)
+      if (add.means == TRUE) {
+        legend(x=add.legend, legend= if(cfact==TRUE) c("Intervention", "Control","Counterfactual", "Treated", "Means") else
+          c("Intervention", "Control", "Treated", "Means"), lty= if(cfact==TRUE) c(1,1,2,3, NA) else c(1,1,3, NA),
+          lwd=cex.legend, col= if(cfact==TRUE) c(lcol[1],lcol[2],lcol[1], ticol, "black") else c(lcol[1],lcol[2], ticol, "black"),
+          bty="n", cex=cex.legend, pch= if(cfact==TRUE) c(NA,NA,NA,NA,20) else c(NA,NA,NA, 20))
+      }
+      if (add.means == FALSE) {
+      legend(x=add.legend, legend= if(cfact==TRUE) c("Intervention", "Control","Counterfactual", "Treated") else
+        c("Intervention", "Control", "Treated"), lty= if(cfact==TRUE) c(1,1,2,3) else c(1,1,3), lwd=cex.legend,
+        col= if(cfact==TRUE) c(lcol[1],lcol[2],lcol[1], ticol) else c(lcol[1],lcol[2], ticol), bty="n",
+        cex=cex.legend)
+      }
     }
   }
 
@@ -609,9 +651,17 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
     # intervention line
     segments(x0 = interrupt_1, y0 = t10, x1 = time_per2[2], y1 = t11, col = lcol[1], lwd = lwidth, lty=1)
     if (!is.null(add.legend)) {
-      legend(x=add.legend, legend=c("Intervention", "Counterfactual", "Treated"),
-             lty= c(1,2,3),
-             lwd=cex.legend, col=c(lcol[1],lcol[1], ticol), bty="n", cex=cex.legend)
+      if (add.means == TRUE) {
+        legend(x=add.legend, legend= if(cfact==TRUE) c("Intervention", "Counterfactual", "Treated", "Means") else
+          c("Intervention", "Treated", "Means"), lty= if(cfact==TRUE) c(1,2,3, NA) else c(1,3, NA), lwd=cex.legend,
+          col= if(cfact==TRUE) c(lcol[1],lcol[1], ticol, "black") else c(lcol[1], ticol, "black"), bty="n",
+          cex=cex.legend, pch= if(cfact==TRUE) c(NA,NA,NA,20) else c(NA,NA, 20))
+      }
+      if (add.means == FALSE) {
+        legend(x=add.legend, legend= if(cfact==TRUE) c("Intervention", "Counterfactual", "Treated") else
+          c("Intervention", "Treated"), lty= if(cfact==TRUE) c(1,2,3) else c(1,3), lwd=cex.legend,
+          col= if(cfact==TRUE) c(lcol[1],lcol[1], ticol) else c(lcol[1], ticol), bty="n", cex=cex.legend)
+      }
     }
     # Arrows and coefficient names #
     if(any(c(arrow,coefs, name) == TRUE)) {
@@ -681,7 +731,12 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
       } else {
         possgst <- possgst
       }
-
+      #Add in group means based on the model data
+      if(add.means == TRUE) {
+        its_grps <- x$study$group_means_its
+        points(its_grps[, 1], its_grps[, 2],
+               col=lcol[1], pch=20, cex=cex)
+      }
       # Add in coefficient names
       # Period 1
       # Intercept
@@ -819,9 +874,17 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
     # intervention line period 3
     segments(x0 = interrupt_2, y0 = t20, x1 = time_per3[2], y1 = t21, col = lcol[1], lwd = lwidth, lty=1)
     if (!is.null(add.legend)) {
-      legend(x=add.legend, legend=c("Intervention", "Counterfactual", "Treated"),
-             lty= c(1,2,3),
-             lwd=cex.legend, col=c(lcol[1],lcol[1], ticol), bty="n", cex=cex.legend)
+      if (add.means == TRUE) {
+        legend(x=add.legend, legend= if(cfact==TRUE) c("Intervention", "Counterfactual", "Treated", "Means") else
+          c("Intervention", "Treated", "Means"), lty= if(cfact==TRUE) c(1,2,3, NA) else c(1,3, NA), lwd=cex.legend,
+          col= if(cfact==TRUE) c(lcol[1],lcol[1], ticol, "black") else c(lcol[1], ticol, "black"), bty="n",
+          cex=cex.legend, pch= if(cfact==TRUE) c(NA,NA,NA,20) else c(NA,NA, 20))
+      }
+      if (add.means == FALSE) {
+        legend(x=add.legend, legend= if(cfact==TRUE) c("Intervention", "Counterfactual", "Treated") else
+          c("Intervention", "Treated"), lty= if(cfact==TRUE) c(1,2,3) else c(1,3), lwd=cex.legend,
+          col= if(cfact==TRUE) c(lcol[1],lcol[1], ticol) else c(lcol[1], ticol), bty="n", cex=cex.legend)
+      }
     }
     # Arrows and coefficient names #
     if(any(c(arrow,coefs, name) == TRUE)) {
@@ -916,7 +979,12 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
       } else {
         possgmt <- possgmt
       }
-
+      #Add in group means based on the model data
+      if(add.means == TRUE) {
+        its_grps <- x$study$group_means_its
+        points(its_grps[, 1], its_grps[, 2],
+               col=lcol[1], pch=20, cex=cex)
+      }
       # Add in coefficient names
       # Period 1
       # Intercept
@@ -1080,9 +1148,10 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
     # intervention line period 2
     segments(x0 = interrupt_1, y0 = t10, x1 = time_per2[2], y1 = t11, col = lcol[1], lwd = lwidth, lty=1)
     if (!is.null(add.legend)) {
-      legend(x=add.legend, legend=c("Intervention", "Control", "Treated"),
-             lty= c(1,1,3),
-             lwd=cex.legend, col=c(lcol[1],lcol[2], ticol), bty="n", cex=cex.legend)
+      legend(x=add.legend, legend= if(add.means==TRUE) c("Intervention", "Control", "Treated", "Means") else
+        c("Intervention", "Control", "Treated"), lty= if(add.means==TRUE) c(1,1,3, NA) else c(1,1,3),
+        lwd=cex.legend, col= if(add.means==TRUE) c(lcol[1],lcol[2], ticol, "black") else c(lcol[1],lcol[2], ticol),
+        bty="n", cex=cex.legend, pch= if(add.means==TRUE) c(NA,NA,NA,20) else c(NA,NA, 20))
     }
     # Arrows and coefficient names #
     if(any(c(arrow,coefs, name) == TRUE)) {
@@ -1211,7 +1280,14 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
       } else {
         posmgst <- posmgst
       }
-
+      #Add in group means based on the model data
+      if(add.means == TRUE) {
+        its_grps <- x$study$group_means_its
+        points(its_grps[its_grps[, 2]==0, 1], its_grps[its_grps[, 2]==0, 3],
+               col=lcol[2], pch=20, cex=cex)
+        points(its_grps[its_grps[, 2]==1, 1], its_grps[its_grps[, 2]==1, 3],
+               col=lcol[1], pch=20, cex=cex)
+      }
       # Add in coefficient names
       # Period 1
       # Intercept
@@ -1439,9 +1515,10 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
     # intervention line period 3
     segments(x0 = interrupt_2, y0 = t20, x1 = time_per3[2], y1 = t21, col = lcol[1], lwd = lwidth, lty=1)
     if (!is.null(add.legend)) {
-      legend(x=add.legend, legend=c("Intervention", "Control", "Treated"),
-             lty= c(1,1,3),
-             lwd=cex.legend, col=c(lcol[1],lcol[2], ticol), bty="n", cex=cex.legend)
+      legend(x=add.legend, legend= if(add.means==TRUE) c("Intervention", "Control", "Treated", "Means") else
+        c("Intervention", "Control", "Treated"), lty= if(add.means==TRUE) c(1,1,3, NA) else c(1,1,3),
+        lwd=cex.legend, col= if(add.means==TRUE) c(lcol[1],lcol[2], ticol, "black") else c(lcol[1],lcol[2], ticol),
+        bty="n", cex=cex.legend, pch= if(add.means==TRUE) c(NA,NA,NA,20) else c(NA,NA, 20))
     }
     # Arrows and coefficient names #
     if(any(c(arrow,coefs, name) == TRUE)) {
@@ -1625,7 +1702,14 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
       } else {
         posmgmt <- posmgmt
       }
-
+      #Add in group means based on the model data
+      if(add.means == TRUE) {
+        its_grps <- x$study$group_means_its
+        points(its_grps[its_grps[, 2]==0, 1], its_grps[its_grps[, 2]==0, 3],
+               col=lcol[2], pch=20, cex=cex)
+        points(its_grps[its_grps[, 2]==1, 1], its_grps[its_grps[, 2]==1, 3],
+               col=lcol[1], pch=20, cex=cex)
+      }
       # Add in coefficient names
       # Period 1
       # Intercept

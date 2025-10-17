@@ -539,14 +539,66 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
     attributes(DID_formula) <- NULL
   }
 
-  #Calculate group means per time period
+  # Calculate group means per time period #
+  #Pick a model's data for aggregating
+  #DID
+  if(!is.null(did_model) ==TRUE) {
+    dcmodel_df <- did_model$model
+  } else {
+    dcmodel_df <- NULL
+  }
+  #ITS
+  if(!is.null(its_model) ==TRUE) {
+    cmodel_df <- its_model$model
+  } else {
+    cmodel_df <- NULL
+  }
+  # Get aggregated data formula #
+  if(itsa_type %in% c("sgst", "sgmt") ) {
+    iaggr_fmla  <- formula(paste(colnames(cmodel_df)[1], "~ ", paste(colnames(cmodel_df)[2], collapse = " + ") ))
+  }
+  if(itsa_type %in% c("mgst", "mgmt") ) {
+    iaggr_fmla  <- formula(paste(colnames(cmodel_df)[1], "~ ", paste(colnames(cmodel_df)[2:3], collapse = " + ") ))
+  }
+  if(did_type %in% c("two", "many") ) {
+    daggr_fmla  <- formula(paste(colnames(dcmodel_df)[1], "~ ", paste(colnames(dcmodel_df)[2:3], collapse = " + ") ))
+  }
+
+  #Calculate group means
+  #Keeping the actual data group means (not the model data)
   if(any(!is.null(c(intervention, int.time)) ==  TRUE)) {
     aggr_fmla <- as.formula(paste(paste0(yvar , "~"),
                                   paste(c(int.time,intervention), collapse= "+")))
-    group_means <- stats::aggregate(x=aggr_fmla, data=data, FUN="mean")
+    group_means <- stats::aggregate(x=aggr_fmla, data=data, FUN="mean", na.rm=TRUE)
     colnames(group_means) <-  c(eval(int.time), eval(intervention), eval(yvar))
   } else {
     group_means <- NULL
+  }
+
+  #DID
+  if(!is.null(did_model) ==  TRUE) {
+    if(did_type == "two") {
+      group_means_did <- stats::aggregate(x=daggr_fmla, data=dcmodel_df, FUN="mean", na.rm=TRUE)
+    }
+    if(did_type == "many") {
+      group_means_did <- stats::aggregate(x=daggr_fmla, data=dcmodel_df, FUN="mean", na.rm=TRUE)
+      #rows_needed <- nrow(group_means_did[group_means_did$DID ==0, ]) - nrow(group_means_did[group_means_did$DID ==1, ])
+      #This adds in full data for missing periods b/c of how variables are coded, won't show in plot.assess
+      #extra_rows <- group_means[group_means[, 2] ==1, ][1:rows_needed, ]
+      #colnames(extra_rows) <- colnames(group_means_did)
+      #extra_rows[, 1][1:rows_needed] <- group_means_did[group_means_did$DID ==0, 1][1:rows_needed]
+      #group_means_did <- rbind(group_means_did[group_means_did$DID ==0, ], extra_rows, group_means_did[group_means_did$DID ==1, ])
+      #rownames(group_means_did) <- 1:nrow(group_means_did)
+    }
+  } else {
+    group_means_did <- NULL
+  }
+
+#ITS
+  if(!is.null(its_model) ==  TRUE) {
+    group_means_its <- stats::aggregate(x=iaggr_fmla, data=cmodel_df, FUN="mean", na.rm=TRUE)
+  } else {
+    group_means_its <- NULL
   }
 
   z <- list(model=model_1, DID=did_model, DID.Names=DID.Names, ITS=its_model,
@@ -558,7 +610,8 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
             analysis_type=list(regression_type=regression_type,
                                did_type=did_type, itsa_type=itsa_type),
             study= list(regression=regression, did=did, its=its, intervention=intervention,
-                        int.time=int.time, treatment=treatment, interrupt=interrupt, group_means=group_means))
+                        int.time=int.time, treatment=treatment, interrupt=interrupt, group_means=group_means,
+                        group_means_did=group_means_did, group_means_its=group_means_its))
   class(z) <- c("assess","ham", "list")
 
   #Returned objects
