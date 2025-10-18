@@ -5,5 +5,5 @@ test_that("Overall point estimation using t-distribution", {
 
 test_that("90% Point estimation using converted quartiles", {
   expect_equal(round(group(x="risk", y="rdm30", dataf=hosprog, quarts=TRUE, dist="b", conf.int=0.90)$Group.CI$adf_alpha$PointEst[[1]], 3),
-               0.267)
+               0.089)
 })

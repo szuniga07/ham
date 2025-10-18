@@ -21,9 +21,12 @@
 #' into 4 groups based on quartiles of x. Default is FALSE.
 #' @param cluster logical TRUE or FALSE to generate measures of between-group variation
 #' such as the Intra-Class Correlation, Median Odds Ratio, or Design Effect. Default is FALSE.
+#' Uses binary outcome formula (between-group variance/(between-group variance + (3.14^2/3)) for ICC
+#' in Rabe-Hesketh which may be more appropriate for multilevel models. ICC, MOR, DE may be less
+#' reliable for binomial and Poisson distributions, use caution.
 #'
 #' @return list of confidence intervals for outcomes by groups, over time,
-#' and clustering measures. Some values returned in alphabetical and numerical order based on group.
+#' and clustering measures. Some values returned in alphabetical and numerical order based on the group.
 #' @importFrom stats aov complete.cases na.omit poisson.test qnorm quantile sd binom.test
 #' @export
 #' @references
@@ -109,10 +112,10 @@ group <- function(x, y, z=NULL, dataf, dist="t", conf.int=0.95, increment=1,
     Upper <- agr_df$agr_m + MOE
     adf_alpha <- data.frame(Group=agr_df$x_lev, PointEst=agr_df$agr_m, Lower=Lower, Upper=Upper)
     rownames(adf_alpha) <- agr_df$x_lev
-    #  alpha_o <- order(rownames(adf_alpha), decreasing = F)
-    alpha_o <- order(agr_df$x_lev, decreasing = F)
+    #  alpha_o <- order(rownames(adf_alpha), decreasing = T)
+    alpha_o <- order(agr_df$x_lev, decreasing = T)
     adf_alpha <- adf_alpha[alpha_o, ]
-    adf_o <- order(adf_alpha[, "PointEst"], decreasing = F)
+    adf_o <- order(adf_alpha[, "PointEst"], decreasing = T)
     adf_numeric <- adf_alpha[adf_o, ]
     return(list(adf_alpha=adf_alpha, adf_numeric=adf_numeric, adf_all= adf_all) )
   }
@@ -147,10 +150,10 @@ group <- function(x, y, z=NULL, dataf, dist="t", conf.int=0.95, increment=1,
     adf_all <- binci(x=sum(agr_df[,2], na.rm=TRUE), n=sum(agr_df[,3], na.rm=TRUE), alpha=1 - conf_lev)
 
     rownames(adf_alpha) <- agr_df$x_lev
-    #  alpha_o <- order(rownames(adf_alpha), decreasing = F)
-    alpha_o <- order(agr_df$x_lev, decreasing = F)
+    #  alpha_o <- order(rownames(adf_alpha), decreasing = T)
+    alpha_o <- order(agr_df$x_lev, decreasing = T)
     adf_alpha <- adf_alpha[alpha_o, ]
-    adf_o <- order(adf_alpha[, "PointEst"], decreasing = F)
+    adf_o <- order(adf_alpha[, "PointEst"], decreasing = T)
     adf_numeric <- adf_alpha[adf_o, ]
     return(list(adf_alpha=adf_alpha, adf_numeric=adf_numeric, adf_all=adf_all) )
   }
@@ -176,10 +179,10 @@ group <- function(x, y, z=NULL, dataf, dist="t", conf.int=0.95, increment=1,
     adf_alpha <- data.frame(Group=agr_df$x_lev, adf_alpha)
     colnames(adf_alpha) <- c("Group", "PointEst", "Lower", "Upper")
     rownames(adf_alpha) <- agr_df$x_lev
-    #  alpha_o <- order(rownames(adf_alpha), decreasing = F)
-    alpha_o <- order(agr_df$x_lev, decreasing = F)
+    #  alpha_o <- order(rownames(adf_alpha), decreasing = T)
+    alpha_o <- order(agr_df$x_lev, decreasing = T)
     adf_alpha <- adf_alpha[alpha_o, ]
-    adf_o <- order(adf_alpha[, "PointEst"], decreasing = F)
+    adf_o <- order(adf_alpha[, "PointEst"], decreasing = T)
     adf_numeric <- adf_alpha[adf_o, ]
     return(list(adf_alpha=adf_alpha, adf_numeric=adf_numeric, adf_all=adf_all) )
   }
@@ -284,6 +287,86 @@ group <- function(x, y, z=NULL, dataf, dist="t", conf.int=0.95, increment=1,
            "p" =  fpconf(x, xlev, y, z, dataf, conf_lev, Increment)
     )
   }
+  ################################################################################
+  #      Function to get overall trend confidence intervals, no grouping         #
+  ################################################################################
+  #Binomial
+  ftotBconf <- function(y, z, dataf, conf_lev, Increment) {
+    #Calculates confidence intervals for single units or in increments
+    if(Increment == 1) {
+      agr_sum <- aggregate(dataf[, y], list(dataf[, z]), FUN="sum", na.rm=TRUE)
+      agr_n <- aggregate(dataf[, y], list(dataf[, z]), FUN="length")
+    } else {
+      agr_sum <- aggregate(dataf[, y], list(ceiling(dataf[, z]/Increment) ), FUN="sum", na.rm=TRUE)
+      agr_n <- aggregate(dataf[, y], list(ceiling(dataf[, z]/Increment) ), FUN="length")
+    }
+    agr_df <- data.frame(z_lev=as.integer(c(agr_sum[, 1])), agr_sum=agr_sum[, 2], agr_n=agr_n[, 2])
+    agr_df <- cbind(agr_df, binci(x=agr_df[,2], n=agr_df[,3], alpha=1 - conf_lev))
+    rownames(agr_df) <- 1:nrow(agr_df)
+    return(agr_df)
+  }
+
+  #Continuous outcomes
+  ftotTconf <- function(y, z, dataf, conf_lev, Increment) {
+    #Confidence interval data for increments
+    if(Increment == 1) {
+      agr_m <- aggregate(dataf[, y], list( dataf[, z]), FUN="mean", na.rm=TRUE)
+      agr_sd <- aggregate(dataf[, y], list(dataf[, z]), FUN="sd", na.rm=TRUE)
+      agr_n <- aggregate(dataf[, y], list(dataf[, z]), FUN="length")
+      agr_df <- data.frame(z_lev=as.integer(c(agr_m[, 1])), agr_m=agr_m[, 2], agr_sd=agr_sd[, 2], agr_n=agr_n[, 2])
+    } else {
+      agr_m <- aggregate(dataf[, y], list(ceiling(dataf[, z]/Increment) ), FUN="mean", na.rm=TRUE)
+      agr_sd <- aggregate(dataf[, y], list(ceiling(dataf[, z]/Increment) ), FUN="sd", na.rm=TRUE)
+      agr_n <- aggregate(dataf[, y], list(ceiling(dataf[, z]/Increment) ), FUN="length")
+      agr_df <- data.frame(z_lev= as.integer(c(agr_m[, 1])), agr_m=agr_m[, 2], agr_sd=agr_sd[, 2], agr_n=agr_n[, 2])
+    }
+    #Calculates confidence intervals
+    MOE <- qt((conf_lev/2)+.5, df=agr_df$agr_n - 1) * agr_df$agr_sd/sqrt(agr_df$agr_n)
+    Lower <- agr_df$agr_m - MOE
+    Upper <- agr_df$agr_m + MOE
+    adf_alpha <- data.frame(cbind(PointEst=agr_df$agr_m, Lower=Lower, Upper=Upper))
+    agr_df <- cbind(agr_df, adf_alpha)
+    return(agr_df )
+  }
+
+  #Exact Poisson
+  ftotPconf <- function(y, z, dataf, conf_lev, Increment) {
+    #Confidence interval data for increments
+    if(Increment == 1) {
+      agr_sum <- aggregate(dataf[, y] ~ dataf[, z], FUN="sum", na.rm=TRUE)
+      agr_n <- aggregate(dataf[, y] ~ dataf[, z], FUN="length")
+      agr_df <- data.frame(z_lev= as.integer(c(agr_sum[, 1])), agr_sum=agr_sum[, 2], agr_n=agr_n[, 2])
+    } else {
+      agr_sum <- aggregate(dataf[, y] ~ ceiling(dataf[, z]/Increment), FUN="sum", na.rm=TRUE)
+      agr_n <- aggregate(dataf[, y] ~ ceiling(dataf[, z]/Increment), FUN="length")
+      agr_df <- data.frame(z_lev= as.integer(c(agr_sum[, 1])), agr_sum=agr_sum[, 2], agr_n=agr_n[, 2])
+    }
+    #Calculates confidence intervals
+    adf_alpha <- matrix(ncol= 3, nrow= nrow(agr_df), byrow = TRUE)
+    for (i in 1:nrow(agr_df)) {
+      adf_alpha[i, ] <- unlist(poisson.test(x=agr_df[i,2], T=agr_df[i, 3], conf.level= conf_lev)[c("estimate","conf.int")])
+    }
+    adf_alpha <- data.frame(adf_alpha)
+    colnames(adf_alpha) <- c("PointEst", "Lower", "Upper")
+    agr_df <- cbind(agr_df, adf_alpha)
+    return(agr_df=agr_df )
+  }
+
+  ftotconf <- function(y, z, dataf, conf_lev, Increment, dist) {
+    switch(dist,                #"var" and can be used anywhere in server.r.
+           "t" =  ftotTconf(y, z, dataf, conf_lev, Increment),
+           "b" =  ftotBconf(y, z, dataf, conf_lev, Increment),
+           "p" =  ftotPconf(y, z, dataf, conf_lev, Increment)
+    )
+  }
+  # Run the function above #
+  if(!is.null(z)) {
+    time_confint_all <- ftotconf(y=y, z=z, dataf=dataf, conf_lev=conf.int,
+                                 Increment=Increment, dist=dist)
+  } else {
+    time_confint_all <- NULL
+  }
+
   # Rolling time #
   fncRollTime <- function(dataf, x, y, z, Increment, dist="t", conf_lev=.95) {
     #Get summary of values
@@ -384,23 +467,13 @@ group <- function(x, y, z=NULL, dataf, dist="t", conf.int=0.95, increment=1,
   } else {
     time_confint <- NULL
   }
+  # return list
+  xyz <- list(Group.CI=main_confint, Time.CI=list(Group=time_confint, All=time_confint_all),
+       Roll.CI=roll_confint, Clustering=cluster_res, Quartiles=Quartiles,
+       Variables=c(x=x, y=y, z=z), CI=conf.int)
+  class(xyz) <- c("group","ham", "list")
 
-  return(list(Group.CI=main_confint, Time.CI=time_confint,
-              Roll.CI=roll_confint, Clustering=cluster_res, Quartiles=Quartiles))
+  return(xyz)
 }
-
-
-#group(x="program", y="los", dataf=hosprog)
-#group(x="program", y="los", z="month", dataf=hosprog, dist="t", rolling=6)
-#group(x="program", y="los", z="month", dataf=hosprog, dist="t", increment=3, rolling=6)
-#group(x="risk", y="los", dataf=hosprog, quarts=TRUE, cluster=TRUE)
-#group(x="risk", y="rdm30", dataf=hosprog, quarts=TRUE, dist="b", cluster=TRUE)
-#group(x="risk", y="los2", dataf=hp2, quarts=TRUE, dist="p", cluster=TRUE)
-
-
-## Citations ##
-#ICC formula
-#https://pmc.ncbi.nlm.nih.gov/articles/PMC4913118/#:~:text=Intraclass%20correlation%20coefficient%20was%20first,Table%202%20for%20their%20definitions).
-#https://www.statmodel.com/discussion/messages/12/18.html
 
 

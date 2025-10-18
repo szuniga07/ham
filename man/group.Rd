@@ -46,11 +46,14 @@ based on months 1-12 of data, followed by the next estimate using months 2-13,
 into 4 groups based on quartiles of x. Default is FALSE.}
 
 \item{cluster}{logical TRUE or FALSE to generate measures of between-group variation
-such as the Intra-Class Correlation, Median Odds Ratio, or Design Effect. Default is FALSE.}
+such as the Intra-Class Correlation, Median Odds Ratio, or Design Effect. Default is FALSE.
+Uses binary outcome formula (between-group variance/(between-group variance + (3.14^2/3)) for ICC
+in Rabe-Hesketh which may be more appropriate for multilevel models. ICC, MOR, DE may be less
+reliable for binomial and Poisson distributions, use caution.}
 }
 \value{
 list of confidence intervals for outcomes by groups, over time,
-and clustering measures. Some values returned in alphabetical and numerical order based on group.
+and clustering measures. Some values returned in alphabetical and numerical order based on the group.
 }
 \description{
 Group level confidence intervals and between-group variation
