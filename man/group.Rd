@@ -71,3 +71,15 @@ group(x="risk", y="los", dataf=hosprog, quarts=TRUE, cluster=TRUE)
 #Binomial distribution with less conservative 90\% confidence intervals
 group(x="risk", y="rdm30", dataf=hosprog, quarts=TRUE, dist="b", conf.int=0.90)
 }
+\references{
+Merlo, J. (2006). A brief conceptual tutorial of multilevel analysis in
+social epidemiology: using measures of clustering in multilevel logistic
+regression to investigate contextual phenomena. Journal of Epidemiological Health, 60, 4,
+290-297. https://doi.org/10.1136/jech.2004.029454.
+
+Muthen, B. & Satorra, A. (1995). Complex Sample Data in Structural Equation Modeling.
+Sociological Methodology, 25, 267-316. https://doi.org/10.2307/271070.
+
+Rabe-Hesketh, S. & Skrondal, A. (2008). Multilevel and Longitudinal Modeling Using Stata,
+Second Edition. ISBN: 978-1-59718-040-5.
+}
