@@ -1,3 +1,59 @@
+
+#' Group level confidence intervals and between-group variation
+#'
+#' @param x group predictor variable name.
+#' @param y outcome variable name.
+#' @param z time period variable name.
+#' @param dataf name of data frame object.
+#' @param dist indicate the distribution used for confidence intervals. Options
+#' for the t, binomial, and exact Poisson distributions. Options are 't', 'b', and 'p'.
+#' Default is the 't'.
+#' @param conf.int select the confidence interval level. Default is 0.95.
+#' @param increment specify the increment in time periods. Selecting 3 if data uses
+#' the month as the unit of time will give confidence intervals, each based on 3 months.
+#' Default is 1.
+#' @param rolling indicate the number of time periods for the 'rolling average'.
+#' The rolling average consists of >1 time periods but subsequent point estimate
+#' increase by a unit of 1. For example, the common 12-month rolling average is
+#' based on months 1-12 of data, followed by the next estimate using months 2-13,
+#' 3-14, and so on until the last month in the data has been reached. Default is NULL.
+#' @param quarts logical TRUE or FALSE that indicates whether to convert continuous x
+#' into 4 groups based on quartiles of x. Default is FALSE.
+#' @param cluster logical TRUE or FALSE to generate measures of between-group variation
+#' such as the Intra-Class Correlation, Median Odds Ratio, or Design Effect. Default is FALSE.
+#'
+#' @return list of confidence intervals for outcomes by groups, over time,
+#' and clustering measures. Some values returned in alphabetical and numerical order based on group.
+#' @importFrom stats aov complete.cases na.omit poisson.test qnorm quantile sd binom.test
+#' @export
+#' @references
+#' Merlo, J. (2006). A brief conceptual tutorial of multilevel analysis in
+#' social epidemiology: using measures of clustering in multilevel logistic
+#' regression to investigate contextual phenomena. Journal of Epidemiological Health, 60, 4,
+#' 290-297. https://doi.org/10.1136/jech.2004.029454.
+#'
+#' Muthen, B. & Satorra, A. (1995). Complex Sample Data in Structural Equation Modeling.
+#' Sociological Methodology, 25, 267-316. https://doi.org/10.2307/271070.
+#'
+#' Rabe-Hesketh, S. & Skrondal, A. (2008). Multilevel and Longitudinal Modeling Using Stata,
+#' Second Edition. ISBN: 978-1-59718-040-5.
+#'
+#' @examples
+#' #default t distribution results
+#' group(x="program", y="los", dataf=hosprog)
+#' #Rounding LOS to integers
+#' hp2 <- hosprog; hp2$los2 <- round(hp2$los, 0)
+#' #Exact Poisson confidence intervals
+#' group(x="program", y="los2", dataf=hp2, dist="p")
+#' #Rolling 6-months of data
+#' group(x="program", y="los", z="month", dataf=hosprog, dist="t", rolling=6)
+#' #Data returned separately for rolling 6-months of data and 3-month increments (e.g., quarters)
+#' group(x="program", y="los", z="month", dataf=hosprog, dist="t", increment=3, rolling=6)
+#' #Quartile groups for continuous risk score and returned clustering info
+#' group(x="risk", y="los", dataf=hosprog, quarts=TRUE, cluster=TRUE)
+#' #Binomial distribution with less conservative 90% confidence intervals
+#' group(x="risk", y="rdm30", dataf=hosprog, quarts=TRUE, dist="b", conf.int=0.90)
+
 group <- function(x, y, z=NULL, dataf, dist="t", conf.int=0.95, increment=1,
                   rolling=NULL, quarts=FALSE, cluster=FALSE ) {
   #Make "Increment" object equal to increment
@@ -63,6 +119,22 @@ group <- function(x, y, z=NULL, dataf, dist="t", conf.int=0.95, increment=1,
   ###################
   # Binary outcomes #
   ###################
+  #Binomial confidence intervals
+  binci <- function(x, n, alpha=0.05) {
+    conf_level <- 1 - alpha
+    #Make a data frame from the aggregated values
+    tbindf <- data.frame(x, n)
+    tbindf[, 2] <- tbindf[, 2] - tbindf[, 1]
+    #Binomial tests
+    tbintest <- apply(tbindf, 1, binom.test, conf.level = conf_level)
+    ci_df <- as.data.frame(cbind(sapply(tbintest, "[[", "estimate"),
+                                 matrix(sapply(tbintest, "[[", "conf.int"), ncol=2, byrow=T)))
+    #Create colnames
+    colnames(ci_df) <- c("PointEst","Lower","Upper")
+    rownames(ci_df) <- NULL
+    return(ci_df)
+  }
+
   bconf <- function(x, y, dataf, conf_lev) {
     #Aggregates outcome by factor
     agr_sum <- aggregate(dataf[, y], list(dataf[, x]),  FUN="sum", na.rm=T)
@@ -204,7 +276,7 @@ group <- function(x, y, z=NULL, dataf, dist="t", conf.int=0.95, increment=1,
     return(agr_df=agr_df )
   }
 
-  fconf <- function(x=xcivar, xlev=NULL, y=ycivar, z=zcivar, dataf, conf_lev=ciconf_lev,
+  fconf <- function(x, xlev=NULL, y, z, dataf, conf_lev,
                     Increment=1, dist) {
     switch(dist,
            "t" =  ftconf(x, xlev, y, z, dataf, conf_lev, Increment),
@@ -331,24 +403,4 @@ group <- function(x, y, z=NULL, dataf, dist="t", conf.int=0.95, increment=1,
 #https://pmc.ncbi.nlm.nih.gov/articles/PMC4913118/#:~:text=Intraclass%20correlation%20coefficient%20was%20first,Table%202%20for%20their%20definitions).
 #https://www.statmodel.com/discussion/messages/12/18.html
 
-#Muthén, B. & Satorra, A. (1995). Complex sample data in structural equation modeling. Sociological Methodology, 25, 267-316.
-#https://www.statmodel.com/download/SMMuthenSatorra1995.pdf
-#https://www.statmodel.com/discussion/messages/12/18.html
-#https://www.statmodel.com/discussion/messages/12/3076.html?1271109554
-
-#Multilevel and Longitudinal Modeling Using Stata, Second Edition
-#Authors:	Sophia Rabe-Hesketh and Anders Skrondal
-#Publisher:	Stata Press
-#Copyright:	2008
-#ISBN-13:	978-1-59718-040-5
-#Pages:	562; paperback
-
-#A brief conceptual tutorial of multilevel analysis in social
-#epidemiology: using measures of clustering in multilevel
-#logistic regression to investigate contextual phenomena
-
-#Juan Merlo, Basile Chaix, Henrik Ohlsson, Anders Beckman, Kristina Johnell, Per Hjerpe,
-#L Ra˚stam, K Larsen
-#J Epidemiol Community Health 2006;60:290–297. doi: 10.1136/jech.2004.029454
-#J Epidemiol Community Health. 2006 Apr;60(4):290–297. doi: 10.1136/jech.2004.029454
 
