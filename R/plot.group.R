@@ -81,7 +81,7 @@ plot.group <- function(x, y="group", order="alpha", gcol="blue", gbar=FALSE, pco
     } else {
       main_ttl <- paste0(ciconf_lev * 100, "% ", "Confidence Intervals of ", ycivar, " by ", xcivar)
     }
-    rng <- seq(min(adf), max(adf),length.out=nrow(adf))
+    rng <- seq(min(adf[, 3:4]), max(adf[, 3:4]),length.out=nrow(adf))
     plot(rng, 1:nrow(adf), type="n", ylab="",
          xlab= paste0("Value (vertical line = overall mean of ", round(mainYmn, roundVal), ", ", ciconf_lev * 100, "% ", "CI",
                       " [", round(cidf[["adf_all"]][,"Lower"], roundVal), ", ", round(cidf[["adf_all"]][,"Upper"], roundVal),"]",")"),
