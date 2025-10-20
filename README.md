@@ -870,7 +870,7 @@ interpret(id22)$its
 
 <center>
 
-### REVISIONS AND NEW ADDITIONS!
+### 6. REVISIONS AND NEW ADDITIONS!
 
 </center>
 

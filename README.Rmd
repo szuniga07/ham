@@ -299,7 +299,7 @@ interpret(id22)$its
 ```
 
 <center>
-### REVISIONS AND NEW ADDITIONS!
+### 6. REVISIONS AND NEW ADDITIONS!
 </center>
 
 The following are corrections of errors and additions in the next version of ham. 
