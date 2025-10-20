@@ -27,7 +27,9 @@
   cex.axis = 1,
   cex.lab = 1,
   cex.main = 1,
+  cex.text = 1,
   round.c = 2,
+  name = FALSE,
   abbrv = 5,
   ...
 )
@@ -51,13 +53,13 @@
 
 \item{obar}{logical TRUE or FALSE that indicates whether to add overall confidence band. Default is FALSE.}
 
-\item{tgt}{specify a value on the x-axis of where to add a target line. Default is NULL.}
+\item{tgt}{specify 1 or more values on the x-axis of where to add a target line. Default is NULL.}
 
 \item{tcol}{select a color for the target line. Default is 'gray'.}
 
-\item{tpline}{add time line (time)}
+\item{tpline}{add one or time point vertical line(s) using x-axis values when y='time' or y='roll'. Default is NULL.}
 
-\item{tpcol}{specify a value on the y-axis of where to add a time point line. Select when y="time" or y="roll". Default is NULL.}
+\item{tpcol}{specify a color for the time point line, tpline. Default is NULL.}
 
 \item{xlim}{specify plot's x-axis limits with a 2 value vector.}
 
@@ -65,20 +67,25 @@
 
 \item{main}{the main title of the plot.}
 
-\item{lwd}{select the line width.}
+\item{lwd}{select the line width. Default is 1.}
 
 \item{adj.alpha}{factor modifying the opacity alpha of the confidence interval bars, in the range of 0 to 1. Default is 0.4.}
 
 \item{cex}{A numerical value giving the amount by which plotting text and symbols should be magnified relative to the default of 1.}
 
-\item{cex.axis}{The magnification to be used for axis annotation relative to the current setting of cex.}
+\item{cex.axis}{The magnification to be used for axis annotation relative to the current setting of cex. Default is 1.}
 
-\item{cex.lab}{The magnification to be used for x and y labels relative to the current setting of cex.}
+\item{cex.lab}{The magnification to be used for x and y labels relative to the current setting of cex. Default is 1.}
 
-\item{cex.main}{The magnification to be used for main titles relative to the current setting of cex.}
+\item{cex.main}{The magnification to be used for main titles relative to the current setting of cex. Default is 1.}
 
-\item{round.c}{an integer indicating the number of decimal places
+\item{cex.text}{The magnification to be used for the text added into the plot relative to the current setting of 1.}
+
+\item{round.c}{an integer indicating the number of decimal places. Default is 2.
 to be used for rounding coefficient values.}
+
+\item{name}{logical TRUE or FALSE that indicates whether group names
+should be added to the plot. Default is FALSE.}
 
 \item{abbrv}{the minimum length of the abbreviations. Default is 5.}
 
@@ -94,10 +101,19 @@ Confidence interval graphs for group class objects
 #Simple graph for confidence intervals using the t-distribution
 gr1 <- group(x="program", y="los", z="month", dataf=hosprog, dist="t",
 increment=3, rolling=6)
-plot(x=gr1, y="group")
-#Improve the graph display using various options
-plot(x=gr1, y="group", order="numeric", gcol="blue", gbar=TRUE, pcol="red",
-overall=TRUE, ocol="gray", obar=TRUE, tgt=4.5, tcol="green", tpline=NULL,
-tpcol="gray", xlim=c(4,5), ylim=c(.9,2.1), main=NULL, lwd=3, adj.alpha=0.2,
-cex=2, cex.axis=1.25, cex.lab=1.25, cex.main=1.5, round.c=1, abbrv=5)
+# Group level confidence intervals
+plot(x=gr1, y="group", order="numeric", lwd=4, gcol= "blue", pcol="red",
+overall=TRUE, obar=TRUE, ocol="gray", tcol="green", tgt=4.5,
+cex=1, cex.axis=1, cex.lab=1, cex.text=2,
+cex.main=1.25, add.names=TRUE, adj.alpha=.2)
+#Trend plots over time in the 3 month increments (i.e., quarters)
+plot(x=gr1, y="time", lwd=4, gcol=c("red", "blue"), gbar=TRUE, overall=TRUE,
+  obar=TRUE, ocol="gray", tcol="green", tgt=4, tpline=3,
+  tpcol="yellow", name=TRUE, cex.axis=1, cex.lab=1, cex.text=2,
+  cex.main=1.25, add.names=TRUE, adj.alpha=.3)
+#Plot for rolling 6-month averages
+plot(x=gr1, y="roll", lwd=4, gcol=c("red", "blue"), gbar=TRUE, overall=TRUE,
+  obar=TRUE, ocol="gray", tcol="green", tgt=4, tpline=c(4,6),
+  tpcol="yellow", name=TRUE, cex.axis=1, cex.lab=1, cex.text=2,
+  cex.main=1.25, add.names=TRUE, adj.alpha=.3)
 }
