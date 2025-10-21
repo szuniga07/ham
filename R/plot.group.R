@@ -241,9 +241,11 @@ plot.group <- function(x, y="group", order="alpha", gcol="blue", gbar=FALSE, pco
       }
     }
     #Add overall text names
-    if(name == TRUE) {
+    if(Tot.Line == TRUE) {
+      if(name == TRUE) {
       text(x=cidf_tot[1, "z_lev"], y=cidf_tot[1, "PointEst"],
            labels= "All", cex= cex.text, col=Tot.Color)
+      }
     }
     #Add target line
     for (i in 1:length(Tgt.Line)) {
