@@ -59,6 +59,15 @@
 
 group <- function(x, y, z=NULL, dataf, dist="t", conf.int=0.95, increment=1,
                   rolling=NULL, quarts=FALSE, cluster=FALSE ) {
+  if(conf.int <= 0 || conf.int >= 1 ) {
+    stop("Error: Expecting confidence interval level within 0 to 1.")
+  }
+  if(any(c(increment, rolling) < 1)) {
+    stop("Error: Expecting increment or rolling whole numbers >= 1.")
+  }
+  if( !dist %in% c("b","t","p")) {
+    stop("Error: Expecting only 'b', 't', or 'p' for binomial, t, or Poisson distributions.")
+  }
   #Make "Increment" object equal to increment
   Increment <- increment
 
