@@ -211,14 +211,14 @@ plot.group <- function(x, y="group", order="alpha", gcol="blue", gbar=FALSE, pco
     if(name == TRUE) {
       #Odd
       for (i in odd_groups) {
-        text(x=cidf[cidf$x_lev == ctrs[i], "z_lev"][min(cidf[cidf$x_lev == ctrs[i], "z_lev"], na.rm=T)],
-             y=cidf[cidf$x_lev == ctrs[i], "PointEst"][min(cidf[cidf$x_lev == ctrs[i], "z_lev"], na.rm=T)],
+        text(x=cidf[cidf$x_lev == ctrs[i], "z_lev"][which(times == min(cidf[cidf$x_lev == ctrs[i], "z_lev"], na.rm=T))],
+             y=cidf[cidf$x_lev == ctrs[i], "PointEst"][which(times == min(cidf[cidf$x_lev == ctrs[i], "z_lev"], na.rm=T))],
              labels= abbreviate(ctrs[i], minlength=abbrv), cex= cex.text, col=my_clr[i])
       }
       #Evens
       for (i in even_groups) {
-        text(x=cidf[cidf$x_lev == ctrs[i], "z_lev"][max(cidf[cidf$x_lev == ctrs[i], "z_lev"], na.rm=T)],
-             y=cidf[cidf$x_lev == ctrs[i], "PointEst"][max(cidf[cidf$x_lev == ctrs[i], "z_lev"], na.rm=T)],
+        text(x=cidf[cidf$x_lev == ctrs[i], "z_lev"][which(times == max(cidf[cidf$x_lev == ctrs[i], "z_lev"], na.rm=T))],
+             y=cidf[cidf$x_lev == ctrs[i], "PointEst"][which(times == max(cidf[cidf$x_lev == ctrs[i], "z_lev"], na.rm=T))],
              labels= abbreviate(ctrs[i], minlength=abbrv), cex= cex.text, col=my_clr[i])
       }
     }
@@ -248,17 +248,20 @@ plot.group <- function(x, y="group", order="alpha", gcol="blue", gbar=FALSE, pco
       }
     }
     #Add target line
+    if(!is.null(Tgt.Line)) {
     for (i in 1:length(Tgt.Line)) {
       abline(h= as.numeric(eval(parse(text=Tgt.Line[i] )) ),
              col=Tgt.Color, lty=3, lwd=lwd)
     }
+    }
     #Add time point line
+    if(!is.null(Time.Pt.Line)) {
     for (i in 1:length(Time.Pt.Line)) {
       abline(v= as.numeric(eval(parse(text=Time.Pt.Line[i] )) ),
              col=Tpt.Color, lty=1, lwd=lwd)
     }
+    }
   }
-
 
   # Run the functions above #
   switch(y,
