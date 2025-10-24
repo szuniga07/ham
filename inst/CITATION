@@ -48,3 +48,35 @@ bibentry(
   doi      = "10.1177/1536867X1501500208"
 )
 
+bibentry(
+  bibtype  = "Article",
+  title    = "A Brief Conceptual Tutorial of Multilevel Analysis in Social Epidemiology: Using Measures of Clustering in Multilevel Logistic Regression to Investigate Contextual Phenomena",
+  author   = person("Juan Merlo"),
+  journal  = "Journal of Epidemiology & Community Health",
+  year     = 2006,
+  volume   = 60,
+  number   = 4,
+  pages    = 290-297,
+  doi      = "10.1136/jech.2004.029454"
+)
+
+bibentry(
+  bibtype  = "Article",
+  title    = "Complex Sample Data in Structural Equation Modeling",
+  author   = person("Bengt Muthen, Albert Satorra"),
+  journal  = "Journal of Epidemiology & Community Health",
+  year     = 1995,
+  volume   = 25,
+  number   = 1,
+  pages    = 267-316,
+  doi      = "10.2307/271070"
+)
+
+bibentry(
+  bibtype = "Book",
+  title = "Multilevel and Longitudinal Modeling Using Stata (2nd Ed.)",
+  author = person("Sophia Rabe-Hesketh, Anders Skrondal"),
+  year = 2008,
+  publisher = "Stata Press",
+  ISBN = "978-1-59718-040-5"
+)

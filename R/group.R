@@ -77,7 +77,7 @@ group <- function(x, y, z=NULL, dataf, dist="t", conf.int=0.95, increment=1,
     for(i in 1:4) {
       x_labels[i] <- paste0("Q", i)
     }
-    quints_ls <- quantile(dataf[, x])
+    quints_ls <- quantile(dataf[, x], na.rm=TRUE)
     X <- cut(dataf[, x], breaks= quints_ls, labels=x_labels,
              right=TRUE, include.lowest=TRUE)
     return(list(X=X, Quartiles=quints_ls))

@@ -2,11 +2,11 @@
 #'
 #' @param x group object.
 #' @param y type of confidence interval object, specify either 'group', 'time', or 'roll'.
-#' @param order specify confidence interval object order as 'alpha' or 'numeric' for alphabetical or numerical ordering.
-#' @param gcol pick confidence interval line colors for groups. Default is 'blue'.
+#' @param order specify confidence interval object order as 'alpha' or 'numeric' for alphabetical or numerical ordering in the 'group' graph.
+#' @param gcol pick confidence interval line colors for groups in the 'group' graph. Default is 'blue'.
 #' @param gbar logical TRUE or FALSE that indicates whether group lines have confidence bars for trend over time results. Default is FALSE.
 #' @param pcol select point color for 'group' only confidence intervals. Default is 'red'.
-#' @param overall logical TRUE or FALSE that indicates whether to include the overall sample confidence intervals (i.e., no grouping). Default is FALSE.
+#' @param overall logical TRUE or FALSE that indicates whether to include the overall sample confidence intervals (i.e., not each group). Default is FALSE.
 #' @param ocol indicate the optional overall line color. Default is 'gray' when overall=TRUE.
 #' @param obar logical TRUE or FALSE that indicates whether to add overall confidence band. Default is FALSE.
 #' @param tgt specify 1 or more values on the x-axis of where to add a target line. Default is NULL.
@@ -26,7 +26,7 @@
 #' @param round.c an integer indicating the number of decimal places. Default is 2.
 #' to be used for rounding coefficient values.
 #' @param name logical TRUE or FALSE that indicates whether group names
-#' should be added to the plot. Default is FALSE.
+#' should be added to the 'time' or 'roll' plots. Default is FALSE.
 #' @param abbrv the minimum length of the abbreviations. Default is 5.
 #' @param ... additional arguments.
 #'
@@ -42,17 +42,17 @@
 #' plot(x=gr1, y="group", order="numeric", lwd=4, gcol= "blue", pcol="red",
 #' overall=TRUE, obar=TRUE, ocol="gray", tcol="green", tgt=4.5,
 #' cex=1, cex.axis=1, cex.lab=1, cex.text=2,
-#' cex.main=1.25, add.names=TRUE, adj.alpha=.2)
+#' cex.main=1.25, name=TRUE, adj.alpha=.2)
 #' #Trend plots over time in the 3 month increments (i.e., quarters)
 #' plot(x=gr1, y="time", lwd=4, gcol=c("red", "blue"), gbar=TRUE, overall=TRUE,
 #'   obar=TRUE, ocol="gray", tcol="green", tgt=4, tpline=3,
 #'   tpcol="yellow", name=TRUE, cex.axis=1, cex.lab=1, cex.text=2,
-#'   cex.main=1.25, add.names=TRUE, adj.alpha=.3)
+#'   cex.main=1.25, adj.alpha=.3)
 #' #Plot for rolling 6-month averages
 #' plot(x=gr1, y="roll", lwd=4, gcol=c("red", "blue"), gbar=TRUE, overall=TRUE,
 #'   obar=TRUE, ocol="gray", tcol="green", tgt=4, tpline=c(4,6),
 #'   tpcol="yellow", name=TRUE, cex.axis=1, cex.lab=1, cex.text=2,
-#'   cex.main=1.25, add.names=TRUE, adj.alpha=.3)
+#'   cex.main=1.25, adj.alpha=.3)
 
 
 plot.group <- function(x, y="group", order="alpha", gcol="blue", gbar=FALSE, pcol="red", overall=FALSE,

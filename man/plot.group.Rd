@@ -39,15 +39,15 @@
 
 \item{y}{type of confidence interval object, specify either 'group', 'time', or 'roll'.}
 
-\item{order}{specify confidence interval object order as 'alpha' or 'numeric' for alphabetical or numerical ordering.}
+\item{order}{specify confidence interval object order as 'alpha' or 'numeric' for alphabetical or numerical ordering in the 'group' graph.}
 
-\item{gcol}{pick confidence interval line colors for groups. Default is 'blue'.}
+\item{gcol}{pick confidence interval line colors for groups in the 'group' graph. Default is 'blue'.}
 
 \item{gbar}{logical TRUE or FALSE that indicates whether group lines have confidence bars for trend over time results. Default is FALSE.}
 
 \item{pcol}{select point color for 'group' only confidence intervals. Default is 'red'.}
 
-\item{overall}{logical TRUE or FALSE that indicates whether to include the overall sample confidence intervals (i.e., no grouping). Default is FALSE.}
+\item{overall}{logical TRUE or FALSE that indicates whether to include the overall sample confidence intervals (i.e., not each group). Default is FALSE.}
 
 \item{ocol}{indicate the optional overall line color. Default is 'gray' when overall=TRUE.}
 
@@ -85,7 +85,7 @@
 to be used for rounding coefficient values.}
 
 \item{name}{logical TRUE or FALSE that indicates whether group names
-should be added to the plot. Default is FALSE.}
+should be added to the 'time' or 'roll' plots. Default is FALSE.}
 
 \item{abbrv}{the minimum length of the abbreviations. Default is 5.}
 
@@ -105,15 +105,15 @@ increment=3, rolling=6)
 plot(x=gr1, y="group", order="numeric", lwd=4, gcol= "blue", pcol="red",
 overall=TRUE, obar=TRUE, ocol="gray", tcol="green", tgt=4.5,
 cex=1, cex.axis=1, cex.lab=1, cex.text=2,
-cex.main=1.25, add.names=TRUE, adj.alpha=.2)
+cex.main=1.25, name=TRUE, adj.alpha=.2)
 #Trend plots over time in the 3 month increments (i.e., quarters)
 plot(x=gr1, y="time", lwd=4, gcol=c("red", "blue"), gbar=TRUE, overall=TRUE,
   obar=TRUE, ocol="gray", tcol="green", tgt=4, tpline=3,
   tpcol="yellow", name=TRUE, cex.axis=1, cex.lab=1, cex.text=2,
-  cex.main=1.25, add.names=TRUE, adj.alpha=.3)
+  cex.main=1.25, adj.alpha=.3)
 #Plot for rolling 6-month averages
 plot(x=gr1, y="roll", lwd=4, gcol=c("red", "blue"), gbar=TRUE, overall=TRUE,
   obar=TRUE, ocol="gray", tcol="green", tgt=4, tpline=c(4,6),
   tpcol="yellow", name=TRUE, cex.axis=1, cex.lab=1, cex.text=2,
-  cex.main=1.25, add.names=TRUE, adj.alpha=.3)
+  cex.main=1.25, adj.alpha=.3)
 }

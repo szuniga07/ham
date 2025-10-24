@@ -152,7 +152,7 @@ print(gr1$Group.CI)
 ### Graph the results
 
 ``` r
-plot(x=gr1, y="group", order="numeric", lwd=4, gcol= "blue", pcol="red", overall=TRUE, obar=TRUE, ocol="gray", tcol="green", tgt=4.5, cex=2, cex.axis=1, cex.lab=1.1, cex.text=2, cex.main=1.25, add.names=TRUE, adj.alpha=.2)
+plot(x=gr1, y="group", order="numeric", lwd=4, gcol= "blue", pcol="red", overall=TRUE, obar=TRUE, ocol="gray", tcol="green", tgt=4.5, cex=2, cex.axis=1, cex.lab=1.1, cex.text=2, cex.main=1.25, adj.alpha=.2)
 ```
 
 <img src="man/figures/README-plotGroup1-1.png" width="100%" />
@@ -160,7 +160,7 @@ plot(x=gr1, y="group", order="numeric", lwd=4, gcol= "blue", pcol="red", overall
 ### Graph the trend results with averages based on 3 month increments
 
 ``` r
-plot(x=gr1, y="time", lwd=4, gcol=c("red", "blue"), gbar=TRUE, overall=TRUE, obar=TRUE, ocol="gray", tcol="green", tgt=4, tpline=3, tpcol="yellow", name=TRUE, cex.axis=1, cex.lab=1, cex.text=2, cex.main=1.25, add.names=TRUE, adj.alpha=.3)
+plot(x=gr1, y="time", lwd=4, gcol=c("red", "blue"), gbar=TRUE, overall=TRUE, obar=TRUE, ocol="gray", tcol="green", tgt=4, tpline=3, tpcol="yellow", name=TRUE, cex.axis=1, cex.lab=1, cex.text=2, cex.main=1.25, adj.alpha=.3)
 ```
 
 <img src="man/figures/README-plotGroup2-1.png" width="100%" />
@@ -943,7 +943,7 @@ plot(im22, "ITS", add.legend="top", xlim=c(-.75, 13.1), ylim=c(2, 8), main="ITS 
 ### New Graph: Graph for group level confidence intervals over time. The trend results with averages based on 6 month rolling averages
 
 ``` r
-plot(x=gr1, y="roll", lwd=4, gcol=c("red", "blue"), gbar=TRUE, overall=TRUE, obar=TRUE, ocol="gray", tcol="green", tgt=4, tpline=c(4,6), tpcol="yellow", name=TRUE, cex.axis=2, cex.lab=2, cex.text=3, cex.main=1.25, add.names=TRUE, adj.alpha=.3)
+plot(x=gr1, y="roll", lwd=4, gcol=c("red", "blue"), gbar=TRUE, overall=TRUE, obar=TRUE, ocol="gray", tcol="green", tgt=4, tpline=c(4,6), tpcol="yellow", name=TRUE, cex.axis=2, cex.lab=2, cex.text=3, cex.main=1.25, adj.alpha=.3)
 ```
 
 <img src="man/figures/README-plotGroup3-1.png" width="100%" />
