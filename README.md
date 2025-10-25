@@ -152,7 +152,7 @@ print(gr1$Group.CI)
 ### Graph the results
 
 ``` r
-plot(x=gr1, y="group", order="numeric", lwd=4, gcol= "blue", pcol="red", overall=TRUE, obar=TRUE, ocol="gray", tcol="green", tgt=4.5, cex=2, cex.axis=1, cex.lab=1.1, cex.text=2, cex.main=1.25, adj.alpha=.2)
+plot(x=gr1, y="group", order="numeric", lwd=4, gcol= "blue", pcol="red", overall=TRUE, oband=TRUE, ocol="gray", tcol="green", tgt=4.5, cex=2, cex.axis=1, cex.lab=1.1, cex.text=2, cex.main=1.25, adj.alpha=.2)
 ```
 
 <img src="man/figures/README-plotGroup1-1.png" width="100%" />
@@ -160,7 +160,7 @@ plot(x=gr1, y="group", order="numeric", lwd=4, gcol= "blue", pcol="red", overall
 ### Graph the trend results with averages based on 3 month increments
 
 ``` r
-plot(x=gr1, y="time", lwd=4, gcol=c("red", "blue"), gbar=TRUE, overall=TRUE, obar=TRUE, ocol="gray", tcol="green", tgt=4, tpline=3, tpcol="yellow", name=TRUE, cex.axis=1, cex.lab=1, cex.text=2, cex.main=1.25, adj.alpha=.3)
+plot(x=gr1, y="time", lwd=4, gcol=c("red", "blue"), gband=TRUE, overall=TRUE, oband=TRUE, ocol="gray", tcol="green", tgt=4, tpline=3, tpcol="yellow", name=TRUE, cex.axis=1, cex.lab=1, cex.text=2, cex.main=1.25, adj.alpha=.3)
 ```
 
 <img src="man/figures/README-plotGroup2-1.png" width="100%" />
@@ -539,13 +539,13 @@ and control group. And we have the option of one or more treatment
 periods (or interruptions). This gives us 4 options that can be
 specified using the interrupt and its= arguments.
 
-Below are examples using the hosprog data for the patient survey and
-death within 30-days. The dataset hosp1 will be used for the single
-group examples.
+Below are examples using the hosprog data for the patient length of stay
+(LOS) and death within 30-days. The dataset hosp1 will be used for the
+single group examples.
 
 We begin by looking at a single group with a single
-interruption/treatment period and assessing their survey scores. We
-specify it with: interrupt= 5 and its=“one”.
+interruption/treatment period and assessing their LOS scores. We specify
+it with: interrupt= 5 and its=“one”.
 
 ### ITS model 1
 
@@ -652,7 +652,7 @@ summary(im12$ITS)
 ```
 
 We continue with comparing the intervention and control groups on their
-survey scores which is specified with interrupt= 5 and its=“two”.
+LOS scores which is specified with interrupt= 5 and its=“two”.
 
 ### ITS model 3
 
@@ -943,7 +943,7 @@ plot(im22, "ITS", add.legend="top", xlim=c(-.75, 13.1), ylim=c(2, 8), main="ITS 
 ### New Graph: Graph for group level confidence intervals over time. The trend results with averages based on 6 month rolling averages
 
 ``` r
-plot(x=gr1, y="roll", lwd=4, gcol=c("red", "blue"), gbar=TRUE, overall=TRUE, obar=TRUE, ocol="gray", tcol="green", tgt=4, tpline=c(4,6), tpcol="yellow", name=TRUE, cex.axis=2, cex.lab=2, cex.text=3, cex.main=1.25, adj.alpha=.3)
+plot(x=gr1, y="roll", lwd=4, gcol=c("red", "blue"), gband=TRUE, overall=TRUE, oband=TRUE, ocol="gray", tcol="green", tgt=4, tpline=c(4,6), tpcol="yellow", name=TRUE, cex.axis=2, cex.lab=2, cex.text=3, cex.main=1.25, adj.alpha=.3)
 ```
 
 <img src="man/figures/README-plotGroup3-1.png" width="100%" />

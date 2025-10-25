@@ -4,11 +4,11 @@
 #' @param y type of confidence interval object, specify either 'group', 'time', or 'roll'.
 #' @param order specify confidence interval object order as 'alpha' or 'numeric' for alphabetical or numerical ordering in the 'group' graph.
 #' @param gcol pick confidence interval line colors for groups in the 'group' graph. Default is 'blue'.
-#' @param gbar logical TRUE or FALSE that indicates whether group lines have confidence bars for trend over time results. Default is FALSE.
+#' @param gband logical TRUE or FALSE that indicates whether group lines have confidence bands for trend over time results. Default is FALSE.
 #' @param pcol select point color for 'group' only confidence intervals. Default is 'red'.
 #' @param overall logical TRUE or FALSE that indicates whether to include the overall sample confidence intervals (i.e., not each group). Default is FALSE.
 #' @param ocol indicate the optional overall line color. Default is 'gray' when overall=TRUE.
-#' @param obar logical TRUE or FALSE that indicates whether to add overall confidence band. Default is FALSE.
+#' @param oband logical TRUE or FALSE that indicates whether to add an overall confidence band. Default is FALSE.
 #' @param tgt specify 1 or more values on the x-axis of where to add a target line. Default is NULL.
 #' @param tcol select a color for the target line. Default is 'gray'.
 #' @param tpline add one or time point vertical line(s) using x-axis values when y='time' or y='roll'. Default is NULL.
@@ -17,7 +17,7 @@
 #' @param ylim specify plot's y-axis limits with a 2 value vector.
 #' @param main the main title of the plot.
 #' @param lwd select the line width. Default is 1.
-#' @param adj.alpha factor modifying the opacity alpha of the confidence interval bars, in the range of 0 to 1. Default is 0.4.
+#' @param adj.alpha factor modifying the opacity alpha of the confidence interval bands, in the range of 0 to 1. Default is 0.4.
 #' @param cex A numerical value giving the amount by which plotting text and symbols should be magnified relative to the default of 1.
 #' @param cex.axis The magnification to be used for axis annotation relative to the current setting of cex. Default is 1.
 #' @param cex.lab The magnification to be used for x and y labels relative to the current setting of cex. Default is 1.
@@ -40,23 +40,23 @@
 #' increment=3, rolling=6)
 #' # Group level confidence intervals
 #' plot(x=gr1, y="group", order="numeric", lwd=4, gcol= "blue", pcol="red",
-#' overall=TRUE, obar=TRUE, ocol="gray", tcol="green", tgt=4.5,
+#' overall=TRUE, oband=TRUE, ocol="gray", tcol="green", tgt=4.5,
 #' cex=1, cex.axis=1, cex.lab=1, cex.text=2,
 #' cex.main=1.25, name=TRUE, adj.alpha=.2)
 #' #Trend plots over time in the 3 month increments (i.e., quarters)
-#' plot(x=gr1, y="time", lwd=4, gcol=c("red", "blue"), gbar=TRUE, overall=TRUE,
-#'   obar=TRUE, ocol="gray", tcol="green", tgt=4, tpline=3,
+#' plot(x=gr1, y="time", lwd=4, gcol=c("red", "blue"), gband=TRUE, overall=TRUE,
+#'   oband=TRUE, ocol="gray", tcol="green", tgt=4, tpline=3,
 #'   tpcol="yellow", name=TRUE, cex.axis=1, cex.lab=1, cex.text=2,
 #'   cex.main=1.25, adj.alpha=.3)
 #' #Plot for rolling 6-month averages
-#' plot(x=gr1, y="roll", lwd=4, gcol=c("red", "blue"), gbar=TRUE, overall=TRUE,
-#'   obar=TRUE, ocol="gray", tcol="green", tgt=4, tpline=c(4,6),
+#' plot(x=gr1, y="roll", lwd=4, gcol=c("red", "blue"), gband=TRUE, overall=TRUE,
+#'   oband=TRUE, ocol="gray", tcol="green", tgt=4, tpline=c(4,6),
 #'   tpcol="yellow", name=TRUE, cex.axis=1, cex.lab=1, cex.text=2,
 #'   cex.main=1.25, adj.alpha=.3)
 
 
-plot.group <- function(x, y="group", order="alpha", gcol="blue", gbar=FALSE, pcol="red", overall=FALSE,
-                       ocol="gray", obar=FALSE, tgt=NULL, tcol="gray", tpline=NULL,
+plot.group <- function(x, y="group", order="alpha", gcol="blue", gband=FALSE, pcol="red", overall=FALSE,
+                       ocol="gray", oband=FALSE, tgt=NULL, tcol="gray", tpline=NULL,
                        tpcol="gray", xlim=NULL, ylim=NULL, main=NULL, lwd=1, adj.alpha=0.4,
                        cex=1, cex.axis=1, cex.lab=1, cex.main=1, cex.text=1, round.c=2,
                        name=FALSE, abbrv=5, ...) {
@@ -265,16 +265,16 @@ plot.group <- function(x, y="group", order="alpha", gcol="blue", gbar=FALSE, pco
 
   # Run the functions above #
   switch(y,
-         "group"   = plot_ci_fnc(x=x, alpha_num=order, main=main, lwd=lwd, Lcol=gcol, Pcol=pcol, tgt=tgt, Cbar=obar,
+         "group"   = plot_ci_fnc(x=x, alpha_num=order, main=main, lwd=lwd, Lcol=gcol, Pcol=pcol, tgt=tgt, Cbar=oband,
                                  roundVal=round.c, adj.alpha=adj.alpha, xlim=xlim, ylim=ylim, abbrv=abbrv, ocol=ocol,
                                  tcol=tcol, cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main),
          "time"   = plot_fci_fnc(x=x, y=y, xlim=xlim, ylim=ylim, lwd=lwd, LCol=gcol,
-                                 cibands=gbar, ocibands=obar, Tot.Line=overall, Tot.Color=ocol, Tgt.Color=tcol,
+                                 cibands=gband, ocibands=oband, Tot.Line=overall, Tot.Color=ocol, Tgt.Color=tcol,
                                  Tgt.Line=tgt, Time.Pt.Line=tpline, Tpt.Color=tpcol, cex=cex, cex.axis=cex.axis,
                                  cex.lab=cex.lab, cex.main=cex.main, cex.text=cex.text, name=name,
                                  abbrv=abbrv, adj.alpha=adj.alpha),
          "roll"   = plot_fci_fnc(x=x, y=y, xlim=xlim, ylim=ylim, lwd=lwd, LCol=gcol,
-                                 cibands=gbar, ocibands=obar, Tot.Line=overall, Tot.Color=ocol, Tgt.Color=tcol,
+                                 cibands=gband, ocibands=oband, Tot.Line=overall, Tot.Color=ocol, Tgt.Color=tcol,
                                  Tgt.Line=tgt, Time.Pt.Line=tpline, Tpt.Color=tpcol, cex=cex, cex.axis=cex.axis,
                                  cex.lab=cex.lab, cex.main=cex.main, cex.text=cex.text, name=name,
                                  abbrv=abbrv, adj.alpha=adj.alpha) )

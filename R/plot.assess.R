@@ -15,8 +15,8 @@
 #' @param col specify intervention and control group colors in a vector. Defaults to, if nothing selected, c("blue", "red") or "blue" for single-group Interrupted Time Series models.
 #' @param tcol specify treatment or interruption line color as a single character vector. Defaults to "gray" if nothing selected.
 #' @param cfact logical TRUE or FALSE that indicates whether a counterfactual line should be included. Defaults to FALSE.
-#' @param conf.int logical TRUE or FALSE that indicates whether a 95% confidence interval bars should be included. Defaults to FALSE.
-#' @param adj.alpha factor modifying the opacity alpha of the confidence interval bars, in the range of 0 to 1. Default is NULL; if conf.int=TRUE, defaults to 0.4.
+#' @param conf.int logical TRUE or FALSE that indicates whether a 95% confidence interval bands should be included. Defaults to FALSE.
+#' @param adj.alpha factor modifying the opacity alpha of the confidence interval bands, in the range of 0 to 1. Default is NULL; if conf.int=TRUE, defaults to 0.4.
 #' @param add.means adds group means by time period based on model data. Default is FALSE
 #' @param add.legend add a legend by selecting the location as "bottomright", "bottom", "bottomleft",
 #' "left", "topleft", "top", "topright", "right", "center". No legend if nothing selected.
@@ -305,7 +305,7 @@ if(y == "ITS") {
     plot(0:1, range(c(cmodel[["fitted.values"]], t0)), type="n",
          main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim,
          cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
-    #Add in confidence bars
+    #Add in confidence bands
     if(conf.int==TRUE) {
       # temp data frame #
       tmpdf00 <- data.frame(Post.All = 0, Int.Var=0, DID=0)
@@ -460,7 +460,7 @@ if(y == "ITS") {
     plot(range(aggr_mns[, 1]), range(c(cmodel[["fitted.values"]], t0)), type="n",
          main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim,
          cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
-    #Add in confidence bars
+    #Add in confidence bands
     if(conf.int==TRUE) {
       # temp data frame #
       tmpdf00 <- data.frame(Period = 1, DID=0, DID.Trend=0)
@@ -610,7 +610,7 @@ if(y == "ITS") {
     plot(range(aggr_mns[, 1]), range(c(cmodel[["fitted.values"]], t00)), type="n",
          main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim,
          cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
-    #Add in confidence bars
+    #Add in confidence bands
     tmpdf_names <- names(coef(cmodel))[1:4][-1]
     if(conf.int==TRUE) {
       tmpdf00 <- data.frame(ITS.Time = 1, post1=0, txp1=0)
@@ -814,7 +814,7 @@ if(y == "ITS") {
     plot(range(aggr_mns[, 1]), range(c(cmodel[["fitted.values"]], t00)), type="n",
          main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim,
          cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
-    #Add in confidence bars
+    #Add in confidence bands
     tmpdf_names <- names(coef(cmodel))[1:6][-1]
     if(conf.int==TRUE) {
       tmpdf00 <- data.frame(ITS.Time = 1, post1=0, txp1=0, post2=0, txp2=0)
@@ -1077,7 +1077,7 @@ if(y == "ITS") {
     plot(range(aggr_mns[, 1]), range(c(cmodel[["fitted.values"]], t00)), type="n",
          main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim,
          cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
-    #Add in confidence bars
+    #Add in confidence bands
     tmpdf_names <- names(coef(cmodel))[1:8][-1]
     if(conf.int==TRUE) {
       #Treatment group
@@ -1415,7 +1415,7 @@ if(y == "ITS") {
     plot(range(aggr_mns[, 1]), range(c(cmodel[["fitted.values"]], t00)), type="n",
          main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim,
          cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
-    #Add in confidence bars
+    #Add in confidence bands
     tmpdf_names <- names(coef(cmodel))[1:12][-1]
     if(conf.int==TRUE) {
       #Treatment group

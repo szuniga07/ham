@@ -9,11 +9,11 @@
   y = "group",
   order = "alpha",
   gcol = "blue",
-  gbar = FALSE,
+  gband = FALSE,
   pcol = "red",
   overall = FALSE,
   ocol = "gray",
-  obar = FALSE,
+  oband = FALSE,
   tgt = NULL,
   tcol = "gray",
   tpline = NULL,
@@ -43,7 +43,7 @@
 
 \item{gcol}{pick confidence interval line colors for groups in the 'group' graph. Default is 'blue'.}
 
-\item{gbar}{logical TRUE or FALSE that indicates whether group lines have confidence bars for trend over time results. Default is FALSE.}
+\item{gband}{logical TRUE or FALSE that indicates whether group lines have confidence bands for trend over time results. Default is FALSE.}
 
 \item{pcol}{select point color for 'group' only confidence intervals. Default is 'red'.}
 
@@ -51,7 +51,7 @@
 
 \item{ocol}{indicate the optional overall line color. Default is 'gray' when overall=TRUE.}
 
-\item{obar}{logical TRUE or FALSE that indicates whether to add overall confidence band. Default is FALSE.}
+\item{oband}{logical TRUE or FALSE that indicates whether to add an overall confidence band. Default is FALSE.}
 
 \item{tgt}{specify 1 or more values on the x-axis of where to add a target line. Default is NULL.}
 
@@ -69,7 +69,7 @@
 
 \item{lwd}{select the line width. Default is 1.}
 
-\item{adj.alpha}{factor modifying the opacity alpha of the confidence interval bars, in the range of 0 to 1. Default is 0.4.}
+\item{adj.alpha}{factor modifying the opacity alpha of the confidence interval bands, in the range of 0 to 1. Default is 0.4.}
 
 \item{cex}{A numerical value giving the amount by which plotting text and symbols should be magnified relative to the default of 1.}
 
@@ -103,17 +103,17 @@ gr1 <- group(x="program", y="los", z="month", dataf=hosprog, dist="t",
 increment=3, rolling=6)
 # Group level confidence intervals
 plot(x=gr1, y="group", order="numeric", lwd=4, gcol= "blue", pcol="red",
-overall=TRUE, obar=TRUE, ocol="gray", tcol="green", tgt=4.5,
+overall=TRUE, oband=TRUE, ocol="gray", tcol="green", tgt=4.5,
 cex=1, cex.axis=1, cex.lab=1, cex.text=2,
 cex.main=1.25, name=TRUE, adj.alpha=.2)
 #Trend plots over time in the 3 month increments (i.e., quarters)
-plot(x=gr1, y="time", lwd=4, gcol=c("red", "blue"), gbar=TRUE, overall=TRUE,
-  obar=TRUE, ocol="gray", tcol="green", tgt=4, tpline=3,
+plot(x=gr1, y="time", lwd=4, gcol=c("red", "blue"), gband=TRUE, overall=TRUE,
+  oband=TRUE, ocol="gray", tcol="green", tgt=4, tpline=3,
   tpcol="yellow", name=TRUE, cex.axis=1, cex.lab=1, cex.text=2,
   cex.main=1.25, adj.alpha=.3)
 #Plot for rolling 6-month averages
-plot(x=gr1, y="roll", lwd=4, gcol=c("red", "blue"), gbar=TRUE, overall=TRUE,
-  obar=TRUE, ocol="gray", tcol="green", tgt=4, tpline=c(4,6),
+plot(x=gr1, y="roll", lwd=4, gcol=c("red", "blue"), gband=TRUE, overall=TRUE,
+  oband=TRUE, ocol="gray", tcol="green", tgt=4, tpline=c(4,6),
   tpcol="yellow", name=TRUE, cex.axis=1, cex.lab=1, cex.text=2,
   cex.main=1.25, adj.alpha=.3)
 }

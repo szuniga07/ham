@@ -52,9 +52,9 @@
 
 \item{cfact}{logical TRUE or FALSE that indicates whether a counterfactual line should be included. Defaults to FALSE.}
 
-\item{conf.int}{logical TRUE or FALSE that indicates whether a 95\% confidence interval bars should be included. Defaults to FALSE.}
+\item{conf.int}{logical TRUE or FALSE that indicates whether a 95\% confidence interval bands should be included. Defaults to FALSE.}
 
-\item{adj.alpha}{factor modifying the opacity alpha of the confidence interval bars, in the range of 0 to 1. Default is NULL; if conf.int=TRUE, defaults to 0.4.}
+\item{adj.alpha}{factor modifying the opacity alpha of the confidence interval bands, in the range of 0 to 1. Default is NULL; if conf.int=TRUE, defaults to 0.4.}
 
 \item{add.means}{adds group means by time period based on model data. Default is FALSE}
 
