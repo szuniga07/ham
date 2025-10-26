@@ -70,13 +70,19 @@ gr1 <- group(x="program", y="los", z="month", dataf=hosprog, dist="t", cluster=T
 print(gr1$Group.CI)
 ```
 
-For many health outcomes, we may track data with high variation across months. This code that uses the 'increment' and 'rolling' arguments can help make better sense in those situations with: 1) 3-month increments, and 2) 6-month rolling averages. And by graphing these results. We don't have strong evidence of high variation in this data so we will continue to use the gr1 object above.
+For many health outcomes, we may track data with high variation across months. This code that uses the 'increment' and 'rolling' arguments can help make better sense in those situations with: 1) 3-month increments, and 2) 6-month rolling averages. We don't have strong evidence of high variation in this data so we will continue to use the gr1 object above.
 
 ## Rolling 6-month averages for all patients
 ```{r group2}
 gr2 <- group(x="program", y="los", z="month", dataf=hosprog, dist="t", increment=3, rolling=6)
 print(gr2$Roll.CI$Rolling.All)
 ```
+
+There are 3 main graphing options that go into the y argument plot(x=your_group_object, y=type_of_plot):
+
+* y= "group" is the group confidence intervals. This is the default graph.
+* y= "time" is the standard confidence intervals over time including the increment of multiple time periods (e.g., 3-month quarters).
+* y= "roll" is the 'rolling' averages (e.g., rolling 12-month average).
 
 ### Graph the results. Is there a signficant difference between the intervention (group 1) and control group (group 0)?
 
@@ -233,6 +239,10 @@ plot(dm1, "DID")
 plot(x=dm1, y="DID", add.legend="topleft", xlim=c(-.05, 1.05), ylim=c(2, 9), main="DID: Length of Stay", col=c("cyan","magenta"), lwd=7, cex=2, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(.045), cex.text=1.5, coefs=TRUE, round.c=2, cfact=T, conf.int=TRUE, adj.alpha=0.2 )
 ```
 
+We see above that there is a significant DID result over 3.5 fewer days length of stay. That is quite a high number. We can continue with the analysis to explain that result more but lets first examine the graph to help understand the results. 
+
+When we compare the solid blue trend line from the model, we see how much it differs with the blue dashed line, the counterfactual as denoted with the right-shifted blue arrow (xshift= .045). The counterfactual line represents what could have happened and we see that we may have expected to see an increase in LOS like the control group. But we instead see a decrease in LOS for the intervention group.
+
 We can also use DID on binary outcomes like hospital re-admission within 30-days.
 
 ```{r did model 3}
@@ -384,7 +394,7 @@ If we select a measure based on multiple survey questions, alpha() can help us i
 
 And we can get an interpretation of all the numbers we are looking at from assess() and alpha() by using interpret().
 
-Hopefully, the ham package can help you from the start to finish of your study.
+Hopefully, the ham package can help you from start to finish in your study.
 
 ## 8. References
 
