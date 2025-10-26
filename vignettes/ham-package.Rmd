@@ -21,7 +21,7 @@ library(ham)
 
 # Healthcare Analysis Methods (ham)
 
-The goal of ham is to provide different modeling approaches to evaluating healthcare programs (or programs in other fields) with descriptive statistics, point estimates and confidence intervals, and regression analysis. This includes standard regression methods like linear (OLS) and logistic regression. And ham adds options for differences-in-differences models as well as interrupted time-series analysis. DID and ITS models offer options for causal modeling. What is unique about ham is that it creates datasets with constructed variables for DID and ITS models, optionally it can add top coded outcome variables, propensity scores, and provides some interpretation of model results. Additionally, Cronbach's alpha can be calculated for such things as patient surveys.
+The goal of ham is to provide different modeling approaches to evaluating healthcare programs (or interventions) with descriptive statistics, point estimates and confidence intervals, and regression analyses. This includes standard regression methods like linear (OLS) and logistic regression. And ham adds options for differences-in-differences models as well as interrupted time series models. DID and ITS models offer options for causal modeling. What is unique about ham is that it creates datasets with constructed variables for DID and ITS models, optionally it can add top coded outcome variables, propensity scores, and provides some interpretation of model results. Additionally, Cronbach's alpha can be calculated for such things as patient surveys.
 
 ```{r echo=FALSE, out.width="30%", fig.align="center"}
 knitr::include_graphics("C:/stats/R/MyPackages/ham/vignettes/logo.png") 
@@ -33,13 +33,11 @@ knitr::include_graphics("C:/stats/R/MyPackages/ham/vignettes/logo.png")
 
 Did our hospital intervention make a difference? Does our work improve healthcare? Did our efforts impact health outcomes? Should we spread our efforts to our other healthcare facilities?
 
-These are questions we are constantly asked each year in healthcare. Another important question we should ask is how do we answer these questions? This vignette shows how we can assess program effect by building upon a set of analyses and the associated ham functions. 
+These are questions we are constantly asked each year in healthcare. Another important question we should ask is how do we answer these questions? This vignette shows how we can assess program effects by building upon a set of analyses and the associated ham functions. 
 
-This is the ham package on healthcare analysis methods. This package can help when performing program evaluations or intervention studies in healthcare.  Or simply to test if a program has an impact on an outcome of interest.
+This is the ham package for healthcare analysis methods. This package can help when performing program evaluations or intervention studies in healthcare.  Or simply to test if a program has an impact on an outcome of interest.
 
-ham can help with research or evaluation studies. When working in healthcare systems, multi-site evaluations can strongly resemble research studies and commonly use regression methods. For an introduction to evaluation, please see the reference below.
-
-Patton, M. Q. (1997). Utilization-focused evaluation: The new century text (3rd ed.). Thousand Oaks, CA: Sage Publications
+ham can help with research or evaluation studies. When working in healthcare systems, multi-site evaluations can strongly resemble research studies and commonly use regression methods. For an introduction to evaluation, please see Michael Patton's book (1997).
 
 What is unique about ham, is that it provides options for running standard linear or ordinary least squares (OLS) and logistic regression as well as methods used in causal modeling such as differences-in-differences (DID) and interrupted time series analysis (ITS). It also optionally makes data with the newly created variables (i.e., this saves you time).
 
@@ -68,15 +66,16 @@ over time.
 
 ### Group level 95% confidence intervals over 12 months (t distribution)
 ```{r group}
-gr1 <- group(x="program", y="los", z="month", dataf=hosprog, dist="t")
+gr1 <- group(x="program", y="los", z="month", dataf=hosprog, dist="t", cluster=TRUE)
 print(gr1$Group.CI)
 ```
 
 For many health outcomes, we may track data with high variation across months. This code that uses the 'increment' and 'rolling' arguments can help make better sense in those situations with: 1) 3-month increments, and 2) 6-month rolling averages. And by graphing these results. We don't have strong evidence of high variation in this data so we will continue to use the gr1 object above.
 
+## Rolling 6-month averages for all patients
 ```{r group2}
 gr2 <- group(x="program", y="los", z="month", dataf=hosprog, dist="t", increment=3, rolling=6)
-print(gr1$Group.CI)
+print(gr2$Roll.CI$Rolling.All)
 ```
 
 ### Graph the results. Is there a signficant difference between the intervention (group 1) and control group (group 0)?
@@ -92,6 +91,14 @@ The results show up from "low-to-high" LOS values because the code uses order='n
 <span style="color: red;" >Hint:</span> Need something fast? Just use 1 argument to get the simplified graph: 
 
 plot(gr1)
+
+## Between-group variance and within-group clustering
+
+We can assess the variation between-groups with statistics such as the Intra-class Correlation Coefficient. This reflects the proportion of total variance that is between-group variance and also the within-group clustering. We can have this and similar values such as the Median Odds Ratio (binary outcomes only) and the Design Effect. These will give us an idea of whether we should consider the variation between groups more in our study. Please see the documentation for more information. This may be more helpful with many groups (e.g., 10-20 hospitals in a healthcare system).
+
+```{r clustering}
+print(gr1$Clustering)
+```
 
 ### Graph the confidence interval trend results 
 
@@ -173,7 +180,7 @@ Let us continue with our length of stay example. By now we have begun to compare
 
 We have the option of doing the analysis with an OLS or multiple linear regression, controlling for other important variables that can explain the outcome. We could create an interaction between the variables that represent time and intervention/control group participation to test if there is a different trend for each group. 
 
-This would work in many situations but we may want to consider what is available in causal modeling because, especially if our control group and intervention groups begin at different levels. For example, the intervention group may be the hospital (or department, etc.) with the most need of an intervention. They may have outcome rates that are at a worse level than the other hospitals. In this case, we nay want to assess program impact as the difference in trends for the intervention and control groups.
+This would work in many situations but we may want to consider what is available in causal modeling, especially if our control and intervention groups begin at different levels. For example, the intervention group may be the hospital (or department, etc.) with the most need of an intervention. They may have outcome rates that are at a worse level than the other hospitals. In this case, we nay want to assess program impact as the difference in trends for the intervention and control groups.
 
 DID can be used on binary or continuous outcome variables. Below is an example using the hosprog data with length of stay as the outcome and the created DID variables as the predictors, use '.' on the right-hand side of the formula to indicate only the created variables will be used. Replace '.' with any additional selected variables. The newly created DID variables will be added in all DID models. 
 
@@ -191,7 +198,7 @@ dm1 <- assess(formula= los ~ ., data=hosprog, intervention = "program",
 summary(dm1$DID)
 ```
 
-<span style="color: red;" >Hint:</span> The primary variables of the intervention are the ones that begin with 'DID'. In this model, DID represents the intervention effect and is the differences-in-differences. In a model with many or more than 2 time periods, "DID.Trend" is the primary variable of interest while the "DID" variable is less so because it represents the difference before-and-after the intervention for both intervention and control group (i.e., intervention group after the intervention vs. control group + intervention before the intervention start) so it represents something else than when DID="two". To run with "many" time periods, use similar code to this:
+<span style="color: red;" >Hint:</span> The primary variables of the intervention are the ones that begin with 'DID'. In this model, DID represents the intervention effect and is the differences-in-differences. In a model with many or more than 2 time periods, "DID.Trend" is the primary variable of interest while the "DID" variable is less so because it represents the difference before-and-after the intervention for both intervention and control groups (i.e., intervention group after the intervention vs. control group + intervention before the intervention start) so it represents something else than when DID="two". To run with "many" time periods, use similar code to this:
 
 * assess(formula= los ~ ., data=hosprog, intervention = "program",
               int.time="month", treatment= 5, did="many")
@@ -203,7 +210,7 @@ interpret(dm1)$did
 
 Now lets graph the results with the counterfactual (what would have happened without the intervention program). 
 
-The ham options include arrows to highlight the coefficient as the difference between counterfactual and post-intervention value. There are options to present the coefficient names only, coefficient values next to the coefficient names with '*' to indicate statistical significance, or none of the above. And we can add confidence bands to the expected lines.
+The ham options include arrows to highlight the coefficient as the difference between counterfactual and post-intervention value. There are options to present the coefficient names only, coefficient values next to the coefficient names with asterisks (*) to indicate statistical significance, or none of the above. And we can add confidence bands to the expected lines.
 
 All of the above mentioned options are shown below, including lighter confidence bands, with the use of these arguments:
 
@@ -246,7 +253,7 @@ ITS lets us look at trends for 1 or 2 groups such as an intervention/treatment g
 
 Below are examples using the hosprog data for the patient length of stay and death within 30-days. The dataset hosp1 will be used for the single group examples.
 
-We'll continue with our length of stay example because our clinical staff have expressed interest in understanding how the trend varies over time. Some hope for an immediate shift in the intercept followed by a continuous effect in the slope while others fear a discontinuous effect. 
+We'll continue with our length of stay example because our clinical staff have expressed interest in understanding how the trend varies over time. Some hope for an immediate shift in the intercept followed by a 'continuous' effect in the slope while others fear a 'discontinuous' effect (see Shadish, Cook, & Campbell, 2002). 
 
 In the spirit of "formative" evaluation, we model these questions with ITS. It may be possible that we have a single, linear trend line in which differences-in-differences would provide adequate results. However, we want to examine our primary intended user's questions about changes in the trend with ITS. 
 
@@ -312,7 +319,7 @@ interpret(im22)$its
 
 <span style="color: red;" >Hint:</span> The 2 summaries at the bottom help us to understand the overall effect on the LOS reduction up to the end of those time periods. In other words, the coefficient interpretations explain what each means while the summaries give us an idea on the actual number in a lower (or higher) LOS over time for the intervention and/or control groups.  
 
-We will now graph the results based on our coefficients. We use many of the same arguments as the DID model. In this example, I adjusted the position of the text to read better with the pos.text argument. And you'll notice that within the confidence bands there are dots that represent the means for each time period from the model data. This is done with the argument add.means=TRUE.
+We will now graph the results based on our coefficients. We use many of the same arguments as the DID model. In this example, I adjusted the position of the text to read better with the pos.text argument. And you'll notice that within the confidence bands there are dots that represent the means for each time period from the model data. This is done with the argument add.means=TRUE. Although not provided in ITS models with control groups, the ITS models that only have the intervention groups do have counterfactual lines. Counterfactual lines may be added to all ITS models in future versions if they can be added while maintaining a clean visualization. 
 
 ### View a partial prediction plot
 ```{r plotAssess, fig.dim = c(6, 4.5)}
@@ -321,10 +328,10 @@ plot(im22, "ITS", add.legend="top", xlim=c(-.75, 13.1), ylim=c(2, 9), main="ITS:
 
 The ITS model provides another layer of information. The graph is helpful at showing how the results changed. The control group appears to show a steady increase in LOS, perhaps this reflects a change in practice, patient population or some other issue that impacted results. However, the intervention group may have helped. It appears that their was an "immediate" change in the intercept (see chapter 6 of Shadish, Cook, & Campbell, 2002). 
 
-We see a significant decrease of over 1 1/2 days (ixp5). Their was a slight decrease at the 2nd interruption denoted by the blue dashed line on the right. This Program+ intervention may not have worked as well as the staff would have hoped. The decrease in the intercept (ixp9) isn't significant and neither is the change in the slope (txip9). Also, we see almost parallel trends for the intervention and control groups during the last periods of the study. But we do see some possible intervention effect after period 5.
+We see a significant decrease of over 1 1/2 days (ixp5). There was a slight decrease at the 2nd interruption denoted by the blue dashed line on the right. This Program+ intervention at month 9 may not have worked as well as the staff would have hoped. The decrease in the intercept (ixp9) isn't significant and neither is the change in the slope (txip9). Also, we see almost similar trends for the intervention and control groups during the last period of the study. But we do see some possible intervention effect after period 5.
 
 
-<span style="color: red;" >Hint:</span> One option that the literature recommends in graphing DID and ITS results is with lines connecting intervention and control group means. That is a good alternative to graphing the fitted lines for DID and ITS models.
+<span style="color: red;" >Hint:</span> One option that the literature recommends in graphing DID and ITS results is with lines connecting intervention and control group means. That is a good alternative to graphing the fitted lines for DID and ITS models as above.
 
 We can also perform an ITS on binary outcomes like death within 30-days.
 We will examine an intervention and control group at months 5 and 9,
@@ -349,7 +356,7 @@ A very commonly used method of collecting information on patient experiences, be
 
 A widely used survey is the HCAHPS survey for hospitals in the United States. Medicare provides the results for the overall score and subscales on individual dimensions to help inform people when selecting which hospital they would like to receive care.
 
-The developers of the HCAHPS survey use careful measurement and assessment methods to build reliable and valid survey tools. We will only cover parts of reliability here but Cronbach's alpha should be a good instrument in our pursuit of developing an accurate measure of whichever psychological dimension we are interested in. 
+The developers of the HCAHPS survey use careful measurement and assessment methods to build reliable and valid survey tools. We will only cover parts of reliability here but Cronbach's alpha should be a good instrument in our pursuit of developing an accurate measure of whichever dimension we are interested in. 
 
 In this example, we'll check how reliably we measure "patient satisfaction" with our 5 survey items (i1 to i5). The function alpha() and interpret() will provide us with helpful information.
 
@@ -377,7 +384,7 @@ If we select a measure based on multiple survey questions, alpha() can help us i
 
 And we can get an interpretation of all the numbers we are looking at from assess() and alpha() by using interpret().
 
-Hopefully, the ham package can help you from start to stop of your study.
+Hopefully, the ham package can help you from the start to finish of your study.
 
 ## 8. References
 
@@ -402,5 +409,6 @@ regression to investigate contextual phenomena. Journal of Epidemiological Healt
 Muthen, B. & Satorra, A. (1995). Complex Sample Data in Structural Equation Modeling.
 Sociological Methodology, 25, 267-316. https://doi.org/10.2307/271070.
 
-Rabe-Hesketh, S. & Skrondal, A. (2008). Multilevel and Longitudinal Modeling Using Stata,
-Second Edition. ISBN: 978-1-59718-040-5. 
+Patton, M. Q. (1997). Utilization-focused evaluation: The new century text (3rd ed.). Thousand Oaks, CA: Sage Publications. ISBN: 978-0803952652
+
+Rabe-Hesketh, S. & Skrondal, A. (2008). Multilevel and Longitudinal Modeling Using Stata, Second Edition. Stata Press. ISBN: 978-1-59718-040-5. 
