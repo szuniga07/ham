@@ -143,10 +143,10 @@ summary(assess(hp ~ mpg+wt, data=mtcars, regression="ols")$model)
 interpret(assess(hp ~ mpg+wt, data=mtcars, regression="ols"))$model
 ```
 
-ham can topcode the outcome and create a propensity score variable. Here is an example using the artificially created hosprog data with hospital stay cost as the outcome with a novel hospital program/intervention binary indicator and a 12 month time variable. The option for new data being returned is specified with newdata=TRUE.
-
 ### OLS top-coding and propensity scores
-top-coding cost at $17,150 and propensity score based on age, female indicator, and a health risk probability score. Top-coding provides more accurate results because it lessens the impact of outliers on regression results. And propensity scores offer more balance in data by controlling for factors that are important in understanding how patients are more or less likely to be in the intervention group.
+ham can topcode the outcome and create a propensity score variable. top-coding cost at $17,150 and propensity score based on age, female indicator, and a health risk probability score. 
+
+Top-coding provides more accurate results because it lessens the impact of outliers on regression results. And propensity scores offer more balance in data by controlling for factors that are important in understanding how patients are more or less likely to be in the intervention group.
 
 Topcoding can be applied to any model. Propensity scores can be created for any model except the single group interrupted time series because there is no control group (i.e. intervention group only).
 
