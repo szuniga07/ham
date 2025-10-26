@@ -54,6 +54,23 @@ Below will cover 4 sections using an intervention program example and reduced le
 
 ## 2. Descriptive and inferential statistics
 This example shows group level point estimates and confidence intervals.
+
+### Group level 95% confidence intervals over 12 months (t distribution)
+```{r group}
+gr1 <- group(x="program", y="los", z="month", dataf=hosprog, dist="t", cluster=TRUE)
+print(gr1$Group.CI)
+```
+
+For many health outcomes, we may track data with high variation across months. This code that uses the 'increment' and 'rolling' arguments can help make better sense in those situations with: 1) 3-month increments, and 2) 6-month rolling averages. 
+
+And we may have a continuous variable that we would want to explore by forming it into quartiles. You can turn a continuous variable into quartiles using the quarts=TRUE argument. Below, we get 6-month rolling average LOS confidence intervals by quartiles of age. If we don't have strong evidence of high variation in this data so we will continue to use the gr1 object above.
+
+## Rolling 6-month averages by quartiles of age (Q1 - Q4)
+```{r group2}
+gr2 <- group(x="age", y="los", z="month", dataf=hosprog, dist="t", increment=3, rolling=6, quarts=TRUE)
+print(gr2$Roll.CI$Rolling)
+```
+
 There is also an option to retrieve those estimates over time periods.
 And there are graphing options to help see how the data looks for both.
 
@@ -64,27 +81,13 @@ over time.
 
 <span style="color: red;" >Hint:</span> The rolling average can add time to to the function, for example using N= 760,000 rows over 11 years took 35 seconds on my moderately fast computer built 5 years ago. In contrast, without rolling averages, it took 5 seconds.
 
-### Group level 95% confidence intervals over 12 months (t distribution)
-```{r group}
-gr1 <- group(x="program", y="los", z="month", dataf=hosprog, dist="t", cluster=TRUE)
-print(gr1$Group.CI)
-```
-
-For many health outcomes, we may track data with high variation across months. This code that uses the 'increment' and 'rolling' arguments can help make better sense in those situations with: 1) 3-month increments, and 2) 6-month rolling averages. We don't have strong evidence of high variation in this data so we will continue to use the gr1 object above.
-
-## Rolling 6-month averages for all patients
-```{r group2}
-gr2 <- group(x="program", y="los", z="month", dataf=hosprog, dist="t", increment=3, rolling=6)
-print(gr2$Roll.CI$Rolling.All)
-```
+### Graph the results. 
 
 There are 3 main graphing options that go into the y argument plot(x=your_group_object, y=type_of_plot):
 
 * y= "group" is the group confidence intervals. This is the default graph.
 * y= "time" is the standard confidence intervals over time including the increment of multiple time periods (e.g., 3-month quarters).
 * y= "roll" is the 'rolling' averages (e.g., rolling 12-month average).
-
-### Graph the results. Is there a signficant difference between the intervention (group 1) and control group (group 0)?
 
 ```{r plotGroup1, fig.dim = c(6, 4.5)}
 plot(x=gr1, y="group", order="numeric", lwd=4, gcol= "blue", pcol="red", overall=TRUE, oband=TRUE, ocol="gray", tcol="green", tgt=4.5, cex=2, cex.axis=1, cex.lab=1.1, cex.text=2, cex.main=1.25, adj.alpha=.2)
@@ -142,7 +145,7 @@ interpret(assess(hp ~ mpg+wt, data=mtcars, regression="ols"))$model
 
 ham can topcode the outcome and create a propensity score variable. Here is an example using the artificially created hosprog data with hospital stay cost as the outcome with a novel hospital program/intervention binary indicator and a 12 month time variable. The option for new data being returned is specified with newdata=TRUE.
 
-### OLS top-coding
+### OLS top-coding and propensity scores
 top-coding cost at $17,150 and propensity score based on age, female indicator, and a health risk probability score. Top-coding provides more accurate results because it lessens the impact of outliers on regression results. And propensity scores offer more balance in data by controlling for factors that are important in understanding how patients are more or less likely to be in the intervention group.
 
 Topcoding can be applied to any model. Propensity scores can be created for any model except the single group interrupted time series because there is no control group (i.e. intervention group only).
