@@ -23,8 +23,8 @@ library(ham)
 
 The goal of ham is to provide different modeling approaches to evaluating healthcare programs (or interventions) with descriptive statistics, point estimates and confidence intervals, and regression analyses. This includes standard regression methods like linear (OLS) and logistic regression. And ham adds options for differences-in-differences models as well as interrupted time series models. DID and ITS models offer options for causal modeling. What is unique about ham is that it creates datasets with constructed variables for DID and ITS models, optionally it can add top coded outcome variables, propensity scores, and provides some interpretation of model results. Additionally, Cronbach's alpha can be calculated for such things as patient surveys. As the logo of Dr. Ham suggests, the ham package can help illuminate your results.
 
-```{r echo=FALSE, out.width="30%", fig.align="center"}
-knitr::include_graphics("C:/stats/R/MyPackages/ham/vignettes/logo.png") 
+```{r vlogo, echo=FALSE, out.width="30%", fig.align="center"}
+knitr::include_graphics("logo.png") 
 ```
 
 
@@ -274,7 +274,7 @@ ITS lets us look at trends for 1 or 2 groups such as an intervention/treatment g
 
 Below are examples using the hosprog data for the patient length of stay and death within 30-days. The dataset hosp1 will be used for the single group examples.
 
-We'll continue with our length of stay example because our clinical staff have expressed interest in understanding how the trend varies over time. Some hope for an immediate shift in the intercept followed by a 'continuous' effect in the slope while others fear a 'discontinuous' effect (see Shadish, Cook, & Campbell, 2002). 
+We'll continue with our length of stay example because our clinical staff have expressed interest in understanding how the trend varies over time. Some hope for an immediate shift in the intercept followed by a 'continuous' effect in the slope while others fear a 'discontinuous' effect. 
 
 In the spirit of "formative" evaluation, we model these questions with ITS. It may be possible that we have a single, linear trend line in which differences-in-differences would provide more than adequate results. However, we want to examine our primary intended user's questions about changes in the trend with ITS. 
 
@@ -354,7 +354,7 @@ We will now graph the results based on our coefficients. We use many of the same
 plot(im22, "ITS", add.legend="top", xlim=c(-.75, 13.1), ylim=c(2, 9), main="ITS: Length of Stay", col=c("springgreen","thistle"), lwd=7, cex=2, cex.axis=2, cex.lab=1.5,  cex.main=3, cex.legend=1.25, arrow=TRUE, xshift=c(0, .5), cex.text=1, coefs=TRUE, round.c=1, pos.text= list("txp5"=3, "post9"=4), tcol="dodgerblue", conf.int=TRUE, adj.alpha=0.3, add.means=TRUE)
 ```
 
-The ITS model provides another layer of information. The graph is helpful at showing how the results changed. The control group appears to show a steady increase in LOS, perhaps this reflects a change in practice, patient population or some other issue that impacted results. However, the intervention group may have helped. It appears that their was an "immediate" change in the intercept (see chapter 6 of Shadish, Cook, & Campbell, 2002). 
+The ITS model provides another layer of information. The graph is helpful at showing how the results changed. The control group appears to show a steady increase in LOS, perhaps this reflects a change in practice, patient population or some other issue that impacted results. However, the intervention group may have helped. It appears that their was an "immediate" change in the intercept. 
 
 We see a significant decrease of over 1 1/2 days (ixp5). There was a slight decrease at the 2nd interruption denoted by the blue dashed line on the right. This Program+ intervention at month 9 may not have worked as well as the staff would have hoped. The decrease in the intercept (ixp9) isn't significant and neither is the change in the slope (txip9). Also, we see almost similar trends for the intervention and control groups during the last period of the study. But we do see some possible intervention effect after period 5.
 
@@ -416,26 +416,4 @@ Hopefully, the ham package can help you from start to finish in your study.
 
 ## 8. References
 
-Allen, M. J., & Yen, W. M. (1979). Introduction to Measurement Theory.
-Brooks/Cole. ISBN: 0-8185-0283-5.
-
-Kline, Paul (1999). Handbook of Psychological Testing (2nd ed).
-Routledge, New York. ISBN: 9780415211581.
-
-Angrist, J. D., & Pischke, J. S. (2009). Mostly Harmless Econometrics:
-An Empiricist's Companion. Princeton University Press. ISBN: 9780691120355. 
-
-Harrell, F. E., Jr. (2016). Regression Modeling Strategies. Springer
-International Publishing. ISBN: 978-3-319-19424-0. 
-
-Linden, A. (2015). Conducting Interrupted Time-series Analysis for Single- and Multiple-group Comparisons. The Stata Journal, 15, 2, 480-500. 
-
-Merlo, J. (2006). A brief conceptual tutorial of multilevel analysis in
-social epidemiology: using measures of clustering in multilevel logistic
-regression to investigate contextual phenomena. Journal of Epidemiological Health, 60, 4, 290-297. 
-
-Muthen, B. & Satorra, A. (1995). Complex Sample Data in Structural Equation Modeling. Sociological Methodology, 25, 267-316. 
-
-Patton, M. Q. (1997). Utilization-focused evaluation: The new century text (3rd ed.). Thousand Oaks, CA: Sage Publications. ISBN: 978-0803952652
-
-Rabe-Hesketh, S. & Skrondal, A. (2008). Multilevel and Longitudinal Modeling Using Stata, Second Edition. Stata Press. ISBN: 978-1-59718-040-5. 
+See Description for author list.
