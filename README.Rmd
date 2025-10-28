@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 <!-- badges: start -->
 <!-- badges: end -->
 
-The goal of ham is to provide different modeling approaches to evaluating healthcare programs (or programs in other fields) with regression analysis. This includes standard regression methods like linear (OLS) and logistic regression. And ham adds options for differences-in-differences models as well as interrupted time-series analysis. DID and ITS models offer options for causal modeling. What is unique about ham is that it creates datasets with constructed variables for DID and ITS models, optionally it can add top coded outcome variables, propensity scores, and provides some interpretation of model results. Additionally, Cronbach's alpha can be calculated for such things as patient surveys.
+The goal of ham is to provide different modeling approaches to evaluating healthcare programs (or programs in other fields) with regression analysis. This includes standard regression methods like linear (OLS) and logistic regression. And ham adds options for differences-in-differences models as well as interrupted time-series analysis. DID and ITS models offer options for causal modeling. What is unique about ham is that it creates datasets with constructed variables for DID and ITS models, optionally it can add top coded outcome variables, propensity scores, and provides some interpretation of model results. Additionally, Cronbach's alpha can be calculated for such things as patient surveys. As the logo of Dr. Ham suggests, the ham package can help illuminate your results.
 
 ```{r echo=FALSE, out.width="20%", fig.align="center"}
 knitr::include_graphics("man/figures/logo.png") # Adjust path as needed

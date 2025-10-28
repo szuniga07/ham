@@ -16,7 +16,8 @@ unique about ham is that it creates datasets with constructed variables
 for DID and ITS models, optionally it can add top coded outcome
 variables, propensity scores, and provides some interpretation of model
 results. Additionally, Cronbach’s alpha can be calculated for such
-things as patient surveys.
+things as patient surveys. As the logo of Dr. Ham suggests, the ham
+package can help illuminate your results.
 
 <img src="man/figures/logo.png" width="20%" style="display: block; margin: auto;" />
 
