@@ -21,7 +21,7 @@ library(ham)
 
 # Healthcare Analysis Methods (ham)
 
-The goal of ham is to provide different modeling approaches to evaluating healthcare programs (or interventions) with descriptive statistics, point estimates and confidence intervals, and regression analyses. This includes standard regression methods like linear (OLS) and logistic regression. And ham adds options for differences-in-differences models as well as interrupted time series models. DID and ITS models offer options for causal modeling. What is unique about ham is that it creates datasets with constructed variables for DID and ITS models, optionally it can add top coded outcome variables, propensity scores, and provides some interpretation of model results. Additionally, Cronbach's alpha can be calculated for such things as patient surveys.
+The goal of ham is to provide different modeling approaches to evaluating healthcare programs (or interventions) with descriptive statistics, point estimates and confidence intervals, and regression analyses. This includes standard regression methods like linear (OLS) and logistic regression. And ham adds options for differences-in-differences models as well as interrupted time series models. DID and ITS models offer options for causal modeling. What is unique about ham is that it creates datasets with constructed variables for DID and ITS models, optionally it can add top coded outcome variables, propensity scores, and provides some interpretation of model results. Additionally, Cronbach's alpha can be calculated for such things as patient surveys. As the logo of Dr. Ham suggests, the ham package can help illuminate your results.
 
 ```{r echo=FALSE, out.width="30%", fig.align="center"}
 knitr::include_graphics("C:/stats/R/MyPackages/ham/vignettes/logo.png") 
@@ -63,7 +63,7 @@ print(gr1$Group.CI)
 
 For many health outcomes, we may track data with high variation across months. This code that uses the 'increment' and 'rolling' arguments can help make better sense in those situations with: 1) 3-month increments, and 2) 6-month rolling averages. 
 
-And we may have a continuous variable that we would want to explore by forming it into quartiles. You can turn a continuous variable into quartiles using the quarts=TRUE argument. Below, we get 6-month rolling average LOS confidence intervals by quartiles of age. If we don't have strong evidence of high variation in this data so we will continue to use the gr1 object above.
+And we may have a continuous variable that we would want to explore by forming it into quartiles. You can turn a continuous variable into quartiles using the quarts=TRUE argument. Below, we get 6-month rolling average LOS confidence intervals by quartiles of age.
 
 ## Rolling 6-month averages by quartiles of age (Q1 - Q4)
 ```{r group2}
@@ -81,13 +81,15 @@ over time.
 
 <span style="color: red;" >Hint:</span> The rolling average can add time to to the function, for example using N= 760,000 rows over 11 years took 35 seconds on my moderately fast computer built 5 years ago. In contrast, without rolling averages, it took 5 seconds.
 
-### Graph the results. 
+### Graph the results
 
-There are 3 main graphing options that go into the y argument plot(x=your_group_object, y=type_of_plot):
+There are 3 main graphing options that go into the y argument:
+
+plot(x=your_group_object, y=type_of_plot)
 
 * y= "group" is the group confidence intervals. This is the default graph.
 * y= "time" is the standard confidence intervals over time including the increment of multiple time periods (e.g., 3-month quarters).
-* y= "roll" is the 'rolling' averages (e.g., rolling 12-month average).
+* y= "roll" is the 'rolling' average (e.g., rolling 12-month average).
 
 ```{r plotGroup1, fig.dim = c(6, 4.5)}
 plot(x=gr1, y="group", order="numeric", lwd=4, gcol= "blue", pcol="red", overall=TRUE, oband=TRUE, ocol="gray", tcol="green", tgt=4.5, cex=2, cex.axis=1, cex.lab=1.1, cex.text=2, cex.main=1.25, adj.alpha=.2)
@@ -103,7 +105,7 @@ plot(gr1)
 
 ## Between-group variance and within-group clustering
 
-We can assess the variation between-groups with statistics such as the Intra-class Correlation Coefficient. This reflects the proportion of total variance that is between-group variance and also the within-group clustering. We can have this and similar values such as the Median Odds Ratio (binary outcomes only) and the Design Effect. These will give us an idea of whether we should consider the variation between groups more in our study. Please see the documentation for more information. This may be more helpful with many groups (e.g., 10-20 hospitals in a healthcare system).
+We can assess the variation between-groups with statistics such as the Intra-class Correlation Coefficient. This reflects the proportion of total variance that is between-group variance and also the within-group clustering. We can have this and similar values such as the Median Odds Ratio (binary outcomes only) and the Design Effect. These will give us an idea of whether we should consider the variation between groups more in our study. For example, Design Effects >= 2 are considered important. Please see the documentation for more information. This may be more helpful with many groups (e.g., 10-20 hospitals in a healthcare system).
 
 ```{r clustering}
 print(gr1$Clustering)
@@ -115,7 +117,7 @@ print(gr1$Clustering)
 plot(x=gr1, y="time", lwd=4, gcol=c("red", "blue"), gband=TRUE, overall=TRUE, oband=TRUE, ocol="gray", tgt=4.5, tcol="green", tpline=5, tpcol="yellow", name=TRUE, cex.axis=1, cex.lab=1, cex.text=2, cex.main=1, adj.alpha=.3)
 ```
 
-The intervention group's data makes up the blue line while the control is indicated with the red line. This looks interesting, the intervention and control group swap LOS ranks at the same time as the start of the intervention. This graph is made for descriptive purposes but may shed light on trends for intervention and control groups. It looks like something happened, we should continue exploring this.
+The intervention group's data makes up the blue line while the control is indicated with the red line. This looks interesting, the intervention and control group swap LOS ranks at the same time as the start of the intervention. This graph is made for descriptive purposes but may shed light on trends for intervention and control groups. It looks like something happened, we should continue exploring.
 
 We see group names when name=TRUE. 95% confidence bands are provided using gband=TRUE. We added the overall gray line and confidence band using overall=TRUE, oband=TRUE, and ocol="gray". adj.alpha=0.3 provides the level of shading, higher values are darker. The 4.5 LOS target and time point lines (5) and colors are provided with tgt=4.5, tcol="green", tpline=5, tpcol="yellow".
 
@@ -128,7 +130,7 @@ Our regression models are performed with assess(). The example dataset has commo
 
 A common approach to answering study questions is using a regression to test a treatment effect while controlling for other covariates or other important variable that may explain the variation in the regression outcome.
 
-Here are OLS and logistic regression examples using assess() on the mtcars data. Logistic regression model below not run:
+Here are OLS and logistic regression examples using assess() on the mtcars data. This ogistic regression model code not run:
 assess(formula=vs~mpg + wt + hp, data=mtcars, regression="logistic")$model
 
 ### OLS or linear regression
@@ -137,7 +139,7 @@ assess(formula=vs~mpg + wt + hp, data=mtcars, regression="logistic")$model
 summary(assess(hp ~ mpg+wt, data=mtcars, regression="ols")$model)
 ```
 
-### ham provides coefficient interpretations
+### ham provides coefficient interpretations with interpret()
 ```{r ols_interpret}
 # Model summary
 interpret(assess(hp ~ mpg+wt, data=mtcars, regression="ols"))$model
@@ -150,6 +152,8 @@ Top-coding provides more accurate results because it lessens the impact of outli
 
 Topcoding can be applied to any model. Propensity scores can be created for any model except the single group interrupted time series because there is no control group (i.e. intervention group only).
 
+We included an interaction so that we can examine both the intervention and control group's trends.
+
 ```{r ols topcoding propensity}
 m1 <- assess(formula=cost ~ month * program, data=hosprog, intervention = "program",
 regression="ols", topcode=17150, propensity=c("female","age","risk"),
@@ -161,7 +165,7 @@ newdata=TRUE)
 summary(m1$model)
 ```
 
-Descriptive statistics on newly created variables and the original cost as a comparison. top.cost is the topcoded cost variable.
+Descriptive statistics on newly created variables and the original cost as a comparison. top.cost is the topcoded cost variable. R^2 is not bad.
 ```{r summary topcoding propensity}
 summary(m1$newdata[, c( "cost","top.cost", "pscore")])
 ```
@@ -185,11 +189,15 @@ plot(importance(m1$model))
 
 ## 4. Differences-in-Differences
 
-Let us continue with our length of stay example. By now we have begun to compare results for the intervention and control groups. We've spoken with various stakeholders and primary intended users to learn more about the program and its potential effects. Staff have listed various outcomes that would benefit so the following analysis can be applied to those outcomes as well.
+Let us continue with our length of stay example. By now we have begun to compare results for the intervention and control groups. We've spoken with various stakeholders and primary intended users to learn more about the program and its potential effects. Staff have listed various outcomes that would benefit so the following analysis can be applied to those outcomes as well. 
+
+And analyzing multiple outcomes would give us a "good story" on program impact and increase the potential utilization of our evaluation's results.  
 
 We have the option of doing the analysis with an OLS or multiple linear regression, controlling for other important variables that can explain the outcome. We could create an interaction between the variables that represent time and intervention/control group participation to test if there is a different trend for each group. 
 
 This would work in many situations but we may want to consider what is available in causal modeling, especially if our control and intervention groups begin at different levels. For example, the intervention group may be the hospital (or department, etc.) with the most need of an intervention. They may have outcome rates that are at a worse level than the other hospitals. In this case, we nay want to assess program impact as the difference in trends for the intervention and control groups.
+
+Another reason we would want to consider a DID model is if we are considering spreading this program to other medical centers, we would then want to be highly certain of the program's efficacy.
 
 DID can be used on binary or continuous outcome variables. Below is an example using the hosprog data with length of stay as the outcome and the created DID variables as the predictors, use '.' on the right-hand side of the formula to indicate only the created variables will be used. Replace '.' with any additional selected variables. The newly created DID variables will be added in all DID models. 
 
@@ -207,7 +215,7 @@ dm1 <- assess(formula= los ~ ., data=hosprog, intervention = "program",
 summary(dm1$DID)
 ```
 
-<span style="color: red;" >Hint:</span> The primary variables of the intervention are the ones that begin with 'DID'. In this model, DID represents the intervention effect and is the differences-in-differences. In a model with many or more than 2 time periods, "DID.Trend" is the primary variable of interest while the "DID" variable is less so because it represents the difference before-and-after the intervention for both intervention and control groups (i.e., intervention group after the intervention vs. control group + intervention before the intervention start) so it represents something else than when DID="two". To run with "many" time periods, use similar code to this:
+<span style="color: red;" >Hint:</span> The primary variables of the intervention are the ones that begin with 'DID'. In this model, DID represents the intervention effect and is the differences-in-differences. In a model with many or more than 2 time periods, "DID.Trend" is the primary variable of interest while the "DID" variable is less so because it represents the difference before-and-after the intervention for both intervention and control groups (i.e., intervention group after the intervention vs. control group + intervention before the intervention start) so it represents something other than when DID="two". To run with "many" time periods, use similar code to this:
 
 * assess(formula= los ~ ., data=hosprog, intervention = "program",
               int.time="month", treatment= 5, did="many")
@@ -217,7 +225,7 @@ summary(dm1$DID)
 interpret(dm1)$did
 ```
 
-Now lets graph the results with the counterfactual (what would have happened without the intervention program). 
+Now lets graph the results with the counterfactual (what could have happened without the intervention program). 
 
 The ham options include arrows to highlight the coefficient as the difference between counterfactual and post-intervention value. There are options to present the coefficient names only, coefficient values next to the coefficient names with asterisks (*) to indicate statistical significance, or none of the above. And we can add confidence bands to the expected lines.
 
@@ -244,7 +252,7 @@ plot(x=dm1, y="DID", add.legend="topleft", xlim=c(-.05, 1.05), ylim=c(2, 9), mai
 
 We see above that there is a significant DID result over 3.5 fewer days length of stay. That is quite a high number. We can continue with the analysis to explain that result more but lets first examine the graph to help understand the results. 
 
-When we compare the solid blue trend line from the model, we see how much it differs with the blue dashed line, the counterfactual as denoted with the right-shifted blue arrow (xshift= .045). The counterfactual line represents what could have happened and we see that we may have expected to see an increase in LOS like the control group. But we instead see a decrease in LOS for the intervention group.
+When we observe the solid blue trend line from the model, we see how much it differs with the blue dashed line, the counterfactual as denoted with the right-shifted blue arrow (xshift= .045). The counterfactual line represents what could have happened and we see that we may have expected to see an increase in LOS like the control group. But we instead see a decrease in LOS for the intervention group.
 
 We can also use DID on binary outcomes like hospital re-admission within 30-days.
 
@@ -268,7 +276,7 @@ Below are examples using the hosprog data for the patient length of stay and dea
 
 We'll continue with our length of stay example because our clinical staff have expressed interest in understanding how the trend varies over time. Some hope for an immediate shift in the intercept followed by a 'continuous' effect in the slope while others fear a 'discontinuous' effect (see Shadish, Cook, & Campbell, 2002). 
 
-In the spirit of "formative" evaluation, we model these questions with ITS. It may be possible that we have a single, linear trend line in which differences-in-differences would provide adequate results. However, we want to examine our primary intended user's questions about changes in the trend with ITS. 
+In the spirit of "formative" evaluation, we model these questions with ITS. It may be possible that we have a single, linear trend line in which differences-in-differences would provide more than adequate results. However, we want to examine our primary intended user's questions about changes in the trend with ITS. 
 
 We can begin by looking at a single group (intervention group) with a single interruption/treatment period and assessing their LOS scores. We specify it with: 
 interrupt= 5 and its="one".
@@ -295,6 +303,13 @@ There is a second key period of interest at month 9 which is specified with inte
 
 <span style="color: red;" >Hint:</span> In assess(), DID="two" and ITS="two" mean two different things. For DID models, DID="two" refers to 2 time periods while ITS="two" refers to 2 groups.
 
+### Graph ITS model 1 
+```{r plotITS1, fig.dim = c(6, 4.5)}
+plot(im11, "ITS", add.legend="topright", xlim=c(-1, 14), ylim=c(2, 9), main="ITS: Intervention LOS", col="thistle", lwd=7, cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(.25, .25), cex.text=1.5, coefs=TRUE, round.c=2, cfact=T, conf.int=TRUE, adj.alpha=0.2, pos.text= list("ITS.Time"=3, "Intercept"=4), cex.legend=1.25, add.means=TRUE )
+```
+
+You've probably noticed only 1 trend line because we only have 1 group, the intervention group. In the 1 group models, our counterfactual lines appear to continue from the end of the baseline. However, we could continue the line from the the second period when there are 2 interruptions.
+
 ### ITS model 2
 ```{r its model 2}
 im12 <- assess(formula=los ~ ., data=hosp1, intervention = "program",
@@ -308,7 +323,7 @@ summary(im12$ITS)
 
 Now that we see how our intervention group is performing, let's see how it compares with the control group. When looking at the confidence intervals from the group() results, we see what looks like a change in trends. Let's test that! 
 
-We have an interest in a comparison of the intervention and control group with 2 potential interruption at months 5 and 9, which is specified with interrupt= c(5, 9) and its="two". We also have the option of comparing 2 groups with 1 interruption, if you would like to try that, use 1 time point instead (e.g., its="two", interrupt= 5). 
+We have an interest in a comparison of the intervention and control group with 2 potential interruptions at months 5 and 9, which is specified with interrupt= c(5, 9) and its="two". We also have the option of comparing 2 groups with 1 interruption, if you would like to try that, use 1 time point instead (e.g., its="two", interrupt= 5). 
 
 ### ITS model 3
 ```{r its model 3}
@@ -332,7 +347,7 @@ interpret(im22)$its
 
 <span style="color: red;" >Hint:</span> The 2 summaries at the bottom help us to understand the overall effect on the LOS reduction up to the end of those time periods. In other words, the coefficient interpretations explain what each means while the summaries give us an idea on the actual number in a lower (or higher) LOS over time for the intervention and/or control groups.  
 
-We will now graph the results based on our coefficients. We use many of the same arguments as the DID model. In this example, I adjusted the position of the text to read better with the pos.text argument. And you'll notice that within the confidence bands there are dots that represent the means for each time period from the model data. This is done with the argument add.means=TRUE. Although not provided in ITS models with control groups, the ITS models that only have the intervention groups do have counterfactual lines. Counterfactual lines may be added to all ITS models in future versions if they can be added while maintaining a clean visualization. 
+We will now graph the results based on our coefficients. We use many of the same arguments as the DID model. In this example, I adjusted the position of the text to read better with the pos.text argument. And you'll notice that within the confidence bands there are dots that represent the means for each time period from the model data. This is done with the argument add.means=TRUE. Although not provided in ITS models with control groups, the ITS models that only have the intervention groups do have counterfactual lines. Counterfactual lines may be added to all ITS models in future versions if can do it in the way I prefer. 
 
 ### View a partial prediction plot
 ```{r plotAssess, fig.dim = c(6, 4.5)}
