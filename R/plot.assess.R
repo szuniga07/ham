@@ -350,6 +350,15 @@ if(y == "ITS") {
       arrows(x0 = 1 + axshift, y0 = cft1, x1 = 1 + axshift, y1 = t1, code=2, #code=arrow_code[3],
              angle=30, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
     }
+    ## Group means by time ##
+    #Add in group means based on the model data
+    if(add.means == TRUE) {
+      did_grps <- x$study$group_means_did
+      points(did_grps[did_grps[, 2]==0, 1], did_grps[did_grps[, 2]==0, 3],
+             col=lcol[2], pch=20, cex=cex)
+      points(did_grps[did_grps[, 2]==1, 1], did_grps[did_grps[, 2]==1, 3],
+             col=lcol[1], pch=20, cex=cex)
+    }
       ## text positions ##
     if(any(c(coefs, name) == TRUE)) {
       postwo <- list("Intercept"=4, "Post.All"=2, "Int.Var"=4,  "DID"=2)
@@ -369,14 +378,6 @@ if(y == "ITS") {
         }
       } else {
         postwo <- postwo
-      }
-      #Add in group means based on the model data
-      if(add.means == TRUE) {
-        did_grps <- x$study$group_means_did
-        points(did_grps[did_grps[, 2]==0, 1], did_grps[did_grps[, 2]==0, 3],
-               col=lcol[2], pch=20, cex=cex)
-        points(did_grps[did_grps[, 2]==1, 1], did_grps[did_grps[, 2]==1, 3],
-               col=lcol[1], pch=20, cex=cex)
       }
       # Add in coefficient names
       # intercept: control group pre-test
@@ -513,6 +514,15 @@ if(y == "ITS") {
              y1 = atet1, code=2, #code=arrow_code[3],
              angle=30, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
     }
+    ## Group means by time ##
+    #Add in group means based on the model data
+    if(add.means == TRUE) {
+      did_grps <- x$study$group_means_did
+      points(did_grps[did_grps[, 2]==0, 1], did_grps[did_grps[, 2]==0, 3],
+             col=lcol[2], pch=20, cex=cex)
+      points(did_grps[did_grps[, 2]==1, 1], did_grps[did_grps[, 2]==1, 3],
+             col=lcol[1], pch=20, cex=cex)
+    }
     if(any(c(coefs, name) == TRUE)) {
       ## text positions ##
       posmany <- list("Intercept"=4, "Period"=2, "DID"=((mdlcoefsign[2]-3)*-1) -1,"DID.Trend"= 2)
@@ -532,14 +542,6 @@ if(y == "ITS") {
         }
       } else {
         posmany <- posmany
-      }
-      #Add in group means based on the model data
-      if(add.means == TRUE) {
-        did_grps <- x$study$group_means_did
-        points(did_grps[did_grps[, 2]==0, 1], did_grps[did_grps[, 2]==0, 3],
-               col=lcol[2], pch=20, cex=cex)
-        points(did_grps[did_grps[, 2]==1, 1], did_grps[did_grps[, 2]==1, 3],
-               col=lcol[1], pch=20, cex=cex)
       }
       # Add in coefficient names
       text(1, c0, labels = if(coefs == TRUE) paste0("Intercept= ", round(coef(cmodel)[1], round.c), model_summary_p[1]) else "Intercept", pos=posmany[[1]], cex=textCEX)
@@ -709,8 +711,15 @@ if(y == "ITS") {
       # txp1
       arrows(x0 = timeqtrp2, y0 = time2thi, x1 = timemidp2, y1 = time2thi, code=2,
              angle=30, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
+      }
+    ## Group means by time ##
+    #Add in group means based on the model data
+    if(add.means == TRUE) {
+      its_grps <- x$study$group_means_its
+      points(its_grps[, 1], its_grps[, 2],
+             col=lcol[1], pch=20, cex=cex)
     }
-      ## text positions ##
+    ## text positions ##
       if(any(c(coefs, name) == TRUE)) {
         possgst <- list("Intercept"=1, "ITS.Time"=4, "post1"=2, "txp1"=4)
         names(possgst)[-1] <- tmpdf_names
@@ -730,12 +739,6 @@ if(y == "ITS") {
         }
       } else {
         possgst <- possgst
-      }
-      #Add in group means based on the model data
-      if(add.means == TRUE) {
-        its_grps <- x$study$group_means_its
-        points(its_grps[, 1], its_grps[, 2],
-               col=lcol[1], pch=20, cex=cex)
       }
       # Add in coefficient names
       # Period 1
@@ -956,8 +959,15 @@ if(y == "ITS") {
       # txp2
       arrows(x0 = timeqtrp3, y0 = time3thi, x1 = timemidp3, y1 = time3thi, code=2,
              angle=30, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
-}
-      ## text positions ##
+    }
+    ## Group means by time ##
+    #Add in group means based on the model data
+    if(add.means == TRUE) {
+      its_grps <- x$study$group_means_its
+      points(its_grps[, 1], its_grps[, 2],
+             col=lcol[1], pch=20, cex=cex)
+    }
+    ## text positions ##
     if(any(c(coefs, name) == TRUE)) {
       possgmt <- list("Intercept"=1, "ITS.Time"=4, "post1"=2,
                       "txp1"=4, "post2"=2, "txp2"=4)
@@ -978,12 +988,6 @@ if(y == "ITS") {
         }
       } else {
         possgmt <- possgmt
-      }
-      #Add in group means based on the model data
-      if(add.means == TRUE) {
-        its_grps <- x$study$group_means_its
-        points(its_grps[, 1], its_grps[, 2],
-               col=lcol[1], pch=20, cex=cex)
       }
       # Add in coefficient names
       # Period 1
@@ -1257,7 +1261,16 @@ if(y == "ITS") {
       # txip1
       arrows(x0 = timeqtrp2, y0 = time2thi, x1 = timemidp2, y1 = time2thi,
              code=2, angle=30, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
-}
+    }
+    ## Group means by time ##
+    #Add in group means based on the model data
+    if(add.means == TRUE) {
+      its_grps <- x$study$group_means_its
+      points(its_grps[its_grps[, 2]==0, 1], its_grps[its_grps[, 2]==0, 3],
+             col=lcol[2], pch=20, cex=cex)
+      points(its_grps[its_grps[, 2]==1, 1], its_grps[its_grps[, 2]==1, 3],
+             col=lcol[1], pch=20, cex=cex)
+    }
       ## text positions ##
     if(any(c(coefs, name) == TRUE)) {
       posmgst <- list("Intercept"=posIntercept, "ITS.Time"=4, "ITS.Int"=posITS.int, "txi"=4,
@@ -1279,14 +1292,6 @@ if(y == "ITS") {
         }
       } else {
         posmgst <- posmgst
-      }
-      #Add in group means based on the model data
-      if(add.means == TRUE) {
-        its_grps <- x$study$group_means_its
-        points(its_grps[its_grps[, 2]==0, 1], its_grps[its_grps[, 2]==0, 3],
-               col=lcol[2], pch=20, cex=cex)
-        points(its_grps[its_grps[, 2]==1, 1], its_grps[its_grps[, 2]==1, 3],
-               col=lcol[1], pch=20, cex=cex)
       }
       # Add in coefficient names
       # Period 1
@@ -1680,6 +1685,15 @@ if(y == "ITS") {
       arrows(x0 = timeqtrp3, y0 = time3thi, x1 = timemidp3, y1 = time3thi,
              code=2, angle=30, length=.25, col = lcol[1], lwd = arwCEX, lty=3)
     }
+    ## Group means by time ##
+    #Add in group means based on the model data
+    if(add.means == TRUE) {
+      its_grps <- x$study$group_means_its
+      points(its_grps[its_grps[, 2]==0, 1], its_grps[its_grps[, 2]==0, 3],
+             col=lcol[2], pch=20, cex=cex)
+      points(its_grps[its_grps[, 2]==1, 1], its_grps[its_grps[, 2]==1, 3],
+             col=lcol[1], pch=20, cex=cex)
+    }
       ## text positions ##
       if(any(c(coefs, name) == TRUE)) {
       posmgmt <- list("Intercept"=posIntercept, "ITS.Time"=4, "ITS.Int"=posITS.int, "txi"=4,
@@ -1701,14 +1715,6 @@ if(y == "ITS") {
         }
       } else {
         posmgmt <- posmgmt
-      }
-      #Add in group means based on the model data
-      if(add.means == TRUE) {
-        its_grps <- x$study$group_means_its
-        points(its_grps[its_grps[, 2]==0, 1], its_grps[its_grps[, 2]==0, 3],
-               col=lcol[2], pch=20, cex=cex)
-        points(its_grps[its_grps[, 2]==1, 1], its_grps[its_grps[, 2]==1, 3],
-               col=lcol[1], pch=20, cex=cex)
       }
       # Add in coefficient names
       # Period 1
