@@ -110,7 +110,8 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
   }
   #Stop too many treatment and interruption periods
   if(length(treatment) > 1) stop("Error: treatment > 1. Expecting only 1 time.")
-  if(length(interrupt) > 2) stop("Error: interrupt > 2. Expecting only 1 or 2 times.")
+  #ITS No longer using this error
+  #if(length(interrupt) > 2) stop("Error: interrupt > 2. Expecting only 1 or 2 times.")
   if(any(duplicated(interrupt)) == TRUE) stop("Error: Duplicated 'interrupt'. Expecting unique values.")
 
   #Identify if there will be new data created
@@ -279,11 +280,9 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
       stop("Error: 'interrupt' is missing.")
     }
   }
-
-  # Get unique times
-  if(its %in%  c("one", "two")) {
-    unique_its_time <- sort(unique(data[, int.time]))
-  }
+  #############################
+  ## Individual ITS function ##
+  #############################
   #indicate type of ITSA
   if(its == "none") {
     itsa_type <- its
@@ -302,49 +301,228 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
       itsa_type <- "mgmt"
     }
   }
-  # Create ITS variables #
-  # All groups, all times
-  if(itsa_type != "none") {
-    ITS.Time <- as.numeric(ordered(data[, int.time]))
+  #Stop: Too few time points between periods for ITS
+  multi_interrupt_diff <- NULL
+  if (itsa_type %in% c("sgmt","mgmt")) {
+    multi_interrupt_diff <- 0:1 %in% diff(sort(interrupt))
   }
-  if(itsa_type %in% c("mgst", "mgmt")) {
-    ITS.Int <- data[, intervention]
-  }
-  if(itsa_type %in% c("mgst", "mgmt")) {
-    txi <- ITS.Int * ITS.Time
-  }
-  # Time 1
-  if(itsa_type != "none") {
-    post1 <- ifelse(ITS.Time >= which(unique_its_time == sort(interrupt)[1]), 1, 0 )
-  }
-  if(itsa_type != "none") {
-    txp1 <- (ITS.Time - which(unique_its_time == sort(interrupt)[1])) * post1
-  }
-  if(itsa_type %in% c("mgst", "mgmt")) {
-    ixp1 <- ITS.Int * post1
-  }
-  if(itsa_type %in% c("mgst", "mgmt")) {
-    txip1 <- ITS.Int * txp1
-  }
-  # Time 2
-  if(itsa_type %in% c("sgmt", "mgmt")) {
-    post2 <- ifelse(ITS.Time >= which(unique_its_time == sort(interrupt)[2]), 1, 0 )
-  }
-  if(itsa_type %in% c("sgmt", "mgmt")) {
-    txp2 <- (ITS.Time - which(unique_its_time == sort(interrupt)[2])) * post2
-  }
-  if(itsa_type == "mgmt") {
-    ixp2 <- ITS.Int * post2
-  }
-  if(itsa_type == "mgmt") {
-    txip2 <- ITS.Int * txp2
-  }
+  if(any(multi_interrupt_diff) ==TRUE) stop("Error: Difference between time points is < 2 for the 'interrupt' argument. ITS can be calculated in segments of 2 time points but consider using 3 or more time points for a more informative analysis.")
+
   #No propensity score for single group ITSA
   if(itsa_type %in% c("sgst", "sgmt")) {
     if (!is.null(propensity) ) {
       stop("Error: No propensity score calculated without a control group.")
     }
   }
+
+  ##########
+  ## post ##
+  ##########
+  fncITSPost <- function(itime= ITS.Time, unqitime= unique_its_time,
+                         interrupt= interrupt ) {
+    #Create NULL to prevent notes
+    ITS.Time <- NULL
+    unique_its_time <- NULL
+    # 1. Create data frame with a numeric structure and temp column names
+    df <- data.frame(matrix(nrow = length(itime), ncol = length(interrupt)))
+    # 2. Make each column a numeric variable to pre-allocate space in the for loop
+    df[] <- lapply(df, function(x) as.numeric(as.character(x)))
+    # 3. Initialize a vector to store the new names
+    new_names <- vector("character", ncol(df))
+    # 4. Use a for loop to generate names
+    for (i in 1:length(interrupt)) {
+      new_names[i] <- paste0("post", sort(interrupt)[i])
+    }
+    # 5. Assign the new names to the data frame
+    colnames(df) <- new_names
+    # 6. Create "post" values with a new function
+    postfnc <- function(df, itime= itime, unqitime= unqitime,
+                        interrupt= interrupt) {
+      #For loop to create "post" variables
+      for (i in 1:length(interrupt)) {
+        df[, i] <- ifelse(itime >= which(unqitime == sort(interrupt[i])), 1, 0 )
+      }
+      return(df)
+    }
+    # 7. Run subfunction to create final data frame
+    df <- postfnc(df=df, itime= itime, unqitime= unqitime,
+                  interrupt= interrupt)
+
+    return(df)
+  }
+
+  #########
+  ## txp ##
+  #########
+  fncITStxp <- function(itime= ITS.Time, unqitime= unique_its_time,
+                        interrupt= interrupt, postdf= postdf ) {
+    #Create NULL to prevent notes
+    ITS.Time <- NULL
+    unique_its_time <- NULL
+    # 1. Create data frame with a numeric structure and temp column names
+    df <- data.frame(matrix(nrow = length(itime), ncol = length(interrupt)))
+    # 2. Make each column a numeric variable to pre-allocate space in the for loop
+    df[] <- lapply(df, function(x) as.numeric(as.character(x)))
+    # 3. Initialize a vector to store the new names
+    new_names <- vector("character", ncol(df))
+    # 4. Use a for loop to generate names
+    for (i in 1:length(interrupt)) {
+      new_names[i] <- paste0("txp", sort(interrupt)[i])
+    }
+    # 5. Assign the new names to the data frame
+    colnames(df) <- new_names
+    # 6. Create "txp" values with a new function
+    txpfnc <- function(df, itime= itime, unqitime= unqitime,
+                       interrupt= interrupt, postdf= postdf) {
+      #For loop to create "txp" variables
+      for (i in 1:length(interrupt)) {
+        df[, i] <- (itime - which(unqitime == sort(interrupt)[i])) * postdf[, i]
+      }
+      return(df)
+    }
+    # 7. Run subfunction to create final data frame
+    df <- txpfnc(df=df, itime= itime, unqitime= unqitime,
+                 interrupt= interrupt, postdf= postdf)
+
+    return(df)
+  }
+
+  #########
+  ## ixp ##
+  #########
+  fncITSixp <- function(itime= ITS.Time, iInt= ITS.Int, interrupt= interrupt,
+                        postdf= postdf ) {
+    #Create NULL to prevent notes
+    ITS.Time <- NULL
+    ITS.Int <- NULL
+    # 1. Create data frame with a numeric structure and temp column names
+    df <- data.frame(matrix(nrow = length(itime), ncol = length(interrupt)))
+    # 2. Make each column a numeric variable to pre-allocate space in the for loop
+    df[] <- lapply(df, function(x) as.numeric(as.character(x)))
+    # 3. Initialize a vector to store the new names
+    new_names <- vector("character", ncol(df))
+    # 4. Use a for loop to generate names
+    for (i in 1:length(interrupt)) {
+      new_names[i] <- paste0("ixp", sort(interrupt)[i])
+    }
+    # 5. Assign the new names to the data frame
+    colnames(df) <- new_names
+    # 6. Create "ixp" values with a new function
+    ixpfnc <- function(df, iInt= iInt, postdf=postdf, interrupt= interrupt) {
+      #For loop to create "ixp" variables
+      for (i in 1:length(interrupt)) {
+        df[, i] <- iInt * postdf[, i]
+      }
+      return(df)
+    }
+    # 7. Run subfunction to create final data frame
+    df <- ixpfnc(df=df, iInt= iInt, postdf=postdf, interrupt= interrupt)
+
+    return(df)
+  }
+
+  ##########
+  ## txip ##
+  ##########
+  fncITStxip <- function(itime= ITS.Time, iInt= ITS.Int,
+                         interrupt= interrupt, txpdf= txpdf ) {
+    #Create NULL to prevent notes
+    ITS.Time <- NULL
+    ITS.Int <- NULL
+    # 1. Create data frame with a numeric structure and temp column names
+    df <- data.frame(matrix(nrow = length(itime), ncol = length(interrupt)))
+    # 2. Make each column a numeric variable to pre-allocate space in the for loop
+    df[] <- lapply(df, function(x) as.numeric(as.character(x)))
+    # 3. Initialize a vector to store the new names
+    new_names <- vector("character", ncol(df))
+    # 4. Use a for loop to generate names
+    for (i in 1:length(interrupt)) {
+      new_names[i] <- paste0("txip", sort(interrupt)[i])
+    }
+    # 5. Assign the new names to the data frame
+    colnames(df) <- new_names
+    # 6. Create "ixp" values with a new function
+    txipfnc <- function(df, iInt= ITS.Int, txpdf=txpdf, interrupt= interrupt) {
+      #For loop to create "txip" variables
+      for (i in 1:length(interrupt)) {
+        df[, i] <- iInt * txpdf[, i]
+      }
+      return(df)
+    }
+    # 7. Run subfunction to create final data frame
+    df <- txipfnc(df=df, iInt= iInt, txpdf=txpdf, interrupt= interrupt)
+
+    return(df)
+  }
+
+
+  fncITSdata <- function(data, intervention = intervention, int.time=int.time,
+                         interrupt= interrupt, its=its, itsa_type=itsa_type) {
+
+    # Get unique times
+    if(its %in%  c("one", "two")) {
+      unique_its_time <- sort(unique(data[, int.time]))
+    }
+    # ITS type
+    if(itsa_type != "none") {
+      ITS.Time <- as.numeric(ordered(data[, int.time]))
+    }
+    if(itsa_type %in% c("mgst", "mgmt")) {
+      ITS.Int <- data[, intervention]
+    }
+    if(itsa_type %in% c("mgst", "mgmt")) {
+      txi <- ITS.Int * ITS.Time
+    }
+    # Create ITS data sections #
+    # post
+    postdf <- fncITSPost(itime= ITS.Time, unqitime= unique_its_time,
+                         interrupt= interrupt )
+    # txp
+    txpostdf <- fncITStxp(itime= ITS.Time, unqitime= unique_its_time,
+                          interrupt= interrupt, postdf= postdf)
+    # ixp
+    if(itsa_type %in% c("mgst", "mgmt")) {
+      ixpdf <- fncITSixp(itime= ITS.Time, iInt= ITS.Int, interrupt= interrupt,
+                         postdf= postdf )
+    }
+    # txip
+    if(itsa_type %in% c("mgst", "mgmt")) {
+      txipdf <- fncITStxip(itime= ITS.Time, iInt= ITS.Int,
+                           interrupt= interrupt, txpdf= txpostdf )
+    }
+    # Combine and arrange data
+    # sgst and sgmt
+    if(itsa_type %in% c("sgst", "sgmt")) {
+      combined_df <- cbind(postdf, txpostdf)
+      n <- ncol(postdf)
+      interweave_order <- order(c(1:n, 1:n))
+      combined_df <- combined_df[, interweave_order]
+    }
+    # mgst and mgmt
+    if(itsa_type %in% c("mgst", "mgmt")) {
+      combined_df <- cbind(postdf, txpostdf, ixpdf, txipdf)
+      n <- ncol(postdf)
+      interweave_order <- order(c(1:n, 1:n, 1:n, 1:n))
+      combined_df <- combined_df[, interweave_order]
+    }
+    #sgmt
+    if(itsa_type %in% c("sgst", "sgmt")) {
+      its_data <- cbind(ITS.Time, combined_df)
+    }
+    #mgmt
+    if(itsa_type %in% c("mgst", "mgmt")) {
+      its_data <- cbind(ITS.Time, ITS.Int, txi, combined_df)
+    }
+    return(its_data)
+  }
+  #####################
+  ## Create ITS data ##
+  #####################
+  if(itsa_type != "none") {
+    its_data <- fncITSdata(data=data, intervention = intervention, int.time=int.time,
+                           interrupt= interrupt, its=its, itsa_type=itsa_type)
+  }
+
   # Make DID data #
   if (did == "two") {
     did_data <- data.frame(Post.All, Int.Var, Period, DID)
@@ -359,41 +537,6 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
     DID.Names <- NULL
   }
 
-  # Make ITS dataframes #
-  # Single group, single treatment (sgst) #
-  if(itsa_type == "sgst") {
-    its_data <- data.frame(ITS.Time, post1, txp1)
-    its_nms22 <- c("post1","txp1")
-    colnames(its_data)[which(colnames(its_data) %in% its_nms22)] <-
-      c(paste0("post", sort(interrupt)[1]), paste0("txp", sort(interrupt)[1]))
-  }
-  # Single group, multi-treatments (sgmt) #
-  if(itsa_type == "sgmt") {
-    its_data <- data.frame(ITS.Time, post1,txp1,post2, txp2)
-    its_nms22 <- c("post1","txp1","post2", "txp2")
-    colnames(its_data)[which(colnames(its_data) %in% its_nms22)] <-
-      c(paste0("post", sort(interrupt)[1]), paste0("txp", sort(interrupt)[1]),
-        paste0("post", sort(interrupt)[2]), paste0("txp", sort(interrupt)[2]))
-  }
-  # Multi-group, single treatments (mgst) #
-  if(itsa_type == "mgst") {
-    its_data <- data.frame(ITS.Time, ITS.Int, txi, post1,txp1,ixp1, txip1)
-    its_nms22 <- c("post1","txp1","ixp1", "txip1")
-    colnames(its_data)[which(colnames(its_data) %in% its_nms22)] <-
-      c(paste0("post", sort(interrupt)[1]), paste0("txp", sort(interrupt)[1]),
-        paste0("ixp", sort(interrupt)[1]), paste0("txip", sort(interrupt)[1]))
-  }
-  # Multi-group, multi-treatments (mgmt) #
-  if(itsa_type == "mgmt") {
-    its_data <- data.frame(ITS.Time, ITS.Int, txi, post1,txp1,ixp1,
-                           txip1,post2, txp2,ixp2, txip2)
-    its_nms22 <- c("post1","txp1","ixp1", "txip1","post2", "txp2","ixp2", "txip2")
-    colnames(its_data)[which(colnames(its_data) %in% its_nms22)] <-
-      c(paste0("post", sort(interrupt)[1]), paste0("txp", sort(interrupt)[1]),
-        paste0("ixp", sort(interrupt)[1]), paste0("txip", sort(interrupt)[1]),
-        paste0("post", sort(interrupt)[2]), paste0("txp", sort(interrupt)[2]),
-        paste0("ixp", sort(interrupt)[2]), paste0("txip", sort(interrupt)[2]))
-  }
   #Get ITS column names for later interpretations
   if(itsa_type != "none") {
     ITS.Names <- colnames(its_data)
@@ -520,7 +663,8 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
 
   # ITSA treatment effects
   if (create_its == TRUE) {
-    ITS.Effects <- itsEffect(model= its_model, type= itsa_type)
+    ITS.Effects <- itsEffect(model= its_model, type= itsa_type,
+                             groups= its, interruptions= length(interrupt))
   } else {
     ITS.Effects <- NULL
   }
