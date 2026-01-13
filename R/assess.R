@@ -30,6 +30,16 @@
 #' Select 1 value from 'int.time' to indicate the start of the intervention.
 #' @param interrupt optional interruption (or intervention) period(s) variable name selected for ITS
 #' models. Select 1 or 2 values from 'int.time' to indicate the start and/or key intervention periods.
+#' @param stagger optional list to indicate staggered entry into the intervention or treatment group.
+#' Relevant model variables are re-coded to appropriate values and can be used for a form of 'stacked' DID
+#' or ITS. If a group of cases joins X months after the primary sample, model variables are adjusted X months.
+#' This three element list named: 'a' = a character vector for the name of the grouping column; 'b' = specific
+#' categories or levels that indicate which cases have a staggered entry; and 'c' = the time point values
+#' at staggered entry. Both 'b' and 'c' must have identical lengths. For ITS models, the staggered entry
+#' time must be: interrupt 1 < stagger time < interrupt 2. For example, a national health policy may have
+#' started in the 3rd year of the study period in NY and other cities but Chicago and LA joined 6 and 12
+#' months later, therefore stagger= list(a= 'city', b=c('Chicago', 'LA')), c=(30, 36) while interrupt= 25.
+#' Default is NULL.
 #' @param topcode optional value selected to top code Y (or left-hand side) of the formula. Analyses
 #' will be performed using the new top coded variable.
 #' @param propensity optional character vector of variable names to perform a propensity score model.
@@ -48,6 +58,10 @@
 #' @references
 #' Angrist, J. D., & Pischke, J. S. (2009). Mostly Harmless Econometrics:
 #' An Empiricist's Companion. Princeton University Press. ISBN: 9780691120355.
+#'
+#' Gebski, V., et al. (2012). Modelling Interrupted Time Series to Evaluate Prevention
+#' and Control of Infection in Healthcare. Epidemiology & Infections, 140, 2131–2141.
+#' https://doi.org/10.1017/S0950268812000179
 #'
 #' Linden, A. (2015). Conducting Interrupted Time-series Analysis for Single- and
 #' Multiple-group Comparisons. The Stata Journal, 15, 2, 480-500. https://doi.org/10.1177/1536867X1501500208
@@ -86,8 +100,8 @@
 #'
 #' @importFrom stats as.formula binomial plogis predict update aggregate
 assess <- function(formula, data, regression= "none", did ="none", its ="none",
-                   intervention =NULL, int.time=NULL, treatment=NULL,
-                   interrupt=NULL, topcode =NULL, propensity =NULL, newdata =FALSE) {
+                   intervention =NULL, int.time=NULL, treatment=NULL,interrupt=NULL,
+                   stagger= NULL, topcode =NULL, propensity =NULL, newdata =FALSE) {
   # Use various formulas for the different models
   primary_formula <- formula
   #Get formula variables
@@ -108,10 +122,8 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
   if (length( dup_vars) >= 1) {
     stop(name_stop_fnc)
   }
-  #Stop too many treatment and interruption periods
+  #Stop too many treatment and duplicated interruption periods
   if(length(treatment) > 1) stop("Error: treatment > 1. Expecting only 1 time.")
-  #ITS No longer using this error
-  #if(length(interrupt) > 2) stop("Error: interrupt > 2. Expecting only 1 or 2 times.")
   if(any(duplicated(interrupt)) == TRUE) stop("Error: Duplicated 'interrupt'. Expecting unique values.")
 
   #Identify if there will be new data created
@@ -455,7 +467,7 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
     return(df)
   }
 
-
+# Make ITS data #
   fncITSdata <- function(data, intervention = intervention, int.time=int.time,
                          interrupt= interrupt, its=its, itsa_type=itsa_type) {
 
@@ -523,6 +535,104 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
                            interrupt= interrupt, its=its, itsa_type=itsa_type)
   }
 
+  # Staggered entry
+  if(!is.null(stagger)) {
+    #Declare objects
+    staggerA <- NULL
+    staggerB <- NULL
+    staggerC <- NULL
+    stagger_diff <- NULL
+    # Errors from incorrectly using stagger argument #
+    if(is(stagger[[1]])[1] != "character") stop("Error: Expecting a character vector for 'a' of the stagger argument.")
+    if(is(stagger[[3]])[1] != "numeric") stop("Error: Expecting a numeric vector for 'c' of the stagger argument.")
+    if(length(stagger[[2]]) != length(stagger[[2]])) stop("Error: There are an unequal number of elements in 'b' and 'c' of the stagger argument.")
+    if(length(interrupt) > 1) {
+      if(any(stagger[[3]] >= sort(interrupt)[2])) stop("Error: Staggered entry not performed if any 'stagger' time values are >= the 2nd lowest interruption value in the interrupt argument (e.g., stagger of 25 when interrupt=c(12, 24).")
+    }
+
+    if(its != "none") {
+      int_time_entry <- interrupt[1]
+    }
+    if(did != "none") {
+      int_time_entry <- treatment
+    }
+    #Get stagger values for later use
+    staggerA <- stagger[[1]]
+    staggerB <- stagger[[2]]
+    staggerC <- stagger[[3]]
+    #Convert model entry time into converted time (if necessary) to
+    int_time_E <- which(sort(unique((data[, int.time]))) == int_time_entry)
+    #Get staggered entry time as ordered rank to fit with converted data
+    stagC <- vector(mode="numeric", length= length(staggerC))
+    for (i in 1:length(staggerC)) {
+      stagC[i] <- which(sort(unique((data[, int.time]))) == staggerC[i])
+    }
+    # Get difference between primary entry period and staggered groups
+    stagger_diff <- int_time_E - stagC
+
+  }
+
+  ########################
+  ## Staggered ITS data ##
+  ########################
+  if(!is.null(stagger)) {
+
+    ##########
+    ## sgst ##
+    ##########
+    if (itsa_type == "sgst") {
+      # Recode the binary post intervention variables for post and ixp
+      for (i in 1:length(staggerB)) {
+        its_data[data[, staggerA] == staggerB[i], 2][its_data[data[, staggerA] == staggerB[i], 1] < staggerC[i]] <- 0
+      }
+      # Recode the trend variables for txp and txip
+      for (i in 1:length(staggerB)) {
+        its_data[, 3][data[, staggerA] == staggerB[i]] <- its_data[, 3][data[, staggerA] == staggerB[i]] + stagger_diff[i]
+      }
+      # Recode any negative values as 0
+      its_data[, 3] <- ifelse(its_data[, 3] < 0, 0, its_data[, 3])
+    }
+    ##########
+    ## sgmt ##
+    ##########
+    if (itsa_type == "sgmt") {
+      # Recode the binary post intervention variables for post and ixp
+      for (i in 1:length(staggerB)) {
+        its_data[data[, staggerA] == staggerB[i], 2][its_data[data[, staggerA] == staggerB[i], 1] < staggerC[i]] <- 0
+        its_data[data[, staggerA] == staggerB[i], 4][its_data[data[, staggerA] == staggerB[i], 1] < staggerC[i]] <- 0
+      }
+      # Recode the trend variables for txp and txip
+      for (i in 1:length(staggerB)) {
+        its_data[, 3][data[, staggerA] == staggerB[i]] <- its_data[, 3][data[, staggerA] == staggerB[i]] + stagger_diff[i]
+        its_data[, 5][data[, staggerA] == staggerB[i]] <- its_data[, 5][data[, staggerA] == staggerB[i]] + stagger_diff[i]
+      }
+      # Recode any negative values as 0
+      its_data[, 3] <- ifelse(its_data[, 3] < 0, 0, its_data[, 3])
+      its_data[, 5] <- ifelse(its_data[, 5] < 0, 0, its_data[, 5])
+    }
+    #################
+    ## mgst & mgmt ##
+    #################
+    if (itsa_type %in% c("mgst","mgmt")) {
+      # Recode the binary post intervention variables for post and ixp
+      for (i in 1:length(staggerB)) {
+        its_data[data[, staggerA] == staggerB[i], 4][its_data[data[, staggerA] == staggerB[i], 1] < staggerC[i]] <- 0
+        its_data[data[, staggerA] == staggerB[i], 6][its_data[data[, staggerA] == staggerB[i], 1] < staggerC[i]] <- 0
+      }
+      # Recode the trend variables for txp and txip
+      for (i in 1:length(staggerB)) {
+        its_data[, 5][data[, staggerA] == staggerB[i]] <- its_data[, 5][data[, staggerA] == staggerB[i]] + stagger_diff[i]
+        its_data[, 7][data[, staggerA] == staggerB[i]] <- its_data[, 7][data[, staggerA] == staggerB[i]] + stagger_diff[i]
+      }
+      # Recode any negative values as 0
+      its_data[, 5] <- ifelse(its_data[, 5] < 0, 0, its_data[, 5])
+      its_data[, 7] <- ifelse(its_data[, 7] < 0, 0, its_data[, 7])
+    }
+  }
+
+  #####################
+  ## Create DID data ##
+  #####################
   # Make DID data #
   if (did == "two") {
     did_data <- data.frame(Post.All, Int.Var, Period, DID)
@@ -530,6 +640,40 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
   if (did == "many") {
     did_data <- data.frame(Post.All, Period, DID, DID.Trend)
   }
+
+  ########################
+  ## Staggered ITS data ##
+  ########################
+
+  if(!is.null(stagger)) {
+  #############
+  ## DID two ##
+  #############
+  if(did_type == "two" ) {
+    # Recode the binary post intervention variables for Post.All and DID
+    for (i in 1:length(staggerB)) {
+      did_data[data[, staggerA] == staggerB[i], 1][did_data[data[, staggerA] == staggerB[i], 3] < staggerC[i]] <- 0
+      did_data[data[, staggerA] == staggerB[i], 4][did_data[data[, staggerA] == staggerB[i], 3] < staggerC[i]] <- 0
+    }
+  }
+    ##############
+    ## DID many ##
+    ##############
+    if(did_type == "many" ) {
+      # Recode the binary post intervention variables for post and ixp
+      for (i in 1:length(staggerB)) {
+        did_data[data[, staggerA] == staggerB[i], 1][did_data[data[, staggerA] == staggerB[i], 2] < staggerC[i]] <- 0
+        did_data[data[, staggerA] == staggerB[i], 3][did_data[data[, staggerA] == staggerB[i], 2] < staggerC[i]] <- 0
+      }
+      # Recode the trend variables for txp and txip
+      for (i in 1:length(staggerB)) {
+        did_data[, 4][data[, staggerA] == staggerB[i]] <- did_data[, 4][data[, staggerA] == staggerB[i]] + stagger_diff[i]
+      }
+      # Recode any pre-intervention values as 0
+      did_data[, 4] <- ifelse(did_data[, 4] < int_time_entry, 0, did_data[, 4])
+    }
+    }
+
   #Get DID column names for later interpretations
   if(did_type != "none") {
     DID.Names <- colnames(did_data)
@@ -664,7 +808,7 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
   # ITSA treatment effects
   if (create_its == TRUE) {
     ITS.Effects <- itsEffect(model= its_model, type= itsa_type,
-                             groups= its, interruptions= length(interrupt))
+                             interruptions= length(interrupt))
   } else {
     ITS.Effects <- NULL
   }

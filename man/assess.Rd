@@ -14,6 +14,7 @@ assess(
   int.time = NULL,
   treatment = NULL,
   interrupt = NULL,
+  stagger = NULL,
   topcode = NULL,
   propensity = NULL,
   newdata = FALSE
@@ -50,6 +51,17 @@ Select 1 value from 'int.time' to indicate the start of the intervention.}
 
 \item{interrupt}{optional interruption (or intervention) period(s) variable name selected for ITS
 models. Select 1 or 2 values from 'int.time' to indicate the start and/or key intervention periods.}
+
+\item{stagger}{optional list to indicate staggered entry into the intervention or treatment group.
+Relevant model variables are re-coded to appropriate values and can be used for a form of 'stacked' DID
+or ITS. If a group of cases joins X months after the primary sample, model variables are adjusted X months.
+This three element list named: 'a' = a character vector for the name of the grouping column; 'b' = specific
+categories or levels that indicate which cases have a staggered entry; and 'c' = the time point values
+at staggered entry. Both 'b' and 'c' must have identical lengths. For ITS models, the staggered entry
+time must be: interrupt 1 < stagger time < interrupt 2. For example, a national health policy may have
+started in the 3rd year of the study period in NY and other cities but Chicago and LA joined 6 and 12
+months later, therefore stagger= list(a= 'city', b=c('Chicago', 'LA')), c=(30, 36) while interrupt= 25.
+Default is NULL.}
 
 \item{topcode}{optional value selected to top code Y (or left-hand side) of the formula. Analyses
 will be performed using the new top coded variable.}
@@ -111,6 +123,10 @@ int.time="month", its="two", interrupt = c(5,9))$ITS)
 \references{
 Angrist, J. D., & Pischke, J. S. (2009). Mostly Harmless Econometrics:
 An Empiricist's Companion. Princeton University Press. ISBN: 9780691120355.
+
+Gebski, V., et al. (2012). Modelling Interrupted Time Series to Evaluate Prevention
+and Control of Infection in Healthcare. Epidemiology & Infections, 140, 2131–2141.
+https://doi.org/10.1017/S0950268812000179
 
 Linden, A. (2015). Conducting Interrupted Time-series Analysis for Single- and
 Multiple-group Comparisons. The Stata Journal, 15, 2, 480-500. https://doi.org/10.1177/1536867X1501500208

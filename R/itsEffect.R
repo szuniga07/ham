@@ -15,10 +15,10 @@
 #' time periods. If selected type="sgst", it is single-group single-time;
 #' type="sgmt", it is single-group multiple-time; type="mgst", it is multiple-group single-time;
 #' and type="mgmt", it is multiple-group multiple-time.
-#' @param groups ITS number of groups as character vector, "one" or "two".
 #' @param interruptions ITS number of interruptions as numeric vector greater than 0.
 #'
-#' @return a data.frame object of ITS effects and summary statistics.
+#' @return a data.frame object of ITS effects and summary statistics. Row names are indicated with
+#' first, second, and additional numbers when there are multiple interruptions (e.g., 'Intervention.2').
 #' Generally run within the assess function.
 #' @export
 #'
@@ -29,10 +29,10 @@
 #' @examples
 #' i21 <- assess(formula=survey ~ ., data=hosprog, intervention = "program",topcode =NULL,
 #' int.time="month", regression="none", interrupt=5, its="two", newdata=TRUE, propensity=NULL)
-#' itsEffect(model= i21$ITS, type= "mgst", groups="two", interruptions= 1)
+#' itsEffect(model= i21$ITS, type= "mgst", interruptions= 1)
 #'
 #' @importFrom stats coef pt qt vcov
-itsEffect <- function(model, type, groups, interruptions) {
+itsEffect <- function(model, type, interruptions) {
   # Gets degrees of freedom
   its_df_resid <- model[["df.residual"]]
   #Using a matrix to get standard errors
@@ -47,10 +47,10 @@ itsEffect <- function(model, type, groups, interruptions) {
   quant_df_res <- stats::qt(.975,  its_df_resid)
   ## Get expected number of coefficients for an ITS model only (i.e., exlcudes non-ITS coefficients) ##
   # Number of groups
-  if(groups == "one") {
+  if(type %in% c("sgst", "sgmt")) {
     num_groups <- 1
   }
-  if(groups == "two") {
+  if(type %in% c("mgst", "mgmt")) {
     num_groups <- 2
   }
   # Number of interruptions in the model
