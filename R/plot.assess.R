@@ -1057,6 +1057,8 @@ if(y == "ITS") {
     # Control group counterfactual for post1
     cfc10 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per2[1] + coef(cmodel)[[3]]*0 + coef(cmodel)[[4]]*0 +
       coef(cmodel)[[5]]*0 + coef(cmodel)[[6]]*0 + coef(cmodel)[[7]]*0 + coef(cmodel)[[8]]*0
+    cfc11 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per2[2] + coef(cmodel)[[3]]*0 + coef(cmodel)[[4]]*0 +
+      coef(cmodel)[[5]]*0 + coef(cmodel)[[6]]*0 + coef(cmodel)[[7]]*0 + coef(cmodel)[[8]]*0
     ## Intervention group
     #Period 1's (pre-intervention) start and stop values
     t00 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per1[1] + coef(cmodel)[[3]]*1 + coef(cmodel)[[4]]*time_per1[1] +
@@ -1068,6 +1070,11 @@ if(y == "ITS") {
       coef(cmodel)[[5]]*1 + coef(cmodel)[[6]]*0 + coef(cmodel)[[7]]*1 + coef(cmodel)[[8]]*0
     t11 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per2[2] + coef(cmodel)[[3]]*1 + coef(cmodel)[[4]]*time_per2[2] +
       coef(cmodel)[[5]]*1 + coef(cmodel)[[6]]*(time_per2[2]-interrupt_1) + coef(cmodel)[[7]]*1 + coef(cmodel)[[8]]*(time_per2[2]-interrupt_1)
+    # Treatment group counterfactual for post1
+    cft10 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per2[1] + coef(cmodel)[[3]]*1 + coef(cmodel)[[4]]*time_per2[1] +
+      coef(cmodel)[[5]]*0 + coef(cmodel)[[6]]*0 + coef(cmodel)[[7]]*0 + coef(cmodel)[[8]]*0
+    cft11 <- coef(cmodel)[[1]] + B0_adjust + coef(cmodel)[[2]]*time_per2[2] + coef(cmodel)[[3]]*1 + coef(cmodel)[[4]]*time_per2[2] +
+      coef(cmodel)[[5]]*0 + coef(cmodel)[[6]]*0 + coef(cmodel)[[7]]*0 + coef(cmodel)[[8]]*0
     #ITS.int variable name position
     if(t00 >= c00) {
       posITS.int <- 3
@@ -1143,19 +1150,35 @@ if(y == "ITS") {
     }
     #Intervention line
     abline(v= interrupt_1, col= ticol, lty=3, lwd=lwidth)
+    # Intervention counterfactual
+    if(cfact==TRUE) {
+      segments(x0 = interrupt_1, y0 = cft10, x1 = time_per2[2], y1 = cft11, col = lcol[1], lwd = lwidth, lty=2)
+    }
     # control period 1
     lines(time_per1, c(c00, c01), lty=1, col=lcol[2], lwd=lwidth)
+    # control counterfactual
+    if(cfact==TRUE) {
+      segments(x0 = interrupt_1, y0 = cfc10, x1 = time_per2[2], y1 = cfc11, col = lcol[2], lwd = lwidth, lty=2)
+    }
     # control line period 2
     segments(x0 = interrupt_1, y0 = c10, x1 = time_per2[2], y1 = c11, col = lcol[2], lwd = lwidth, lty=1)
     # intervention period 1
     lines(time_per1, c(t00, t01), lty=1, col=lcol[1], lwd=lwidth)
     # intervention line period 2
     segments(x0 = interrupt_1, y0 = t10, x1 = time_per2[2], y1 = t11, col = lcol[1], lwd = lwidth, lty=1)
+    ## Legend ##
     if (!is.null(add.legend)) {
-      legend(x=add.legend, legend= if(add.means==TRUE) c("Intervention", "Control", "Treated", "Means") else
-        c("Intervention", "Control", "Treated"), lty= if(add.means==TRUE) c(1,1,3, NA) else c(1,1,3),
-        lwd=cex.legend, col= if(add.means==TRUE) c(lcol[1],lcol[2], ticol, "black") else c(lcol[1],lcol[2], ticol),
-        bty="n", cex=cex.legend, pch= if(add.means==TRUE) c(NA,NA,NA,20) else c(NA,NA, 20))
+      if (add.means == TRUE) {
+        legend(x=add.legend, legend= if(cfact==TRUE) c("Intervention", "Control","Counterfactual", "Treated", "Means") else
+          c("Intervention", "Control", "Treated", "Means"), lty= if(cfact==TRUE) c(1,1,2,3, NA) else c(1,1,3, NA), lwd=cex.legend,
+          col= if(cfact==TRUE) c(lcol[1],lcol[2],lcol[1], ticol, "black") else c(lcol[1], lcol[2],ticol, "black"), bty="n",
+          cex=cex.legend, pch= if(cfact==TRUE) c(NA,NA,NA,NA,20) else c(NA,NA,NA, 20))
+      }
+      if (add.means == FALSE) {
+        legend(x=add.legend, legend= if(cfact==TRUE) c("Intervention", "Control","Counterfactual", "Treated") else
+          c("Intervention", "Control", "Treated"), lty= if(cfact==TRUE) c(1,1,2,3) else c(1,1,3), lwd=cex.legend,
+          col= if(cfact==TRUE) c(lcol[1],lcol[2],lcol[1], ticol) else c(lcol[1], ticol), bty="n", cex=cex.legend)
+      }
     }
     # Arrows and coefficient names #
     if(any(c(arrow,coefs, name) == TRUE)) {
