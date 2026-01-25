@@ -1388,15 +1388,15 @@ if(y == "ITS") {
     ## Legend ##
     if (!is.null(add.legend)) {
       if (add.means == TRUE) {
-        legend(x=add.legend, legend= if(cfact==TRUE) c("Intervention", "Control","Counterfactual", "Treated", "Means") else
-          c("Intervention", "Control", "Treated", "Means"), lty= if(cfact==TRUE) c(1,1,2,3, NA) else c(1,1,3, NA), lwd=cex.legend,
-          col= if(cfact==TRUE) c(lcol[1],lcol[2],lcol[1], ticol, "black") else c(lcol[1], lcol[2],ticol, "black"), bty="n",
-          cex=cex.legend, pch= if(cfact==TRUE) c(NA,NA,NA,NA,20) else c(NA,NA,NA, 20))
+        legend(x=add.legend, legend= if(cfact==TRUE) c("Intervention", "Control","Counterfactual","Counterfactual", "Treated", "Means") else
+          c("Intervention", "Control", "Treated", "Means"), lty= if(cfact==TRUE) c(1,1,2,2,3, NA) else c(1,1,3, NA), lwd=cex.legend,
+          col= if(cfact==TRUE) c(lcol[1],lcol[2],lcol[1],lcol[2], ticol, "black") else c(lcol[1], lcol[2],ticol, "black"), bty="n",
+          cex=cex.legend, pch= if(cfact==TRUE) c(NA,NA,NA,NA,NA,20) else c(NA,NA,NA, 20))
       }
       if (add.means == FALSE) {
-        legend(x=add.legend, legend= if(cfact==TRUE) c("Intervention", "Control","Counterfactual", "Treated") else
-          c("Intervention", "Control", "Treated"), lty= if(cfact==TRUE) c(1,1,2,3) else c(1,1,3), lwd=cex.legend,
-          col= if(cfact==TRUE) c(lcol[1],lcol[2],lcol[1], ticol) else c(lcol[1], ticol), bty="n", cex=cex.legend)
+        legend(x=add.legend, legend= if(cfact==TRUE) c("Intervention", "Control","Counterfactual","Counterfactual", "Treated") else
+          c("Intervention", "Control", "Treated"), lty= if(cfact==TRUE) c(1,1,2,2,3) else c(1,1,3), lwd=cex.legend,
+          col= if(cfact==TRUE) c(lcol[1],lcol[2],lcol[1],lcol[2], ticol) else c(lcol[1],lcol[2], ticol), bty="n", cex=cex.legend)
       }
     }
     # Arrows and coefficient names #
@@ -1699,15 +1699,15 @@ if(y == "ITS") {
     ############
     if (!is.null(add.legend)) {
       if (add.means == TRUE) {
-        legend(x=add.legend, legend= if(cfact==TRUE) c("Intervention", "Control","Counterfactual", "Treated", "Means") else
-          c("Intervention", "Control", "Treated", "Means"), lty= if(cfact==TRUE) c(1,1,2,3, NA) else c(1,1,3, NA), lwd=cex.legend,
-          col= if(cfact==TRUE) c(lcol[1],lcol[2],lcol[1], ticol, "black") else c(lcol[1], lcol[2],ticol, "black"), bty="n",
-          cex=cex.legend, pch= if(cfact==TRUE) c(NA,NA,NA,NA,20) else c(NA,NA,NA, 20))
+        legend(x=add.legend, legend= if(cfact==TRUE) c("Intervention", "Control","Counterfactual","Counterfactual", "Treated", "Means") else
+          c("Intervention", "Control", "Treated", "Means"), lty= if(cfact==TRUE) c(1,1,2,2,3, NA) else c(1,1,3, NA), lwd=cex.legend,
+          col= if(cfact==TRUE) c(lcol[1],lcol[2],lcol[1],lcol[2], ticol, "black") else c(lcol[1], lcol[2],ticol, "black"), bty="n",
+          cex=cex.legend, pch= if(cfact==TRUE) c(NA,NA,NA,NA,NA,20) else c(NA,NA,NA, 20))
       }
       if (add.means == FALSE) {
-        legend(x=add.legend, legend= if(cfact==TRUE) c("Intervention", "Control","Counterfactual", "Treated") else
-          c("Intervention", "Control", "Treated"), lty= if(cfact==TRUE) c(1,1,2,3) else c(1,1,3), lwd=cex.legend,
-          col= if(cfact==TRUE) c(lcol[1],lcol[2],lcol[1], ticol) else c(lcol[1], lcol[2],ticol), bty="n", cex=cex.legend)
+        legend(x=add.legend, legend= if(cfact==TRUE) c("Intervention", "Control","Counterfactual","Counterfactual", "Treated") else
+          c("Intervention", "Control", "Treated"), lty= if(cfact==TRUE) c(1,1,2,2,3) else c(1,1,3), lwd=cex.legend,
+          col= if(cfact==TRUE) c(lcol[1],lcol[2],lcol[1],lcol[2], ticol) else c(lcol[1], lcol[2],ticol), bty="n", cex=cex.legend)
       }
     }
     ################################
