@@ -121,5 +121,5 @@ plot(am2, "ITS", add.legend="top", xlim=c(-.5, 13), ylim=c(2, 8), main="ITS stud
 col=c("cyan","hotpink"), tcol="springgreen", lwd=7, cex=2, cex.axis=2, cex.lab=2,
 cex.main=3, cex.text=1.2, cex.legend=1.25, name=FALSE, coefs=TRUE, round.c=1,
 pos.text= list("txp5"=3, "post9"=4), arrow=TRUE, xshift=c(.5, 1.5),
-cfact=T, conf.int=TRUE, adj.alpha=0.2)
+cfact=TRUE, conf.int=TRUE, adj.alpha=0.2)
 }
