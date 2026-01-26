@@ -647,8 +647,8 @@ if(y == "ITS") {
     for (i in 1:length(treated_df[, "num_pers"])) {
       tp1[[i]] <- sum(mod_coefs[treated_df[,"treat_fit_binary"]][1:i]) +  # binary predictors
         sum(mod_coefs[treated_df[, "treat_fit_trend"]] *       # trend predictors
-              pmax(tinc1[i] - treated_df[, "intrup_wt"], 0) +   # X values
-              B0_adjust)
+              pmax(tinc1[i] - treated_df[, "intrup_wt"], 0)) +   # X values
+              B0_adjust
     }
     #Treatment group stopping fitted values
     tinc2 <- treated_df[, "time_per2"]
@@ -656,8 +656,8 @@ if(y == "ITS") {
     for (i in 1:length(treated_df[, "num_pers"])) {
       tp2[[i]] <- sum(mod_coefs[treated_df[,"treat_fit_binary"]][1:i]) +  # binary predictors
         sum(mod_coefs[treated_df[, "treat_fit_trend"]] *       # trend predictors
-              pmax(tinc2[i] - treated_df[, "intrup_wt"], 0) +   # X values
-              B0_adjust)
+              pmax(tinc2[i] - treated_df[, "intrup_wt"], 0)) +   # X values
+              B0_adjust
     }
     # Control group starting fitted values
     if(e == "mgmt") {
@@ -666,8 +666,8 @@ if(y == "ITS") {
       for (i in controls_df[, "num_pers"]) {
         cp1[[i]] <- sum(mod_coefs[controls_df[,"control_fit_binary"]][1:i]) +  # binary predictors
           sum(mod_coefs[controls_df[,"control_fit_trend"]] *       # trend predictors
-                pmax(cinc1[i] - controls_df[, "intrup_wt"], 0) +          # X values
-                B0_adjust)
+                pmax(cinc1[i] - controls_df[, "intrup_wt"], 0)) +          # X values
+                B0_adjust
       }
       # Control group stopping fitted values
       cinc2 <- controls_df[, "time_per2"]
@@ -675,8 +675,8 @@ if(y == "ITS") {
       for (i in controls_df[, "num_pers"]) {
         cp2[[i]] <- sum(mod_coefs[controls_df[,"control_fit_binary"]][1:i]) +  # binary predictors
           sum(mod_coefs[controls_df[,"control_fit_trend"]] *       # trend predictors
-                pmax(cinc2[i] - controls_df[, "intrup_wt"], 0) +          # X values
-                B0_adjust)
+                pmax(cinc2[i] - controls_df[, "intrup_wt"], 0)) +          # X values
+                B0_adjust
       }
     }
     #####################
@@ -694,8 +694,8 @@ if(y == "ITS") {
     for (i in 1:length(treated_cf[, "num_pers"])) {
       cftp1[[i]] <- sum(mod_coefs[treated_cf[,"treat_fit_binary"]][1:i]) +  # binary predictors
         sum(mod_coefs[treated_cf[, "treat_fit_trend"]][1:i] *       # trend predictors
-              pmax(cftinc1[i] - treated_cf[, "intrup_wt"][1:i], 0) +   # X values
-              B0_adjust)
+              pmax(cftinc1[i] - treated_cf[, "intrup_wt"][1:i], 0)) +   # X values
+              B0_adjust
     }
     #Treatment group ending counterfactual values
     cftinc2 <- treated_cf[, "time_per2"]
@@ -703,8 +703,8 @@ if(y == "ITS") {
     for (i in 1:length(treated_cf[, "num_pers"])) {
       cftp2[[i]] <- sum(mod_coefs[treated_cf[,"treat_fit_binary"]][1:i]) +  # binary predictors
         sum(mod_coefs[treated_cf[, "treat_fit_trend"]][1:i] *       # trend predictors
-              pmax(cftinc2[i] - treated_cf[, "intrup_wt"][1:i], 0) +   # X values
-              B0_adjust)
+              pmax(cftinc2[i] - treated_cf[, "intrup_wt"][1:i], 0)) +   # X values
+              B0_adjust
     }
 
     #Control group starting/stopping counterfactual values
@@ -720,8 +720,8 @@ if(y == "ITS") {
       for (i in 1:length(controls_cf[, "num_pers"])) {
         cfcp1[[i]] <- sum(mod_coefs[controls_cf[,"control_fit_binary"]][1:i]) +  # binary predictors
           sum(mod_coefs[controls_cf[, "control_fit_trend"]][1:i] *       # trend predictors
-                pmax(cfcinc1[i] - controls_cf[, "intrup_wt"][1:i], 0) +   # X values
-                B0_adjust)
+                pmax(cfcinc1[i] - controls_cf[, "intrup_wt"][1:i], 0)) +   # X values
+                B0_adjust
       }
     }
 
@@ -732,8 +732,8 @@ if(y == "ITS") {
       for (i in 1:length(controls_cf[, "num_pers"])) {
         cfcp2[[i]] <- sum(mod_coefs[controls_cf[,"control_fit_binary"]][1:i]) +  # binary predictors
           sum(mod_coefs[controls_cf[, "control_fit_trend"]][1:i] *       # trend predictors
-                pmax(cfcinc2[i] - controls_cf[, "intrup_wt"][1:i], 0) +   # X values
-                B0_adjust)
+                pmax(cfcinc2[i] - controls_cf[, "intrup_wt"][1:i], 0)) +   # X values
+                B0_adjust
       }
     }
 
@@ -1602,15 +1602,6 @@ if(y == "ITS") {
     its_fit_mgmt <- fitfnc(x=mod_coefs, a=interrupt_all, B0_adjust=B0_adjust,
                            d=max_time, e=model_type, conf.int=conf.int)
 
-    #ITS.int variable name position
-    if(its_fit_mgmt$tp1[1] >= its_fit_mgmt$cp1[1]) {
-      posITS.int <- 3
-      posIntercept <- 1
-    }
-    if(its_fit_mgmt$cp1[1] > its_fit_mgmt$tp1[1]) {
-      posIntercept <- 3
-      posITS.int <- 1
-    }
     ## Margins of errors ##
     if(conf.int==TRUE) {
       #Get standard errors based on fitted values of key time points: treatment and controls
