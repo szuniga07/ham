@@ -10,6 +10,8 @@
 #' @param y type of model, specify either 'DID' (difference-in-difference) or 'ITS' (interrupted time series). Will not accept other models.
 #' @param xlim specify plot's x-axis limits with a 2 value vector.
 #' @param ylim specify plot's y-axis limits with a 2 value vector.
+#' @param xlab a vector label for the x-axis.
+#' @param ylab a vector label for the y-axis.
 #' @param main the main title of the plot.
 #' @param lwd select the line width.
 #' @param col specify intervention and control group colors in a vector. Defaults to, if nothing selected, c("blue", "red") or "blue" for single-group Interrupted Time Series models.
@@ -66,7 +68,7 @@
 #' cex.main=3, cex.text=1.2, cex.legend=1.25, name=FALSE, coefs=TRUE, round.c=1,
 #' pos.text= list("txp5"=3, "post9"=4), arrow=TRUE, xshift=c(.5, 1.5),
 #' cfact=TRUE, conf.int=TRUE, adj.alpha=0.2)
-plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NULL, tcol=NULL,
+plot.assess <- function(x, y, xlim=NULL, ylim=NULL, xlab=NULL, ylab=NULL, main=NULL, lwd=NULL, col=NULL, tcol=NULL,
                         cfact=FALSE, conf.int=FALSE, adj.alpha=NULL, add.means=FALSE, add.legend=NULL,
                         cex=NULL, cex.axis=NULL, cex.lab=NULL, cex.main=NULL, cex.text=NULL,
                         cex.legend=NULL, name=FALSE, coefs=FALSE, round.c=NULL,
@@ -81,7 +83,6 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, main=NULL, lwd=NULL, col=NUL
       stop("Error: Expecting a list for pos.text")
     }
   }
-
   # Get assess objects
 if(y == "DID") {
   aggr_mns <-  x[["study"]][["group_means_did"]]   #model data
@@ -103,6 +104,17 @@ if(y == "ITS") {
   # outcome variable for printing
   yvar <- all.vars(as.formula(x[["formula"]][[formula_type]]))[[1]]
   xvar <- colnames(aggr_mns)[1]
+  # Create x and y labels
+  if (!is.null(xlab)) {
+    xlab <- xlab
+  } else {
+    xlab <- xvar
+  }
+  if (!is.null(xlab)) {
+    ylab <- ylab
+  } else {
+    ylab <- yvar
+  }
 
   # causal models
   if(y == "DID") {
@@ -303,7 +315,7 @@ if(y == "ITS") {
       coef(cmodel)[[4]]*1   #intervention group time 1
 
     plot(0:1, range(c(cmodel[["fitted.values"]], t0)), type="n",
-         main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim,
+         main=main_title, xlab= xlab, ylab=ylab, xlim=xlim, ylim=ylim,
          cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
     #Add in confidence bands
     if(conf.int==TRUE) {
@@ -459,7 +471,7 @@ if(y == "ITS") {
       coef(cmodel)[[4]]*max_time   #intervention group time 1
 
     plot(range(aggr_mns[, 1]), range(c(cmodel[["fitted.values"]], t0)), type="n",
-         main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim,
+         main=main_title, xlab= xlab, ylab=ylab, xlim=xlim, ylim=ylim,
          cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
     #Add in confidence bands
     if(conf.int==TRUE) {
@@ -871,7 +883,7 @@ if(y == "ITS") {
       coef(cmodel)[[4]]*0
 
     plot(range(aggr_mns[, 1]), range(c(cmodel[["fitted.values"]], t00)), type="n",
-         main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim,
+         main=main_title, xlab= xlab, ylab=ylab, xlim=xlim, ylim=ylim,
          cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
     #Add in confidence bands
     tmpdf_names <- names(coef(cmodel))[1:4][-1]
@@ -1075,7 +1087,7 @@ if(y == "ITS") {
     time_per <- its_fit_mgmt$time_per
 
     plot(range(aggr_mns[, 1]), range(c(cmodel[["fitted.values"]], its_fit_mgmt$tp1[1])),
-         type="n", main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim,
+         type="n", main=main_title, xlab= xlab, ylab=ylab, xlim=xlim, ylim=ylim,
          cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
 
     #Add in confidence bands
@@ -1225,7 +1237,7 @@ if(y == "ITS") {
       for(i in 1:length(its_fit_mgmt$tp1)) {
         text(mean(c(time_per[i, 1], time_per[i, 2])),
              mean(c(its_fit_mgmt$tp1[i], its_fit_mgmt$tp2[i])),
-             labels =if(coefs == TRUE) paste0(mainvars2[ seq(2, length(mainvars2), by=2)][i], "=",
+             labels =if(coefs == TRUE) paste0(mainvars2[ seq(2, length(mainvars2), by=2)][i], "= ",
                                               round(mod_coefs[seq(2, length(mainvars2), by=2)][i], round.c),
                                               model_summary_p[seq(2, length(mainvars2), by=2)][i]) else
                                                 mainvars2[ seq(2, length(mainvars2), by=2)][i],
@@ -1305,7 +1317,7 @@ if(y == "ITS") {
     }
 
     plot(range(aggr_mns[, 1]), range(c(cmodel[["fitted.values"]], t00)), type="n",
-         main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim,
+         main=main_title, xlab= xlab, ylab=ylab, xlim=xlim, ylim=ylim,
          cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
     #Add in confidence bands
     tmpdf_names <- names(coef(cmodel))[1:8][-1]
@@ -1621,7 +1633,7 @@ if(y == "ITS") {
     time_per <- its_fit_mgmt$time_per
 
     plot(range(aggr_mns[, 1]), range(c(cmodel[["fitted.values"]], its_fit_mgmt$tp1[1])),
-         type="n", main=main_title, xlab= xvar, ylab=yvar, xlim=xlim, ylim=ylim,
+         type="n", main=main_title, xlab= xlab, ylab=ylab, xlim=xlim, ylim=ylim,
          cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
 
     #Add in confidence bands
@@ -1825,7 +1837,7 @@ if(y == "ITS") {
       for(i in 1:length(its_fit_mgmt$cp1)) {
         text(mean(c(time_per[i, 1], time_per[i, 2])),
              mean(c(its_fit_mgmt$cp1[i], its_fit_mgmt$cp2[i])),
-             labels =if(coefs == TRUE) paste0(mainvars2[ seq(2, length(mainvars2), by=4)][i], "=",
+             labels =if(coefs == TRUE) paste0(mainvars2[ seq(2, length(mainvars2), by=4)][i], "= ",
                                               round(mod_coefs[seq(2, length(mainvars2), by=4)][i], round.c),
                                               model_summary_p[seq(2, length(mainvars2), by=4)][i]) else
                                                 mainvars2[ seq(2, length(mainvars2), by=4)][i],
@@ -1835,7 +1847,7 @@ if(y == "ITS") {
       for(i in 1:length(its_fit_mgmt$tp1)) {
         text(mean(c(time_per[i, 1], time_per[i, 2])),
              mean(c(its_fit_mgmt$tp1[i], its_fit_mgmt$tp2[i])),
-             labels =if(coefs == TRUE) paste0(mainvars2[ seq(4, length(mainvars2), by=4)][i], "=",
+             labels =if(coefs == TRUE) paste0(mainvars2[ seq(4, length(mainvars2), by=4)][i], "= ",
                                               round(mod_coefs[seq(4, length(mainvars2), by=4)][i], round.c),
                                               model_summary_p[seq(4, length(mainvars2), by=4)][i]) else
                                                 mainvars2[ seq(4, length(mainvars2), by=4)][i],

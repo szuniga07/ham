@@ -9,6 +9,8 @@
   y,
   xlim = NULL,
   ylim = NULL,
+  xlab = NULL,
+  ylab = NULL,
   main = NULL,
   lwd = NULL,
   col = NULL,
@@ -41,6 +43,10 @@
 \item{xlim}{specify plot's x-axis limits with a 2 value vector.}
 
 \item{ylim}{specify plot's y-axis limits with a 2 value vector.}
+
+\item{xlab}{a vector label for the x-axis.}
+
+\item{ylab}{a vector label for the y-axis.}
 
 \item{main}{the main title of the plot.}
 
