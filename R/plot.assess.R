@@ -110,7 +110,7 @@ if(y == "ITS") {
   } else {
     xlab <- xvar
   }
-  if (!is.null(xlab)) {
+  if (!is.null(ylab)) {
     ylab <- ylab
   } else {
     ylab <- yvar

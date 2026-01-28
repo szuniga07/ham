@@ -137,18 +137,16 @@ print.interpret <- function(x, ...) {
       cat("\n" )
       cat(object$B1, "\n" )
       cat("\n" )
-      cat(object$B2 , "\n" )
-      cat("\n" )
-      cat(object$B3 , "\n" )
-      cat("\n" )
-      cat(object$B4 , "\n" )
-      cat("\n" )
-      cat(object$B5 , "\n" )
-      cat("\n" )
-      cat(object$its_Summary1 , "\n" )
-      cat("\n" )
-      cat(object$its_Summary2 , "\n" )
-      cat("\n" )
+      for(i in 1:length(object$post_interpret)) {
+        cat(object$post_interpret[i] , "\n" )
+        cat("\n" )
+        cat(object$txp_interpret[i] , "\n" )
+        cat("\n" )
+      }
+      for(i in 1:length(object$its_Summary)) {
+        cat(object$its_Summary[i] , "\n" )
+        cat("\n" )
+      }
       cat(object$its_covariates , "\n" )
     }
   }
@@ -166,26 +164,21 @@ print.interpret <- function(x, ...) {
       cat("\n" )
       cat(object$B3 , "\n" )
       cat("\n" )
-      cat(object$B4 , "\n" )
+
+      for(i in 1:length(object$post_interpret)) {
+      cat(object$post_interpret[i] , "\n" )
       cat("\n" )
-      cat(object$B5 , "\n" )
+      cat(object$txp_interpret[i] , "\n" )
       cat("\n" )
-      cat(object$B6, "\n" )
+      cat(object$ixp_interpret[i] , "\n" )
       cat("\n" )
-      cat(object$B7, "\n" )
+      cat(object$txip_interpret[i] , "\n" )
       cat("\n" )
-      cat(object$B8 , "\n" )
+      }
+      for(i in 1:length(object$its_Summary)) {
+      cat(object$its_Summary[i] , "\n" )
       cat("\n" )
-      cat(object$B9 , "\n" )
-      cat("\n" )
-      cat(object$B10 , "\n" )
-      cat("\n" )
-      cat(object$B11 , "\n" )
-      cat("\n" )
-      cat(object$its_Summary1 , "\n" )
-      cat("\n" )
-      cat(object$its_Summary2 , "\n" )
-      cat("\n" )
+      }
       cat(object$its_covariates , "\n" )
     }
   }

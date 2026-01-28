@@ -234,96 +234,150 @@ interpret <- function(object) {
     }
     # sgmt
     if(object$analysis_type$itsa_type == "sgmt") {
+      # Get specific values #
       Y_var_its <- all.vars(object$formula$ITS_formula)[1]
-      X_var_its <- all.vars(object$formula$ITS_formula)[-1][1:5]
+      X_var_its <- object[["ITS.Names"]] # main causal model terms
+      #Full list of variables for later coefficient names
+      mainvars2 <- c("(Intercept)", X_var_its)
+      #Get interruptions
+      interruptions <- object$study$interrupt
+      # Number of expected main ITS coefficients
+      expect_coefs <- length(mainvars2)
       # Coefficients
       its_b0_coef <- summary(object$ITS)[["coefficients"]][1, "Estimate"]
       its_b1_coef <- summary(object$ITS)[["coefficients"]][2, "Estimate"]
-      its_b2_coef <- summary(object$ITS)[["coefficients"]][3, "Estimate"]
-      its_b3_coef <- summary(object$ITS)[["coefficients"]][4, "Estimate"]
-      its_b4_coef <- summary(object$ITS)[["coefficients"]][5, "Estimate"]
-      its_b5_coef <- summary(object$ITS)[["coefficients"]][6, "Estimate"]
-      Smry_int1_coef <- object$ITS.Effects[1, "Effect"]
-      Smry_int2_coef <- object$ITS.Effects[2, "Effect"]
-      # Significance test
-      its_b0_sig <- ifelse(summary(object$ITS)[["coefficients"]][1, "Pr(>|t|)"] < .05, "significant", "non-significant")
-      its_b1_sig <- ifelse(summary(object$ITS)[["coefficients"]][2, "Pr(>|t|)"] < .05, "significant", "non-significant")
-      its_b2_sig <- ifelse(summary(object$ITS)[["coefficients"]][3, "Pr(>|t|)"] < .05, "significant", "non-significant")
-      its_b3_sig <- ifelse(summary(object$ITS)[["coefficients"]][4, "Pr(>|t|)"] < .05, "significant", "non-significant")
-      its_b4_sig <- ifelse(summary(object$ITS)[["coefficients"]][5, "Pr(>|t|)"] < .05, "significant", "non-significant")
-      its_b5_sig <- ifelse(summary(object$ITS)[["coefficients"]][6, "Pr(>|t|)"] < .05, "significant", "non-significant")
-      Smry_int1_sig <- ifelse(object$ITS.Effects[1, "p.value"] < .05, "significant", "non-significant")
-      Smry_int2_sig <- ifelse(object$ITS.Effects[2, "p.value"] < .05, "significant", "non-significant")
-      # Interpretations
-      its_intro <- c("Note: Some variable names below based on time points (or 'interruptions'). \nThis analysis is for a one-group, double intervention period (2 interruptions).")
-      B0 <- paste0("Intercept is ", round(its_b0_coef, 3), " and the starting value of the trend \nfor the intervention group.")
-      B1 <- paste0("ITS.Time is ", round(its_b1_coef, 3), " and the slope prior to intervention. \nThe coefficient is ", its_b1_sig, ".")
-      B2 <- paste0(X_var_its[2], " is ", round(its_b2_coef, 3), " and the immediate shift in the trend line \nafter the intervention start (e.g., 1st year of intervention). \nThe coefficient is ", its_b2_sig, ".")
-      B3 <- paste0(X_var_its[3], " is ", round(its_b3_coef, 3), " and the difference between pre- and \npost-intervention slopes (e.g., change in the pre-intervention \nslope). The coefficient is ", its_b3_sig,".")
-      B4 <- paste0(X_var_its[4], " is ", round(its_b4_coef, 3), " and the immediate shift in the trend line \nafter the first intervention (e.g., 1st year of 2nd intervention). \nThe coefficient is ", its_b4_sig, ".")
-      B5 <- paste0(X_var_its[5], " is ", round(its_b5_coef, 3), " and the difference between 1st- and \n2nd-intervention slopes (e.g., change in the pre-intervention \nslope). The coefficient is ", its_b5_sig,".")
-      its_Summary1 <- paste0("Summary 1: The results show that after the start of the 1st intervention, \nthere was a ", Smry_int1_sig, " change in the ", Y_var_its, " trend. This gives \na total post 1st intervention trend in the ", Y_var_its, " of ", round(Smry_int1_coef, 3), " \nover time (i.e., the total combined value of change not the \nchange relative to pre-intervention).")
-      its_Summary2 <- paste0("Summary 2: The results show that after the start of the 2nd intervention, \nthere was a ", Smry_int2_sig, " change in the ", Y_var_its, " trend. This gives \na total post 2nd intervention trend in the ", Y_var_its, " of ", round(Smry_int2_coef, 3), " \nover time (i.e., the total combined value of change not the \nchange relative to the 1st intervention).")
+      # Make for loops for types of variables #
+      post_its_coef <- vector(mode="numeric", length=length(interruptions))
+      txp_its_coef <- vector(mode="numeric", length=length(interruptions))
+      for(i in 1:length(interruptions)) {
+        post_its_coef[i] <- summary(object$ITS)[["coefficients"]][seq(3, expect_coefs, by=2)[i], "Estimate"]
+        txp_its_coef[i] <- summary(object$ITS)[["coefficients"]][seq(4, expect_coefs, by=2)[i], "Estimate"]
+      }
+      # Give names for the elements of the types of variables #
+      for(i in 1:length(interruptions)) {
+        names(post_its_coef)[i] <- paste0("its_b", seq(3, expect_coefs, by=2)[i]-1, "_coef")
+        names(txp_its_coef)[i] <-  paste0("its_b", seq(4, expect_coefs, by=2)[i]-1, "_coef")
+      }
+      ## Summary of ITS effects ##
+      Smry_int_coef <- object$ITS.Effects[, "Effect"]
+      # Significance test for coefficients #
+      its_b_sig <- ifelse(summary(object$ITS)[["coefficients"]][, "Pr(>|t|)"] < .05, "significant", "non-significant")
+      # Significance test for ITS effects #
+      Smry_int_sig <- ifelse(object$ITS.Effects[, "p.value"] < .05, "significant", "non-significant")
+      # Interpretations #
+      its_intro <- c("Note: Some variable names below based on time points (or 'interruptions'). \nThis analysis is for a two-group, single intervention period (interruption). \nPositive values indicate higher intervention group values and vice-versa for: \npost1, txp1, ixp1, txip1, post2, txp2, ixp2, txip2.")
+      # These are static interpretations that are NOT repeated
+      B0 <- paste0("Intercept is ", round(its_b0_coef, 3), " and the starting value of the trend for the \ncontrol group.")
+      B1 <- paste0("ITS.Time is ", round(its_b1_coef, 3), " and the group\'s slope prior to intervention. \nThe coefficient is ", its_b_sig[2], ".")
+      # Interpretations that come from a for loop #
+      # post
+      post_interpret <- vector(mode="character", length=length(interruptions))
+      for(i in 1:length(interruptions)) {
+        post_interpret[i] <- paste0(mainvars2[seq(3, expect_coefs, by=2)][i], " is ", round(post_its_coef[i], 3), " and the immediate shift in the group trend \nline after this intervention time starts. The coefficient is \n", its_b_sig[seq(3, expect_coefs, by=2)][i], ".")
+      }
+      # txp
+      txp_interpret <- vector(mode="character", length=length(interruptions))
+      for(i in 1:length(interruptions)) {
+        txp_interpret[i] <- paste0(mainvars2[seq(4, expect_coefs, by=2)][i], " is ", round(txp_its_coef[i], 3), " and the difference between current and prior intervention \ngroup slopes (e.g., change in the pre-intervention slope). \nThe coefficient is ", its_b_sig[seq(4, expect_coefs, by=2)][i], ".")
+      }
+      ## Intervention period effect ##
+      its_Summary <- vector(mode="character", length=length(interruptions))
+      for(i in 1:length(interruptions)) {
+        its_Summary[i] <- paste0("Summary ", i, ": For this intervention period ", i, ", ", "the results show that \nthe group\'s ", Smry_int_sig[i], " shift in ", Y_var_its, ", post intervention \nwas ", round(Smry_int_coef[i], 3), " (e.g., the total combined value of change for later \nperiods not the change relative to solely the prior period).")
+      }
+      # additional variables
       its_covariates <- c("If there are additional variables in the model then the coefficients \nabove represent effects after controlling for the other variables.")
     }
     # mgmt
     if(object$analysis_type$itsa_type == "mgmt") {
+      # Get specific values #
       Y_var_its <- all.vars(object$formula$ITS_formula)[1]
-      X_var_its <- all.vars(object$formula$ITS_formula)[-1][1:11]
+      X_var_its <- object[["ITS.Names"]] # main causal model terms
+      #Full list of variables for later coefficient names
+      mainvars2 <- c("(Intercept)", X_var_its)
+      #Get interruptions
+      interruptions <- object$study$interrupt
+      # Number of expected main ITS coefficients
+      expect_coefs <- length(mainvars2)
       # Coefficients
       its_b0_coef <- summary(object$ITS)[["coefficients"]][1, "Estimate"]
       its_b1_coef <- summary(object$ITS)[["coefficients"]][2, "Estimate"]
       its_b2_coef <- summary(object$ITS)[["coefficients"]][3, "Estimate"]
       its_b3_coef <- summary(object$ITS)[["coefficients"]][4, "Estimate"]
-      its_b4_coef <- summary(object$ITS)[["coefficients"]][5, "Estimate"]
-      its_b5_coef <- summary(object$ITS)[["coefficients"]][6, "Estimate"]
-      its_b6_coef <- summary(object$ITS)[["coefficients"]][7, "Estimate"]
-      its_b7_coef <- summary(object$ITS)[["coefficients"]][8, "Estimate"]
-      its_b8_coef <- summary(object$ITS)[["coefficients"]][9, "Estimate"]
-      its_b9_coef <- summary(object$ITS)[["coefficients"]][10, "Estimate"]
-      its_b10_coef <- summary(object$ITS)[["coefficients"]][11, "Estimate"]
-      its_b11_coef <- summary(object$ITS)[["coefficients"]][12, "Estimate"]
-      Smry_int1_coef <- object$ITS.Effects[1, "Effect"]
-      Smry_con1_coef <- object$ITS.Effects[2, "Effect"]
-      Smry_diff1_coef <- object$ITS.Effects[3, "Effect"]
-      Smry_int2_coef <- object$ITS.Effects[4, "Effect"]
-      Smry_con2_coef <- object$ITS.Effects[5, "Effect"]
-      Smry_diff2_coef <- object$ITS.Effects[6, "Effect"]
-      # Significance test
-      its_b0_sig <- ifelse(summary(object$ITS)[["coefficients"]][1, "Pr(>|t|)"] < .05, "significant", "non-significant")
-      its_b1_sig <- ifelse(summary(object$ITS)[["coefficients"]][2, "Pr(>|t|)"] < .05, "significant", "non-significant")
-      its_b2_sig <- ifelse(summary(object$ITS)[["coefficients"]][3, "Pr(>|t|)"] < .05, "significant", "non-significant")
-      its_b3_sig <- ifelse(summary(object$ITS)[["coefficients"]][4, "Pr(>|t|)"] < .05, "significant", "non-significant")
-      its_b4_sig <- ifelse(summary(object$ITS)[["coefficients"]][5, "Pr(>|t|)"] < .05, "significant", "non-significant")
-      its_b5_sig <- ifelse(summary(object$ITS)[["coefficients"]][6, "Pr(>|t|)"] < .05, "significant", "non-significant")
-      its_b6_sig <- ifelse(summary(object$ITS)[["coefficients"]][7, "Pr(>|t|)"] < .05, "significant", "non-significant")
-      its_b7_sig <- ifelse(summary(object$ITS)[["coefficients"]][8, "Pr(>|t|)"] < .05, "significant", "non-significant")
-      its_b8_sig <- ifelse(summary(object$ITS)[["coefficients"]][9, "Pr(>|t|)"] < .05, "significant", "non-significant")
-      its_b9_sig <- ifelse(summary(object$ITS)[["coefficients"]][10, "Pr(>|t|)"] < .05, "significant", "non-significant")
-      its_b10_sig <- ifelse(summary(object$ITS)[["coefficients"]][11, "Pr(>|t|)"] < .05, "significant", "non-significant")
-      its_b11_sig <- ifelse(summary(object$ITS)[["coefficients"]][12, "Pr(>|t|)"] < .05, "significant", "non-significant")
-      Smry_int1_sig <- ifelse(object$ITS.Effects[1, "p.value"] < .05, "significant", "non-significant")
-      Smry_con1_sig <- ifelse(object$ITS.Effects[2, "p.value"] < .05, "significant", "non-significant")
-      Smry_diff1_sig <- ifelse(object$ITS.Effects[3, "p.value"] < .05, "significant", "non-significant")
-      Smry_int2_sig <- ifelse(object$ITS.Effects[4, "p.value"] < .05, "significant", "non-significant")
-      Smry_con2_sig <- ifelse(object$ITS.Effects[5, "p.value"] < .05, "significant", "non-significant")
-      Smry_diff2_sig <- ifelse(object$ITS.Effects[6, "p.value"] < .05, "significant", "non-significant")
-      # Interpretations
+      # Make for loops for types of variables #
+      post_its_coef <- vector(mode="numeric", length=length(interruptions))
+      txp_its_coef <- vector(mode="numeric", length=length(interruptions))
+      ixp_its_coef <- vector(mode="numeric", length=length(interruptions))
+      txip_its_coef <- vector(mode="numeric", length=length(interruptions))
+      for(i in 1:length(interruptions)) {
+        post_its_coef[i] <- summary(object$ITS)[["coefficients"]][seq(5, expect_coefs, by=4)[i], "Estimate"]
+        txp_its_coef[i] <- summary(object$ITS)[["coefficients"]][seq(6, expect_coefs, by=4)[i], "Estimate"]
+        ixp_its_coef[i] <- summary(object$ITS)[["coefficients"]][seq(7, expect_coefs, by=4)[i], "Estimate"]
+        txip_its_coef[i] <- summary(object$ITS)[["coefficients"]][seq(8, expect_coefs, by=4)[i], "Estimate"]
+      }
+      # Give names for the elements of the types of variables #
+      for(i in 1:length(interruptions)) {
+        names(post_its_coef)[i] <- paste0("its_b", seq(5, expect_coefs, by=4)[i]-1, "_coef")
+        names(txp_its_coef)[i] <-  paste0("its_b", seq(6, expect_coefs, by=4)[i]-1, "_coef")
+        names(ixp_its_coef)[i] <-  paste0("its_b", seq(7, expect_coefs, by=4)[i]-1, "_coef")
+        names(txip_its_coef)[i] <-  paste0("its_b", seq(8, expect_coefs, by=4)[i]-1, "_coef")
+      }
+      ## Summary of ITS effects ##
+      Smry_int_coef <- vector(mode="numeric", length=length(interruptions))
+      Smry_con_coef <- vector(mode="numeric", length=length(interruptions))
+      Smry_diff_coef <- vector(mode="numeric", length=length(interruptions))
+      for(i in 1:length(interruptions)) {
+        Smry_int_coef[i] <- object$ITS.Effects[seq(1, length(interruptions)*3, by=3)[i], "Effect"]
+        Smry_con_coef[i] <- object$ITS.Effects[seq(2, length(interruptions)*3, by=3)[i], "Effect"]
+        Smry_diff_coef[i] <- object$ITS.Effects[seq(3, length(interruptions)*3, by=3)[i], "Effect"]
+      }
+      # Significance test for coefficients #
+      its_b_sig <- ifelse(summary(object$ITS)[["coefficients"]][, "Pr(>|t|)"] < .05, "significant", "non-significant")
+      # Significance test for ITS effects #
+      Smry_sig_all <- ifelse(object$ITS.Effects[, "p.value"] < .05, "significant", "non-significant")
+      # Make vectors for intervention, control, and difference values
+      Smry_int_sig <- vector(mode="character", length=length(interruptions))
+      Smry_con_sig <- vector(mode="character", length=length(interruptions))
+      Smry_diff_sig <- vector(mode="character", length=length(interruptions))
+      for(i in 1:length(interruptions)) {
+        Smry_int_sig[i] <- Smry_sig_all[seq(1, length(Smry_sig_all), by=3)][i]
+        Smry_con_sig[i] <- Smry_sig_all[seq(2, length(Smry_sig_all), by=3)][i]
+        Smry_diff_sig[i] <- Smry_sig_all[seq(3, length(Smry_sig_all), by=3)][i]
+      }
+      # Interpretations #
       its_intro <- c("Note: Some variable names below based on time points (or 'interruptions'). \nThis analysis is for a two-group, single intervention period (interruption). \nPositive values indicate higher intervention group values and vice-versa for: \npost1, txp1, ixp1, txip1, post2, txp2, ixp2, txip2.")
+      # These are static interpretations that are NOT repeated
       B0 <- paste0("Intercept is ", round(its_b0_coef, 3), " and the starting value of the trend for the \ncontrol group.")
-      B1 <- paste0("ITS.Time is ", round(its_b1_coef, 3), " and the control group\'s slope prior to intervention. \nThe coefficient is ", its_b1_sig, ".")
-      B2 <- paste0("ITS.Int is ", round(its_b2_coef, 3), " and the difference in the level between intervention \nand control group prior to intervention 1 (intervention - control). \nThe coefficient is ", its_b2_sig, ".")
-      B3 <- paste0("txi is ", round(its_b3_coef, 3), " and the difference between the intervention and \ncontrol group\'s pre-intervention slopes (intervention - control). \nThe coefficient is ", its_b3_sig, ".")
-      B4 <- paste0(X_var_its[4], " is ", round(its_b4_coef, 3), " and the immediate shift in the control group \ntrend line after the 1st intervention start. The coefficient is \n", its_b4_sig, ".")
-      B5 <- paste0(X_var_its[5], " is ", round(its_b5_coef, 3), " and the difference between pre- and post-intervention \ncontrol group slopes (e.g., change in the pre-intervention \nslope). The coefficient is ", its_b5_sig, ".")
-      B6 <- paste0(X_var_its[6], " is ", round(its_b6_coef, 3), " and the difference between the intervention and \ncontrol groups (intervention - control) in the period immediately \nafter the intervention started (e.g., 1st year of intervention 1). \nThe coefficient is ", its_b6_sig, ".")
-      B7 <- paste0(X_var_its[7], " is ", round(its_b7_coef, 3), " and ", its_b7_sig, "."," This is the difference in both \ngroup\'s slope changes since pre-intervention (pre-slopes compared \nto post-slopes). For example, both have pre-intervention slopes \nof 2, the control group\'s slope remained the same, therefore the \npost 1st intervention slope is 0. And the intervention group's slope \nincreased by 2, then txip1 = 2 (= 2 - 0).")
-      B8 <- paste0(X_var_its[8], " is ", round(its_b8_coef, 3), " and the immediate shift in the control group \ntrend line after the 2nd intervention start. The coefficient is \n", its_b8_sig, ".")
-      B9 <- paste0(X_var_its[9], " is ", round(its_b9_coef, 3), " and the difference between 1st and 2nd intervention \ncontrol group slopes (e.g., change in the 1st intervention \nslope). The coefficient is ", its_b9_sig, ".")
-      B10 <- paste0(X_var_its[10], " is ", round(its_b10_coef, 3), " and the difference between the intervention and \ncontrol groups (intervention - control) in the period immediately \nafter the 2nd intervention started (e.g., 1st year of intervention 2). \nThe coefficient is ", its_b10_sig, ".")
-      B11 <- paste0(X_var_its[11], " is ", round(its_b11_coef, 3), " and ", its_b11_sig, "."," This is the difference in both group\'s \nslope changes since the 1st intervention (1st intervention slope compared \nto the 2nd). For example, both have 1st intervention slopes of 2, the control \ngroup\'s slope remained the same, therefore the 2nd intervention slope is 0. And \nthe intervention group's slope increased by 2, then txip2 = 2 (= 2 - 0).")
-      its_Summary1 <- paste0("Summary 1: For the 1st intervention period, the results show that the \nintervention group\'s ", Smry_int1_sig, " shift in ", Y_var_its, ", \npost 1st intervention was ", round(Smry_int1_coef, 3), ". The control group\'s ",Smry_con1_sig, " \nshift in ", Y_var_its, ", post 1st intervention was ", round(Smry_con1_coef, 3), ". The ", Smry_diff1_sig, " \ndifference between both groups is ", round(Smry_diff1_coef, 3), ".")
-      its_Summary2 <- paste0("Summary 2: For the 2nd intervention period, the results show that the \nintervention group\'s ", Smry_int2_sig, " shift in ", Y_var_its, ", \npost 2nd intervention was ", round(Smry_int2_coef, 3), ". The control group\'s ",Smry_con2_sig, " \nshift in ", Y_var_its, ", post 2nd intervention was ", round(Smry_con2_coef, 3), ". The ", Smry_diff2_sig, " \ndifference between both groups is ", round(Smry_diff2_coef, 3), ".")
+      B1 <- paste0("ITS.Time is ", round(its_b1_coef, 3), " and the control group\'s slope prior to intervention. \nThe coefficient is ", its_b_sig[2], ".")
+      B2 <- paste0("ITS.Int is ", round(its_b2_coef, 3), " and the difference in the level between intervention \nand control group prior to intervention 1 (intervention - control). \nThe coefficient is ", its_b_sig[3], ".")
+      B3 <- paste0("txi is ", round(its_b3_coef, 3), " and the difference between the intervention and \ncontrol group\'s pre-intervention slopes (intervention - control). \nThe coefficient is ", its_b_sig[4], ".")
+      # Interpretations that come from a for loop #
+      # post
+      post_interpret <- vector(mode="character", length=length(interruptions))
+      for(i in 1:length(interruptions)) {
+        post_interpret[i] <- paste0(mainvars2[seq(5, expect_coefs, by=4)][i], " is ", round(post_its_coef[i], 3), " and the immediate shift in the control group trend \nline after this intervention time starts. The coefficient is \n", its_b_sig[seq(5, expect_coefs, by=4)][i], ".")
+      }
+      # txp
+      txp_interpret <- vector(mode="character", length=length(interruptions))
+      for(i in 1:length(interruptions)) {
+        txp_interpret[i] <- paste0(mainvars2[seq(6, expect_coefs, by=4)][i], " is ", round(txp_its_coef[i], 3), " and the difference between current and prior intervention \ncontrol group slopes (e.g., change in the pre-intervention slope). \nThe coefficient is ", its_b_sig[seq(6, expect_coefs, by=4)][i], ".")
+      }
+      # ixp
+      ixp_interpret <- vector(mode="character", length=length(interruptions))
+      for(i in 1:length(interruptions)) {
+        ixp_interpret[i] <- paste0(mainvars2[seq(7, expect_coefs, by=4)][i], " is ", round(ixp_its_coef[i], 3), " and the difference between the intervention and \ncontrol groups (intervention - control) in the period immediately \nafter this intervention started (e.g., 1st year of intervention 1). \nThe coefficient is ", its_b_sig[seq(7, expect_coefs, by=4)][i], ".")
+      }
+      # txip
+      txip_interpret <- vector(mode="character", length=length(interruptions))
+      for(i in 1:length(interruptions)) {
+        txip_interpret[i] <- paste0(mainvars2[seq(8, expect_coefs, by=4)][i], " is ", round(txip_its_coef[i], 3), " and ", its_b_sig[seq(8, expect_coefs, by=4)][i], "."," This is the difference in both \ngroup\'s slope changes since the prior intervention (pre-slopes compared \nto post-slopes). For example, both have pre-intervention slopes \nof 2, the control group\'s slope remained the same, therefore the \npost 1st intervention slope is 0. And the intervention group's slope \nincreased by 2, then txip1 = 2 (= 2 - 0).")
+      }
+      ## Intervention period effect ##
+      its_Summary <- vector(mode="character", length=length(interruptions))
+      for(i in 1:length(interruptions)) {
+        its_Summary[i] <- paste0("Summary ", i, ": For this intervention period ", i, ", ", "the results show that the \nintervention group\'s ", Smry_int_sig[i], " shift in ", Y_var_its, ", \npost intervention was ", round(Smry_int_coef[i], 3), ". The control group\'s ",Smry_con_sig[i], " \nshift in ", Y_var_its, ", post intervention was ", round(Smry_con_coef[i], 3), ". The ", Smry_diff_sig[i], " \ndifference between both groups is ", round(Smry_diff_coef[i], 3), ".")
+      }
+      # additional variables
       its_covariates <- c("If there are additional variables in the model then the coefficients \nabove represent effects after controlling for the other variables.")
     }
   }
@@ -352,13 +406,13 @@ interpret <- function(object) {
                   its_covariates=its_covariates)
     }
     if(object$analysis_type$itsa_type == "sgmt") {
-      its <- list(its_intro=its_intro, B0=B0, B1=B1, B2=B2, B3=B3, B4=B4, B5=B5,
-                  its_Summary1=its_Summary1, its_Summary2=its_Summary2,its_covariates=its_covariates)
+      its <- list(its_intro=its_intro, B0=B0, B1=B1, post_interpret=post_interpret,
+                  txp_interpret=txp_interpret, its_Summary=its_Summary, its_covariates=its_covariates)
     }
     if(object$analysis_type$itsa_type == "mgmt") {
-      its <- list(its_intro=its_intro, B0=B0, B1=B1, B2=B2, B3=B3, B4=B4, B5=B5,
-                  B6=B6, B7=B7, B8=B8, B9=B9, B10=B10, B11=B11, its_Summary1=its_Summary1,
-                  its_Summary2=its_Summary2, its_covariates=its_covariates)
+      its <- list(its_intro=its_intro, B0=B0, B1=B1, B2=B2, B3=B3,
+                  post_interpret=post_interpret, txp_interpret=txp_interpret, ixp_interpret=ixp_interpret,
+                  txip_interpret=txip_interpret, its_Summary=its_Summary, its_covariates=its_covariates)
     }
   }
   # Regression models
