@@ -4,12 +4,37 @@
 \alias{plot.importance}
 \title{Plot of variable importance ranked by partial chi-square statistic}
 \usage{
-\method{plot}{importance}(x, y, ...)
+\method{plot}{importance}(
+  x,
+  y,
+  main = NULL,
+  cex = NULL,
+  pt.cex = NULL,
+  pch = NULL,
+  color = NULL,
+  lcolor = NULL,
+  ...
+)
 }
 \arguments{
 \item{x}{importance object.}
 
 \item{y}{not currently used.}
+
+\item{main}{overall title for the plot, default is 'Variable Importance'.}
+
+\item{cex}{the character size to be used. Setting cex to a value smaller than 1
+can be a useful way of avoiding label overlap. This sets the actual size,
+not a multiple of par('cex').}
+
+\item{pt.cex}{the cex to be applied to plotting symbols, default is 2.}
+
+\item{pch}{the plotting character or symbol to be used, default is 19.}
+
+\item{color}{the color to be used for points and labels when there are
+significant results. Default is 'red'.}
+
+\item{lcolor}{the color(s) to be used for the horizontal lines. Default is 'gray'.}
 
 \item{...}{additional arguments.}
 }
