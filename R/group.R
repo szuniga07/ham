@@ -24,6 +24,9 @@
 #' Uses binary outcome formula (between-group variance/(between-group variance + (3.14^2/3)) for ICC
 #' in Rabe-Hesketh which may be more appropriate for multilevel models. ICC, MOR, DE may be less
 #' reliable for binomial and Poisson distributions, use caution.
+#' @param asis a logical vector that indicates if data will be processed as having only 1 unique observation per 'x' and 'z' combination
+#' (i.e., this is intended for use with aggregated data). Default is FALSE. This will allow the plot function to graph single observation data for groups
+#' over time. Only the t distribution is used for the overall trend line and confidence band (works in conjunction with 'ocol' and 'oband').
 #'
 #' @return list of confidence intervals for outcomes by groups, over time,
 #' and clustering measures. Some values returned in alphabetical and numerical order based on the group.
@@ -58,7 +61,7 @@
 #' group(x="risk", y="rdm30", dataf=hosprog, quarts=TRUE, dist="b", conf.int=0.90)
 
 group <- function(x, y, z=NULL, dataf, dist="t", conf.int=0.95, increment=1,
-                  rolling=NULL, quarts=FALSE, cluster=FALSE ) {
+                  rolling=NULL, quarts=FALSE, cluster=FALSE, asis=FALSE ) {
   if(conf.int <= 0 || conf.int >= 1 ) {
     stop("Error: Expecting confidence interval level within 0 to 1.")
   }
@@ -67,6 +70,14 @@ group <- function(x, y, z=NULL, dataf, dist="t", conf.int=0.95, increment=1,
   }
   if( !dist %in% c("b","t","p")) {
     stop("Error: Expecting only 'b', 't', or 'p' for binomial, t, or Poisson distributions.")
+  }
+  if( dist %in% c("b","p")) {
+    if( asis == TRUE) {
+    stop("Error: Expecting only the argument dist= 't' when asis= TRUE.")
+    }
+  }
+  if(all(c(cluster, asis)  == TRUE)) {
+    stop("Error: No clustering results produced when asis= TRUE and cluster= TRUE.")
   }
   #Make "Increment" object equal to increment
   Increment <- increment
@@ -116,9 +127,16 @@ group <- function(x, y, z=NULL, dataf, dist="t", conf.int=0.95, increment=1,
     all_Upper <- all_m + all_MOE
     adf_all <- data.frame(cbind(PointEst=all_m, Lower=all_Lower, Upper=all_Upper))
     #Calculates confidence intervals--By Level
+    if (asis == TRUE) {
+      MOE <- NA
+      Lower <- agr_df$agr_m
+      Upper <- agr_df$agr_m
+    }
+    if (asis == FALSE) {
     MOE <- qt((conf_lev/2)+.5, df=agr_df$agr_n - 1) * agr_df$agr_sd/sqrt(agr_df$agr_n)
     Lower <- agr_df$agr_m - MOE
     Upper <- agr_df$agr_m + MOE
+    }
     adf_alpha <- data.frame(Group=agr_df$x_lev, PointEst=agr_df$agr_m, Lower=Lower, Upper=Upper)
     rownames(adf_alpha) <- agr_df$x_lev
     #  alpha_o <- order(rownames(adf_alpha), decreasing = T)
@@ -230,7 +248,7 @@ group <- function(x, y, z=NULL, dataf, dist="t", conf.int=0.95, increment=1,
   }
 
   #Continuous outcomes
-  ftconf <- function(x, xlev=NULL, y, z, dataf, conf_lev, Increment=1) {
+  ftconf <- function(x, xlev=NULL, y, z, dataf, conf_lev, Increment=1, asis) {
     Increment <- Increment
     #Aggregates outcome by factor
     if( is.null(xlev)) {
@@ -251,9 +269,16 @@ group <- function(x, y, z=NULL, dataf, dist="t", conf.int=0.95, increment=1,
       agr_df <- data.frame(x_lev=agr_m[, 1], z_lev=as.integer(c(agr_m[, 2])), agr_m=agr_m[, 3], agr_sd=agr_sd[, 3], agr_n=agr_n[, 3])
     }
     #Calculates confidence intervals
-    MOE <- qt((conf_lev/2)+.5, df=agr_df$agr_n - 1) * agr_df$agr_sd/sqrt(agr_df$agr_n)
-    Lower <- agr_df$agr_m - MOE
-    Upper <- agr_df$agr_m + MOE
+    if (asis == TRUE) {
+      MOE <- NA
+      Lower <- agr_df$agr_m
+      Upper <- agr_df$agr_m
+    }
+    if (asis == FALSE) {
+      MOE <- qt((conf_lev/2)+.5, df=agr_df$agr_n - 1) * agr_df$agr_sd/sqrt(agr_df$agr_n)
+      Lower <- agr_df$agr_m - MOE
+      Upper <- agr_df$agr_m + MOE
+    }
     adf_alpha <- data.frame(cbind(PointEst=agr_df$agr_m, Lower=Lower, Upper=Upper))
     agr_df <- cbind(agr_df, adf_alpha)
     return(agr_df )
@@ -291,7 +316,7 @@ group <- function(x, y, z=NULL, dataf, dist="t", conf.int=0.95, increment=1,
   fconf <- function(x, xlev=NULL, y, z, dataf, conf_lev,
                     Increment=1, dist) {
     switch(dist,
-           "t" =  ftconf(x, xlev, y, z, dataf, conf_lev, Increment),
+           "t" =  ftconf(x, xlev, y, z, dataf, conf_lev, Increment, asis),
            "b" =  fbconf(x, xlev, y, z, dataf, conf_lev, Increment),
            "p" =  fpconf(x, xlev, y, z, dataf, conf_lev, Increment)
     )
@@ -316,7 +341,7 @@ group <- function(x, y, z=NULL, dataf, dist="t", conf.int=0.95, increment=1,
   }
 
   #Continuous outcomes
-  ftotTconf <- function(y, z, dataf, conf_lev, Increment) {
+  ftotTconf <- function(y, z, dataf, conf_lev, Increment, asis) {
     #Confidence interval data for increments
     if(Increment == 1) {
       agr_m <- aggregate(dataf[, y], list( dataf[, z]), FUN="mean", na.rm=TRUE)
@@ -330,7 +355,7 @@ group <- function(x, y, z=NULL, dataf, dist="t", conf.int=0.95, increment=1,
       agr_df <- data.frame(z_lev= as.integer(c(agr_m[, 1])), agr_m=agr_m[, 2], agr_sd=agr_sd[, 2], agr_n=agr_n[, 2])
     }
     #Calculates confidence intervals
-    MOE <- qt((conf_lev/2)+.5, df=agr_df$agr_n - 1) * agr_df$agr_sd/sqrt(agr_df$agr_n)
+      MOE <- qt((conf_lev/2)+.5, df=agr_df$agr_n - 1) * agr_df$agr_sd/sqrt(agr_df$agr_n)
     Lower <- agr_df$agr_m - MOE
     Upper <- agr_df$agr_m + MOE
     adf_alpha <- data.frame(cbind(PointEst=agr_df$agr_m, Lower=Lower, Upper=Upper))
@@ -363,7 +388,7 @@ group <- function(x, y, z=NULL, dataf, dist="t", conf.int=0.95, increment=1,
 
   ftotconf <- function(y, z, dataf, conf_lev, Increment, dist) {
     switch(dist,                #"var" and can be used anywhere in server.r.
-           "t" =  ftotTconf(y, z, dataf, conf_lev, Increment),
+           "t" =  ftotTconf(y, z, dataf, conf_lev, Increment, asis),
            "b" =  ftotBconf(y, z, dataf, conf_lev, Increment),
            "p" =  ftotPconf(y, z, dataf, conf_lev, Increment)
     )

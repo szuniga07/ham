@@ -14,7 +14,8 @@ group(
   increment = 1,
   rolling = NULL,
   quarts = FALSE,
-  cluster = FALSE
+  cluster = FALSE,
+  asis = FALSE
 )
 }
 \arguments{
@@ -50,6 +51,10 @@ such as the Intra-Class Correlation, Median Odds Ratio, or Design Effect. Defaul
 Uses binary outcome formula (between-group variance/(between-group variance + (3.14^2/3)) for ICC
 in Rabe-Hesketh which may be more appropriate for multilevel models. ICC, MOR, DE may be less
 reliable for binomial and Poisson distributions, use caution.}
+
+\item{asis}{a logical vector that indicates if data will be processed as having only 1 unique observation per 'x' and 'z' combination
+(i.e., this is intended for use with aggregated data). Default is FALSE. This will allow the plot function to graph single observation data for groups
+over time. Only the t distribution is used for the overall trend line and confidence band (works in conjunction with 'ocol' and 'oband').}
 }
 \value{
 list of confidence intervals for outcomes by groups, over time,

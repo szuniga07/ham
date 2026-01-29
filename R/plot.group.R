@@ -11,11 +11,13 @@
 #' @param oband logical TRUE or FALSE that indicates whether to add an overall confidence band. Default is FALSE.
 #' @param tgt specify 1 or more values on the x-axis of where to add a target line. Default is NULL.
 #' @param tcol select a color for the target line. Default is 'gray'.
-#' @param tpline add one or time point vertical line(s) using x-axis values when y='time' or y='roll'. Default is NULL.
+#' @param tpline add one or more time point vertical line(s) using x-axis values when y='time' or y='roll'. Default is NULL.
 #' @param tpcol specify a color for the time point line, tpline. Default is NULL.
 #' @param xlim specify plot's x-axis limits with a 2 value vector.
 #' @param ylim specify plot's y-axis limits with a 2 value vector.
 #' @param main the main title of the plot.
+#' @param xlab a vector label for the x-axis.
+#' @param ylab a vector label for the y-axis.
 #' @param lwd select the line width. Default is 1.
 #' @param adj.alpha factor modifying the opacity alpha of the confidence interval bands, in the range of 0 to 1. Default is 0.4.
 #' @param cex A numerical value giving the amount by which plotting text and symbols should be magnified relative to the default of 1.
@@ -28,6 +30,9 @@
 #' @param name logical TRUE or FALSE that indicates whether group names
 #' should be added to the 'time' or 'roll' plots. Default is FALSE.
 #' @param abbrv the minimum length of the abbreviations. Default is 5.
+#' @param roll.x one of 2 character options to graph rolling average x-axis values as either the 'Start' or 'Stop' of the time period.
+#' Selecting 'Start' indicates the time point on the x-axis as the first month (e.g., roll=12 will have a graph that starts at 1 on the x-axis).
+#' The default is 'Stop' (e.g., roll=12 will have a graph that starts at 12 on the x-axis).
 #' @param ... additional arguments.
 #'
 #' @return plot of group level confidence intervals, including estimates over time periods.
@@ -53,13 +58,16 @@
 #'   oband=TRUE, ocol="gray", tcol="green", tgt=4, tpline=c(4,6),
 #'   tpcol="yellow", name=TRUE, cex.axis=1, cex.lab=1, cex.text=2,
 #'   cex.main=1.25, adj.alpha=.3)
+#'
+#'   # Helpful note: You can plot aggregated data if you used the argument asis=TRUE in group(),
 
 
 plot.group <- function(x, y="group", order="alpha", gcol="blue", gband=FALSE, pcol="red", overall=FALSE,
                        ocol="gray", oband=FALSE, tgt=NULL, tcol="gray", tpline=NULL,
-                       tpcol="gray", xlim=NULL, ylim=NULL, main=NULL, lwd=1, adj.alpha=0.4,
+                       tpcol="gray", xlim=NULL, ylim=NULL, main=NULL,
+                       xlab=NULL, ylab=NULL, lwd=1, adj.alpha=0.4,
                        cex=1, cex.axis=1, cex.lab=1, cex.main=1, cex.text=1, round.c=2,
-                       name=FALSE, abbrv=5, ...) {
+                       name=FALSE, abbrv=5, roll.x="Stop", ...) {
   if(any(is.null(c(x, y)) == TRUE)) {
     stop("Error: Expecting both an x and y argument.")
   }
@@ -69,7 +77,7 @@ plot.group <- function(x, y="group", order="alpha", gcol="blue", gband=FALSE, pc
   ##########################################
   # Plot function for confidence intervals #
   ##########################################
-  plot_ci_fnc <- function(x, alpha_num, main, lwd, Lcol, Pcol, tgt, Cbar,
+  plot_ci_fnc <- function(x, alpha_num, main, xlab, ylab, lwd, Lcol, Pcol, tgt, Cbar,
                           roundVal, adj.alpha, xlim, ylim, abbrv, ocol, tcol,
                           cex, cex.axis, cex.lab, cex.main) {
     # Get analysis info #
@@ -95,12 +103,21 @@ plot.group <- function(x, y="group", order="alpha", gcol="blue", gband=FALSE, pc
     } else {
       main_ttl <- paste0(ciconf_lev * 100, "% ", "Confidence Intervals of ", ycivar, " by ", xcivar)
     }
+      # Create x and y labels
+      if (!is.null(xlab)) {
+        xlab <- xlab
+      } else {
+        xlab <- paste0("Value (vertical line = overall mean of ", round(mainYmn, roundVal), ", ", ciconf_lev * 100, "% ", "CI",
+                       " [", round(cidf[["adf_all"]][,"Lower"], roundVal), ", ", round(cidf[["adf_all"]][,"Upper"], roundVal),"]",")")
+      }
+      if (!is.null(ylab)) {
+        ylab <- ylab
+      } else {
+        ylab <- ""
+      }
     rng <- seq(min(adf[, 3:4]), max(adf[, 3:4]),length.out=nrow(adf))
-    plot(rng, 1:nrow(adf), type="n", ylab="",
-         xlab= paste0("Value (vertical line = overall mean of ", round(mainYmn, roundVal), ", ", ciconf_lev * 100, "% ", "CI",
-                      " [", round(cidf[["adf_all"]][,"Lower"], roundVal), ", ", round(cidf[["adf_all"]][,"Upper"], roundVal),"]",")"),
-         #main=main_ttl,
-         axes=F,  cex.lab=cex.lab, xlim=xlim, ylim=ylim)
+    plot(rng, 1:nrow(adf), type="n", ylab=ylab,
+         xlab= xlab, axes=F,  cex.lab=cex.lab, xlim=xlim, ylim=ylim)
     title(main_ttl, cex.main = cex.main)
     for (i in 1:nrow(adf)) {
       lines(c(adf[,'Lower'][i], adf[,'Upper'][i]), c(i,i), lwd=lwd, col=Lcol)
@@ -134,9 +151,9 @@ plot.group <- function(x, y="group", order="alpha", gcol="blue", gband=FALSE, pc
   ##            Function to create the time plot            ##
   ############################################################
   plot_fci_fnc <- function(x, y, xlim, ylim, lwd, LCol, cibands, ocibands,
-                           Tot.Line, Tot.Color, Tgt.Color, Tgt.Line,
-                           Time.Pt.Line, Tpt.Color, cex, cex.axis, cex.lab,
-                           cex.main, cex.text, name, abbrv, adj.alpha) {
+                           Tot.Line, Tot.Color, Tgt.Color, Tgt.Line, main,
+                           xlab, ylab, Time.Pt.Line, Tpt.Color, cex, cex.axis,
+                           cex.lab, cex.main, cex.text, name, abbrv, adj.alpha) {
 
     # Get analysis info #
     xcivar <- x[["Variables"]][["x"]]
@@ -153,8 +170,8 @@ plot.group <- function(x, y="group", order="alpha", gcol="blue", gband=FALSE, pc
     if(y== "roll") {
       cidf <- x[["Roll.CI"]][[1]]     #by time
       cidf_tot <- x[["Roll.CI"]][[2]] #Overall
-      colnames(cidf)[which(colnames(cidf) %in% c("Group", "Start"))] <- c("x_lev","z_lev")
-      colnames(cidf_tot)[which(colnames(cidf_tot) == "Start")] <- "z_lev"
+      colnames(cidf)[which(colnames(cidf) %in% c("Group", roll.x))] <- c("x_lev","z_lev")
+      colnames(cidf_tot)[which(colnames(cidf_tot) == roll.x)] <- "z_lev"
     }
     #Unique levels
     ctrs <- sort(unique(cidf[["x_lev"]]))
@@ -174,17 +191,33 @@ plot.group <- function(x, y="group", order="alpha", gcol="blue", gband=FALSE, pc
     #Make text out of the confidence level
     ConINT <- paste0(as.character(Conf.Intrv*100), "%")
     #Main title
-    if(cibands == TRUE) {
-      Main.Title <- paste0( ycivar, " trajectories per ", xcivar,  " by ",
-                            zcivar, " with ", ConINT, " confidence bands")
+    if (is.null(main)) {
+      if(cibands == TRUE) {
+        Main.Title <- paste0( ycivar, " trajectories per ", xcivar,  " by ",
+                              zcivar, " with ", ConINT, " confidence bands")
+      } else {
+        Main.Title <- paste0( ycivar, " trajectories per ", xcivar,  " by ", zcivar)
+      }
+
     } else {
-      Main.Title <- paste0( ycivar, " trajectories per ", xcivar,  " by ", zcivar)
+      Main.Title <- main
+    }
+    # Create x and y labels
+    if (!is.null(xlab)) {
+      xlab <- xlab
+    } else {
+      xlab <- zcivar
+    }
+    if (!is.null(ylab)) {
+      ylab <- ylab
+    } else {
+      ylab <- ycivar
     }
     #Set up colors
     my_clr <- rep_len(LCol, length.out= length(ctrs))
     plot(times, seq(min(min_ci, na.rm=T), max(max_ci, na.rm=T),
                     length.out=length(times)), type="n",cex.lab=cex.lab,
-         axes=F, ylab=ycivar, xlab=zcivar, xlim=xlim, ylim=ylim )
+         axes=F, ylab=ylab, xlab=xlab, xlim=xlim, ylim=ylim )
     title(Main.Title, cex.main = cex.main)
     axis(1, las=1, cex.axis=cex.axis )
     axis(2, las=3, cex.axis=cex.axis )
@@ -265,15 +298,16 @@ plot.group <- function(x, y="group", order="alpha", gcol="blue", gband=FALSE, pc
 
   # Run the functions above #
   switch(y,
-         "group"   = plot_ci_fnc(x=x, alpha_num=order, main=main, lwd=lwd, Lcol=gcol, Pcol=pcol, tgt=tgt, Cbar=oband,
+         "group"   = plot_ci_fnc(x=x, alpha_num=order, main=main,xlab=xlab,ylab=ylab,lwd=lwd, Lcol=gcol,
+                                 Pcol=pcol, tgt=tgt, Cbar=oband,
                                  roundVal=round.c, adj.alpha=adj.alpha, xlim=xlim, ylim=ylim, abbrv=abbrv, ocol=ocol,
                                  tcol=tcol, cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main),
-         "time"   = plot_fci_fnc(x=x, y=y, xlim=xlim, ylim=ylim, lwd=lwd, LCol=gcol,
+         "time"   = plot_fci_fnc(x=x, y=y, xlim=xlim, ylim=ylim, lwd=lwd, LCol=gcol, main=main,xlab=xlab,ylab=ylab,
                                  cibands=gband, ocibands=oband, Tot.Line=overall, Tot.Color=ocol, Tgt.Color=tcol,
                                  Tgt.Line=tgt, Time.Pt.Line=tpline, Tpt.Color=tpcol, cex=cex, cex.axis=cex.axis,
                                  cex.lab=cex.lab, cex.main=cex.main, cex.text=cex.text, name=name,
                                  abbrv=abbrv, adj.alpha=adj.alpha),
-         "roll"   = plot_fci_fnc(x=x, y=y, xlim=xlim, ylim=ylim, lwd=lwd, LCol=gcol,
+         "roll"   = plot_fci_fnc(x=x, y=y, xlim=xlim, ylim=ylim, lwd=lwd, LCol=gcol, main=main,xlab=xlab,ylab=ylab,
                                  cibands=gband, ocibands=oband, Tot.Line=overall, Tot.Color=ocol, Tgt.Color=tcol,
                                  Tgt.Line=tgt, Time.Pt.Line=tpline, Tpt.Color=tpcol, cex=cex, cex.axis=cex.axis,
                                  cex.lab=cex.lab, cex.main=cex.main, cex.text=cex.text, name=name,
