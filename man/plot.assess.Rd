@@ -20,6 +20,7 @@
   adj.alpha = NULL,
   add.means = FALSE,
   add.legend = NULL,
+  legend = NULL,
   cex = NULL,
   cex.axis = NULL,
   cex.lab = NULL,
@@ -66,6 +67,8 @@
 
 \item{add.legend}{add a legend by selecting the location as "bottomright", "bottom", "bottomleft",
 "left", "topleft", "top", "topright", "right", "center". No legend if nothing selected.}
+
+\item{legend}{a character vector of length >= 1 to appear in the DID and ITS model legends to represent the Intervention and Control groups.}
 
 \item{cex}{A numerical value giving the amount by which plotting text and symbols should be magnified relative to the default of 1.}
 
