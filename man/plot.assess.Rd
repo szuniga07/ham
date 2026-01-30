@@ -21,6 +21,8 @@
   add.means = FALSE,
   add.legend = NULL,
   legend = NULL,
+  tgt = NULL,
+  tgtcol = "gray",
   cex = NULL,
   cex.axis = NULL,
   cex.lab = NULL,
@@ -69,6 +71,10 @@
 "left", "topleft", "top", "topright", "right", "center". No legend if nothing selected.}
 
 \item{legend}{a character vector of length >= 1 to appear in the DID and ITS model legends to represent the Intervention and Control groups.}
+
+\item{tgt}{specify 1 or more values on the x-axis of where to add a target line when y='group'. Or 1 or more values on the y-axis of where to add a target line when y='time' or 'roll'. Default is NULL.}
+
+\item{tgtcol}{select a color for the target line. Default is 'gray'.}
 
 \item{cex}{A numerical value giving the amount by which plotting text and symbols should be magnified relative to the default of 1.}
 

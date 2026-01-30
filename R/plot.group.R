@@ -9,7 +9,8 @@
 #' @param overall logical TRUE or FALSE that indicates whether to include the overall sample confidence intervals (i.e., not each group). Default is FALSE.
 #' @param ocol indicate the optional overall line color. Default is 'gray' when overall=TRUE.
 #' @param oband logical TRUE or FALSE that indicates whether to add an overall confidence band. Default is FALSE.
-#' @param tgt specify 1 or more values on the x-axis of where to add a target line. Default is NULL.
+#' @param tgt specify 1 or more values on the x-axis of where to add a target line when y='group'. Or 1 or more values on the y-axis of where to add a
+#' target line when y='time' or 'roll'. Default is NULL.
 #' @param tcol select a color for the target line. Default is 'gray'.
 #' @param tpline add one or more time point vertical line(s) using x-axis values when y='time' or y='roll'. Default is NULL.
 #' @param tpcol specify a color for the time point line, tpline. Default is NULL.

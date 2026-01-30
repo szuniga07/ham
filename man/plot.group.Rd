@@ -56,7 +56,8 @@
 
 \item{oband}{logical TRUE or FALSE that indicates whether to add an overall confidence band. Default is FALSE.}
 
-\item{tgt}{specify 1 or more values on the x-axis of where to add a target line. Default is NULL.}
+\item{tgt}{specify 1 or more values on the x-axis of where to add a target line when y='group'. Or 1 or more values on the y-axis of where to add a
+target line when y='time' or 'roll'. Default is NULL.}
 
 \item{tcol}{select a color for the target line. Default is 'gray'.}
 

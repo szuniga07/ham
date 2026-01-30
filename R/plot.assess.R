@@ -16,6 +16,8 @@
 #' @param lwd select the line width.
 #' @param col specify intervention and control group colors in a vector. Defaults to, if nothing selected, c("blue", "red") or "blue" for single-group Interrupted Time Series models.
 #' @param tcol specify treatment or interruption line color as a single character vector. Defaults to "gray" if nothing selected.
+#' @param tgt specify 1 or more values on the x-axis of where to add a target line when y='group'. Or 1 or more values on the y-axis of where to add a target line when y='time' or 'roll'. Default is NULL.
+#' @param tgtcol select a color for the target line. Default is 'gray'.
 #' @param cfact logical TRUE or FALSE that indicates whether a counterfactual line should be included. Defaults to FALSE.
 #' @param conf.int logical TRUE or FALSE that indicates whether a 95% confidence interval bands should be included. Defaults to FALSE.
 #' @param adj.alpha factor modifying the opacity alpha of the confidence interval bands, in the range of 0 to 1. Default is NULL; if conf.int=TRUE, defaults to 0.4.
@@ -71,7 +73,7 @@
 #' cfact=TRUE, conf.int=TRUE, adj.alpha=0.2)
 plot.assess <- function(x, y, xlim=NULL, ylim=NULL, xlab=NULL, ylab=NULL, main=NULL, lwd=NULL, col=NULL, tcol=NULL,
                         cfact=FALSE, conf.int=FALSE, adj.alpha=NULL, add.means=FALSE, add.legend=NULL, legend=NULL,
-                        cex=NULL, cex.axis=NULL, cex.lab=NULL, cex.main=NULL, cex.text=NULL,
+                        tgt=NULL, tgtcol="gray", cex=NULL, cex.axis=NULL, cex.lab=NULL, cex.main=NULL, cex.text=NULL,
                         cex.legend=NULL, name=FALSE, coefs=FALSE, round.c=NULL,
                         pos.text=NULL, arrow=FALSE, xshift=NULL, ...) {
   if(any(is.null(c(x, y)) == TRUE)) {
@@ -422,6 +424,12 @@ if(y == "ITS") {
         col= if(cfact==TRUE) c(lcol[1],lcol[2],lcol[1], ticol) else c(lcol[1],lcol[2], ticol))
       }
     }
+    #Target line
+    if(!is.null(tgt)) {
+      for (i in 1:length(tgt)) {
+        abline(h=tgt[i], lwd=lwd, col= tgtcol[1], lty=1)
+      }
+    }
   }
 
   ##############
@@ -581,6 +589,12 @@ if(y == "ITS") {
         c(legend[1], legend[2], "Treated"), lty= if(cfact==TRUE) c(1,1,2,3) else c(1,1,3), lwd=cex.legend,
         col= if(cfact==TRUE) c(lcol[1],lcol[2],lcol[1], ticol) else c(lcol[1],lcol[2], ticol), bty="n",
         cex=cex.legend)
+      }
+    }
+    #Target line
+    if(!is.null(tgt)) {
+      for (i in 1:length(tgt)) {
+        abline(h=tgt[i], lwd=lwd, col= tgtcol[1], lty=1)
       }
     }
   }
@@ -1035,6 +1049,12 @@ if(y == "ITS") {
       # txp1
       text(timemidp2, time2thi, labels =if(coefs == TRUE) paste0(tmpdf_names[3],"= ", round(coef(cmodel)[4], round.c), model_summary_p[4]) else tmpdf_names[3],
            pos=possgst[[4]], cex=textCEX)
+      }
+    #Target line
+    if(!is.null(tgt)) {
+      for (i in 1:length(tgt)) {
+        abline(h=tgt[i], lwd=lwd, col= tgtcol[1], lty=1)
+      }
     }
   }
 
@@ -1249,6 +1269,12 @@ if(y == "ITS") {
                                               model_summary_p[seq(2, length(mainvars2), by=2)][i]) else
                                                 mainvars2[ seq(2, length(mainvars2), by=2)][i],
              pos=posmgmt[ seq(2, length(mainvars2), by=2) ][i], cex=textCEX)
+      }
+    }
+    #Target line
+    if(!is.null(tgt)) {
+      for (i in 1:length(tgt)) {
+        abline(h=tgt[i], lwd=lwd, col= tgtcol[1], lty=1)
       }
     }
   } #End of sgmt
@@ -1582,7 +1608,12 @@ if(y == "ITS") {
       text(timemidp2, time2thi, labels =if(coefs == TRUE) paste0(tmpdf_names[7], "= ", round(coef(cmodel)[8], round.c), model_summary_p[8]) else tmpdf_names[7],
            pos=posmgst[[8]], cex=textCEX)
     }
-
+    #Target line
+    if(!is.null(tgt)) {
+      for (i in 1:length(tgt)) {
+        abline(h=tgt[i], lwd=lwd, col= tgtcol[1], lty=1)
+      }
+    }
   }
   ##########
   ## mgmt ##
@@ -1859,6 +1890,12 @@ if(y == "ITS") {
                                               model_summary_p[seq(4, length(mainvars2), by=4)][i]) else
                                                 mainvars2[ seq(4, length(mainvars2), by=4)][i],
              pos=posmgmt[ seq(4, length(mainvars2), by=4) ][i], cex=textCEX)
+      }
+    }
+    #Target line
+    if(!is.null(tgt)) {
+      for (i in 1:length(tgt)) {
+        abline(h=tgt[i], lwd=lwd, col= tgtcol[1], lty=1)
       }
     }
   } #End of mgmt
