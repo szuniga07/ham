@@ -58,8 +58,8 @@ or ITS. If a group of cases joins X months after the primary sample, model varia
 This three element list named: 'a' = a character vector for the name of the grouping column; 'b' = specific
 categories or levels that indicate which cases have a staggered entry; and 'c' = the time point values
 at staggered entry. Both 'b' and 'c' must have identical lengths. For ITS models, the staggered entry
-time must be: interrupt 1 < stagger time < interrupt 2. For example, a national health policy may have
-started in the 3rd year of the study period in NY and other cities but Chicago and LA joined 6 and 12
+time must be: interrupt 1 < stagger time < interrupt 2. For example, a WHO health policy may have
+started in the 3rd year of the study period in NY and Toronto but Chicago and LA joined 6 and 12
 months later, therefore stagger= list(a= 'city', b=c('Chicago', 'LA')), c=(30, 36) while interrupt= 25.
 Default is NULL.}
 
