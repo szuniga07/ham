@@ -14,6 +14,7 @@ assess(
   int.time = NULL,
   treatment = NULL,
   interrupt = NULL,
+  subset = NULL,
   stagger = NULL,
   topcode = NULL,
   propensity = NULL,
@@ -51,6 +52,12 @@ Select 1 value from 'int.time' to indicate the start of the intervention.}
 
 \item{interrupt}{optional interruption (or intervention) period(s) variable name selected for ITS
 models. Select 1 or 2 values from 'int.time' to indicate the start and/or key intervention periods.}
+
+\item{subset}{an expression defining a subset of the observations to use in the regression model. The default
+is NULL, thereby using all observations. Specify, for example, data$hospital == "NY" or c(1:100,200:300) respectively to
+use just those observations. This is helpful when doing a submodel for DID or ITS after identifying similar groups.
+DID and ITS models could be improved by limiting the choice of control groups to only those with similar values on
+the intervention indicator and baseline trend variable (e.g., 'ITS.Time' and 'ITS.Int') with p-values >= 0.10.}
 
 \item{stagger}{optional list to indicate staggered entry into the intervention or treatment group.
 Relevant model variables are re-coded to appropriate values and can be used for a form of 'stacked' DID

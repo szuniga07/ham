@@ -30,6 +30,11 @@
 #' Select 1 value from 'int.time' to indicate the start of the intervention.
 #' @param interrupt optional interruption (or intervention) period(s) variable name selected for ITS
 #' models. Select 1 or 2 values from 'int.time' to indicate the start and/or key intervention periods.
+#' @param subset an expression defining a subset of the observations to use in the regression model. The default
+#' is NULL, thereby using all observations. Specify, for example, data$hospital == "NY" or c(1:100,200:300) respectively to
+#' use just those observations. This is helpful when doing a submodel for DID or ITS after identifying similar groups.
+#' DID and ITS models could be improved by limiting the choice of control groups to only those with similar values on
+#' the intervention indicator and baseline trend variable (e.g., 'ITS.Time' and 'ITS.Int') with p-values >= 0.10.
 #' @param stagger optional list to indicate staggered entry into the intervention or treatment group.
 #' Relevant model variables are re-coded to appropriate values and can be used for a form of 'stacked' DID
 #' or ITS. If a group of cases joins X months after the primary sample, model variables are adjusted X months.
@@ -100,7 +105,7 @@
 #'
 #' @importFrom stats as.formula binomial plogis predict update aggregate
 assess <- function(formula, data, regression= "none", did ="none", its ="none",
-                   intervention =NULL, int.time=NULL, treatment=NULL,interrupt=NULL,
+                   intervention =NULL, int.time=NULL, treatment=NULL,interrupt=NULL, subset=NULL,
                    stagger= NULL, topcode =NULL, propensity =NULL, newdata =FALSE) {
   # Use various formulas for the different models
   primary_formula <- formula
@@ -109,6 +114,17 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
   yvar <- xyvar[1]
   xvar <- xyvar[-1]
 
+#Identify all rows to use for subsets
+  all_rows <- nrow(data)
+  if(!is.null(subset)) {
+    subset <- subset
+  } else {
+    subset <- 1:all_rows
+  }
+#Create subset data if needed
+  if(!is.null(sub)) {
+    data <-   eval(substitute(data[subset , ], list(subset =subset))  )
+  }
   # Identify duplicate variable names in new data
   if (is.null(data)) {
     stop("Error: No data found.")
