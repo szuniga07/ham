@@ -53,7 +53,7 @@ Uses binary outcome formula (between-group variance/(between-group variance + (3
 in Rabe-Hesketh which may be more appropriate for multilevel models. ICC, MOR, DE may be less
 reliable for binomial and Poisson distributions, use caution.}
 
-\item{subset}{an expression defining a subset of the observations to use in the regression model. The default
+\item{subset}{an expression defining a subset of the observations to use in the grouping. The default
 is NULL, thereby using all observations. Specify, for example, data$hospital == "NY" or c(1:100,200:300) respectively to
 use just those observations.}
 
