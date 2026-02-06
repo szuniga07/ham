@@ -122,7 +122,7 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
     subset <- 1:all_rows
   }
 #Create subset data if needed
-  if(!is.null(sub)) {
+  if(!is.null(subset)) {
     data <-   eval(substitute(data[subset , ], list(subset =subset))  )
   }
   # Identify duplicate variable names in new data

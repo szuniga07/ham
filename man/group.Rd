@@ -15,6 +15,7 @@ group(
   rolling = NULL,
   quarts = FALSE,
   cluster = FALSE,
+  subset = NULL,
   asis = FALSE
 )
 }
@@ -51,6 +52,10 @@ such as the Intra-Class Correlation, Median Odds Ratio, or Design Effect. Defaul
 Uses binary outcome formula (between-group variance/(between-group variance + (3.14^2/3)) for ICC
 in Rabe-Hesketh which may be more appropriate for multilevel models. ICC, MOR, DE may be less
 reliable for binomial and Poisson distributions, use caution.}
+
+\item{subset}{an expression defining a subset of the observations to use in the regression model. The default
+is NULL, thereby using all observations. Specify, for example, data$hospital == "NY" or c(1:100,200:300) respectively to
+use just those observations.}
 
 \item{asis}{a logical vector that indicates if data will be processed as having only 1 unique observation per 'x' and 'z' combination
 (i.e., this is intended for use with aggregated data). Default is FALSE. This will allow the plot function to graph single observation data for groups

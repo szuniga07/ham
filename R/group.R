@@ -24,6 +24,9 @@
 #' Uses binary outcome formula (between-group variance/(between-group variance + (3.14^2/3)) for ICC
 #' in Rabe-Hesketh which may be more appropriate for multilevel models. ICC, MOR, DE may be less
 #' reliable for binomial and Poisson distributions, use caution.
+#' @param subset an expression defining a subset of the observations to use in the regression model. The default
+#' is NULL, thereby using all observations. Specify, for example, data$hospital == "NY" or c(1:100,200:300) respectively to
+#' use just those observations.
 #' @param asis a logical vector that indicates if data will be processed as having only 1 unique observation per 'x' and 'z' combination
 #' (i.e., this is intended for use with aggregated data). Default is FALSE. This will allow the plot function to graph single observation data for groups
 #' over time. Only the t distribution is used for the overall trend line and confidence band (works in conjunction with 'ocol' and 'oband').
@@ -61,7 +64,7 @@
 #' group(x="risk", y="rdm30", dataf=hosprog, quarts=TRUE, dist="b", conf.int=0.90)
 
 group <- function(x, y, z=NULL, dataf, dist="t", conf.int=0.95, increment=1,
-                  rolling=NULL, quarts=FALSE, cluster=FALSE, asis=FALSE ) {
+                  rolling=NULL, quarts=FALSE, cluster=FALSE, subset=NULL, asis=FALSE ) {
   if(conf.int <= 0 || conf.int >= 1 ) {
     stop("Error: Expecting confidence interval level within 0 to 1.")
   }
@@ -78,6 +81,17 @@ group <- function(x, y, z=NULL, dataf, dist="t", conf.int=0.95, increment=1,
   }
   if(all(c(cluster, asis)  == TRUE)) {
     stop("Error: No clustering results produced when asis= TRUE and cluster= TRUE.")
+  }
+  #Identify all rows to use for subsets
+  all_rows <- nrow(dataf)
+  if(!is.null(subset)) {
+    subset <- subset
+  } else {
+    subset <- 1:all_rows
+  }
+  #Create subset data if needed
+  if(!is.null(subset)) {
+    dataf <-   eval(substitute(dataf[subset , ], list(subset =subset))  )
   }
   #Make "Increment" object equal to increment
   Increment <- increment
