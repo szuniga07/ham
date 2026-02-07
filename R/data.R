@@ -59,3 +59,20 @@
 #' the intervention group's data used for single group interrupted time series.
 #'
 "hosp1"
+
+#' USA's unemployment rate between 1929 and 2024
+#' @format ## `unemployment`
+#' An artificial data frame with 96 rows and 5 columns:
+#' \describe{
+#'   \item{Year}{Calendar year as an integer from 1929 to 2024.}
+#'   \item{ rate }{Unemployment rate defined as the proportion of the US Labor Market that were unemployed.}
+#'   \item{ event}{Notable events in the United States that may have impacted the unemployment rate. Other than notable events (or unspecified) listed as 'other'.}
+#'   \item{ year}{Integer for the number of years for 1929 to 2024, ranging from 1 to 96.}
+#'   \item{ usa}{Value of 1 to indicate data for the USA.}
+#'   ...
+#' }
+#' @source unemployment is an artificial data frame of reasonable estimates made entirely
+#' for the purpose of demonstrating interrupted time series with many interruptions. For
+#' precise rates, please see a reliable source.
+#'
+"unemployment"
