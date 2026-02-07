@@ -23,7 +23,7 @@
   legend = NULL,
   tgt = NULL,
   tgtcol = "gray",
-  cex = NULL,
+  cex = 1,
   cex.axis = NULL,
   cex.lab = NULL,
   cex.main = NULL,

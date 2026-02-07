@@ -73,7 +73,7 @@
 #' cfact=TRUE, conf.int=TRUE, adj.alpha=0.2)
 plot.assess <- function(x, y, xlim=NULL, ylim=NULL, xlab=NULL, ylab=NULL, main=NULL, lwd=NULL, col=NULL, tcol=NULL,
                         cfact=FALSE, conf.int=FALSE, adj.alpha=NULL, add.means=FALSE, add.legend=NULL, legend=NULL,
-                        tgt=NULL, tgtcol="gray", cex=NULL, cex.axis=NULL, cex.lab=NULL, cex.main=NULL, cex.text=NULL,
+                        tgt=NULL, tgtcol="gray", cex=1, cex.axis=NULL, cex.lab=NULL, cex.main=NULL, cex.text=NULL,
                         cex.legend=NULL, name=FALSE, coefs=FALSE, round.c=NULL,
                         pos.text=NULL, arrow=FALSE, xshift=NULL, ...) {
   if(any(is.null(c(x, y)) == TRUE)) {
