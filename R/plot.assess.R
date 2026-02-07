@@ -188,18 +188,22 @@ if(y == "ITS") {
   # Cex settings cex, cex.axis, cex.lab, cex.main
   if(!is.null(cex)) {
     cex <- cex
-  } else {
-    cex <- NULL
-    }
+  }
   if(!is.null(cex.axis)) {
     cex.axis <- cex.axis
-    }
+  } else {
+    cex.axis <- 1
+  }
   if(!is.null(cex.lab)) {
     cex.lab <- cex.lab
-    }
+  } else {
+    cex.lab <- 1
+  }
   if(!is.null(cex.main)) {
     cex.main <- cex.main
-    }
+  } else {
+    cex.main <- 1
+  }
   #Line width
   if(is.null(lwd)) {
     lwidth <- 3
