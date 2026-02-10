@@ -137,4 +137,18 @@ col=c("cyan","hotpink"), tcol="springgreen", lwd=7, cex=2, cex.axis=2, cex.lab=2
 cex.main=3, cex.text=1.2, cex.legend=1.25, name=FALSE, coefs=TRUE, round.c=1,
 pos.text= list("txp5"=3, "post9"=4), arrow=TRUE, xshift=c(.5, 1.5),
 cfact=TRUE, conf.int=TRUE, adj.alpha=0.2)
+# ITS: USA's unemployment rate with a single group, 10 interruption model
+key_time <- c(5, 14, 17, 29, 42, 59, 69, 73, 80,92)# key interruption periods
+u110 <- assess(formula=rate ~ ., data=unemployment, intervention="usa",# model
+               int.time="year", its="one", interrupt= key_time)
+# Graph the results, note shift in intercept and slope during 1933's New Deal
+plot(u110, "ITS", add.means = TRUE, coefs=TRUE, conf.int=TRUE, adj.alpha = .2,
+     lwd=2, col="slategray", tcol= "orange", main="US unemployment rate",
+     xlab="Years (1929-2024)", ylab="Proportion of labor market",
+     cex.main=2, cex.axis = 1.5, cex.lab = 1.5, cex=2, cex.text = 1.25,
+     pos.text=list("ITS.Time"=4, "post42"=1,"txp42"=3,"txp92"=3))
+for(i in 1:length(key_time)) {
+  text(key_time[i], .22-(.01*i), cex=1.25, labels =
+         paste0(unemployment[ key_time[i], "Year"], ": ", unemployment[ key_time[i], "event"]))
+}
 }
