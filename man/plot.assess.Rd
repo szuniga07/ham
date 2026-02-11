@@ -35,6 +35,7 @@
   pos.text = NULL,
   arrow = FALSE,
   xshift = NULL,
+  y.axis = NULL,
   ...
 )
 }
@@ -111,6 +112,11 @@ of the furthest right, vertical lines for the intervention group is shifted (i.e
 One line is shifted when there is 1 treatment/interruption period and 2 shifts for 2 periods.
 (e.g., "DID" before "DID.Trend" for DID models with argument did="many").}
 
+\item{y.axis}{a vector of data or unique values that makes up y-axis values to replace the intervention time
+variable values. This will be most helpful if you prefer current calendar years instead of
+values starting at 1 (e.g., y.axis= data$Year for 1900-1999, not 1-100). Must have equal
+lengths for unique y.axis values and unique replaced values.}
+
 \item{...}{additional arguments.}
 }
 \value{
@@ -146,7 +152,7 @@ plot(u110, "ITS", add.means = TRUE, coefs=TRUE, conf.int=TRUE, adj.alpha = .2,
      lwd=2, col="slategray", tcol= "orange", main="US unemployment rate",
      xlab="Years (1929-2024)", ylab="Proportion of labor market",
      cex.main=2, cex.axis = 1.5, cex.lab = 1.5, cex=2, cex.text = 1.25,
-     pos.text=list("ITS.Time"=4, "post42"=1,"txp42"=3,"txp92"=3))
+     pos.text=list("ITS.Time"=4, "post42"=1,"txp42"=3,"txp92"=3), y.axis=unemployment$Year)
 for(i in 1:length(key_time)) {
   text(key_time[i], .22-(.01*i), cex=1.25, labels =
          paste0(unemployment[ key_time[i], "Year"], ": ", unemployment[ key_time[i], "event"]))

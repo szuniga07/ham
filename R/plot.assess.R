@@ -48,6 +48,10 @@
 #' of the furthest right, vertical lines for the intervention group is shifted (i.e., not left).
 #' One line is shifted when there is 1 treatment/interruption period and 2 shifts for 2 periods.
 #' (e.g., "DID" before "DID.Trend" for DID models with argument did="many").
+#' @param y.axis a vector of data or unique values that makes up y-axis values to replace the intervention time
+#' variable values. This will be most helpful if you prefer current calendar years instead of
+#' values starting at 1 (e.g., y.axis= data$Year for 1900-1999, not 1-100). Must have equal
+#' lengths for unique y.axis values and unique replaced values.
 #' @param ... additional arguments.
 #'
 #' @return plot of partial predictions for treatment and control groups.
@@ -80,7 +84,7 @@
 #'      lwd=2, col="slategray", tcol= "orange", main="US unemployment rate",
 #'      xlab="Years (1929-2024)", ylab="Proportion of labor market",
 #'      cex.main=2, cex.axis = 1.5, cex.lab = 1.5, cex=2, cex.text = 1.25,
-#'      pos.text=list("ITS.Time"=4, "post42"=1,"txp42"=3,"txp92"=3))
+#'      pos.text=list("ITS.Time"=4, "post42"=1,"txp42"=3,"txp92"=3), y.axis=unemployment$Year)
 #' for(i in 1:length(key_time)) {
 #'   text(key_time[i], .22-(.01*i), cex=1.25, labels =
 #'          paste0(unemployment[ key_time[i], "Year"], ": ", unemployment[ key_time[i], "event"]))
@@ -89,7 +93,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, xlab=NULL, ylab=NULL, main=N
                         cfact=FALSE, conf.int=FALSE, adj.alpha=NULL, add.means=FALSE, add.legend=NULL, legend=NULL,
                         tgt=NULL, tgtcol="gray", cex=1, cex.axis=NULL, cex.lab=NULL, cex.main=NULL, cex.text=NULL,
                         cex.legend=NULL, name=FALSE, coefs=FALSE, round.c=NULL,
-                        pos.text=NULL, arrow=FALSE, xshift=NULL, ...) {
+                        pos.text=NULL, arrow=FALSE, xshift=NULL, y.axis=NULL, ...) {
   if(any(is.null(c(x, y)) == TRUE)) {
     stop("Error: Expecting both an x and y argument.")
   }
@@ -98,6 +102,12 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, xlab=NULL, ylab=NULL, main=N
   if(!is.null(pos.text)) {
     if(is(pos.text, "list") == FALSE) {
       stop("Error: Expecting a list for pos.text")
+    }
+  }
+  #y.axis having equal lengths with current time variable
+  if(!is.null(y.axis)) {
+    if(!is.null(y.axis)) {
+      if (length(unique(x$study$group_means[,1])) != length(unique(y.axis))) {stop("Error: Expecting equal lengths for int.time and y.axis." )}
     }
   }
   # Get assess objects
@@ -303,6 +313,18 @@ if(y == "ITS") {
     pred_SE <- predict(Model, newdata=tmoddf[true_tlep[1], -1], se.fit=TRUE)[["se.fit"]]
     return(pred_SE)
   }
+  #Indicates we will have axes
+  if(!is.null(y.axis)) {
+    axes <- FALSE
+  } else {
+    axes <- TRUE
+  }
+  #Indicates y axis "at" values
+  if(axes== FALSE) {
+    y.at <- sort(unique(x$study$group_means[, 1]))
+  } else {
+    y.at <- NULL
+  }
 
   #############
   ## DID Two ##
@@ -343,7 +365,7 @@ if(y == "ITS") {
 
     plot(0:1, range(c(cmodel[["fitted.values"]], t0)), type="n",
          main=main_title, xlab= xlab, ylab=ylab, xlim=xlim, ylim=ylim,
-         cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
+         cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main, axes=axes)
     #Add in confidence bands
     if(conf.int==TRUE) {
       # temp data frame #
@@ -448,6 +470,12 @@ if(y == "ITS") {
         abline(h=tgt[i], lwd=lwd, col= tgtcol[1], lty=1)
       }
     }
+    #Add y-axis value to graph
+    if(axes== FALSE) {
+      axis(side=1, at=y.at, labels=y.axis, cex.axis=cex.axis)
+      axis(2, cex.axis=cex.axis)
+      box()
+    }
   }
 
   ##############
@@ -505,7 +533,7 @@ if(y == "ITS") {
 
     plot(range(aggr_mns[, 1]), range(c(cmodel[["fitted.values"]], t0)), type="n",
          main=main_title, xlab= xlab, ylab=ylab, xlim=xlim, ylim=ylim,
-         cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
+         cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main, axes=axes)
     #Add in confidence bands
     if(conf.int==TRUE) {
       # temp data frame #
@@ -614,6 +642,12 @@ if(y == "ITS") {
       for (i in 1:length(tgt)) {
         abline(h=tgt[i], lwd=lwd, col= tgtcol[1], lty=1)
       }
+    }
+    #Add y-axis value to graph
+    if(axes== FALSE) {
+      axis(side=1, at=y.at, labels=y.axis, cex.axis=cex.axis)
+      axis(2, cex.axis=cex.axis)
+      box()
     }
   }
 
@@ -923,7 +957,7 @@ if(y == "ITS") {
 
     plot(range(aggr_mns[, 1]), range(c(cmodel[["fitted.values"]], t00)), type="n",
          main=main_title, xlab= xlab, ylab=ylab, xlim=xlim, ylim=ylim,
-         cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
+         cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main, axes=axes)
     #Add in confidence bands
     tmpdf_names <- names(coef(cmodel))[1:4][-1]
     if(conf.int==TRUE) {
@@ -1074,6 +1108,12 @@ if(y == "ITS") {
         abline(h=tgt[i], lwd=lwd, col= tgtcol[1], lty=1)
       }
     }
+    #Add y-axis value to graph
+    if(axes== FALSE) {
+      axis(side=1, at=y.at, labels=y.axis, cex.axis=cex.axis)
+      axis(2, cex.axis=cex.axis)
+      box()
+    }
   }
 
   ##########
@@ -1133,7 +1173,7 @@ if(y == "ITS") {
 
     plot(range(aggr_mns[, 1]), range(c(cmodel[["fitted.values"]], its_fit_mgmt$tp1[1])),
          type="n", main=main_title, xlab= xlab, ylab=ylab, xlim=xlim, ylim=ylim,
-         cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
+         cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main, axes=axes)
 
     #Add in confidence bands
     if(conf.int==TRUE) {
@@ -1295,6 +1335,12 @@ if(y == "ITS") {
         abline(h=tgt[i], lwd=lwd, col= tgtcol[1], lty=1)
       }
     }
+    #Add y-axis value to graph
+    if(axes== FALSE) {
+      axis(side=1, at=y.at, labels=y.axis, cex.axis=cex.axis)
+      axis(2, cex.axis=cex.axis)
+      box()
+    }
   } #End of sgmt
 
   ##########
@@ -1369,7 +1415,7 @@ if(y == "ITS") {
 
     plot(range(aggr_mns[, 1]), range(c(cmodel[["fitted.values"]], t00)), type="n",
          main=main_title, xlab= xlab, ylab=ylab, xlim=xlim, ylim=ylim,
-         cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
+         cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main, axes=axes)
     #Add in confidence bands
     tmpdf_names <- names(coef(cmodel))[1:8][-1]
     if(conf.int==TRUE) {
@@ -1632,6 +1678,12 @@ if(y == "ITS") {
         abline(h=tgt[i], lwd=lwd, col= tgtcol[1], lty=1)
       }
     }
+    #Add y-axis value to graph
+    if(axes== FALSE) {
+      axis(side=1, at=y.at, labels=y.axis, cex.axis=cex.axis)
+      axis(2, cex.axis=cex.axis)
+      box()
+    }
   }
   ##########
   ## mgmt ##
@@ -1690,7 +1742,7 @@ if(y == "ITS") {
 
     plot(range(aggr_mns[, 1]), range(c(cmodel[["fitted.values"]], its_fit_mgmt$tp1[1])),
          type="n", main=main_title, xlab= xlab, ylab=ylab, xlim=xlim, ylim=ylim,
-         cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main)
+         cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main, axes=axes)
 
     #Add in confidence bands
     if(conf.int==TRUE) {
@@ -1915,6 +1967,12 @@ if(y == "ITS") {
       for (i in 1:length(tgt)) {
         abline(h=tgt[i], lwd=lwd, col= tgtcol[1], lty=1)
       }
+    }
+    #Add y-axis value to graph
+    if(axes== FALSE) {
+      axis(side=1, at=y.at, labels=y.axis, cex.axis=cex.axis)
+      axis(2, cex.axis=cex.axis)
+      box()
     }
   } #End of mgmt
 
