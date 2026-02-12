@@ -112,10 +112,10 @@ of the furthest right, vertical lines for the intervention group is shifted (i.e
 One line is shifted when there is 1 treatment/interruption period and 2 shifts for 2 periods.
 (e.g., "DID" before "DID.Trend" for DID models with argument did="many").}
 
-\item{y.axis}{a vector of data or unique values that makes up y-axis values to replace the intervention time
-variable values. This will be most helpful if you prefer current calendar years instead of
-values starting at 1 (e.g., y.axis= data$Year for 1900-1999, not 1-100). Must have equal
-lengths for unique y.axis values and unique replaced values.}
+\item{y.axis}{a vector of unique character or numeric values that makes up y-axis values to
+replace the intervention time variable values. This will be most helpful if you prefer current
+calendar years instead of values starting at 1 (e.g., y.axis= sort(unique(data$Year)) for 1900-1999,
+not 1-100). Must have equal lengths for unique y.axis values and unique replaced values.}
 
 \item{...}{additional arguments.}
 }

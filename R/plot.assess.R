@@ -48,10 +48,10 @@
 #' of the furthest right, vertical lines for the intervention group is shifted (i.e., not left).
 #' One line is shifted when there is 1 treatment/interruption period and 2 shifts for 2 periods.
 #' (e.g., "DID" before "DID.Trend" for DID models with argument did="many").
-#' @param y.axis a vector of data or unique values that makes up y-axis values to replace the intervention time
-#' variable values. This will be most helpful if you prefer current calendar years instead of
-#' values starting at 1 (e.g., y.axis= data$Year for 1900-1999, not 1-100). Must have equal
-#' lengths for unique y.axis values and unique replaced values.
+#' @param y.axis a vector of unique character or numeric values that makes up y-axis values to
+#' replace the intervention time variable values. This will be most helpful if you prefer current
+#' calendar years instead of values starting at 1 (e.g., y.axis= sort(unique(data$Year)) for 1900-1999,
+#' not 1-100). Must have equal lengths for unique y.axis values and unique replaced values.
 #' @param ... additional arguments.
 #'
 #' @return plot of partial predictions for treatment and control groups.
@@ -105,11 +105,9 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, xlab=NULL, ylab=NULL, main=N
     }
   }
   #y.axis having equal lengths with current time variable
-  if(!is.null(y.axis)) {
     if(!is.null(y.axis)) {
       if (length(unique(x$study$group_means[,1])) != length(unique(y.axis))) {stop("Error: Expecting equal lengths for int.time and y.axis." )}
     }
-  }
   # Get assess objects
 if(y == "DID") {
   aggr_mns <-  x[["study"]][["group_means_did"]]   #model data
