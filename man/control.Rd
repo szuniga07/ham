@@ -2,7 +2,7 @@
 % Please edit documentation in R/control.R
 \name{control}
 \alias{control}
-\title{Shewhart control charts}
+\title{Statistics for Shewhart control charts}
 \usage{
 control(
   x,

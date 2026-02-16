@@ -1,4 +1,4 @@
-#' Shewhart control charts
+#' Statistics for Shewhart control charts
 #'
 #' Calculate statistics that can be used to produce X-bar charts, p-charts, and u-charts. This includes
 #' producing means for center lines, lower control limits, and upper control limits. Users can also calculate
