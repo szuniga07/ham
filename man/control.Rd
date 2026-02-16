@@ -2,7 +2,7 @@
 % Please edit documentation in R/control.R
 \name{control}
 \alias{control}
-\title{Shewhart control charts: X-bar charts, p-charts, and u-charts.}
+\title{Shewhart control charts}
 \usage{
 control(
   x,
@@ -40,11 +40,14 @@ intervention begins on the 25th day). Separate means and control limits are calc
 Default is NULL.}
 }
 \value{
-list of control chart elements for X-bar charts, p-charts, and u-charts. Includes means,
+data frame of control chart statistics for X-bar charts, p-charts, and u-charts. Includes means,
 standard deviations, and upper control limit and lower control limit values.
 }
 \description{
-Shewhart control charts: X-bar charts, p-charts, and u-charts.
+Calculate statistics that can be used to produce X-bar charts, p-charts, and u-charts. This includes
+producing means for center lines, lower control limits, and upper control limits. Users can also calculate
+values before and after an intervention to see if a change in the control process happened. Values are
+returned in a data frame.
 }
 \examples{
 ## Hospital LOS and readmissions ##

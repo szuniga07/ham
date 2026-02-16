@@ -1,4 +1,9 @@
-#' Shewhart control charts: X-bar charts, p-charts, and u-charts.
+#' Shewhart control charts
+#'
+#' Calculate statistics that can be used to produce X-bar charts, p-charts, and u-charts. This includes
+#' producing means for center lines, lower control limits, and upper control limits. Users can also calculate
+#' values before and after an intervention to see if a change in the control process happened. Values are
+#' returned in a data frame.
 #'
 #' @param x character outcome variable in X bar charts or numerator variable name for u-charts or p-charts (when p-chart data is aggregated).
 #' @param y character variable name for u-charts or p-charts (when p-chart data is aggregated). When y is present, it becomes the
@@ -16,7 +21,7 @@
 #' is NULL, thereby using all observations. Specify, for example, data$hospital == "NY" or c(1:100,200:300) respectively to
 #' use just those observations.
 #'
-#' @return list of control chart elements for X-bar charts, p-charts, and u-charts. Includes means,
+#' @return data frame of control chart statistics for X-bar charts, p-charts, and u-charts. Includes means,
 #' standard deviations, and upper control limit and lower control limit values.
 #' @importFrom stats sd
 #' @export
