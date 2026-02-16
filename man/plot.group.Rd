@@ -111,7 +111,7 @@ Confidence interval graphs for group class objects
 }
 \examples{
 #Simple graph for confidence intervals using the t-distribution
-gr1 <- group(x="program", y="los", z="month", dataf=hosprog, dist="t",
+gr1 <- group(x="program", y="los", z="month", data=hosprog, dist="t",
 increment=3, rolling=6)
 # Group level confidence intervals
 plot(x=gr1, y="group", order="numeric", lwd=4, gcol= "blue", pcol="red",

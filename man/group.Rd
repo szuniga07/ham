@@ -8,7 +8,7 @@ group(
   x,
   y,
   z = NULL,
-  dataf,
+  data,
   dist = "t",
   conf.int = 0.95,
   increment = 1,
@@ -26,7 +26,7 @@ group(
 
 \item{z}{time period variable name.}
 
-\item{dataf}{name of data frame object.}
+\item{data}{name of data frame object.}
 
 \item{dist}{indicate the distribution used for confidence intervals. Options
 for the t, binomial, and exact Poisson distributions. Options are 't', 'b', and 'p'.
@@ -70,19 +70,19 @@ Group level confidence intervals and between-group variation
 }
 \examples{
 #default t distribution results
-group(x="program", y="los", dataf=hosprog)
+group(x="program", y="los", data=hosprog)
 #Rounding LOS to integers
 hp2 <- hosprog; hp2$los2 <- round(hp2$los, 0)
 #Exact Poisson confidence intervals
-group(x="program", y="los2", dataf=hp2, dist="p")
+group(x="program", y="los2", data=hp2, dist="p")
 #Rolling 6-months of data
-group(x="program", y="los", z="month", dataf=hosprog, dist="t", rolling=6)
+group(x="program", y="los", z="month", data=hosprog, dist="t", rolling=6)
 #Data returned separately for rolling 6-months of data and 3-month increments (e.g., quarters)
-group(x="program", y="los", z="month", dataf=hosprog, dist="t", increment=3, rolling=6)
+group(x="program", y="los", z="month", data=hosprog, dist="t", increment=3, rolling=6)
 #Quartile groups for continuous risk score and returned clustering info
-group(x="risk", y="los", dataf=hosprog, quarts=TRUE, cluster=TRUE)
+group(x="risk", y="los", data=hosprog, quarts=TRUE, cluster=TRUE)
 #Binomial distribution with less conservative 90\% confidence intervals
-group(x="risk", y="rdm30", dataf=hosprog, quarts=TRUE, dist="b", conf.int=0.90)
+group(x="risk", y="rdm30", data=hosprog, quarts=TRUE, dist="b", conf.int=0.90)
 }
 \references{
 Merlo, J. (2006). A brief conceptual tutorial of multilevel analysis in

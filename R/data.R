@@ -76,3 +76,17 @@
 #' precise rates, please see a reliable source.
 #'
 "unemployment"
+
+#' Hospital acquired infections (HAI) during 41 months.
+#' @format ## `infections`
+#' An artificial data frame with 41 rows and 3 columns:
+#' \describe{
+#'   \item{ Month }{Calendar month as an integer, ranging from 1 to 41.}
+#'   \item{ HAI }{Count of hospital acquired infections (HAI) within 1 month.}
+#'   \item{ PatientDays }{Count of hospital patient days within 1 month (i.e., the sum of days in the hospital for all patients).}
+#'   ...
+#' }
+#' @source infections is an artificial data frame of reasonable hospital acquired infections (HAI) estimates
+#' made entirely for the purpose of demonstrating control charts.
+#'
+"infections"

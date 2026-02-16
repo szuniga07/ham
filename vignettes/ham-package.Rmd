@@ -57,7 +57,7 @@ This example shows group level point estimates and confidence intervals.
 
 ### Group level 95% confidence intervals over 12 months (t distribution)
 ```{r group}
-gr1 <- group(x="program", y="los", z="month", dataf=hosprog, dist="t", cluster=TRUE)
+gr1 <- group(x="program", y="los", z="month", data=hosprog, dist="t", cluster=TRUE)
 print(gr1$Group.CI)
 ```
 
@@ -67,7 +67,7 @@ And we may have a continuous variable that we would want to explore by forming i
 
 ## Rolling 6-month averages by quartiles of age (Q1 - Q4)
 ```{r group2}
-gr2 <- group(x="age", y="los", z="month", dataf=hosprog, dist="t", increment=3, rolling=6, quarts=TRUE)
+gr2 <- group(x="age", y="los", z="month", data=hosprog, dist="t", increment=3, rolling=6, quarts=TRUE)
 print(gr2$Roll.CI$Rolling)
 ```
 
