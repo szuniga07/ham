@@ -159,6 +159,9 @@ control <- function(x, y=NULL, time, data, type="x", subset=NULL,
       agr_df <- agr_df[, c("time", "agr_m", "agr_sum", "agr_n","SD","N","MOC","Mean","LCL","UCL")]
       #Add in variable on type of control analysis
       agr_df$type <- type
+      #change column names time and agr_m to actual names
+#      colnames(agr_df)[which(colnames(agr_df) %in% c("time","agr_m"))] <- c(time, x )
+      colnames(agr_df)[1:2] <- c("cat","hat" )
     }
     return(agr_df)
   }
@@ -238,6 +241,9 @@ control <- function(x, y=NULL, time, data, type="x", subset=NULL,
       agr_df <- agr_df[, c("time", "agr_m", "agr_sum", "agr_n","SD","N","MOC","Mean","LCL","UCL")]
       #Add in variable on type of control analysis
       agr_df$type <- type
+      #change column names time and agr_m to actual names
+#      colnames(agr_df)[which(colnames(agr_df) %in% c("time","agr_m"))] <- c(time, x )
+      colnames(agr_df)[1:2] <- c("cat","hat" )
     }
     return(agr_df)
   }
