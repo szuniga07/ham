@@ -47,7 +47,7 @@
 
 \item{lwd}{select the line width.}
 
-\item{col}{a 2 element character vector to specify the center line and control limit colors. Defaults to, if nothing selected, c("blue", "red").}
+\item{col}{a 2 element character vector to specify the 1) center line and 2) both control limit colors. Defaults to, if nothing selected, c("blue", "red").}
 
 \item{iname}{intervention name text as a single character vector. Defaults to "Intervention" if nothing is selected.}
 
