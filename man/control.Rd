@@ -32,8 +32,8 @@ denominator for a rate calculated as x/y. Default is NULL.}
 is NULL, thereby using all observations. Specify, for example, data$hospital == "NY" or c(1:100,200:300) respectively to
 use just those observations.}
 
-\item{n.equal}{whether there are equal subgroup (sample) sizes. If n.equal=TRUE, control limits are calculated using the overall
-standard deviation value. If n.equal=FALSE, control limits are based on each subgroup's sample size. Default is TRUE.}
+\item{n.equal}{whether there are or we assume equal subgroup (sample) sizes. If n.equal=TRUE, control limits are calculated using the overall
+mean n value. If n.equal=FALSE, control limits are based on each subgroup's sample size. Default is TRUE.}
 
 \item{intervention}{a single numeric value for the time when an intervention begins (e.g., intervention=25;
 intervention begins on the 25th day). Separate means and control limits are calculated pre- and post-intervention.
@@ -51,11 +51,16 @@ returned in a data frame.
 }
 \examples{
 ## Hospital LOS and readmissions ##
-# X-bar chart
+# X-bar chart statistics
 spc_x <- control(x="los", time="month", data=hosprog, type="x", n.equal=TRUE)
 print(spc_x) # get data frame output
 
-# p-chart, using only the numerator (i.e., y=NULL). Specify unequal sample sizes
+# X-bar chart statistics not assuming equal sample sizes, subsetting for females
+spc_x <- control(x="los", time="month", data=hosprog, type="x", n.equal=FALSE,
+  subset=hosprog$female==1)
+print(spc_x) # get data frame output
+
+# p-chart statistics, using only the numerator (i.e., y=NULL). Specify unequal sample sizes
 spc_p <- control(x="rdm30", time="month", data=hosprog, type="p", n.equal=FALSE)
 print(spc_p) # get data frame output
 

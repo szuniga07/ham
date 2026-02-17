@@ -58,11 +58,11 @@
 
 \item{trcol}{select a color for the trend line. Default is 'gray'.}
 
-\item{tgt}{specify 1 or more values on the y-axis of where to add a target line when y='group'. Or 1 or more values on the y-axis of where to add a target line when y='time' or 'roll'. Default is NULL.}
+\item{tgt}{specify 1 or more values on the y-axis of where to add one or more horizontal target lines. Default is NULL.}
 
 \item{tgtcol}{select one or multiple colors for one or multiple target lines. Default is 'gray'.}
 
-\item{tpline}{add one or more time point vertical line(s) using x-axis values. Default is NULL (i.e., no lines).}
+\item{tpline}{add one or more time point vertical lines using x-axis values. Default is NULL (i.e., no lines).}
 
 \item{tpcol}{specify a color for the time point line, tpline. Default is NULL.}
 
@@ -74,11 +74,11 @@
 
 \item{cex.main}{The magnification to be used for main titles relative to the current setting of cex.}
 
-\item{cex.text}{The magnification to be used for the 'Intervention' text added into the plot relative to the current setting of 1.}
+\item{cex.text}{The magnification to be used for the iname text added into the plot relative to the current setting of 1.}
 
 \item{x.axis}{a vector of unique character or numeric values that makes up x-axis values to
-replace the intervention time variable values. This will be most helpful if you prefer current
-calendar years instead of values starting at 1 (e.g., x.axis= sort(unique(data$Year)) for 1900-1999,
+replace the time variable values. This will be most helpful if you prefer current calendar
+months/years instead of values starting at 1 (e.g., x.axis= sort(unique(data$Year)) for 1900-1999,
 not 1-100). Must have equal lengths for unique x.axis values and unique replaced values.}
 
 \item{...}{additional arguments.}

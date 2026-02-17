@@ -18,18 +18,18 @@
 #' @param icol specify intervention line color as a single character vector. Defaults to "black" if nothing is selected.
 #' @param trend a logical vector that adds an ordinary least squares trend line (i.e., simple linear regression line) when trend=TRUE. Default is FALSE.
 #' @param trcol select a color for the trend line. Default is 'gray'.
-#' @param tgt specify 1 or more values on the y-axis of where to add a target line when y='group'. Or 1 or more values on the y-axis of where to add a target line when y='time' or 'roll'. Default is NULL.
+#' @param tgt specify 1 or more values on the y-axis of where to add one or more horizontal target lines. Default is NULL.
 #' @param tgtcol select one or multiple colors for one or multiple target lines. Default is 'gray'.
-#' @param tpline add one or more time point vertical line(s) using x-axis values. Default is NULL (i.e., no lines).
+#' @param tpline add one or more time point vertical lines using x-axis values. Default is NULL (i.e., no lines).
 #' @param tpcol specify a color for the time point line, tpline. Default is NULL.
 #' @param cex A numerical value giving the amount by which plotting text and symbols should be magnified relative to the default of 1.
 #' @param cex.axis The magnification to be used for axis annotation relative to the current setting of cex.
 #' @param cex.lab The magnification to be used for x and y labels relative to the current setting of cex.
 #' @param cex.main The magnification to be used for main titles relative to the current setting of cex.
-#' @param cex.text The magnification to be used for the 'Intervention' text added into the plot relative to the current setting of 1.
+#' @param cex.text The magnification to be used for the iname text added into the plot relative to the current setting of 1.
 #' @param x.axis a vector of unique character or numeric values that makes up x-axis values to
-#' replace the intervention time variable values. This will be most helpful if you prefer current
-#' calendar years instead of values starting at 1 (e.g., x.axis= sort(unique(data$Year)) for 1900-1999,
+#' replace the time variable values. This will be most helpful if you prefer current calendar
+#' months/years instead of values starting at 1 (e.g., x.axis= sort(unique(data$Year)) for 1900-1999,
 #' not 1-100). Must have equal lengths for unique x.axis values and unique replaced values.
 #' @param ... additional arguments.
 #'

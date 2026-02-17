@@ -12,8 +12,8 @@
 #' @param data name of data frame object.
 #' @param type indicate what type of control chart is needed. Options for the X-bar, p-, and u-charts should be listed as
 #' 'x', 'p', and 'u'. Default is the 'x' chart.
-#' @param n.equal whether there are equal subgroup (sample) sizes. If n.equal=TRUE, control limits are calculated using the overall
-#' standard deviation value. If n.equal=FALSE, control limits are based on each subgroup's sample size. Default is TRUE.
+#' @param n.equal whether there are or we assume equal subgroup (sample) sizes. If n.equal=TRUE, control limits are calculated using the overall
+#' mean n value. If n.equal=FALSE, control limits are based on each subgroup's sample size. Default is TRUE.
 #' @param intervention a single numeric value for the time when an intervention begins (e.g., intervention=25;
 #' intervention begins on the 25th day). Separate means and control limits are calculated pre- and post-intervention.
 #' Default is NULL.
@@ -31,11 +31,16 @@
 
 #' @examples
 #' ## Hospital LOS and readmissions ##
-#' # X-bar chart
+#' # X-bar chart statistics
 #' spc_x <- control(x="los", time="month", data=hosprog, type="x", n.equal=TRUE)
 #' print(spc_x) # get data frame output
 #'
-#' # p-chart, using only the numerator (i.e., y=NULL). Specify unequal sample sizes
+#' # X-bar chart statistics not assuming equal sample sizes, subsetting for females
+#' spc_x <- control(x="los", time="month", data=hosprog, type="x", n.equal=FALSE,
+#'   subset=hosprog$female==1)
+#' print(spc_x) # get data frame output
+#'
+#' # p-chart statistics, using only the numerator (i.e., y=NULL). Specify unequal sample sizes
 #' spc_p <- control(x="rdm30", time="month", data=hosprog, type="p", n.equal=FALSE)
 #' print(spc_p) # get data frame output
 #'
