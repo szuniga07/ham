@@ -23,6 +23,7 @@
   tpline = NULL,
   tpcol = NULL,
   cex = 1,
+  cex.lab = NULL,
   cex.axis = NULL,
   cex.main = NULL,
   cex.text = NULL,
@@ -66,6 +67,8 @@
 \item{tpcol}{specify a color for the time point line, tpline. Default is NULL.}
 
 \item{cex}{A numerical value giving the amount by which plotting text and symbols should be magnified relative to the default of 1.}
+
+\item{cex.lab}{The magnification to be used for x and y labels relative to the current setting of cex.}
 
 \item{cex.axis}{The magnification to be used for axis annotation relative to the current setting of cex.}
 

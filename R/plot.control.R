@@ -24,6 +24,7 @@
 #' @param tpcol specify a color for the time point line, tpline. Default is NULL.
 #' @param cex A numerical value giving the amount by which plotting text and symbols should be magnified relative to the default of 1.
 #' @param cex.axis The magnification to be used for axis annotation relative to the current setting of cex.
+#' @param cex.lab The magnification to be used for x and y labels relative to the current setting of cex.
 #' @param cex.main The magnification to be used for main titles relative to the current setting of cex.
 #' @param cex.text The magnification to be used for the 'Intervention' text added into the plot relative to the current setting of 1.
 #' @param x.axis a vector of unique character or numeric values that makes up x-axis values to
@@ -61,7 +62,7 @@
 
 plot.control <- function(x, y=NULL, xlim=NULL, ylim=NULL, xlab=NULL, ylab=NULL, main=NULL, lwd=NULL, col=NULL, iname=NULL,
                          icol="black", trend=FALSE, trcol="gray", tgt=NULL, tgtcol="gray", tpline=NULL, tpcol=NULL, cex=1,
-                         cex.axis=NULL, cex.main=NULL, cex.text=NULL, x.axis=NULL, ...) {
+                         cex.lab=NULL, cex.axis=NULL, cex.main=NULL, cex.text=NULL, x.axis=NULL, ...) {
   if (any(class(x) == "control") == FALSE) {stop("Error: Expecting control class object." )}
   #x.axis having equal lengths with current time variable
   if(!is.null(x.axis)) {
@@ -113,6 +114,11 @@ plot.control <- function(x, y=NULL, xlim=NULL, ylim=NULL, xlab=NULL, ylab=NULL, 
     cex.axis <- cex.axis
   } else {
     cex.axis <- 1
+  }
+  if(!is.null(cex.lab)) {
+    cex.lab <- cex.lab
+  } else {
+    cex.lab <- 1
   }
   if(!is.null(cex.main)) {
     cex.main <- cex.main
@@ -188,7 +194,7 @@ plot.control <- function(x, y=NULL, xlim=NULL, ylim=NULL, xlab=NULL, ylab=NULL, 
   #############################
   plot(rep(x[, 1], 3), c(x[, 2],x[,"LCL"],x[,"UCL"]), type="n", main=main_title,
        xlab= xlab, ylab=ylab, xlim=xlim, ylim=ylim, cex=cex, cex.axis=cex.axis,
-       cex.main=cex.main, axes=FALSE)
+       cex.lab=cex.lab, cex.main=cex.main, axes=FALSE)
   #Control limit lines
   lines(x[, 1], x$UCL, lty=2, col=lcol[2], lwd=lwd, type="s")
   lines(x[, 1], x$LCL, lty=2, col=lcol[2], lwd=lwd, type="s")
