@@ -1,7 +1,7 @@
 #'#' Shewhart control charts
 #'
 #' Graph X-bar charts, p-charts, and u-charts. This includes
-#' producing means for center lines, lower control limits, and upper control limits. Users can also calculate
+#' producing means center lines, 3-sigma upper and lower control limits. Users can also calculate
 #' values before and after an intervention to see if a change in the control process happened. Values are
 #' returned in a data frame.
 #'
@@ -32,7 +32,7 @@
 #' not 1-100). Must have equal lengths for unique x.axis values and unique replaced values.
 #' @param ... additional arguments.
 #'
-#' @return plot of Shewhart control charts: X-bar chart, p-chart, and u-chart.
+#' @return plot of Shewhart control charts: X-bar charts, p-charts, and u-charts with 3-sigma control limits.
 #' @importFrom graphics lines plot abline points text arrows
 #' @importFrom utils head tail
 #' @importFrom methods is
@@ -228,16 +228,16 @@ plot.control <- function(x, y=NULL, xlim=NULL, ylim=NULL, xlab=NULL, ylab=NULL, 
              x1 = x_end[[i]], y1 = y_end[[i]],
              col = trcol,       # Color of the line/arrow
              lwd = lwd,         # Line width
-             length = 0.15,   # Length of the arrowhead sides (in inches)
-             angle = 25)      # Angle of the arrowhead sides
+             length = 0.25,   # Length of the arrowhead sides (in inches)
+             angle = 30)      # Angle of the arrowhead sides
     }
   } else {
     arrows(x0 = x_start[[1]], y0 = y_start[[1]],
            x1 = x_end[[1]], y1 = y_end[[1]],
            col = trcol,       # Color of the line/arrow
            lwd = lwd,         # Line width
-           length = 0.15,   # Length of the arrowhead sides (in inches)
-           angle = 25)      # Angle of the arrowhead sides
+           length = 0.25,   # Length of the arrowhead sides (in inches)
+           angle = 30)      # Angle of the arrowhead sides
   }
   }
 
