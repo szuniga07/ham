@@ -83,5 +83,5 @@ object <- x
            cex=cex, pt.cex=pt.cex, pch = pch)
   # Add labels to the right margin
   graphics::axis(4, at=1:(nrow(object)), tick= FALSE, las=1, cex.axis= 1.1,
-       labels= paste("p=" , sprintf("%.4f", p_vals)) )
+       labels= paste("p=" , sprintf("%.4f", p_vals)), line=-.7 )
 }

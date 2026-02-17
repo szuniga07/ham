@@ -53,11 +53,16 @@ returned in a data frame.
 ## Hospital LOS and readmissions ##
 # X-bar chart
 spc_x <- control(x="los", time="month", data=hosprog, type="x", n.equal=TRUE)
+print(spc_x) # get data frame output
+
 # p-chart, using only the numerator (i.e., y=NULL). Specify unequal sample sizes
 spc_p <- control(x="rdm30", time="month", data=hosprog, type="p", n.equal=FALSE)
+print(spc_p) # get data frame output
+
 # u-chart for infection rates with an intervention at the 22nd month
-hai1 <- control(x="HAI", y="PatientDays", time="Month", data=infections,
+spc_u <- control(x="HAI", y="PatientDays", time="Month", data=infections,
 type="u", n.equal=FALSE, intervention=22)
+print(spc_u) # get data frame output
 }
 \references{
 Ryan, T. (2011). Statistical Methods for Quality Improvement, Third Edition.

@@ -16,7 +16,8 @@ group(
   quarts = FALSE,
   cluster = FALSE,
   subset = NULL,
-  asis = FALSE
+  asis = FALSE,
+  dataf = NULL
 )
 }
 \arguments{
@@ -60,6 +61,8 @@ use just those observations.}
 \item{asis}{a logical vector that indicates if data will be processed as having only 1 unique observation per 'x' and 'z' combination
 (i.e., this is intended for use with aggregated data). Default is FALSE. This will allow the plot function to graph single observation data for groups
 over time. Only the t distribution is used for the overall trend line and confidence band (works in conjunction with 'ocol' and 'oband').}
+
+\item{dataf}{not currently use, please use 'data' instead.}
 }
 \value{
 list of confidence intervals for outcomes by groups, over time,

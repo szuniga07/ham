@@ -30,6 +30,7 @@
 #' @param asis a logical vector that indicates if data will be processed as having only 1 unique observation per 'x' and 'z' combination
 #' (i.e., this is intended for use with aggregated data). Default is FALSE. This will allow the plot function to graph single observation data for groups
 #' over time. Only the t distribution is used for the overall trend line and confidence band (works in conjunction with 'ocol' and 'oband').
+#' @param dataf not currently use, please use 'data' instead.
 #'
 #' @return list of confidence intervals for outcomes by groups, over time,
 #' and clustering measures. Some values returned in alphabetical and numerical order based on the group.
@@ -64,7 +65,7 @@
 #' group(x="risk", y="rdm30", data=hosprog, quarts=TRUE, dist="b", conf.int=0.90)
 
 group <- function(x, y, z=NULL, data, dist="t", conf.int=0.95, increment=1,
-                  rolling=NULL, quarts=FALSE, cluster=FALSE, subset=NULL, asis=FALSE ) {
+                  rolling=NULL, quarts=FALSE, cluster=FALSE, subset=NULL, asis=FALSE, dataf=NULL ) {
 
   if(conf.int <= 0 || conf.int >= 1 ) {
     stop("Error: Expecting confidence interval level within 0 to 1.")
@@ -82,6 +83,15 @@ group <- function(x, y, z=NULL, data, dist="t", conf.int=0.95, increment=1,
   }
   if(all(c(cluster, asis)  == TRUE)) {
     stop("Error: No clustering results produced when asis= TRUE and cluster= TRUE.")
+  }
+  if(!is.null(dataf)) {
+    warning("Warning: Please use data argument instead of dataf argument.")
+  }
+  #Replace data with dataf
+  if(is.null(data)) {
+    if(!is.null(dataf)) {
+      data <- dataf
+    }
   }
   #Identify all rows to use for subsets
   all_rows <- nrow(data)

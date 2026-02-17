@@ -33,11 +33,17 @@
 #' ## Hospital LOS and readmissions ##
 #' # X-bar chart
 #' spc_x <- control(x="los", time="month", data=hosprog, type="x", n.equal=TRUE)
+#' print(spc_x) # get data frame output
+#'
 #' # p-chart, using only the numerator (i.e., y=NULL). Specify unequal sample sizes
 #' spc_p <- control(x="rdm30", time="month", data=hosprog, type="p", n.equal=FALSE)
+#' print(spc_p) # get data frame output
+#'
 #' # u-chart for infection rates with an intervention at the 22nd month
-#' hai1 <- control(x="HAI", y="PatientDays", time="Month", data=infections,
+#' spc_u <- control(x="HAI", y="PatientDays", time="Month", data=infections,
 #' type="u", n.equal=FALSE, intervention=22)
+#' print(spc_u) # get data frame output
+
 
 control <- function(x, y=NULL, time, data, type="x", subset=NULL,
                     n.equal=TRUE, intervention=NULL) {
@@ -64,6 +70,10 @@ control <- function(x, y=NULL, time, data, type="x", subset=NULL,
       stop("Error: Expecting only 1 intervention value.")
     }
   }
+  #Can't use "intervention" or "Mean", "SD", "post" as  variable name
+    if(any(c(x,time) %in% c("intervention","Mean", "SD", "post"))) {
+      stop("Error: Can't use data with these column names: intervention, Mean, SD, post .")
+    }
   # Identify all rows to use for subsets
   all_rows <- nrow(data)
   if(!is.null(subset)) {
@@ -159,9 +169,6 @@ control <- function(x, y=NULL, time, data, type="x", subset=NULL,
       agr_df <- agr_df[, c("time", "agr_m", "agr_sum", "agr_n","SD","N","MOC","Mean","LCL","UCL")]
       #Add in variable on type of control analysis
       agr_df$type <- type
-      #change column names time and agr_m to actual names
-#      colnames(agr_df)[which(colnames(agr_df) %in% c("time","agr_m"))] <- c(time, x )
-      colnames(agr_df)[1:2] <- c("cat","hat" )
     }
     return(agr_df)
   }
@@ -241,9 +248,6 @@ control <- function(x, y=NULL, time, data, type="x", subset=NULL,
       agr_df <- agr_df[, c("time", "agr_m", "agr_sum", "agr_n","SD","N","MOC","Mean","LCL","UCL")]
       #Add in variable on type of control analysis
       agr_df$type <- type
-      #change column names time and agr_m to actual names
-#      colnames(agr_df)[which(colnames(agr_df) %in% c("time","agr_m"))] <- c(time, x )
-      colnames(agr_df)[1:2] <- c("cat","hat" )
     }
     return(agr_df)
   }
@@ -283,13 +287,8 @@ control <- function(x, y=NULL, time, data, type="x", subset=NULL,
            "udi" =  rateSPCd(x=x, y=y, time=time, data=data, type=type,
                              n.equal=n.equal, intervention=intervention)
     )
-
-#  if (is.null(y)) {
-#    spc <- contSPC(x=x, time=time, data=data, type=type, n.equal=n.equal)
-#  }
-#  if (!is.null(y)) {
-#    spc <- rateSPC(x=x, y=y, time=time, data=data, type=type, n.equal=n.equal)
-#  }
+  #change column names time and agr_m to actual names
+  colnames(spc)[which(colnames(spc) %in% c("time","agr_m"))] <- c(time, x )
   # Assign ham classes
   class(spc) <- c("control","ham", "data.frame")
   #return spc

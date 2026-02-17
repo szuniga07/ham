@@ -48,10 +48,10 @@
 #' of the furthest right, vertical lines for the intervention group is shifted (i.e., not left).
 #' One line is shifted when there is 1 treatment/interruption period and 2 shifts for 2 periods.
 #' (e.g., "DID" before "DID.Trend" for DID models with argument did="many").
-#' @param y.axis a vector of unique character or numeric values that makes up y-axis values to
+#' @param x.axis a vector of unique character or numeric values that makes up x-axis values to
 #' replace the intervention time variable values. This will be most helpful if you prefer current
-#' calendar years instead of values starting at 1 (e.g., y.axis= sort(unique(data$Year)) for 1900-1999,
-#' not 1-100). Must have equal lengths for unique y.axis values and unique replaced values.
+#' calendar years instead of values starting at 1 (e.g., x.axis= sort(unique(data$Year)) for 1900-1999,
+#' not 1-100). Must have equal lengths for unique x.axis values and unique replaced values.
 #' @param ... additional arguments.
 #'
 #' @return plot of partial predictions for treatment and control groups.
@@ -84,7 +84,7 @@
 #'      lwd=2, col="slategray", tcol= "orange", main="US unemployment rate",
 #'      xlab="Years (1929-2024)", ylab="Proportion of labor market",
 #'      cex.main=2, cex.axis = 1.5, cex.lab = 1.5, cex=2, cex.text = 1.25,
-#'      pos.text=list("ITS.Time"=4, "post42"=1,"txp42"=3,"txp92"=3), y.axis=unemployment$Year)
+#'      pos.text=list("ITS.Time"=4, "post42"=1,"txp42"=3,"txp92"=3), x.axis=unemployment$Year)
 #' for(i in 1:length(key_time)) {
 #'   text(key_time[i], .22-(.01*i), cex=1.25, labels =
 #'          paste0(unemployment[ key_time[i], "Year"], ": ", unemployment[ key_time[i], "event"]))
@@ -93,7 +93,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, xlab=NULL, ylab=NULL, main=N
                         cfact=FALSE, conf.int=FALSE, adj.alpha=NULL, add.means=FALSE, add.legend=NULL, legend=NULL,
                         tgt=NULL, tgtcol="gray", cex=1, cex.axis=NULL, cex.lab=NULL, cex.main=NULL, cex.text=NULL,
                         cex.legend=NULL, name=FALSE, coefs=FALSE, round.c=NULL,
-                        pos.text=NULL, arrow=FALSE, xshift=NULL, y.axis=NULL, ...) {
+                        pos.text=NULL, arrow=FALSE, xshift=NULL, x.axis=NULL, ...) {
   if(any(is.null(c(x, y)) == TRUE)) {
     stop("Error: Expecting both an x and y argument.")
   }
@@ -104,9 +104,9 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, xlab=NULL, ylab=NULL, main=N
       stop("Error: Expecting a list for pos.text")
     }
   }
-  #y.axis having equal lengths with current time variable
-    if(!is.null(y.axis)) {
-      if (length(unique(x$study$group_means[,1])) != length(unique(y.axis))) {stop("Error: Expecting equal lengths for int.time and y.axis." )}
+  #x.axis having equal lengths with current time variable
+    if(!is.null(x.axis)) {
+      if (length(unique(x$study$group_means[,1])) != length(unique(x.axis))) {stop("Error: Expecting equal lengths for int.time and x.axis." )}
     }
   # Get assess objects
 if(y == "DID") {
@@ -312,16 +312,16 @@ if(y == "ITS") {
     return(pred_SE)
   }
   #Indicates we will have axes
-  if(!is.null(y.axis)) {
+  if(!is.null(x.axis)) {
     axes <- FALSE
   } else {
     axes <- TRUE
   }
   #Indicates y axis "at" values
   if(axes== FALSE) {
-    y.at <- sort(unique(x$study$group_means[, 1]))
+    x.at <- sort(unique(x$study$group_means[, 1]))
   } else {
-    y.at <- NULL
+    x.at <- NULL
   }
 
   #############
@@ -470,7 +470,7 @@ if(y == "ITS") {
     }
     #Add y-axis value to graph
     if(axes== FALSE) {
-      axis(side=1, at=y.at, labels=y.axis, cex.axis=cex.axis)
+      axis(side=1, at=x.at, labels=x.axis, cex.axis=cex.axis)
       axis(2, cex.axis=cex.axis)
       box()
     }
@@ -643,7 +643,7 @@ if(y == "ITS") {
     }
     #Add y-axis value to graph
     if(axes== FALSE) {
-      axis(side=1, at=y.at, labels=y.axis, cex.axis=cex.axis)
+      axis(side=1, at=x.at, labels=x.axis, cex.axis=cex.axis)
       axis(2, cex.axis=cex.axis)
       box()
     }
@@ -1108,7 +1108,7 @@ if(y == "ITS") {
     }
     #Add y-axis value to graph
     if(axes== FALSE) {
-      axis(side=1, at=y.at, labels=y.axis, cex.axis=cex.axis)
+      axis(side=1, at=x.at, labels=x.axis, cex.axis=cex.axis)
       axis(2, cex.axis=cex.axis)
       box()
     }
@@ -1335,7 +1335,7 @@ if(y == "ITS") {
     }
     #Add y-axis value to graph
     if(axes== FALSE) {
-      axis(side=1, at=y.at, labels=y.axis, cex.axis=cex.axis)
+      axis(side=1, at=x.at, labels=x.axis, cex.axis=cex.axis)
       axis(2, cex.axis=cex.axis)
       box()
     }
@@ -1678,7 +1678,7 @@ if(y == "ITS") {
     }
     #Add y-axis value to graph
     if(axes== FALSE) {
-      axis(side=1, at=y.at, labels=y.axis, cex.axis=cex.axis)
+      axis(side=1, at=x.at, labels=x.axis, cex.axis=cex.axis)
       axis(2, cex.axis=cex.axis)
       box()
     }
@@ -1968,7 +1968,7 @@ if(y == "ITS") {
     }
     #Add y-axis value to graph
     if(axes== FALSE) {
-      axis(side=1, at=y.at, labels=y.axis, cex.axis=cex.axis)
+      axis(side=1, at=x.at, labels=x.axis, cex.axis=cex.axis)
       axis(2, cex.axis=cex.axis)
       box()
     }
