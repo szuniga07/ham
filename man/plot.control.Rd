@@ -28,6 +28,8 @@
   cex.main = NULL,
   cex.text = NULL,
   x.axis = NULL,
+  y.axis = NULL,
+  round.c = NULL,
   ...
 )
 }
@@ -79,7 +81,15 @@
 \item{x.axis}{a vector of unique character or numeric values that makes up x-axis values to
 replace the time variable values. This will be most helpful if you prefer current calendar
 months/years instead of values starting at 1 (e.g., x.axis= sort(unique(data$Year)) for 1900-1999,
-not 1-100). Must have equal lengths for unique x.axis values and unique replaced values.}
+not 1-100). Must have equal lengths for unique x.axis values and replaced values (i.e., nrow(x)). Default is NULL.}
+
+\item{y.axis}{a vector of unique character or numeric values that makes up y-axis values to replace
+the outcome variable values. This will be most helpful if your outcome needs to be converted such as rate per
+1,000 patient days (e.g., y.axis= seq(min(x$HAI)*1000, max(x$HAI)*1000, length.out=nrow(x))). Must have equal
+lengths for unique y.axis values and replaced values (i.e., nrow(x)). Default is NULL.}
+
+\item{round.c}{an integer indicating the number of decimal places when rounding numbers such as for y.axis.
+Default is 2.}
 
 \item{...}{additional arguments.}
 }
@@ -102,13 +112,17 @@ plot(spc_x)
 # p-chart, using only the numerator (i.e., y=NULL). Specify unequal sample sizes
 spc_p <- control(x="rdm30", time="month", data=hosprog, type="p", n.equal=FALSE)
 # p-chart, adding target and time point lines
-plot(spc_p, tgt=c(0,.25), tgtcol="green", ylim=c(0,0.4), tpline=c(4,8), tpcol= c("yellow","black"))
+plot(spc_p, tgt=c(0,.25), tgtcol="green", ylim=c(0,0.4), tpline=c(4,8),
+tpcol= c("yellow","black"))
 
 # u-chart for infection rates with an intervention
 spc_u <- control(x="HAI", y="PatientDays", time="Month", data=infections,
 type="u", n.equal=FALSE, intervention=22)
-# u-chart comparing trend lines and non-default graphing options
-plot(spc_u, main="u-Chart: Pre/Post Intervention", col=c("green","dodgerblue"), ylim=c(0, .0025),
-trend=TRUE, trcol="red", x.axis=c((1:41+12)), xlab="Months (starting at year 2)",
-icol="gray", lwd=2, cex=2, cex.axis=1.1, cex.main=1.25, cex.text=1.25)
+# u-chart with trend lines, various graphing options, x.axis start at 2nd year
+# and y.axis changed to show HAIs per 1,000 patient days
+plot(spc_u, main="u-Chart: HAI per 1,000 Patient Days Pre/Post Intervention",
+col=c("green","dodgerblue"), trend=TRUE, trcol="red", x.axis=c((1:41+12)), round.c=1,
+y.axis=seq(min(spc_u$HAI)*1000, max(spc_u$HAI)*1000, length.out=nrow(spc_u)),
+xlab="Months (starting at year 2)", icol="gray", lwd=2, cex=2,
+cex.axis=1.1, cex.main=1.25, cex.text=1.25)
 }

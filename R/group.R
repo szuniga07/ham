@@ -30,7 +30,7 @@
 #' @param asis a logical vector that indicates if data will be processed as having only 1 unique observation per 'x' and 'z' combination
 #' (i.e., this is intended for use with aggregated data). Default is FALSE. This will allow the plot function to graph single observation data for groups
 #' over time. Only the t distribution is used for the overall trend line and confidence band (works in conjunction with 'ocol' and 'oband').
-#' @param dataf not currently use, please use 'data' instead.
+#' @param dataf not currently used, please use 'data' instead.
 #'
 #' @return list of confidence intervals for outcomes by groups, over time,
 #' and clustering measures. Some values returned in alphabetical and numerical order based on the group.

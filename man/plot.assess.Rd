@@ -96,8 +96,7 @@ should be added to the plot. Default is FALSE. It is overridden if coefs = TRUE.
 and p-value significance symbols ('+' p<0.10; '\emph{' p<0.05; '\strong{' p<0.01; '}}' p<0.001) should be
 added to the plot. Default is FALSE. coefs = TRUE overrides name = FALSE.}
 
-\item{round.c}{an integer indicating the number of decimal places
-to be used for rounding coefficient values.}
+\item{round.c}{an integer indicating the number of decimal places to be used for rounding coefficient values. Default is 2.}
 
 \item{pos.text}{a list of named integer value(s) between 1 to 4 indicating
 the position of the text added into the plot. List name(s) should use coefficient variable names.}
@@ -115,7 +114,7 @@ One line is shifted when there is 1 treatment/interruption period and 2 shifts f
 \item{x.axis}{a vector of unique character or numeric values that makes up x-axis values to
 replace the intervention time variable values. This will be most helpful if you prefer current
 calendar years instead of values starting at 1 (e.g., x.axis= sort(unique(data$Year)) for 1900-1999,
-not 1-100). Must have equal lengths for unique x.axis values and unique replaced values.}
+not 1-100). Must have equal lengths for unique x.axis values and unique replaced values. Default is NULL.}
 
 \item{...}{additional arguments.}
 }

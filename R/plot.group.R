@@ -26,8 +26,7 @@
 #' @param cex.lab The magnification to be used for x and y labels relative to the current setting of cex. Default is 1.
 #' @param cex.main The magnification to be used for main titles relative to the current setting of cex. Default is 1.
 #' @param cex.text The magnification to be used for the text added into the plot relative to the current setting of 1.
-#' @param round.c an integer indicating the number of decimal places. Default is 2.
-#' to be used for rounding coefficient values.
+#' @param round.c an integer indicating the number of decimal places to be used for rounding values. Default is 2.
 #' @param name logical TRUE or FALSE that indicates whether group names
 #' should be added to the 'time' or 'roll' plots. Default is FALSE.
 #' @param abbrv the minimum length of the abbreviations. Default is 5.

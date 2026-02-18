@@ -89,8 +89,7 @@ target line when y='time' or 'roll'. Default is NULL.}
 
 \item{cex.text}{The magnification to be used for the text added into the plot relative to the current setting of 1.}
 
-\item{round.c}{an integer indicating the number of decimal places. Default is 2.
-to be used for rounding coefficient values.}
+\item{round.c}{an integer indicating the number of decimal places to be used for rounding values. Default is 2.}
 
 \item{name}{logical TRUE or FALSE that indicates whether group names
 should be added to the 'time' or 'roll' plots. Default is FALSE.}

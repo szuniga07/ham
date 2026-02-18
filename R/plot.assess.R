@@ -36,8 +36,7 @@
 #' @param coefs logical TRUE or FALSE that indicates whether coefficient names, values,
 #' and p-value significance symbols ('+' p<0.10; '*' p<0.05; '**' p<0.01; '***' p<0.001) should be
 #' added to the plot. Default is FALSE. coefs = TRUE overrides name = FALSE.
-#' @param round.c an integer indicating the number of decimal places
-#' to be used for rounding coefficient values.
+#' @param round.c an integer indicating the number of decimal places to be used for rounding coefficient values. Default is 2.
 #' @param pos.text a list of named integer value(s) between 1 to 4 indicating
 #' the position of the text added into the plot. List name(s) should use coefficient variable names.
 #' @param arrow logical TRUE or FALSE that indicates whether arrows and
@@ -51,7 +50,7 @@
 #' @param x.axis a vector of unique character or numeric values that makes up x-axis values to
 #' replace the intervention time variable values. This will be most helpful if you prefer current
 #' calendar years instead of values starting at 1 (e.g., x.axis= sort(unique(data$Year)) for 1900-1999,
-#' not 1-100). Must have equal lengths for unique x.axis values and unique replaced values.
+#' not 1-100). Must have equal lengths for unique x.axis values and unique replaced values. Default is NULL.
 #' @param ... additional arguments.
 #'
 #' @return plot of partial predictions for treatment and control groups.
