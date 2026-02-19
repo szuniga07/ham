@@ -1,4 +1,4 @@
-#'#' Shewhart control charts
+#' Shewhart control charts
 #'
 #' Graph X-bar charts, p-charts, and u-charts. This includes
 #' producing means center lines, 3-sigma upper and lower control limits. Users can also calculate

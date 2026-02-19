@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot.control.R
 \name{plot.control}
 \alias{plot.control}
-\title{#' Shewhart control charts}
+\title{Shewhart control charts}
 \usage{
 \method{plot}{control}(
   x,
