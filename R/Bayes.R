@@ -33,7 +33,7 @@
 #' ## Hospital LOS and readmissions ##
 #' # X-bar chart statistics
 
-bayes <- function(x, parameter=NULL, mass=NULL, compare=NULL,
+Bayes <- function(x, parameter=NULL, mass=NULL, compare=NULL,
                     rope=NULL, newdata=FALSE) {
   #Looking for a list
   if (any(class(x) %in% c("list", "mcmc.list")) == FALSE) {stop("Error: Expecting list class object." )}
