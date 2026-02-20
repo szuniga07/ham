@@ -1,0 +1,4206 @@
+#' Shewhart control charts
+#'
+#' Graph X-bar charts, p-charts, and u-charts. This includes
+#' producing means center lines, 3-sigma upper and lower control limits. Users can also calculate
+#' values before and after an intervention to see if a change in the control process happened. Values are
+#' returned in a data frame.
+#'
+#' @param x bayes object.
+#' @param y character vector for the type of plot to graph. Select 'post', 'check', 'multi', or 'target'
+#' for posterior summary, posterior predictive check, multilevel or hierarchical model, or target summary plots.
+#' Default is NULL, if nothing is selected, a posterior summary plot is produced.
+#' @param x list object of MCMC chains (e.g, mcmc.list).
+#' @param parameter single character vector name of parameter in MCMC chains to produce summary statistics. Default is NULL.
+#' @param center character vector that selects the type of central tendency to use when reporting parameter values.
+#' Choices include: 'mean', 'median', and 'mode'. Default is 'mode'.
+#' @param mass numeric vector the specifies the credible mass used in the Highest Density Interval (HDI). Default is 0.95.
+#' @param compare numeric vector with one comparison value to determine how much of the distribution is above or below
+#' the comparison value. Default is NULL.
+#' @param rope numeric vector with two values that define the Region of Practical Equivalence (ROPE).
+#' Test hypotheses by setting low and high values to determine if the Highest Density Interval (HDI)
+#' is within or without the ROPE. Parameter value declared not credible if the entire ROPE lies
+#' outside the HDI of the parameter’s posterior (i.e., we reject the null hypothesis). For example,
+#' the ROPE of a coin is set to 0.45 to 0.55 but the posterior 95% HDI is 0.61 - 0.69 so we reject
+#' the null hypothesis value of 0.50. We can accept the null hypothesis if the entire 95% HDI falls with the ROPE. Default is NULL.
+#' @param xlim specify plot's x-axis limits with a 2 element numeric vector.
+#' @param ylim specify plot's y-axis limits with a 2 element numeric vector.
+#' @param xlab a character vector label for the x-axis.
+#' @param ylab a character vector label for the y-axis.
+#' @param main the main title of the plot.
+#' @param lwd select the line width.
+#' @param bcol a single or multiple element character vector to specify the bar color(s).
+#' When Bayesian estimates and observed values are present, the first colors are Bayesian estimates
+#' while the last colors are observed values. Defaults to, if nothing selected, 'gray'.
+#' @param lcol a single or multiple element character vector to specify the line color(s).
+#' When Bayesian estimates and observed values are present, the first colors are Bayesian estimates
+#' while the last colors are observed values. Defaults to, if nothing selected, 'gray'.
+#' @param pcol a single or multiple element character vector to specify the point color(s).
+#' When Bayesian estimates and observed values are present, the first colors are Bayesian estimates
+#' while the last colors are observed values. Defaults to, if nothing selected, 'gray'.
+#' @param tgt specify 1 or more values on the y-axis of where to add one or more horizontal target lines. Default is NULL.
+#' @param tgtcol select one or multiple colors for one or multiple target lines. Default is 'gray'.
+#' @param tpline add one or more time point vertical lines using x-axis values. Default is NULL (i.e., no lines).
+#' @param tpcol specify a color for the time point line, tpline. Default is NULL.
+#' @param cex A numerical value giving the amount by which plotting text and symbols should be magnified relative to the default of 1.
+#' @param cex.axis The magnification to be used for axis annotation relative to the current setting of cex.
+#' @param cex.lab The magnification to be used for x and y labels relative to the current setting of cex.
+#' @param cex.main The magnification to be used for main titles relative to the current setting of cex.
+#' @param cex.text The magnification to be used for the iname text added into the plot relative to the current setting of 1.
+#' @param x.axis a vector of unique character or numeric values that makes up x-axis values to
+#' replace the time variable values. This will be most helpful if you prefer current calendar
+#' months/years instead of values starting at 1 (e.g., x.axis= sort(unique(data$Year)) for 1900-1999,
+#' not 1-100). Must have equal lengths for unique x.axis values and replaced values (i.e., nrow(x)). Default is NULL.
+#' @param y.axis a vector of unique character or numeric values that makes up y-axis values to replace
+#' the outcome variable values. This will be most helpful if your outcome needs to be converted such as rate per
+#' 1,000 patient days (e.g., y.axis= seq(min(x$HAI)*1000, max(x$HAI)*1000, length.out=nrow(x))). Must have equal
+#' lengths for unique y.axis values and replaced values (i.e., nrow(x)). Default is NULL.
+#' @param round.c an integer indicating the number of decimal places when rounding numbers such as for y.axis.
+#' Default is 2.
+#' @param ... additional arguments.
+#'
+#' @return plot of Shewhart control charts: X-bar charts, p-charts, and u-charts with 3-sigma control limits.
+#' @importFrom graphics lines plot abline points text arrows
+#' @importFrom utils head tail
+#' @importFrom methods is
+#' @importFrom stats lm
+#' @export
+#' @references
+#' Kruschke, J. (2014). Doing Bayesian Data Analysis: A Tutorial with R, JAGS, and
+#' Stan, Second Edition. New York: Academic Press. ISBN: 9780124058880
+#'
+#' @examples
+#' ## Hospital LOS and readmissions ##
+
+
+plot.bayes <- function(x, y=NULL, xlim=NULL, ylim=NULL, xlab=NULL, ylab=NULL, main=NULL, lwd=NULL,
+                       bcol=NULL, lcol=NULL, pcol=NULL, tgt=NULL, tgtcol="gray", tpline=NULL, tpcol=NULL, cex=1,
+                         cex.lab=NULL, cex.axis=NULL, cex.main=NULL, cex.text=NULL, x.axis=NULL, y.axis=NULL, round.c=NULL, ...) {
+  if (any(class(x) == "bayes") == FALSE) {stop("Error: Expecting bayes class object." )}
+  #Looking for 1 parameter name
+  if(!center %in% c("mode","median","mean")) {
+    stop("Error: Expecting center as either 'mode', 'median', or 'mean'.")
+  }
+
+################################################################################
+
+  ################################################################################
+  #                 Function to convert coda to data frame                       #
+  ################################################################################
+
+  fncMCMC <- function(x) {
+    #Get the number of chains, rows, and columns per chain
+    n_chains <- length(x)
+    n_rows <- dim(x[[1]])[1]
+    n_cols <- dim(x[[1]])[2]
+    #Convert coda object to data.frame
+    mcmc <- data.frame(do.call(rbind, codaSamples)) #drop data.frame if matrix/array needed
+    #Create CHAIN variable
+    mcmc$CHAIN <- rep(1:n_chains, each=n_rows)
+    #Re-order so CHAIN is in the 1st spot
+    mcmc <- mcmc[, c((n_cols+1), 1:n_cols)]
+    return(mcmc)
+  }
+
+  ch_all <- fncMCMC(codaSamples)
+
+  ch_names <- colnames(ch_all)[-1]
+  ch_names
+
+  plotPost(rowMeans(ch_all[, ch_names[1], drop=FALSE]) )
+  plotPost(rowMeans(ch_all[, ch_names[2], drop=FALSE]) )
+  plotPost(rowMeans(ch_all[, ch_names[3], drop=FALSE]) )
+  HDIofMCMC
+
+  ## effective sample size
+  fncESS(ch_all)
+
+  #Traceplot
+  n_rows <- dim(ch_all)[1]
+  n_cols <- dim(ch_all)[2]
+
+  #plot works much faster than lines, doesn't matter if it's a for loop
+  plot(1:(n_rows/n_cols), ch_all[1:(n_rows/n_cols), ch_names[1]], type="n")
+  for(i in 1:max(ch_all$CHAIN)) {
+    lines(ch_all[ch_all$CHAIN == i, ch_names[1]], lty=i, col=i)
+  }
+
+
+  #with library(coda), is a dim= 20000, 4, "matrix" "array"
+  #Code below has colnames = CHAIN muOfY sigmaOfY nu, meed ch_all with CHAIN
+  mcmc2 <- as.matrix(codaSamples, chains=TRUE)
+
+  #This is code I would need to use, ch_all works
+  colMeans(ch_all[, c("muOfY","sigmaOfY","nu")])
+
+  #This is real code
+  rowMeans(ch_all[, "muOfY", drop=FALSE])
+
+
+
+
+
+  ################################################################################
+  #                           Bayesian Analysis                                  #
+  ################################################################################
+
+  ###################
+  # Get coda object #
+  ###################
+  #1. Enter the name of the coda object that will be used for analysis
+  output$dbdaCodaObj <- renderUI({
+    textInput("DBDAcoda", "1. Enter the Coda object name",   #Enter coda object
+              value="")
+  })
+  #1A. Make coda object a reactive function
+  DBDA_coda_object_df <- reactive({      #Coda object for Bayesian analysis
+    get(input$DBDAcoda)
+  })
+
+  #####################
+  ## HDI Diagnostics ##
+  #####################
+  #Reactive function of Coda object parameter names
+  DBDA_parameter_Names <- reactive({
+    if(input$DBDAcoda != "") {
+      colnames(as.matrix(DBDA_coda_object_df(), chains=TRUE))[-1]
+    }
+  })
+
+  #1. Select the parameters
+  output$select_dbda_diag_par <- renderUI({
+    selectInput("selDbPar", "1. Select the parameter.",
+                choices = DBDA_parameter_Names(), multiple=FALSE)
+  })
+  #Reactive function for directly above
+  sel_DBDA_par_name <- reactive({
+    input$selDbPar
+  })
+  #2. Run the Diagnostics?
+  output$DBDA_Diag_YN <- renderUI({
+    selectInput("dbdaDiYn", "2. Run the Diagnostics?",
+                choices = c("No", "Yes"), multiple=FALSE, selected="No")
+  })
+  #2A. Reactive function for above
+  dbda_diagnostics_Yes_No <- reactive({
+    input$dbdaDiYn
+  })
+  #Plot of DBDA diagnostics
+  #Confidence interval plot reactive function
+  plot_dbda_diagnostics <- reactive({                  #This indicates the data frame I will use.
+    if(dbda_diagnostics_Yes_No() == "Yes") {
+      diagMCMC( codaObject=DBDA_coda_object_df() , parName= sel_DBDA_par_name() ,
+                saveName=NULL , saveType=NULL )
+    }
+  })
+  #Diagnostic plot for above
+  output$plotDbdaDiag <- renderPlot({
+    if(dbda_diagnostics_Yes_No() == "Yes") {
+      plot_dbda_diagnostics()
+    }
+  }, height = 800)
+
+  #################################
+  ## Posterior Distribution Plot ##
+  #################################
+
+  ############
+  ##   UI   ##
+  ############
+  #1. Select the main parameter
+  output$dbdaPostPlot1 <- renderUI({
+    selectInput("dbdaPP1", "1. Select the parameter(s).",
+                choices = DBDA_parameter_Names(), multiple=TRUE, selected=DBDA_parameter_Names()[1] )
+  })
+  #1a. Reactive function for directly above
+  dbda_post_plot_par1 <- reactive({
+    input$dbdaPP1
+  })
+  #2. Do you want to compare parameter
+  #Working on correlations
+  output$dbdaPostCompareParYN <- renderUI({
+    selectInput("dbdaPostComP12", "2. Compare parameters?",
+                choices = c("No", "Subtraction", "Addition", "Division","Multiplication", "Correlation", "Covariance"),
+                multiple=FALSE, selected="No")
+  })
+  #2a. Reactive function for directly above
+  dbda_post_plot_compare_YN <- reactive({
+    input$dbdaPostComP12
+  })
+  #3. Select the 2nd parameter
+  output$dbdaPostPlot2 <- renderUI({
+    selectInput("dbdaPP2", "3. Select 2nd parameter(s).",
+                choices = setdiff(DBDA_parameter_Names(), dbda_post_plot_par1()),
+                multiple=TRUE, selected=setdiff(DBDA_parameter_Names(), dbda_post_plot_par1())[1] )
+  })
+  #3a. Reactive function for directly above
+  dbda_post_plot_par2 <- reactive({
+    input$dbdaPP2
+  })
+  #4. Do you want to run the function
+  output$dbdaPostCenTen <- renderUI({
+    selectInput("dbdaPstCT", "4. Choose central tendency.",
+                choices = c("mode","median","mean"), multiple=FALSE,
+                selected=c("mode","median","mean")[1])
+  })
+  #4A. Reactive function for above
+  dbda_post_central_tendency <- reactive({
+    input$dbdaPstCT
+  })
+  #5. Specify credible mass
+  output$dbdaPostCredibleMass <- renderUI({
+    numericInput("dbdaPstCrdMs", "5. Specify credible mass.",
+                 value = 0.95, min=0, max = 1, step = .01)
+  })
+  #5a. Reactive function for directly above
+  dbda_post_credible_mass <- reactive({
+    input$dbdaPstCrdMs
+  })
+  #6. Do you want to add a ROPE
+  output$dbdaPostROPEYN <- renderUI({
+    selectInput("dbdaPstReYN", "6. Add ROPE?",
+                choices = c("No", "Yes"), multiple=FALSE, selected="No")
+  })
+  #7. Lower ROPE value
+  output$dbdaPostRopeVal1 <- renderUI({
+    numericInput("dbdaPRpVl1", "7. Lower ROPE value.",
+                 value = 0, step = .01)
+  })
+  #7a. Reactive function for directly above
+  dbda_post_rope_val_1 <- reactive({
+    if(input$dbdaPstReYN == "Yes") {
+      input$dbdaPRpVl1
+    } else {
+      NULL
+    }
+  })
+  #8. Upper ROPE value
+  output$dbdaPostRopeVal2 <- renderUI({
+    numericInput("dbdaPRpVl2", "8. Upper ROPE value.",
+                 value = 0, step = .01)
+  })
+  #8a. Reactive function for directly above
+  dbda_post_rope_val_2 <- reactive({
+    if(input$dbdaPstReYN == "Yes") {
+      input$dbdaPRpVl2
+    } else {
+      NULL
+    }
+  })
+  #9. Select label size multiplier
+  output$dbdaPostLabMulti <- renderUI({
+    numericInput("dbdaPstLbMlt", "9. Increase XY label sizes.",
+                 value = 1.75, min=.01, step = .1)
+  })
+  #9a. Reactive function for directly above
+  dbda_post_label_multiplier <- reactive({
+    input$dbdaPstLbMlt
+  })
+  #10. Enter a weight variable.
+  output$dbdaPostMainTtl <- renderUI({
+    textInput("dbdaPstMnTtl", "10. Type main title.")
+  })
+  #10A. Enter a weight variable.
+  dbda_post_main_title <- reactive({
+    input$dbdaPstMnTtl
+  })
+  #11. Enter a weight variable.
+  output$dbdaPostXlab <- renderUI({
+    textInput("dbdaPstXLb", "11. Type x-axis label.")
+  })
+  #11A. Enter a weight variable.
+  dbda_post_x_label <- reactive({
+    input$dbdaPstXLb
+  })
+  #12. Enter a weight variable.
+  output$dbdaPostYlab <- renderUI({
+    textInput("dbdaPstYLb", "12. Type y-axis label.")
+  })
+  #12A. Enter a weight variable.
+  dbda_post_y_label <- reactive({
+    input$dbdaPstYLb
+  })
+  #13. Do you want to add a ROPE
+  output$dbdaPostShowCur <- renderUI({
+    selectInput("dbdaPstSC", "13. Show curve instead?",
+                choices = c("No", "Yes"), multiple=FALSE, selected="No")
+  })
+  #13A. reactive function for above
+  dbda_post_show_curve <- reactive({
+    if(input$dbdaPstSC == "Yes") {
+      TRUE
+    } else {
+      FALSE
+    }
+  })
+  #14. Select bar colors
+  output$dbdaPlotLineCol <- renderUI({
+    selectInput("dbdaPLC", "14. Select bar color.",
+                choices = xyplot_Line_Color_Names(), multiple=FALSE,
+                selected= xyplot_Line_Color_Names()[2] )
+  })
+  #14a. Reactive function for directly above
+  dbda_plot_line_colors <- reactive({
+    input$dbdaPLC
+  })
+  #15. X-axis limits
+  output$dbdaPostXaxisLims <- renderUI({
+    textInput("dbdaPstXLms", "15. List X-axis limits.",
+              value = paste0('c( ', ')'))
+  })
+  #15a. Reactive function for directly above
+  dbda_post_x_axis_limits <- reactive({
+    input$dbdaPstXLms
+  })
+
+  #16. Place HDI text
+  output$dbdaPostPlaceHDIText <- renderUI({
+    numericInput("dbdaPPlHDITxt", "16. Place HDI text.",
+                 value = 0.7, step = .01)
+  })
+  #16a. Reactive function for directly above
+  dbda_post_place_hdi_text <- reactive({
+    input$dbdaPPlHDITxt
+  })
+  #17. Do you want to compare parameter
+  output$dbdaPostCompValYN <- renderUI({
+    selectInput("dbdaPstCmpVl", "17. Add comparison value?",
+                choices = c("No", "Yes"), multiple=FALSE, selected="No")
+  })
+  #18. Vertical line as a comparative value
+  output$dbdaPostCompVal <- renderUI({
+    numericInput("dbdaPCmpVl", "18. Plot comparative value.",
+                 value = 0, step = .01)
+  })
+  #18a. Reactive function for directly above
+  dbda_post_comparative_val <- reactive({
+    if (input$dbdaPstCmpVl == "Yes") {
+      input$dbdaPCmpVl
+    } else {
+      NULL
+    }
+  })
+  #19. Do you want to run the function
+  output$dbdaPostRun <- renderUI({
+    selectInput("dbdaPstRn", "19. Run HDI plot?",
+                choices = c("No", "Yes"), multiple=FALSE, selected="No")
+  })
+  #19A. Reactive function for above
+  dbda_post_run_Yes_No <- reactive({
+    input$dbdaPstRn
+  })
+  #20. Do you want to run the function
+  output$dbdaPostEffSize <- renderUI({
+    selectInput("dbdaPstES", "20. View effect size by distribution?",
+                choices = c("No","Correlation","Beta", "Normal", "Log-normal", "Skew-normal", "Gamma", "Weibull", "t"),
+                multiple=FALSE, selected="No")
+  })
+  #20A. Reactive function for above
+  dbda_post_effect_size <- reactive({
+    input$dbdaPstES
+  })
+
+  # Reactive function to indicate if we compare 2 groups and we want an effect size
+  dbda_post_want_to_run_effect_size <- reactive({
+    ifelse(dbda_post_plot_compare_YN()=="Subtraction" & dbda_post_run_Yes_No()== "Yes" &
+             dbda_post_effect_size() != "No", 1, 0 )
+  })
+
+  # Reactive function that creates posterior for effect sizes
+  dbda_post_effect_size_posterior <- reactive({
+    if (dbda_post_want_to_run_effect_size() == 1) {
+      fncBayesEffectSize( Coda.Object=DBDA_coda_object_df(),
+                          Distribution= dbda_post_effect_size(),
+                          yVal1= dbda_post_plot_par1(),
+                          yVal2= dbda_post_plot_par2())
+    }
+  })
+
+  ## Plot DBDA Posterior HDI #1. ##
+  plot_dbda_posterior_distribution <- reactive({
+    if(dbda_post_run_Yes_No() == "Yes") {
+      par(mar=c(6, 7, 4, 2))
+      if(dbda_post_plot_compare_YN() == "Subtraction") {
+        #Difference between 2 posterios
+        plotPost( rowMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par1(), drop=FALSE]) - rowMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par2(), drop=FALSE]),
+                  compVal= dbda_post_comparative_val(), cenTend= dbda_post_central_tendency(),
+                  ROPE=c(dbda_post_rope_val_1(),dbda_post_rope_val_2()),
+                  credMass= dbda_post_credible_mass(), main= dbda_post_main_title(),
+                  xlab= dbda_post_x_label(), ylab= dbda_post_y_label(),
+                  showCurve= dbda_post_show_curve(), col= dbda_plot_line_colors(),
+                  xlim= (eval(parse(text=dbda_post_x_axis_limits() )) ),
+                  HDItextPlace= dbda_post_place_hdi_text(), cex=dbda_post_label_multiplier(),
+                  cex.main= dbda_post_label_multiplier(), cex.lab= dbda_post_label_multiplier() )
+      }
+      #Addition of 2 posteriors
+      if(dbda_post_plot_compare_YN() == "Addition") {
+        plotPost( rowMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par1(), drop=FALSE]) + rowMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par2(), drop=FALSE]),
+                  compVal= dbda_post_comparative_val(), cenTend= dbda_post_central_tendency(),
+                  ROPE=c(dbda_post_rope_val_1(),dbda_post_rope_val_2()),
+                  credMass= dbda_post_credible_mass(), main= dbda_post_main_title(),
+                  xlab= dbda_post_x_label(), ylab= dbda_post_y_label(),
+                  showCurve= dbda_post_show_curve(), col= dbda_plot_line_colors(),
+                  xlim= (eval(parse(text=dbda_post_x_axis_limits() )) ),
+                  HDItextPlace= dbda_post_place_hdi_text(), cex=dbda_post_label_multiplier(),
+                  cex.main= dbda_post_label_multiplier(), cex.lab= dbda_post_label_multiplier() )
+      }
+      if(dbda_post_plot_compare_YN() == "Division") {
+        #Difference between 2 posterios
+        plotPost( rowMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par1(), drop=FALSE]) / rowMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par2(), drop=FALSE]),
+                  compVal= dbda_post_comparative_val(), cenTend= dbda_post_central_tendency(),
+                  ROPE=c(dbda_post_rope_val_1(),dbda_post_rope_val_2()),
+                  credMass= dbda_post_credible_mass(), main= dbda_post_main_title(),
+                  xlab= dbda_post_x_label(), ylab= dbda_post_y_label(),
+                  showCurve= dbda_post_show_curve(), col= dbda_plot_line_colors(),
+                  xlim= (eval(parse(text=dbda_post_x_axis_limits() )) ),
+                  HDItextPlace= dbda_post_place_hdi_text(), cex=dbda_post_label_multiplier(),
+                  cex.main= dbda_post_label_multiplier(), cex.lab= dbda_post_label_multiplier() )
+      }
+      if(dbda_post_plot_compare_YN() == "Multiplication") {
+        #Difference between 2 posterios
+        plotPost( rowMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par1(), drop=FALSE]) * rowMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par2(), drop=FALSE]),
+                  compVal= dbda_post_comparative_val(), cenTend= dbda_post_central_tendency(),
+                  ROPE=c(dbda_post_rope_val_1(),dbda_post_rope_val_2()),
+                  credMass= dbda_post_credible_mass(), main= dbda_post_main_title(),
+                  xlab= dbda_post_x_label(), ylab= dbda_post_y_label(),
+                  showCurve= dbda_post_show_curve(), col= dbda_plot_line_colors(),
+                  xlim= (eval(parse(text=dbda_post_x_axis_limits() )) ),
+                  HDItextPlace= dbda_post_place_hdi_text(), cex=dbda_post_label_multiplier(),
+                  cex.main= dbda_post_label_multiplier(), cex.lab= dbda_post_label_multiplier() )
+      }
+      if(dbda_post_plot_compare_YN() == "Correlation") {
+        #Correlation between 2 posterios
+        plot( cor(colMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par1()]), colMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par2()])),
+              xlab= dbda_post_x_label(), ylab= dbda_post_y_label(),
+              main= dbda_post_main_title(), col= dbda_plot_line_colors(), pch=17,
+              xlim= (eval(parse(text=dbda_post_x_axis_limits() )) ),
+              cex=dbda_post_label_multiplier(), cex.main= dbda_post_label_multiplier(),
+              cex.lab= dbda_post_label_multiplier() )
+        text( 1.1, cor(colMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par1()]), colMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par2()])),
+              round(cor(colMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par1()]), colMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par2()])), 4),
+              cex= dbda_post_label_multiplier())
+      }
+      if(dbda_post_plot_compare_YN() == "Covariance") {
+        #Correlation between 2 posterios
+        plot( cov(colMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par1()]), colMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par2()])),
+              xlab= dbda_post_x_label(), ylab= dbda_post_y_label(),
+              main= dbda_post_main_title(), col= dbda_plot_line_colors(), pch=17,
+              xlim= (eval(parse(text=dbda_post_x_axis_limits() )) ),
+              cex=dbda_post_label_multiplier(), cex.main= dbda_post_label_multiplier(),
+              cex.lab= dbda_post_label_multiplier() )
+        text( 1.1, cov(colMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par1()]), colMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par2()])),
+              round(cov(colMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par1()]), colMeans(as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par2()])), 4),
+              cex= dbda_post_label_multiplier())
+      }
+      if(dbda_post_plot_compare_YN() == "No") {
+        plotPost( as.matrix(DBDA_coda_object_df())[, dbda_post_plot_par1()[1]],
+                  compVal= dbda_post_comparative_val(), cenTend= dbda_post_central_tendency(),
+                  ROPE=c(dbda_post_rope_val_1(),dbda_post_rope_val_2()),
+                  credMass= dbda_post_credible_mass(), main= dbda_post_main_title(),
+                  xlab= dbda_post_x_label(), ylab= dbda_post_y_label(),
+                  showCurve= dbda_post_show_curve(), col= dbda_plot_line_colors(),
+                  xlim= (eval(parse(text=dbda_post_x_axis_limits() )) ),
+                  HDItextPlace= dbda_post_place_hdi_text(), cex=dbda_post_label_multiplier(),
+                  cex.main= dbda_post_label_multiplier(), cex.lab= dbda_post_label_multiplier() )
+      }
+    }
+  })
+
+  ## Plot DBDA Posterior HDI #2. ##
+  #Plot effect size
+  plot_dbda_post_distr_effect_size <- reactive({
+    if(dbda_post_want_to_run_effect_size() == 1) {
+      par(mar=c(6, 7, 4, 2))
+      plotPost( dbda_post_effect_size_posterior(),
+                compVal= dbda_post_comparative_val(), cenTend= dbda_post_central_tendency(),
+                ROPE=c(dbda_post_rope_val_1(),dbda_post_rope_val_2()),
+                credMass= dbda_post_credible_mass(), main= dbda_post_main_title(),
+                xlab= dbda_post_x_label(), ylab= dbda_post_y_label(),
+                showCurve= dbda_post_show_curve(), col= dbda_plot_line_colors(),
+                xlim= (eval(parse(text=dbda_post_x_axis_limits() )) ),
+                HDItextPlace= dbda_post_place_hdi_text(), cex=dbda_post_label_multiplier(),
+                cex.main= dbda_post_label_multiplier(), cex.lab= dbda_post_label_multiplier() )
+    }
+  })
+
+  #Posterior distribution for above
+  output$plotDbdaPosteriorDistribution <- renderPlot({
+    if(dbda_post_run_Yes_No() == "Yes") {
+      if(dbda_post_want_to_run_effect_size() == 1) {
+        plot_dbda_post_distr_effect_size()
+      } else {
+        plot_dbda_posterior_distribution()
+      }
+    }
+  }, height = 800)
+
+  ##################################
+  ## Hierarchical Estimation Plot ##
+  ##################################
+
+  ## Posterior summary ##
+  ############
+  ##   UI   ##
+  ############
+  #1. Select the main parameter
+  output$dbdaPostSumLev <- renderUI({
+    numericInput("dbdaPSL", "1. Hierarchical model level.",
+                 value = 1, min=1, max=3, step = 1)
+  })
+  #2. Select the outcome
+  output$dbdaPostSumY <- renderUI({
+    selectInput("dbdaPSY", "2. Select the outcome.",
+                choices = var(), multiple=FALSE, selected=var()[1] )
+  })
+  #3. Select hierarchical groupings...level-2
+  output$dbdaPostSumX1 <- renderUI({
+    selectInput("dbdaPSX1", "3. Select level-2 Group.",
+                choices = setdiff(var(), input$dbdaPSY), multiple=FALSE,
+                selected= setdiff(var(), input$dbdaPSY)[1])
+  })
+  #4. Select hierarchical groupings...level-3
+  output$dbdaPostSumX2 <- renderUI({
+    selectInput("dbdaPSX2", "4. Select level-3 Category.",
+                choices = setdiff(var(), try(c(input$dbdaPSY, input$dbdaPSX1))), multiple=FALSE,
+                selected= setdiff(var(), try(c(input$dbdaPSY, input$dbdaPSX1)))[1])
+  })
+  #5. Enter theta variable name.
+  output$dbdaPostSumTheta <- renderUI({
+    textInput("dbdaPstSmTht", "5. Type Theta name.")
+  })
+  #6. Enter level-2 omega variable name.
+  output$dbdaPostSumOmega2 <- renderUI({
+    textInput("dbdaPstSmOmg2", "6. Type level-2 Omega.")
+  })
+  #7. Enter level-2 omega variable name.
+  output$dbdaPostSumOmega3 <- renderUI({
+    textInput("dbdaPstSmOmg3", "7. Type level-3 Omega.")
+  })
+  #8. Do you want to run the function
+  output$dbdaPostSumCenTen <- renderUI({
+    selectInput("dbdaPstSmCT", "8. Choose central tendency.",
+                choices = c("Mode","Median","Mean"), multiple=FALSE,
+                selected= c("Mode","Median","Mean")[1])
+  })
+  #9. select the distribution type
+  output$dbdaPostSumDist <- renderUI({
+    selectInput("dbdaPstSmDst", "9. Choose the distribution.",
+                choices = c("Beta", "Normal", "Log-normal", "Skew-normal", "Gamma", "Weibull", "t"), multiple=FALSE,
+                selected=c("Beta", "Normal", "Log-normal", "Skew-normal", "Gamma", "Weibull", "t")[1])
+  })
+  #9A. Reactive function for above
+  dbda_post_summary_distr <- reactive({
+    input$dbdaPstSmDst
+  })
+
+  #10. Specify credible mass
+  output$dbdaPostSumCredibleMass <- renderUI({
+    numericInput("dbdaPstSmCrdMs", "10. Specify credible mass.",
+                 value = 0.95, min=0, max = 1, step = .01)
+  })
+  #10a. Reactive function for directly above
+  dbda_post_summary_credible_mass <- reactive({
+    input$dbdaPstSmCrdMs
+  })
+  #11. Is the data aggregated
+  output$dbdaPostSumAggrYN <- renderUI({
+    selectInput("dbdaPstSmAgYN", "11. Is data aggregated?",
+                choices = c("No", "Yes"), multiple=FALSE, selected="No")
+  })
+  #12. Pick the aggregated variable that represents the N.
+  output$dbdaPostSumAggrN <- renderUI({
+    selectInput("dbdaPSAgN", "12. Select aggregated N value.",
+                choices = var(), multiple=FALSE, selected=var()[1] )
+  })
+  #13. Do you want to run the function
+  output$dbdaPostSumRun <- renderUI({
+    selectInput("dbdaPstSmRn", "13. Run posterior summary?",
+                choices = c("No", "Yes"), multiple=FALSE, selected="No")
+  })
+  #13a. Reactive function for directly above
+  dbda_post_summary_run <- reactive({
+    input$dbdaPstSmRn
+  })
+  #14. Print the posterior structure
+  output$dbdaPostSumStructYN <- renderUI({
+    selectInput("dbdaPstSmStrYN", "14. Print posterior structure?",
+                choices = c("No", "Yes"), multiple=FALSE, selected="No")
+  })
+  #14a. Reactive function for directly above
+  dbda_post_summary_structure <- reactive({
+    input$dbdaPstSmStrYN
+  })
+  ## Summary of DBDA Posterior ##
+  results_dbda_posterior_summary <- reactive({
+    if(dbda_post_summary_run() == "Yes") {
+      fncHdiBinSmry(MCmatrix=as.matrix(DBDA_coda_object_df(), chains=TRUE), datFrm=df(),
+                    Level=input$dbdaPSL, Outcome=input$dbdaPSY, Group2=input$dbdaPSX1,
+                    Group3=input$dbdaPSX2, Theta=input$dbdaPstSmTht, Omega2=input$dbdaPstSmOmg2,
+                    Omega3=input$dbdaPstSmOmg3, Average=input$dbdaPstSmCT,
+                    AggrDF=input$dbdaPstSmAgYN, AggrN=input$dbdaPSAgN,
+                    Distribution=dbda_post_summary_distr(), Cred.Mass=dbda_post_summary_credible_mass())
+    }
+  })
+  #Print structure of posterior summary
+  output$structure_dbda_posterior_summary <- renderPrint({
+    if(dbda_post_summary_structure() == "Yes") {
+      str(results_dbda_posterior_summary())
+    }
+  })
+
+  #############################
+  ## Hierarchical Estimation ##
+  #############################
+  #1. Select the sorting order.
+  output$dbdaHierlphaNum <- renderUI({
+    selectInput("dbdaHrAN", "1. Sort by name or numerical value?",
+                choices = c("Alphabetical", "Numerical"),
+                selected="Alphabetical")
+  })
+  #1a. Reactive function for directly above
+  dbda_hier_alpha_num <- reactive({
+    input$dbdaHrAN
+  })
+  #2. Select whether to view level-2 or level-3 group
+  output$dbdaHierViewGroup3 <- renderUI({
+    selectInput("dbdaHrVwG3YN", "2. View level-3 groups?",
+                choices = c("No", "Yes"),
+                selected="No")
+  })
+  #2a. Reactive function for directly above
+  dbda_hier_view_group_level_3 <- reactive({
+    input$dbdaHrVwG3YN
+  })
+  #3. Select whether to view a subset
+  output$dbdaHierViewSub <- renderUI({
+    selectInput("dbdaHrVwSb", "3. View a subset?",
+                choices = c("No", "Yes"),
+                selected="No")
+  })
+  #3a. Reactive function for directly above
+  dbda_hier_view_subset <- reactive({
+    input$dbdaHrVwSb
+  })
+  #4c. Get group names
+  dbda_hier_group_lev_names <- reactive({
+    if (dbda_hier_view_subset() == "Yes") {
+      if(dbda_hier_view_group_level_3() == "Yes") {
+        results_dbda_posterior_summary()$Group3.Names
+      } else {
+        results_dbda_posterior_summary()$Group2.Names
+      }
+    } else {
+      NULL
+    }
+  })
+  #4. Select specific groups
+  output$dbdaHierSpecGroup <- renderUI({
+    selectInput("dbdaHrGrpLvs", "4. Highlight specific groups?",
+                choices = dbda_hier_group_lev_names(), multiple=TRUE)
+  })
+  #4a. Reactive function to get group levels
+  dbda_hier_group_levels <- reactive({
+    input$dbdaHrGrpLvs
+  })
+  #5. Select number of digits to round values by
+  output$dbdaHierRoundVals <- renderUI({
+    numericInput("dbdaHrRndVls", "5. Round decimals by.",
+                 value = 2, step = 1)
+  })
+  #5a. Reactive function for directly above
+  dbda_hier_round_decimals <- reactive({
+    input$dbdaHrRndVls
+  })
+  #6. Select line colors
+  output$dbdaHierLineCol <- renderUI({
+    selectInput("dbdaHrLnCl", "6. Select line color.",
+                choices = xyplot_Line_Color_Names(), multiple=FALSE, selected= "blue")
+  })
+  #6a. Reactive function for directly above
+  dbda_hier_line_colors <- reactive({
+    input$dbdaHrLnCl
+  })
+  #7. Select point colors
+  output$dbdaHierPointCol <- renderUI({
+    selectInput("dbdaHrPntCl", "7. Select point color.",
+                choices = xyplot_Line_Color_Names(), multiple=FALSE, selected= "red")
+  })
+  #7a. Reactive function for directly above
+  dbda_hier_point_colors <- reactive({
+    input$dbdaHrPntCl
+  })
+  #8. Select observed rate point color for level-3 graph
+  output$dbdaHierObsRateCol <- renderUI({
+    selectInput("dbdaHrObsRtCl", "8. Level-3 observed '+' color.",
+                choices = xyplot_Line_Color_Names(), multiple=FALSE, selected= "sienna")
+  })
+  #8a. Reactive function for directly above
+  dbda_hier_obs_rate_colors <- reactive({
+    input$dbdaHrObsRtCl
+  })
+  #9. Set target lines
+  output$dbdaHierTarLine <- renderUI({
+    textInput("dbdaHrTrLn", "9. Set target line(s).",
+              value = paste0('c( ', ')'))
+  })
+  #9a. Reactive function for directly above
+  dbda_hier_target_line <- reactive({
+    input$dbdaHrTrLn
+  })
+
+  #10. Select target color
+  output$dbdaHierTarCol <- renderUI({
+    selectInput("dbdaHrTrCl", "10. Select target color.",
+                choices = xyplot_Line_Color_Names(), multiple=FALSE, selected= "gray")
+  })
+  #10a. Reactive function for directly above
+  dbda_hier_target_color <- reactive({
+    input$dbdaHrTrCl
+  })
+  #11. Select whether to run overall 95% density bar
+  output$dbdaHierTotalBar <- renderUI({
+    selectInput("dbdaHrTtlBr", "11. Create overall HDI band?",
+                choices = c("No", "Yes"),
+                selected="No")
+  })
+  #11a. Reactive function for directly above
+  dbda_hier_total_bar_interval <- reactive({
+    input$dbdaHrTtlBr
+  })
+  #12. Select overall band color
+  output$dbdaHierTotalBarCol <- renderUI({
+    selectInput("dbdaHrTtlBCol", "12. Select overall band color.",
+                choices = xyplot_Line_Color_Names(), multiple=FALSE, selected= "yellow")
+  })
+  #12a. Reactive function for directly above
+  dbda_hier_total_bar_color <- reactive({
+    input$dbdaHrTtlBCol
+  })
+  ## Lower and uppper x-axis limits ##
+  #Lower
+  dbda_hier_x_lim_1 <- reactive({
+    if (dbda_post_summary_run() == "Yes") {
+      min(results_dbda_posterior_summary()$Post[1:results_dbda_posterior_summary()$LTR, "Obs.Rate"], na.rm=TRUE)* 0.95
+    } else {
+      0
+    }
+  })
+  #Upper
+  dbda_hier_x_lim_2 <- reactive({
+    if (dbda_post_summary_run() == "Yes") {
+      max(results_dbda_posterior_summary()$Post[1:results_dbda_posterior_summary()$LTR, "Obs.Rate"], na.rm=TRUE)* 1.05
+    } else {
+      0
+    }
+  })
+  #13. Indicate lower limit of x-axis
+  output$dbdaHierXlim1 <- renderUI({
+    numericInput("dbdaHrXLim1", "13. Lower X-axis limit.",
+                 value = round(dbda_hier_x_lim_1(), 2), step = .01)
+  })
+  #13a. Indicate lower limit of x-axis
+  dbda_hier_Xlim_val1 <- reactive({
+    input$dbdaHrXLim1
+  })
+  #14. Indicate upper limit of x-axis
+  output$dbdaHierXlim2 <- renderUI({
+    numericInput("dbdaHrXLim2", "14. Upper X-axis limit.",
+                 value = round(dbda_hier_x_lim_2(), 2), step = .01)
+  })
+  #14a. Indicate upper limit of x-axis
+  dbda_hier_Xlim_val2 <- reactive({
+    input$dbdaHrXLim2
+  })
+  #15. Select whether to add a legend or not
+  output$dbdaHierAddLeg <- renderUI({
+    selectInput("dbdaHrAdLgd", "15. Add the legend?",
+                choices = c("No", "Yes"),
+                selected="No")
+  })
+  #15a. Reactive function for directly above
+  dbda_hier_add_legend <- reactive({
+    input$dbdaHrAdLgd
+  })
+  #16. Legend location
+  output$dbdaHierLgdLoc <- renderUI({
+    selectInput("dbdaHrLgdLc", "16. Select the legend location.",
+                choices = c("bottomright","bottom","bottomleft","left","topleft","top","topright","right","center"),
+                multiple=FALSE, selected="topright" )
+  })
+  #16A. Reactive function for legend location
+  dbda_hier_legend_location <- reactive({
+    input$dbdaHrLgdLc
+  })
+  #17. Select label size multiplier
+  output$dbdaHierLabMulti <- renderUI({
+    numericInput("dbdaHrLbMlt", "17. Increase XY label sizes.",
+                 value = 1.75, min=.01, step = .1)
+  })
+  #17a. Reactive function for directly above
+  dbda_hier_label_multiplier <- reactive({
+    input$dbdaHrLbMlt
+  })
+  #18. Select label size multiplier
+  output$dbdaHierLineMulti <- renderUI({
+    numericInput("dbdaHrLnMlt", "18. Increase line width.",
+                 value = 1.75, min=.01, step = .1)
+  })
+  #18a. Reactive function for directly above
+  dbda_hier_line_multiplier <- reactive({
+    input$dbdaHrLnMlt
+  })
+
+  #19. Do you want to run the function
+  output$dbdaHierRun <- renderUI({
+    selectInput("dbdaHrRn", "19. Run HDI plot?",
+                choices = c("No", "Yes"), multiple=FALSE, selected="No")
+  })
+  #19A. Reactive function for above
+  dbda_hier_run_Yes_No <- reactive({
+    input$dbdaHrRn
+  })
+  ## Plot DBDA Posterior HDI ##
+  plot_dbda_hierarchical_estimation <- reactive({
+    if(dbda_hier_run_Yes_No() == "Yes") {
+      par(mar=c(2, 7, 4, 1))
+      fncHdiBinP(MCmatrix=results_dbda_posterior_summary(), Level=input$dbdaPSL,
+                 View.Order=dbda_hier_alpha_num(), View.Level=dbda_hier_view_group_level_3(),
+                 GroupX=dbda_hier_group_levels(), Lcol=dbda_hier_line_colors(),
+                 Pcol=dbda_hier_point_colors(), P3.col=dbda_hier_obs_rate_colors(),
+                 tgt=(eval(parse(text=dbda_hier_target_line() )) ), tgt.col=dbda_hier_target_color(),
+                 Cbar=dbda_hier_total_bar_interval(), plyCol=dbda_hier_total_bar_color(),
+                 labMulti=dbda_hier_label_multiplier(), lineMulti= dbda_hier_line_multiplier(),
+                 roundVal=dbda_hier_round_decimals(),
+                 XLim1=dbda_hier_Xlim_val1(),XLim2=dbda_hier_Xlim_val2(),
+                 Add.Lgd=dbda_hier_add_legend(), Leg.Loc=dbda_hier_legend_location())
+    }
+  })
+  #Posterior distribution for above
+  output$plotDbdaHierEstimation <- renderPlot({
+    if(dbda_hier_run_Yes_No() == "Yes") {
+      plot_dbda_hierarchical_estimation()
+    }
+  }, height = 800)
+
+
+  ###########################################
+  ## Posterior Predictive Check for groups ##
+  ###########################################
+  #1. select the distribution/Posterior Predictive type
+  output$dbdaPostCheckDist <- renderUI({
+    selectInput("dbdaPcgDst", "1. Posterior Predictive Check type.",
+                choices = c("Normal", "Log-normal", "Skew-normal", "Weibull", "Gamma", "t", "t: 1 group", "t: ANOVA",
+                            "OLS: Linear", "OLS: Quadratic", "OLS: Cubic",
+                            "Hierarchical OLS: Linear", "Hierarchical OLS: Quadratic", "Hierarchical OLS: Cubic",
+                            "Hierarchical Log OLS: Linear", "Hierarchical Log OLS: Quadratic", "Hierarchical Log OLS: Cubic",
+                            "OLS: DID", "Logistic: Linear", "Logistic: Quadratic","Logistic: Cubic",
+                            "Hierarchical Logistic: Linear", "Hierarchical Logistic: Quadratic",
+                            "Hierarchical Logistic: Cubic"), multiple=FALSE,
+                selected= c("Normal", "Log-normal", "Skew-normal", "Weibull", "Gamma", "t", "t: 1 group", "t: ANOVA",
+                            "OLS: Linear", "OLS: Quadratic", "OLS: Cubic",
+                            "Hierarchical OLS: Linear", "Hierarchical OLS: Quadratic", "Hierarchical OLS: Cubic",
+                            "Hierarchical Log OLS: Linear", "Hierarchical Log OLS: Quadratic", "Hierarchical Log OLS: Cubic",
+                            "OLS: DID", "Logistic: Linear", "Logistic: Quadratic","Logistic: Cubic",
+                            "Hierarchical Logistic: Linear", "Hierarchical Logistic: Quadratic",
+                            "Hierarchical Logistic: Cubic")[1])
+  })
+  #1A. Reactive function for above
+  dbda_post_check_grp_distr <- reactive({
+    input$dbdaPcgDst
+  })
+  #2. Select the outcome
+  output$dbdaPostCheckY <- renderUI({
+    selectInput("dbdaPcgY", "2. Select the outcome.",
+                choices = var(), multiple=FALSE, selected=var()[1] )
+  })
+  #2a. Reactive function for directly above
+  dbda_post_check_grp_Y <- reactive({
+    input$dbdaPcgY
+  })
+  #3. Select groups
+  output$dbdaPostCheckX <- renderUI({
+    selectInput("dbdaPcgX", "3. Select the group variable.",
+                choices = setdiff(var(), dbda_post_check_grp_Y()), multiple=FALSE,
+                selected= setdiff(var(), dbda_post_check_grp_Y())[1])
+  })
+  #3a. Reactive function for directly above
+  dbda_post_check_grp_X <- reactive({
+    input$dbdaPcgX
+  })
+  #4. Do you want to run the function
+  output$dbdaPostCheckGenGroups <- renderUI({
+    selectInput("dbdaPcgGnGrp", "4. Generate group levels in #3?",
+                choices = c("No", "Yes"), multiple=FALSE, selected="No")
+  })
+  #4A. Reactive function for above
+  dbda_post_check_grp_gen_YN <- reactive({
+    input$dbdaPcgGnGrp
+  })
+  #5c. Get levels
+  dbda_post_check_grp_X_all_levels <- reactive({
+    if (dbda_post_check_grp_gen_YN() == "Yes") {
+      sort(unique(df()[, dbda_post_check_grp_X()]))
+    }
+  })
+  #5. Select group levels
+  output$dbdaPostCheckLevX <- renderUI({
+    selectInput("dbdaPcgLX", "5. Select the group level.",
+                choices = dbda_post_check_grp_X_all_levels(), multiple=FALSE,
+                selected= dbda_post_check_grp_X_all_levels()[1])
+  })
+  #5a. Reactive function for directly above
+  dbda_post_check_grp_level_X <- reactive({
+    input$dbdaPcgLX
+  })
+  #6. Select the mean parameter
+  output$dbdaPostCheckParMn <- renderUI({
+    selectInput("dbdaPcgPM", "6. Select mean or 1st parameter.",
+                choices = DBDA_parameter_Names(), multiple=FALSE,
+                selected=DBDA_parameter_Names()[1] )
+  })
+  #6a. Reactive function for directly above
+  dbda_post_check_grp_pm <- reactive({
+    input$dbdaPcgPM
+  })
+  #7. Select the SD parameter
+  output$dbdaPostCheckParSD <- renderUI({
+    selectInput("dbdaPcgPSD", "7. Select SD or 2nd parameter.",
+                choices = setdiff(DBDA_parameter_Names(), dbda_post_check_grp_pm()),
+                multiple=FALSE, selected= setdiff(DBDA_parameter_Names(), dbda_post_check_grp_pm())[1] )
+  })
+  #7a. Reactive function for directly above
+  dbda_post_check_grp_psd <- reactive({
+    input$dbdaPcgPSD
+  })
+  #8. Select the mean parameter
+  output$dbdaPostCheckParNu <- renderUI({
+    selectInput("dbdaPcgPNu", "8. Select V, Skew, or 3rd parameter.",
+                choices = DBDA_parameter_Names(), multiple=FALSE,
+                selected=DBDA_parameter_Names()[1] )
+  })
+  #8a. Reactive function for directly above
+  dbda_post_check_grp_pnu <- reactive({
+    input$dbdaPcgPNu
+  })
+
+  #9. Select regression predictors
+  output$dbdaPartPredX <- renderUI({
+    selectInput("dbdaPrPrX", "9. Select regression predictors.",
+                choices = setdiff(var(), dbda_post_check_grp_Y()), multiple=TRUE,
+                selected= setdiff(var(), dbda_post_check_grp_Y())[1])
+  })
+  #9a. Reactive function for directly above
+  dbda_post_check_part_pred_X <- reactive({
+    input$dbdaPrPrX
+  })
+  #10. Select the mean parameter
+  output$dbdaPartPredPars <- renderUI({
+    selectInput("dbdaPrPrPars", "10. Select regression parameters.",
+                choices = DBDA_parameter_Names(), multiple=TRUE,
+                selected=DBDA_parameter_Names()[1] )
+  })
+  #10a. Reactive function for directly above
+  dbda_post_check_part_pred_pars <- reactive({
+    input$dbdaPrPrPars
+  })
+  #11. select the distribution/Posterior Predictive type
+  output$dbdaPartPredData <- renderUI({
+    selectInput("dbdaPrPrDat", "11. Add observed data?",
+                choices = c("All", "Unit","All: Lines", "Unit: Lines","DID: Groups", "None"),
+                multiple=FALSE, selected= "None")
+  })
+  #11A. Reactive function for above
+  dbda_post_check_part_pred_data <- reactive({
+    input$dbdaPrPrDat
+  })
+  #12. Specify the number of posterior distribution lines
+  output$dbdaPostCheckNumPL <- renderUI({
+    numericInput("dbdaPcgNmPL", "12. Number of posterior lines.",
+                 value = 20, min=1, step = 1)
+  })
+  #12a. Reactive function for directly above
+  dbda_post_check_grp_number_lines <- reactive({
+    input$dbdaPcgNmPL
+  })
+  #13. Enter a weight variable.
+  output$dbdaPostCheckMainTtl <- renderUI({
+    textInput("dbdaPcgMnTtl", "13. Type main title.")
+  })
+  #13A. Enter a weight variable.
+  dbda_post_check_grp_main_title <- reactive({
+    input$dbdaPcgMnTtl
+  })
+  #14. Enter a weight variable.
+  output$dbdaPostCheckXlab <- renderUI({
+    textInput("dbdaPcgXLb", "14. Type x-axis label.")
+  })
+  #14A. Enter a weight variable.
+  dbda_post_check_grp_x_label <- reactive({
+    input$dbdaPcgXLb
+  })
+  #15. Select line colors
+  output$dbdaPostCheckBarCol <- renderUI({
+    selectInput("dbdaPcgBrCl", "15. Select bar color.",
+                choices = xyplot_Line_Color_Names(), multiple=FALSE, selected= "blue")
+  })
+  #15a. Reactive function for directly above
+  dbda_post_check_grp_bar_colors <- reactive({
+    input$dbdaPcgBrCl
+  })
+  #16. Select line colors
+  output$dbdaPostCheckLineCol <- renderUI({
+    selectInput("dbdaPcgLnCl", "16. Select line color.",
+                choices = xyplot_Line_Color_Names(), multiple=TRUE, selected= "orange")
+  })
+  #16a. Reactive function for directly above
+  dbda_post_check_grp_line_colors <- reactive({
+    input$dbdaPcgLnCl
+  })
+  #17. Specify the number of posterior distribution lines
+  output$dbdaPostCheckNumHB <- renderUI({
+    numericInput("dbdaPcgNmHB", "17. Number of histogram bars.",
+                 value = 30, min=1, step = 1)
+  })
+  #17a. Reactive function for directly above
+  dbda_post_check_grp_number_bars <- reactive({
+    input$dbdaPcgNmHB
+  })
+  #18. Select label size multiplier
+  output$dbdaPostCheckLabMulti <- renderUI({
+    numericInput("dbdaPcgLbMlt", "18. Increase XY label sizes.",
+                 value = 1.75, min=.01, step = .1)
+  })
+  #18a. Reactive function for directly above
+  dbda_post_check_grp_label_multiplier <- reactive({
+    input$dbdaPcgLbMlt
+  })
+  #19. X-axis limits
+  output$dbdaPostCheckXaxisLims <- renderUI({
+    textInput("dbdaPcgXLms", "19. List X-axis limits.",
+              value = paste0('c( ', ')'))
+  })
+  #19a. Reactive function for directly above
+  dbda_post_check_grp_x_axis_limits <- reactive({
+    input$dbdaPcgXLms
+  })
+  #20. X-axis limits
+  output$dbdaPostCheckYaxisLims <- renderUI({
+    textInput("dbdaPcgYLms", "20. List Y-axis limits.",
+              value = paste0('c( ', ')'))
+  })
+  #20a. Reactive function for directly above
+  dbda_post_check_grp_y_axis_limits <- reactive({
+    input$dbdaPcgYLms
+  })
+  #21c. Get the range of values
+  dbda_post_check_range_y <- reactive({
+    range( df()[, dbda_post_check_grp_Y()], na.rm=T)
+  })
+  #21b. Set the selected minimum value
+  dbda_post_check_min_value_choice <- reactive({
+    #if (dbda_post_check_grp_distr() == "t") {
+    if (dbda_post_check_grp_distr() %in% c("t: 1 group", "t: ANOVA") ) {
+      95
+    } else {
+      dbda_post_check_range_y()[1]
+    }
+  })
+  #21. Select label minimum value
+  output$dbdaPostCheckMinVal <- renderUI({
+    numericInput("dbdaPcgLbMV", "21. List minimum value.",
+                 value = dbda_post_check_min_value_choice(), step = 1)
+  })
+  #21a. Reactive function for directly above
+  dbda_post_check_grp_min_value <- reactive({
+    input$dbdaPcgLbMV
+  })
+  #22b. Set the selected maximum value
+  dbda_post_check_max_value_choice <- reactive({
+    dbda_post_check_range_y()[2]
+  })
+  #22. Select label minimum value
+  output$dbdaPostCheckMaxVal <- renderUI({
+    numericInput("dbdaPcgLbMxV", "22. List maximum value.",
+                 value = dbda_post_check_max_value_choice(), step = 1)
+  })
+  #22a. Reactive function for directly above
+  dbda_post_check_grp_max_value <- reactive({
+    input$dbdaPcgLbMxV
+  })
+  #23. X-axis points
+  output$dbdaPostCheckXaxisPoint <- renderUI({
+    textInput("dbdaPcgXPts", "23. Add X-axis point(s).",
+              value = paste0('c( ', ')'))
+  })
+  #23a. Reactive function for directly above
+  dbda_post_check_grp_x_axis_points <- reactive({
+    input$dbdaPcgXPts
+  })
+  #24. Select point colors
+  output$dbdaPostCheckPointCol <- renderUI({
+    selectInput("dbdaPcgPntCl", "24. Select point color.",
+                choices = xyplot_Line_Color_Names(), multiple=TRUE, selected= "red")
+  })
+  #24a. Reactive function for directly above
+  dbda_post_check_point_colors <- reactive({
+    input$dbdaPcgPntCl
+  })
+
+  #25. Select whether to add a legend or not
+  output$dbdaPostCheckAddLeg <- renderUI({
+    selectInput("dbdaPcgAdLgd", "25. Add the legend?",
+                choices = c("No", "Yes"),
+                selected="No")
+  })
+  #25a. Reactive function for directly above
+  dbda_post_check_add_legend <- reactive({
+    input$dbdaPcgAdLgd
+  })
+  #26. Legend location
+  output$dbdaPostCheckLgdLoc <- renderUI({
+    selectInput("dbdaPcgLgdLc", "26. Select the legend location.",
+                choices = c("bottomright","bottom","bottomleft","left","topleft","top","topright","right","center"),
+                multiple=FALSE, selected="topright" )
+  })
+  #26A. Reactive function for legend location
+  dbda_post_check_legend_location <- reactive({
+    input$dbdaPcgLgdLc
+  })
+  #27. Select label size multiplier
+  output$dbdaPostCheckRndPlc <- renderUI({
+    numericInput("dbdaPcgRP", "27. Round decimal places?",
+                 value = 1, step = 1)
+  })
+  #27a. Reactive function for directly above
+  dbda_post_check_grp_round_place <- reactive({
+    input$dbdaPcgRP
+  })
+  #28. Do you want to run the function
+  output$dbdaPostCheckRun <- renderUI({
+    selectInput("dbdaPcgRn", "28. Run posterior plot?",
+                choices = c("No", "Yes"), multiple=FALSE, selected="No")
+  })
+  #28A. Reactive function for above
+  dbda_post_check_grp_run_YN <- reactive({
+    input$dbdaPcgRn
+  })
+  ## Plot DBDA Posterior HDI ##
+  plot_dbda_posterior_group_check <- reactive({
+    if(dbda_post_check_grp_run_YN() == "Yes") {
+      #    par( mar=c(4,2,2.5,.25) , mgp=c(2.5,0.5,0) , pty="m" )
+      switch(dbda_post_check_grp_distr() ,
+             "Normal" =     fncGrpPostPredCheck(Coda.Object=DBDA_coda_object_df(), datFrm=df(),
+                                                Outcome=dbda_post_check_grp_Y(), Group=dbda_post_check_grp_X(),
+                                                Group.Level=dbda_post_check_grp_level_X(),
+                                                Mean.Var=dbda_post_check_grp_pm(),
+                                                SD.Var=dbda_post_check_grp_psd(), Distribution=dbda_post_check_grp_distr(),
+                                                Num.Lines=dbda_post_check_grp_number_lines(),
+                                                Main.Title=dbda_post_check_grp_main_title(),
+                                                X.Lab=dbda_post_check_grp_x_label(),
+                                                Bar.Color=dbda_post_check_grp_bar_colors(),
+                                                Line.Color=dbda_post_check_grp_line_colors(),
+                                                Hist.Breaks=dbda_post_check_grp_number_bars(),
+                                                CEX.size=dbda_post_check_grp_label_multiplier(),
+                                                X.Lim=(eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                                Y.Lim=(eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                Min.Val=dbda_post_check_grp_min_value(),
+                                                Max.Val=dbda_post_check_grp_max_value(),
+                                                Round.Digits=dbda_post_check_grp_round_place(),
+                                                Point.Loc= (eval(parse(text=dbda_post_check_grp_x_axis_points() )) ),
+                                                PCol = dbda_post_check_point_colors(),
+                                                Add.Lgd= dbda_post_check_add_legend(),
+                                                Leg.Loc=dbda_post_check_legend_location() ) ,
+             "Log-normal" =     fncGrpPostPredCheck(Coda.Object=DBDA_coda_object_df(), datFrm=df(),
+                                                    Outcome=dbda_post_check_grp_Y(), Group=dbda_post_check_grp_X(),
+                                                    Group.Level=dbda_post_check_grp_level_X(),
+                                                    Mean.Var=dbda_post_check_grp_pm(),
+                                                    SD.Var=dbda_post_check_grp_psd(), Distribution=dbda_post_check_grp_distr(),
+                                                    Num.Lines=dbda_post_check_grp_number_lines(),
+                                                    Main.Title=dbda_post_check_grp_main_title(),
+                                                    X.Lab=dbda_post_check_grp_x_label(),
+                                                    Bar.Color=dbda_post_check_grp_bar_colors(),
+                                                    Line.Color=dbda_post_check_grp_line_colors(),
+                                                    Hist.Breaks=dbda_post_check_grp_number_bars(),
+                                                    CEX.size=dbda_post_check_grp_label_multiplier(),
+                                                    X.Lim=(eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                                    Y.Lim=(eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                    Min.Val=dbda_post_check_grp_min_value(),
+                                                    Max.Val=dbda_post_check_grp_max_value(),
+                                                    Round.Digits=dbda_post_check_grp_round_place(),
+                                                    Point.Loc= (eval(parse(text=dbda_post_check_grp_x_axis_points() )) ),
+                                                    PCol = dbda_post_check_point_colors(),
+                                                    Add.Lgd= dbda_post_check_add_legend(),
+                                                    Leg.Loc=dbda_post_check_legend_location() ) ,
+             "Skew-normal" =     fncGrpPostPredCheck(Coda.Object=DBDA_coda_object_df(), datFrm=df(),
+                                                     Outcome=dbda_post_check_grp_Y(), Group=dbda_post_check_grp_X(),
+                                                     Group.Level=dbda_post_check_grp_level_X(),
+                                                     Mean.Var=dbda_post_check_grp_pm(),
+                                                     SD.Var=dbda_post_check_grp_psd(), MCnu= dbda_post_check_grp_pnu(),
+                                                     Distribution=dbda_post_check_grp_distr(),
+                                                     Num.Lines=dbda_post_check_grp_number_lines(),
+                                                     Main.Title=dbda_post_check_grp_main_title(),
+                                                     X.Lab=dbda_post_check_grp_x_label(),
+                                                     Bar.Color=dbda_post_check_grp_bar_colors(),
+                                                     Line.Color=dbda_post_check_grp_line_colors(),
+                                                     Hist.Breaks=dbda_post_check_grp_number_bars(),
+                                                     CEX.size=dbda_post_check_grp_label_multiplier(),
+                                                     X.Lim=(eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                                     Y.Lim=(eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                     Min.Val=dbda_post_check_grp_min_value(),
+                                                     Max.Val=dbda_post_check_grp_max_value(),
+                                                     Round.Digits=dbda_post_check_grp_round_place(),
+                                                     Point.Loc= (eval(parse(text=dbda_post_check_grp_x_axis_points() )) ),
+                                                     PCol = dbda_post_check_point_colors(),
+                                                     Add.Lgd= dbda_post_check_add_legend(),
+                                                     Leg.Loc=dbda_post_check_legend_location() ) ,
+             "Weibull" =     fncGrpPostPredCheck(Coda.Object=DBDA_coda_object_df(), datFrm=df(),
+                                                 Outcome=dbda_post_check_grp_Y(), Group=dbda_post_check_grp_X(),
+                                                 Group.Level=dbda_post_check_grp_level_X(),
+                                                 Mean.Var=dbda_post_check_grp_pm(),
+                                                 SD.Var=dbda_post_check_grp_psd(), MCnu= dbda_post_check_grp_pnu(),
+                                                 Distribution=dbda_post_check_grp_distr(),
+                                                 Num.Lines=dbda_post_check_grp_number_lines(),
+                                                 Main.Title=dbda_post_check_grp_main_title(),
+                                                 X.Lab=dbda_post_check_grp_x_label(),
+                                                 Bar.Color=dbda_post_check_grp_bar_colors(),
+                                                 Line.Color=dbda_post_check_grp_line_colors(),
+                                                 Hist.Breaks=dbda_post_check_grp_number_bars(),
+                                                 CEX.size=dbda_post_check_grp_label_multiplier(),
+                                                 X.Lim=(eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                                 Y.Lim=(eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                 Min.Val=dbda_post_check_grp_min_value(),
+                                                 Max.Val=dbda_post_check_grp_max_value(),
+                                                 Round.Digits=dbda_post_check_grp_round_place(),
+                                                 Point.Loc= (eval(parse(text=dbda_post_check_grp_x_axis_points() )) ),
+                                                 PCol = dbda_post_check_point_colors(),
+                                                 Add.Lgd= dbda_post_check_add_legend(),
+                                                 Leg.Loc=dbda_post_check_legend_location() ) ,
+             "Gamma" =     fncGrpPostPredCheck(Coda.Object=DBDA_coda_object_df(), datFrm=df(),
+                                               Outcome=dbda_post_check_grp_Y(), Group=dbda_post_check_grp_X(),
+                                               Group.Level=dbda_post_check_grp_level_X(),
+                                               Mean.Var=dbda_post_check_grp_pm(),
+                                               SD.Var=dbda_post_check_grp_psd(), MCnu= dbda_post_check_grp_pnu(),
+                                               Distribution=dbda_post_check_grp_distr(),
+                                               Num.Lines=dbda_post_check_grp_number_lines(),
+                                               Main.Title=dbda_post_check_grp_main_title(),
+                                               X.Lab=dbda_post_check_grp_x_label(),
+                                               Bar.Color=dbda_post_check_grp_bar_colors(),
+                                               Line.Color=dbda_post_check_grp_line_colors(),
+                                               Hist.Breaks=dbda_post_check_grp_number_bars(),
+                                               CEX.size=dbda_post_check_grp_label_multiplier(),
+                                               X.Lim=(eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                               Y.Lim=(eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                               Min.Val=dbda_post_check_grp_min_value(),
+                                               Max.Val=dbda_post_check_grp_max_value(),
+                                               Round.Digits=dbda_post_check_grp_round_place(),
+                                               Point.Loc= (eval(parse(text=dbda_post_check_grp_x_axis_points() )) ),
+                                               PCol = dbda_post_check_point_colors(),
+                                               Add.Lgd= dbda_post_check_add_legend(),
+                                               Leg.Loc=dbda_post_check_legend_location() ) ,
+             "t" =     fncGrpPostPredCheck(Coda.Object=DBDA_coda_object_df(), datFrm=df(),
+                                           Outcome=dbda_post_check_grp_Y(), Group=dbda_post_check_grp_X(),
+                                           Group.Level=dbda_post_check_grp_level_X(),
+                                           Mean.Var=dbda_post_check_grp_pm(),
+                                           SD.Var=dbda_post_check_grp_psd(), MCnu= dbda_post_check_grp_pnu(),
+                                           Distribution=dbda_post_check_grp_distr(),
+                                           Num.Lines=dbda_post_check_grp_number_lines(),
+                                           Main.Title=dbda_post_check_grp_main_title(),
+                                           X.Lab=dbda_post_check_grp_x_label(),
+                                           Bar.Color=dbda_post_check_grp_bar_colors(),
+                                           Line.Color=dbda_post_check_grp_line_colors(),
+                                           Hist.Breaks=dbda_post_check_grp_number_bars(),
+                                           CEX.size=dbda_post_check_grp_label_multiplier(),
+                                           X.Lim=(eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                           Y.Lim=(eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                           Min.Val=dbda_post_check_grp_min_value(),
+                                           Max.Val=dbda_post_check_grp_max_value(),
+                                           Round.Digits=dbda_post_check_grp_round_place(),
+                                           Point.Loc= (eval(parse(text=dbda_post_check_grp_x_axis_points() )) ),
+                                           PCol = dbda_post_check_point_colors(),
+                                           Add.Lgd= dbda_post_check_add_legend(),
+                                           Leg.Loc=dbda_post_check_legend_location() ) ,
+             "t: 1 group" = fncPlotSingleT(codaSamples=DBDA_coda_object_df(), datFrm=df(),
+                                           yName=dbda_post_check_grp_Y(),
+                                           MCmean=dbda_post_check_grp_pm(),
+                                           MCsigma=dbda_post_check_grp_psd(),
+                                           MCnu= dbda_post_check_grp_pnu(),
+                                           Num.Lines=dbda_post_check_grp_number_lines(),
+                                           Main.Title=dbda_post_check_grp_main_title(),
+                                           X.Lab=dbda_post_check_grp_x_label(),
+                                           Line.Color=dbda_post_check_grp_line_colors(),
+                                           CEX.size=dbda_post_check_grp_label_multiplier(),
+                                           X.Lim=(eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                           Y.Lim=(eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                           PCol = dbda_post_check_point_colors(),
+                                           Add.Lgd= dbda_post_check_add_legend(),
+                                           Leg.Loc=dbda_post_check_legend_location(),
+                                           T.Percentage=dbda_post_check_grp_min_value() ),
+             "t: ANOVA" = fncPlotMcANOVA(codaSamples=DBDA_coda_object_df(), datFrm=df(),
+                                         yName=dbda_post_check_grp_Y(), xName=dbda_post_check_grp_X(),
+                                         MCmean=dbda_post_check_grp_pm(),
+                                         MCsigma=dbda_post_check_grp_psd(),
+                                         MCnu= dbda_post_check_grp_pnu(),
+                                         Num.Lines=dbda_post_check_grp_number_lines(),
+                                         Main.Title=dbda_post_check_grp_main_title(),
+                                         X.Lab=dbda_post_check_grp_x_label(),
+                                         Line.Color=dbda_post_check_grp_line_colors(),
+                                         CEX.size=dbda_post_check_grp_label_multiplier(),
+                                         X.Lim=(eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                         Y.Lim=(eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                         PCol = dbda_post_check_point_colors(),
+                                         Add.Lgd= dbda_post_check_add_legend(),
+                                         Leg.Loc=dbda_post_check_legend_location(),
+                                         T.Percentage=dbda_post_check_grp_min_value() ),
+             "OLS: Linear" = fncBayesOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
+                                                Reg.Type= dbda_post_check_grp_distr(),
+                                                Outcome= dbda_post_check_grp_Y(),
+                                                Group= dbda_post_check_grp_X(),
+                                                Group.Level= dbda_post_check_grp_level_X(),
+                                                xName= dbda_post_check_part_pred_X(),
+                                                parX= dbda_post_check_part_pred_pars(),
+                                                View.Lines= dbda_post_check_part_pred_data(),
+                                                Num.Lines= dbda_post_check_grp_number_lines(),
+                                                Main.Title= dbda_post_check_grp_main_title(),
+                                                X.Lab= dbda_post_check_grp_x_label(),
+                                                Line.Color= dbda_post_check_grp_line_colors(),
+                                                CEX.size= dbda_post_check_grp_label_multiplier(),
+                                                X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                                Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                X.Min= dbda_post_check_grp_min_value(),
+                                                X.Max= dbda_post_check_grp_max_value(),
+                                                PCol= dbda_post_check_point_colors(),
+                                                Add.Lgd= dbda_post_check_add_legend(),
+                                                Leg.Loc= dbda_post_check_legend_location()),
+             "OLS: Quadratic" = fncBayesOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
+                                                   Reg.Type= dbda_post_check_grp_distr(),
+                                                   Outcome= dbda_post_check_grp_Y(),
+                                                   Group= dbda_post_check_grp_X(),
+                                                   Group.Level= dbda_post_check_grp_level_X(),
+                                                   xName= dbda_post_check_part_pred_X(),
+                                                   parX= dbda_post_check_part_pred_pars(),
+                                                   View.Lines= dbda_post_check_part_pred_data(),
+                                                   Num.Lines= dbda_post_check_grp_number_lines(),
+                                                   Main.Title= dbda_post_check_grp_main_title(),
+                                                   X.Lab= dbda_post_check_grp_x_label(),
+                                                   Line.Color= dbda_post_check_grp_line_colors(),
+                                                   CEX.size= dbda_post_check_grp_label_multiplier(),
+                                                   X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                                   Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                   X.Min= dbda_post_check_grp_min_value(),
+                                                   X.Max= dbda_post_check_grp_max_value(),
+                                                   PCol= dbda_post_check_point_colors(),
+                                                   Add.Lgd= dbda_post_check_add_legend(),
+                                                   Leg.Loc= dbda_post_check_legend_location()),
+             "OLS: Cubic" = fncBayesOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
+                                               Reg.Type= dbda_post_check_grp_distr(),
+                                               Outcome= dbda_post_check_grp_Y(),
+                                               Group= dbda_post_check_grp_X(),
+                                               Group.Level= dbda_post_check_grp_level_X(),
+                                               xName= dbda_post_check_part_pred_X(),
+                                               parX= dbda_post_check_part_pred_pars(),
+                                               View.Lines= dbda_post_check_part_pred_data(),
+                                               Num.Lines= dbda_post_check_grp_number_lines(),
+                                               Main.Title= dbda_post_check_grp_main_title(),
+                                               X.Lab= dbda_post_check_grp_x_label(),
+                                               Line.Color= dbda_post_check_grp_line_colors(),
+                                               CEX.size= dbda_post_check_grp_label_multiplier(),
+                                               X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                               Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                               X.Min= dbda_post_check_grp_min_value(),
+                                               X.Max= dbda_post_check_grp_max_value(),
+                                               PCol= dbda_post_check_point_colors(),
+                                               Add.Lgd= dbda_post_check_add_legend(),
+                                               Leg.Loc= dbda_post_check_legend_location()),
+             "Logistic: Linear" = fncBayesOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
+                                                     Reg.Type= dbda_post_check_grp_distr(),
+                                                     Outcome= dbda_post_check_grp_Y(),
+                                                     Group= dbda_post_check_grp_X(),
+                                                     Group.Level= dbda_post_check_grp_level_X(),
+                                                     xName= dbda_post_check_part_pred_X(),
+                                                     parX= dbda_post_check_part_pred_pars(),
+                                                     View.Lines= dbda_post_check_part_pred_data(),
+                                                     Num.Lines= dbda_post_check_grp_number_lines(),
+                                                     Main.Title= dbda_post_check_grp_main_title(),
+                                                     X.Lab= dbda_post_check_grp_x_label(),
+                                                     Line.Color= dbda_post_check_grp_line_colors(),
+                                                     CEX.size= dbda_post_check_grp_label_multiplier(),
+                                                     X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                                     Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                     X.Min= dbda_post_check_grp_min_value(),
+                                                     X.Max= dbda_post_check_grp_max_value(),
+                                                     PCol= dbda_post_check_point_colors(),
+                                                     Add.Lgd= dbda_post_check_add_legend(),
+                                                     Leg.Loc= dbda_post_check_legend_location()),
+             "Logistic: Quadratic" = fncBayesOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
+                                                        Reg.Type= dbda_post_check_grp_distr(),
+                                                        Outcome= dbda_post_check_grp_Y(),
+                                                        Group= dbda_post_check_grp_X(),
+                                                        Group.Level= dbda_post_check_grp_level_X(),
+                                                        xName= dbda_post_check_part_pred_X(),
+                                                        parX= dbda_post_check_part_pred_pars(),
+                                                        View.Lines= dbda_post_check_part_pred_data(),
+                                                        Num.Lines= dbda_post_check_grp_number_lines(),
+                                                        Main.Title= dbda_post_check_grp_main_title(),
+                                                        X.Lab= dbda_post_check_grp_x_label(),
+                                                        Line.Color= dbda_post_check_grp_line_colors(),
+                                                        CEX.size= dbda_post_check_grp_label_multiplier(),
+                                                        X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                                        Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                        X.Min= dbda_post_check_grp_min_value(),
+                                                        X.Max= dbda_post_check_grp_max_value(),
+                                                        PCol= dbda_post_check_point_colors(),
+                                                        Add.Lgd= dbda_post_check_add_legend(),
+                                                        Leg.Loc= dbda_post_check_legend_location()),
+             "Logistic: Cubic" = fncBayesOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
+                                                    Reg.Type= dbda_post_check_grp_distr(),
+                                                    Outcome= dbda_post_check_grp_Y(),
+                                                    Group= dbda_post_check_grp_X(),
+                                                    Group.Level= dbda_post_check_grp_level_X(),
+                                                    xName= dbda_post_check_part_pred_X(),
+                                                    parX= dbda_post_check_part_pred_pars(),
+                                                    View.Lines= dbda_post_check_part_pred_data(),
+                                                    Num.Lines= dbda_post_check_grp_number_lines(),
+                                                    Main.Title= dbda_post_check_grp_main_title(),
+                                                    X.Lab= dbda_post_check_grp_x_label(),
+                                                    Line.Color= dbda_post_check_grp_line_colors(),
+                                                    CEX.size= dbda_post_check_grp_label_multiplier(),
+                                                    X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                                    Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                    X.Min= dbda_post_check_grp_min_value(),
+                                                    X.Max= dbda_post_check_grp_max_value(),
+                                                    PCol= dbda_post_check_point_colors(),
+                                                    Add.Lgd= dbda_post_check_add_legend(),
+                                                    Leg.Loc= dbda_post_check_legend_location()),
+             "OLS: DID" = fncBayesOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
+                                             Reg.Type= dbda_post_check_grp_distr(),
+                                             Outcome= dbda_post_check_grp_Y(),
+                                             Group= dbda_post_check_grp_X(),
+                                             Group.Level= dbda_post_check_grp_level_X(),
+                                             xName= dbda_post_check_part_pred_X(),
+                                             parX= dbda_post_check_part_pred_pars(),
+                                             View.Lines= dbda_post_check_part_pred_data(),
+                                             Num.Lines= dbda_post_check_grp_number_lines(),
+                                             Main.Title= dbda_post_check_grp_main_title(),
+                                             X.Lab= dbda_post_check_grp_x_label(),
+                                             Line.Color= dbda_post_check_grp_line_colors(),
+                                             CEX.size= dbda_post_check_grp_label_multiplier(),
+                                             X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                             Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                             PCol= dbda_post_check_point_colors(),
+                                             Add.Lgd= dbda_post_check_add_legend(),
+                                             Leg.Loc= dbda_post_check_legend_location()),
+             "Hierarchical OLS: Linear" = fncBayesMultiOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
+                                                                  Reg.Type= dbda_post_check_grp_distr(),
+                                                                  Outcome= dbda_post_check_grp_Y(),
+                                                                  Group= dbda_post_check_grp_X(),
+                                                                  xName= dbda_post_check_part_pred_X(),
+                                                                  parX= dbda_post_check_part_pred_pars(),
+                                                                  View.Lines= dbda_post_check_part_pred_data(),
+                                                                  Main.Title= dbda_post_check_grp_main_title(),
+                                                                  X.Lab= dbda_post_check_grp_x_label(),
+                                                                  Line.Color= dbda_post_check_grp_line_colors(),
+                                                                  CEX.size= dbda_post_check_grp_label_multiplier(),
+                                                                  X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                                                  Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                                  X.Min= dbda_post_check_grp_min_value(),
+                                                                  X.Max= dbda_post_check_grp_max_value(),
+                                                                  PCol= dbda_post_check_point_colors(),
+                                                                  Add.Lgd= dbda_post_check_add_legend(),
+                                                                  Leg.Loc= dbda_post_check_legend_location(),
+                                                                  mc_row_number= dbda_post_check_grp_number_lines()),
+             "Hierarchical OLS: Quadratic" = fncBayesMultiOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
+                                                                     Reg.Type= dbda_post_check_grp_distr(),
+                                                                     Outcome= dbda_post_check_grp_Y(),
+                                                                     Group= dbda_post_check_grp_X(),
+                                                                     xName= dbda_post_check_part_pred_X(),
+                                                                     parX= dbda_post_check_part_pred_pars(),
+                                                                     View.Lines= dbda_post_check_part_pred_data(),
+                                                                     Main.Title= dbda_post_check_grp_main_title(),
+                                                                     X.Lab= dbda_post_check_grp_x_label(),
+                                                                     Line.Color= dbda_post_check_grp_line_colors(),
+                                                                     CEX.size= dbda_post_check_grp_label_multiplier(),
+                                                                     X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                                                     Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                                     X.Min= dbda_post_check_grp_min_value(),
+                                                                     X.Max= dbda_post_check_grp_max_value(),
+                                                                     PCol= dbda_post_check_point_colors(),
+                                                                     Add.Lgd= dbda_post_check_add_legend(),
+                                                                     Leg.Loc= dbda_post_check_legend_location(),
+                                                                     mc_row_number= dbda_post_check_grp_number_lines()),
+             "Hierarchical OLS: Cubic" = fncBayesMultiOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
+                                                                 Reg.Type= dbda_post_check_grp_distr(),
+                                                                 Outcome= dbda_post_check_grp_Y(),
+                                                                 Group= dbda_post_check_grp_X(),
+                                                                 xName= dbda_post_check_part_pred_X(),
+                                                                 parX= dbda_post_check_part_pred_pars(),
+                                                                 View.Lines= dbda_post_check_part_pred_data(),
+                                                                 Main.Title= dbda_post_check_grp_main_title(),
+                                                                 X.Lab= dbda_post_check_grp_x_label(),
+                                                                 Line.Color= dbda_post_check_grp_line_colors(),
+                                                                 CEX.size= dbda_post_check_grp_label_multiplier(),
+                                                                 X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                                                 Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                                 X.Min= dbda_post_check_grp_min_value(),
+                                                                 X.Max= dbda_post_check_grp_max_value(),
+                                                                 PCol= dbda_post_check_point_colors(),
+                                                                 Add.Lgd= dbda_post_check_add_legend(),
+                                                                 Leg.Loc= dbda_post_check_legend_location(),
+                                                                 mc_row_number= dbda_post_check_grp_number_lines()),
+             "Hierarchical Log OLS: Linear" = fncBayesMultiOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
+                                                                      Reg.Type= dbda_post_check_grp_distr(),
+                                                                      Outcome= dbda_post_check_grp_Y(),
+                                                                      Group= dbda_post_check_grp_X(),
+                                                                      xName= dbda_post_check_part_pred_X(),
+                                                                      parX= dbda_post_check_part_pred_pars(),
+                                                                      View.Lines= dbda_post_check_part_pred_data(),
+                                                                      Main.Title= dbda_post_check_grp_main_title(),
+                                                                      X.Lab= dbda_post_check_grp_x_label(),
+                                                                      Line.Color= dbda_post_check_grp_line_colors(),
+                                                                      CEX.size= dbda_post_check_grp_label_multiplier(),
+                                                                      X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                                                      Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                                      X.Min= dbda_post_check_grp_min_value(),
+                                                                      X.Max= dbda_post_check_grp_max_value(),
+                                                                      PCol= dbda_post_check_point_colors(),
+                                                                      Add.Lgd= dbda_post_check_add_legend(),
+                                                                      Leg.Loc= dbda_post_check_legend_location(),
+                                                                      mc_row_number= dbda_post_check_grp_number_lines()),
+             "Hierarchical Log OLS: Quadratic" = fncBayesMultiOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
+                                                                         Reg.Type= dbda_post_check_grp_distr(),
+                                                                         Outcome= dbda_post_check_grp_Y(),
+                                                                         Group= dbda_post_check_grp_X(),
+                                                                         xName= dbda_post_check_part_pred_X(),
+                                                                         parX= dbda_post_check_part_pred_pars(),
+                                                                         View.Lines= dbda_post_check_part_pred_data(),
+                                                                         Main.Title= dbda_post_check_grp_main_title(),
+                                                                         X.Lab= dbda_post_check_grp_x_label(),
+                                                                         Line.Color= dbda_post_check_grp_line_colors(),
+                                                                         CEX.size= dbda_post_check_grp_label_multiplier(),
+                                                                         X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                                                         Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                                         X.Min= dbda_post_check_grp_min_value(),
+                                                                         X.Max= dbda_post_check_grp_max_value(),
+                                                                         PCol= dbda_post_check_point_colors(),
+                                                                         Add.Lgd= dbda_post_check_add_legend(),
+                                                                         Leg.Loc= dbda_post_check_legend_location(),
+                                                                         mc_row_number= dbda_post_check_grp_number_lines()),
+             "Hierarchical Log OLS: Cubic" = fncBayesMultiOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
+                                                                     Reg.Type= dbda_post_check_grp_distr(),
+                                                                     Outcome= dbda_post_check_grp_Y(),
+                                                                     Group= dbda_post_check_grp_X(),
+                                                                     xName= dbda_post_check_part_pred_X(),
+                                                                     parX= dbda_post_check_part_pred_pars(),
+                                                                     View.Lines= dbda_post_check_part_pred_data(),
+                                                                     Main.Title= dbda_post_check_grp_main_title(),
+                                                                     X.Lab= dbda_post_check_grp_x_label(),
+                                                                     Line.Color= dbda_post_check_grp_line_colors(),
+                                                                     CEX.size= dbda_post_check_grp_label_multiplier(),
+                                                                     X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                                                     Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                                     X.Min= dbda_post_check_grp_min_value(),
+                                                                     X.Max= dbda_post_check_grp_max_value(),
+                                                                     PCol= dbda_post_check_point_colors(),
+                                                                     Add.Lgd= dbda_post_check_add_legend(),
+                                                                     Leg.Loc= dbda_post_check_legend_location(),
+                                                                     mc_row_number= dbda_post_check_grp_number_lines()),
+             "Hierarchical Logistic: Linear" = fncBayesMultiOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
+                                                                       Reg.Type= dbda_post_check_grp_distr(),
+                                                                       Outcome= dbda_post_check_grp_Y(),
+                                                                       Group= dbda_post_check_grp_X(),
+                                                                       xName= dbda_post_check_part_pred_X(),
+                                                                       parX= dbda_post_check_part_pred_pars(),
+                                                                       View.Lines= dbda_post_check_part_pred_data(),
+                                                                       Main.Title= dbda_post_check_grp_main_title(),
+                                                                       X.Lab= dbda_post_check_grp_x_label(),
+                                                                       Line.Color= dbda_post_check_grp_line_colors(),
+                                                                       CEX.size= dbda_post_check_grp_label_multiplier(),
+                                                                       X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                                                       Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                                       X.Min= dbda_post_check_grp_min_value(),
+                                                                       X.Max= dbda_post_check_grp_max_value(),
+                                                                       PCol= dbda_post_check_point_colors(),
+                                                                       Add.Lgd= dbda_post_check_add_legend(),
+                                                                       Leg.Loc= dbda_post_check_legend_location(),
+                                                                       mc_row_number= dbda_post_check_grp_number_lines()),
+             "Hierarchical Logistic: Quadratic" = fncBayesMultiOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
+                                                                          Reg.Type= dbda_post_check_grp_distr(),
+                                                                          Outcome= dbda_post_check_grp_Y(),
+                                                                          Group= dbda_post_check_grp_X(),
+                                                                          xName= dbda_post_check_part_pred_X(),
+                                                                          parX= dbda_post_check_part_pred_pars(),
+                                                                          View.Lines= dbda_post_check_part_pred_data(),
+                                                                          Main.Title= dbda_post_check_grp_main_title(),
+                                                                          X.Lab= dbda_post_check_grp_x_label(),
+                                                                          Line.Color= dbda_post_check_grp_line_colors(),
+                                                                          CEX.size= dbda_post_check_grp_label_multiplier(),
+                                                                          X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                                                          Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                                          X.Min= dbda_post_check_grp_min_value(),
+                                                                          X.Max= dbda_post_check_grp_max_value(),
+                                                                          PCol= dbda_post_check_point_colors(),
+                                                                          Add.Lgd= dbda_post_check_add_legend(),
+                                                                          Leg.Loc= dbda_post_check_legend_location(),
+                                                                          mc_row_number= dbda_post_check_grp_number_lines()),
+             "Hierarchical Logistic: Cubic" = fncBayesMultiOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
+                                                                      Reg.Type= dbda_post_check_grp_distr(),
+                                                                      Outcome= dbda_post_check_grp_Y(),
+                                                                      Group= dbda_post_check_grp_X(),
+                                                                      xName= dbda_post_check_part_pred_X(),
+                                                                      parX= dbda_post_check_part_pred_pars(),
+                                                                      View.Lines= dbda_post_check_part_pred_data(),
+                                                                      Main.Title= dbda_post_check_grp_main_title(),
+                                                                      X.Lab= dbda_post_check_grp_x_label(),
+                                                                      Line.Color= dbda_post_check_grp_line_colors(),
+                                                                      CEX.size= dbda_post_check_grp_label_multiplier(),
+                                                                      X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                                                      Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                                      X.Min= dbda_post_check_grp_min_value(),
+                                                                      X.Max= dbda_post_check_grp_max_value(),
+                                                                      PCol= dbda_post_check_point_colors(),
+                                                                      Add.Lgd= dbda_post_check_add_legend(),
+                                                                      Leg.Loc= dbda_post_check_legend_location(),
+                                                                      mc_row_number= dbda_post_check_grp_number_lines())
+      )
+    }
+  })
+  #Posterior distribution for above
+  output$plotDbdaPostCheckGroup <- renderPlot({
+    if(dbda_post_check_grp_run_YN() == "Yes") {
+      plot_dbda_posterior_group_check()
+    }
+  }, height = 800)
+
+  #######################################
+  ## Proportion above specific Y value ##
+  #######################################
+  #1. Select the main parameter
+  output$dbdaPropGtPar1 <- renderUI({
+    selectInput("dbdaPgtP1", "1. Select 'Center' or 1st parameter.",
+                choices = DBDA_parameter_Names(), multiple=FALSE,
+                selected= DBDA_parameter_Names()[1] )
+  })
+  #1a. Reactive function for directly above
+  dbda_prop_gr_than_par1 <- reactive({
+    input$dbdaPgtP1
+  })
+  #2. Select the 2nd parameter
+  output$dbdaPropGtPar2 <- renderUI({
+    selectInput("dbdaPgtP2", "2. Select 'Spread' or 2nd parameter.",
+                choices = setdiff(DBDA_parameter_Names(), dbda_prop_gr_than_par1()),
+                multiple=FALSE, selected=setdiff(DBDA_parameter_Names(), dbda_prop_gr_than_par1())[1] )
+  })
+  #2a. Reactive function for directly above
+  dbda_prop_gr_than_par2 <- reactive({
+    input$dbdaPgtP2
+  })
+  #3. Select the 3rd parameter
+  output$dbdaPropGtPar3 <- renderUI({
+    selectInput("dbdaPgtP3", "3. Select V, 'Skew' or 3rd parameter.",
+                choices = setdiff(DBDA_parameter_Names(), dbda_prop_gr_than_par1()),
+                multiple=FALSE, selected=setdiff(DBDA_parameter_Names(), dbda_prop_gr_than_par1())[1] )
+  })
+  #3a. Reactive function for directly above
+  dbda_prop_gr_than_par3 <- reactive({
+    input$dbdaPgtP3
+  })
+  #4. select the distribution type
+  output$dbdaPropGtDist <- renderUI({
+    selectInput("dbdaPgtDst", "4. Choose the distribution.",
+                choices = c("Beta", "Normal", "Log-normal",  "Skew-normal", "t", "Weibull", "Gamma"), multiple=FALSE,
+                selected=c("Beta", "Normal", "Log-normal", "Skew-normal", "t", "Weibull", "Gamma")[1])
+  })
+  #4A. Reactive function for above
+  dbda_prop_gr_than_distr <- reactive({
+    input$dbdaPgtDst
+  })
+  #5. Do you want to run the function
+  output$dbdaPropGtCenTen <- renderUI({
+    selectInput("dbdaPgtCT", "5. Choose central tendency.",
+                choices = c("Mode","Median","Mean"), multiple=FALSE,
+                selected=c("Mode","Median","Mean")[1])
+  })
+  #5A. Reactive function for above
+  dbda_prop_gr_than_central_tendency <- reactive({
+    input$dbdaPgtCT
+  })
+  #6. X-axis limits
+  output$dbdaPropGtYval <- renderUI({
+    textInput("dbdaPgtYs", "6. List Y-values.",
+              value = paste0('c( ', ')'))
+  })
+  #6a. Reactive function for directly above
+  dbda_prop_gr_than_y_values <- reactive({
+    eval(parse(text= input$dbdaPgtYs))
+  })
+  #7. X-axis limits
+  output$dbdaPropGtQval <- renderUI({
+    textInput("dbdaPgtQs", "7. List Y percentiles.",
+              value = paste0('c( ', ')'))
+  })
+  #7a. Reactive function for directly above
+  dbda_prop_gr_than_q_values <- reactive({
+    eval(parse(text=  input$dbdaPgtQs))
+  })
+  #8. Do you want to run the function
+  output$dbdaPropGtRun <- renderUI({
+    selectInput("dbdaPgtRn", "8. Run probabilities?",
+                choices = c("No", "Yes"), multiple=FALSE, selected="No")
+  })
+  #8A. Reactive function for above
+  dbda_prop_gr_than_run_YN <- reactive({
+    input$dbdaPgtRn
+  })
+
+  ## Run the proportion greater than Y value function
+  dbda_prop_gr_than_func_run <- reactive({
+    if(dbda_prop_gr_than_run_YN() == "Yes") {
+      options(scipen=30)
+      fncPropGtY( Coda.Object= DBDA_coda_object_df(),
+                  Distribution= dbda_prop_gr_than_distr(),
+                  yVal= dbda_prop_gr_than_y_values() ,
+                  qVal= dbda_prop_gr_than_q_values(),
+                  Center= dbda_prop_gr_than_par1(),
+                  Spread= dbda_prop_gr_than_par2(),
+                  Skew= dbda_prop_gr_than_par3(),
+                  CenTend= dbda_prop_gr_than_central_tendency() )
+    }
+  })
+
+  #proportion greater than Y value
+  output$dbdaPropGt_output <- renderPrint({
+    if(dbda_prop_gr_than_run_YN() == "Yes") {
+      dbda_prop_gr_than_func_run()
+    }
+  })
+
+  #kermit
+  #################
+  ## Bayesian R2 ##
+  #################
+  #1. Select the main parameter
+  output$dbdaR2VarXs <- renderUI({
+    selectInput("dbdaR2Xs", "1. List the predictor variables.",
+                choices = var(), multiple=TRUE,
+                selected= var()[1] )
+  })
+  #1a. Reactive function for directly above
+  dbda_R2_X_variables <- reactive({
+    input$dbdaR2Xs
+  })
+  #2. Select the the intercept or not (e.g., cox models)
+  output$dbdaR2Intercept <- renderUI({
+    selectInput("dbdaR2B0", "2. Pick intercept (if needed).",
+                choices = c("None", DBDA_parameter_Names()),
+                multiple=FALSE, selected=c("None", DBDA_parameter_Names())[1] )
+  })
+  #2a. Reactive function for directly above
+  dbda_R2_intercept <- reactive({
+    input$dbdaR2B0
+  })
+  #3. Select the the beta coefficients from the MCMC
+  output$dbdaR2MCBs <- renderUI({
+    selectInput("dbdaR2Bs", "3. Select Beta names.",
+                choices = DBDA_parameter_Names(),
+                multiple=TRUE, selected=DBDA_parameter_Names()[1] )
+  })
+  #3a. Reactive function for directly above
+  dbda_R2_betas <- reactive({
+    input$dbdaR2Bs
+  })
+  #4. Select the residual variance
+  output$dbdaR2Sigma <- renderUI({
+    selectInput("dbdaR2resSD", "4. Pick residual variance (i.e., SD).",
+                choices = setdiff(DBDA_parameter_Names(), dbda_R2_betas()),
+                multiple=FALSE, selected=setdiff(DBDA_parameter_Names(), dbda_R2_betas())[1] )
+  })
+  #4a. Reactive function for directly above
+  dbda_R2_res_sigma <- reactive({
+    input$dbdaR2resSD
+  })
+  #5. Do you want to run the function
+  output$dbdaR2CenTen <- renderUI({
+    selectInput("dbdaR2CT", "5. Choose central tendency.",
+                choices = c("Mean","Median"), multiple=FALSE,
+                selected=c("Mean","Median")[1])
+  })
+  #5A. Reactive function for above
+  dbda_R2_central_tendency <- reactive({
+    input$dbdaR2CT
+  })
+  #6. Do you want to run the function
+  output$dbdaR2Run <- renderUI({
+    selectInput("dbdaR2Rn", "6. Calculate R^2?",
+                choices = c("No", "Yes"), multiple=FALSE, selected="No")
+  })
+  #6A. Reactive function for above
+  dbda_R2_run_YN <- reactive({
+    input$dbdaR2Rn
+  })
+
+  ## Run the R2 function
+  dbda_r2_model <- reactive({
+    if(dbda_R2_run_YN() == "Yes") {
+      options(scipen=30)
+      fncBayesOlsR2(Coda_Object=DBDA_coda_object_df(), datFrm=df(), xName=dbda_R2_X_variables(),
+                    Intercept= dbda_R2_intercept(), Betas=dbda_R2_betas(),
+                    Level1.Sigma=dbda_R2_res_sigma(), Average.type=dbda_R2_central_tendency())
+    }
+  })
+
+  #R2 results
+  output$dbdaR2_output <- renderPrint({
+    if(dbda_R2_run_YN() == "Yes") {
+      dbda_r2_model()[-4]
+    }
+  })
+
+  ########################################
+  ## My functions for Bayesian analysis ##
+  ########################################
+
+  ################################################################################
+  #                  1. Expand aggregated data into  full data                   #
+  ################################################################################
+  #This function expands y ~ x1 + X2 BINARY aggregated data in multi-row data
+  #X1= lower level hierarchy (e.g., patients), X2= higher level hierarchy (e.g., States)
+  #Z= Outcome, N= Total count of denominator (e.g., Z/N= rate)
+  fncExpAgr <- function(DF, X1, X2, Z, N, Level) {
+    #Add variable that tracks number of 0s
+    t_exp_df <- DF
+    t_exp_df$Yzero <- t_exp_df[, N] - t_exp_df[, Z]
+    #Total rows
+    tot_rows <- nrow(DF)
+    #For loop to get the vectors of 0s and 1s
+    z_ls <- vector(mode = "list", length = tot_rows)
+    #Level 1 or 2 models
+    if (Level <= 2) {
+      for (i in 1:tot_rows) {
+        z_ls[[i]] <- data.frame(Z=c(rep(0, t_exp_df[i, "Yzero"]), rep(1, t_exp_df[i, Z])),
+                                X1=rep(t_exp_df[i, X1], t_exp_df[i, N]))
+      }
+    }
+    #Level 3 models
+    if (Level == 3) {
+      for (i in 1:tot_rows) {
+        z_ls[[i]] <- data.frame(Z=c(rep(0, t_exp_df[i, "Yzero"]), rep(1, t_exp_df[i, Z])),
+                                X1=rep(t_exp_df[i, X1], t_exp_df[i, N]),
+                                X2=rep(t_exp_df[i, X2], t_exp_df[i, N]))
+      }
+    }
+    #Turn list into data frame
+    ExpDF <- do.call(rbind.data.frame, z_ls)
+    #Give column names
+    if (Level <= 2) {
+      colnames(ExpDF) <- c(Z, X1)
+    }
+    if (Level == 3) {
+      colnames(ExpDF) <- c(Z, X1, X2)
+    }
+    return("ExpDF"=ExpDF)
+  }
+
+  ################################################################################
+  # 2. Function to get the binary (non)hierarchical estimation posterior summary #
+  ################################################################################
+  #Uses DBDA function below, summarizePost()
+  #MCmatrix= MCMC matrix after: mcmcMat <- as.matrix(codaSamples, chains=TRUE)
+  #mydf: Original data frame (i.e., not the data list used in JAGS)
+  #Level= A 1, 2, or 3 level indicator for the type of model
+  #Outcome= Model outcome
+  #Group2 & Group3= level 2 and 3 group names
+  fncHdiBinSmry <- function(MCmatrix, datFrm, Level, Outcome, Group2, Group3=NULL,
+                            Theta=NULL, Omega2=NULL, Omega3=NULL, Average=NULL,
+                            AggrDF="No", AggrN=NULL, Distribution=NULL, Cred.Mass=0.95 ) {
+    ###################################################################
+    ## These next 30 lines will exclude irrelevant parameters ##
+    keep_theta_cols <- NULL
+    keep_omega2_cols <- NULL
+    keep_omega3_cols <- NULL
+    #Level-1, non-hierarchical model
+    if(Level== 1) {
+      keep_theta_cols <- grep(Theta, colnames(MCmatrix))
+    }
+    #Level-2, hierarchical model
+    if(Level== 2) {
+      keep_theta_cols <- grep(Theta, colnames(MCmatrix))
+    }
+    if(Level== 2) {
+      keep_omega2_cols <- grep(Omega2, colnames(MCmatrix))
+    }
+    #Level-3, hierarchical model
+    if(Level== 3) {
+      keep_theta_cols <- grep(Theta, colnames(MCmatrix))
+    }
+    if(Level== 3) {
+      keep_omega3_cols <- grep(Omega3, colnames(MCmatrix))
+    }
+    if(Level== 3) {
+      keep_omega2_cols <- setdiff(grep(Omega2, colnames(MCmatrix)), keep_omega3_cols)
+    }
+    #These are just the columns I need
+    keep_these_cols <- c(which(colnames(MCmatrix) == "CHAIN"), keep_theta_cols, keep_omega2_cols, keep_omega3_cols)
+    #Revise MCMC matrix to just the columns I need
+    MCmatrix <- MCmatrix[, keep_these_cols]
+    ###################################################################
+    #Get order of participants in rows of aggregated data
+    if (AggrDF == "Yes") {
+      group2_aggr_factor <- factor(datFrm[, Group2], levels=c(datFrm[, Group2]))
+    } else {
+      group2_aggr_factor <- levels(factor(datFrm[, Group2], levels=names(table(sort(datFrm[, Group2]))) ))
+    }
+    # Use the aggregated data if needed
+    if (AggrDF == "Yes") {
+      datFrm <- fncExpAgr(DF=datFrm, X1=Group2, X2=Group3, Z=Outcome, N=AggrN, Level=Level)
+    } else {
+      datFrm <- datFrm
+    }
+    #Make a factor from aggregated data so that it follows the same order
+    if (AggrDF == "Yes") {
+      datFrm[, Group2] <- factor(datFrm[, Group2], levels=group2_aggr_factor)
+    } else {
+      datFrm[, Group2] <- factor(datFrm[, Group2], levels=group2_aggr_factor)
+    }
+    #Get the type of estimate
+    if (is.null(Average)) {
+      average_type <- "Mode"
+    } else {
+      average_type <- Average
+    }
+    #Number of level-2 groups
+    numGroups <- length(table(datFrm[, Group2]))
+    #Number of level-3 categories
+    if(Level== 3) {
+      numCats <- length(table(datFrm[, Group3]))
+    }
+    #Get the level-2 group names
+    Group2.Names <- sort(unique(datFrm[, Group2]))
+    #Get the level-3 group names
+    if(Level== 3) {  #Get group-3 rates
+      Group3.Names <- sort(unique(datFrm[, Group3]))
+    } else {
+      Group3.Names <- NULL
+    }
+    #Get the column numbers with the Theta and Omega in it
+    #Level-1, non-hierarchical model
+    if(Level== 1) {
+      theta_cols <- grep(Theta, colnames(MCmatrix))
+    }
+    #Level-2, hierarchical model
+    if(Level== 2) {
+      theta_cols <- grep(Theta, colnames(MCmatrix))
+    }
+    if(Level== 2) {
+      omega2_cols <- grep(Omega2, colnames(MCmatrix))
+    }
+    #Level-3, hierarchical model
+    if(Level== 3) {
+      theta_cols <- grep(Theta, colnames(MCmatrix))
+    }
+    if(Level== 3) {
+      omega3_cols <- grep(Omega3, colnames(MCmatrix))
+    }
+    if(Level== 3) {
+      omega2_cols <- setdiff(grep(Omega2, colnames(MCmatrix)), omega3_cols)
+    }
+
+    #Get the column numbers with the Theta and Omega in it
+    mat_cols <- 1:length(colnames(MCmatrix))      #Get range of matrix columns
+    #Level-1, non-hierarchical model
+    if(Level== 1) {
+      pName <- colnames(MCmatrix)
+    }
+    #Level-2, hierarchical model
+    if(Level== 2) {
+      pName <- colnames(MCmatrix)[c(1, theta_cols, omega2_cols, setdiff(mat_cols, c(1, theta_cols, omega2_cols) ))]
+    }
+    #Level-3, hierarchical model
+    if(Level== 3) {
+      pName <- colnames(MCmatrix)[c(1, theta_cols, omega2_cols, omega3_cols, setdiff(mat_cols, c(1, theta_cols, omega2_cols, omega3_cols)))]
+    }
+
+    ## Create posterior chain summary ##
+    # pName <- colnames(MCmatrix)   #Parameter names
+    postDF <- list()
+    #  for (i in 1:length(pName[-1]))  {
+    for (i in 1:length(pName[which(pName != "CHAIN")]))  {
+      #    postDF[[i]] <- summarizePost( MCmatrix[, pName[i] ] , compVal=NULL , ROPE=NULL )
+      postDF[[i]] <- summarizePost( MCmatrix[, pName[which(pName != "CHAIN")[i]] ] , compVal=NULL , ROPE=NULL, credMass=Cred.Mass )
+    }
+    #Turn summary into data frame
+    postDF <- data.frame(do.call( "rbind", postDF))
+    #  rownames(postDF) <- pName[-1]
+    rownames(postDF) <- pName[which(pName != "CHAIN")]
+    ## Get number of parameters to create Group 2 variable
+    m_param_tot <- length(colnames(MCmatrix)) - 1 #Total parameters from MCmatrix
+    #Level-2, hierarchical model
+    if(Level== 2) {
+      param2_so_far <- length(c(theta_cols, omega2_cols))
+      other_param2 <- m_param_tot - param2_so_far
+      num_rep_Group2 <- other_param2 + 1
+    }
+    #Level-3, hierarchical model
+    if(Level== 3) {
+      param3_so_far <- length(c(theta_cols, omega2_cols, omega3_cols))
+      other_param3 <- (m_param_tot - param3_so_far) / (numCats + 1)
+      num_rep_Group3 <- other_param3
+    }
+    #Enter Group/Cat into summary
+    #Level-1, non-hierarchical model
+    if(Level== 1) {
+      row_name <- c(names(table(datFrm[, Group2])) )
+    }
+    #Level-2, hierarchical model
+    if(Level== 2) {
+      row_name <- c(names(table(datFrm[, Group2])), rep("Overall", num_rep_Group2) )
+    }
+    #Level-3, hierarchical model. try() used if "omega" is only param passed into JAGS function
+    if(Level== 3) {
+      row_name <- c(names(table(datFrm[, Group2])),
+                    rep(names(table(datFrm[, Group3])), 1), "Overall",
+                    try(rep(names(table(datFrm[, Group3])), num_rep_Group3)), try(rep("Overall", num_rep_Group3)) )
+    }
+    #Make a variable for the group 2 and 3 names
+    postDF[, Group2] <- row_name
+
+    #Enter Group/Cat counts
+    #Level-1, non-hierarchical model
+    if(Level== 1) {
+      postDF[, Outcome] <- c(table(datFrm[, Outcome], datFrm[, Group2])[2,])
+    }
+    #Level-2, hierarchical model
+    if(Level== 2) {
+      postDF[, Outcome] <- c(table(datFrm[, Outcome], datFrm[, Group2])[2,],
+                             rep(0, nrow(postDF) - length(table(datFrm[, Group2])) ))
+    }
+    #Level-3, hierarchical model
+    if(Level== 3) {
+      postDF[, Outcome] <- c(table(datFrm[, Outcome], datFrm[, Group2])[2,],
+                             table(datFrm[, Outcome], datFrm[, Group3])[2,],
+                             rep(0, nrow(postDF) -
+                                   (length(table(datFrm[, Group2])) + length(table(datFrm[, Group3]))) ))
+    }
+    #Enter Group/Cat Ns
+    #Level-1, non-hierarchical model
+    if(Level== 1) {
+      postDF[, "N"] <- c(colSums(table(datFrm[, Outcome], datFrm[, Group2])))
+    }
+    #Level-2, hierarchical model
+    if(Level== 2) {
+      postDF[, "N"] <- c( colSums(table(datFrm[, Outcome], datFrm[, Group2])),
+                          rep(0, nrow(postDF) - length(table(datFrm[, Group2])) ))
+    }
+    #Level-3, hierarchical model
+    if(Level== 3) {
+      postDF[, "N"] <- c( colSums(table(datFrm[, Outcome], datFrm[, Group2])),
+                          colSums(table(datFrm[, Outcome], datFrm[, Group3])),
+                          rep(0, nrow(postDF) -
+                                (length(table(datFrm[, Group2])) + length(table(datFrm[, Group3]))) ))
+    }
+    #Enter Group/Cat sums
+    #Level-1, non-hierarchical model
+    if(Level== 1) {
+      cont_sum_ls1 <- by(datFrm[, Outcome], datFrm[, Group2], FUN=sum, na.rm = TRUE)
+      class(cont_sum_ls1) <- "list"
+      #cont_sum_ls1 <- factor(datFrm[, Group2], levels=group2_aggr_factor)
+      postDF[, "Sum"] <- unlist(cont_sum_ls1)
+    }
+    #Level-2, hierarchical model
+    if(Level== 2) {
+      cont_sum_ls1 <- by(datFrm[, Outcome], datFrm[, Group2], FUN=sum, na.rm = TRUE)
+      class(cont_sum_ls1) <- "list"
+      postDF[, "Sum"] <- c( unlist(cont_sum_ls1),
+                            rep(0, nrow(postDF) - length(table(datFrm[, Group2])) ))
+    }
+    #Level-3, hierarchical model
+    if(Level== 3) {
+      cont_sum_ls1 <- by(datFrm[, Outcome], datFrm[, Group2], FUN=sum, na.rm = TRUE)
+      class(cont_sum_ls1) <- "list"
+      cont_sum_ls2 <- by(datFrm[, Outcome], datFrm[, Group3], FUN=sum, na.rm = TRUE)
+      class(cont_sum_ls2) <- "list"
+      postDF[, "Sum"] <- c( unlist(cont_sum_ls1), unlist(cont_sum_ls2) ,
+                            rep(0, nrow(postDF) -
+                                  (length(table(datFrm[, Group2])) + length(table(datFrm[, Group3]))) ))
+    }
+
+    #Observed rate
+    if (Distribution == "Beta") {
+      postDF$Obs.Rate <- postDF[, Outcome] / postDF[, "N"]
+    } else {
+      postDF$Obs.Rate <- postDF[, "Sum"] / postDF[, "N"]
+    }
+
+    #Get the row numbers with the Theta and Omega in it
+    #Level-1, non-hierarchical model
+    if(Level== 1) {
+      theta_rows <- grep(Theta, rownames(postDF))
+    }
+    #Level-2, hierarchical model
+    if(Level== 2) {
+      theta_rows <- grep(Theta, rownames(postDF))
+    }
+    if(Level== 2) {
+      omega2_rows <- grep(Omega2, rownames(postDF))
+    }
+    #Level-3, hierarchical model
+    if(Level== 3) {
+      theta_rows <- grep(Theta, rownames(postDF))
+    }
+    if(Level== 3) {
+      omega2_rows <- grep(Omega2, rownames(postDF))
+    }
+    if(Level== 3) {
+      omega3_rows <- grep(Omega3, rownames(postDF))
+    }
+    #First make length of theta, omega2 and omega3 rows
+    if(Level== 1) {
+      LTR <- length(theta_rows)
+    }
+    if(Level== 1) {
+      LO2R<- NULL
+    }
+    if(Level== 1) {
+      LO3R <- NULL
+    }
+    if(Level== 2) {
+      LTR <- length(theta_rows)
+    }
+    if(Level== 2) {
+      LO2R <- length(omega2_rows)
+    }
+    if(Level== 2) {
+      LO3R <- NULL
+    }
+    if(Level== 3) {
+      LTR <- length(theta_rows)
+    }
+    if(Level== 3) {
+      LO2R <- length(setdiff(omega2_rows, omega3_rows))
+    }
+    if(Level== 3) {
+      LO3R <- length(omega3_rows)
+    }
+    #Create an order by parameter
+    #Level-2, hierarchical model order of results
+    if(Level== 1) {
+      o6 <- c(order(postDF[, average_type][1:numGroups], decreasing = T))
+    }
+    #ISSUE: first 2 elements are kappas and skipped in the order below colnames(mcmcMatTT)
+    if(Level== 2) {
+      o6 <- c(order(postDF[theta_rows, average_type], decreasing = T),  #Theta
+              omega2_rows[order(postDF[omega2_rows, average_type], decreasing = T)], #Omega2
+              setdiff(1:nrow(postDF), c(theta_rows, omega2_rows)))  #All others
+    }
+    if(Level== 3) {
+      o6 <- c(order(postDF[, average_type][theta_rows], decreasing = T), #Theta and then Omega2
+              setdiff(omega2_rows, omega3_rows)[order(postDF[, average_type][setdiff(omega2_rows, omega3_rows)], decreasing = T)],
+              omega3_rows[ order(postDF[, average_type][omega3_rows], decreasing = T)], #Omega3
+              ((numGroups+numCats+LO3R ):nrow(postDF))[((numGroups+numCats+LO3R):nrow(postDF)) != omega3_rows] ) #All other
+    }
+    #Re-order the rows now
+    if(Level== 1) {
+      postDFb <- postDF[o6, ]
+    }
+    if(Level== 2) {
+      postDFb <- rbind(postDF[o6[1:LTR], ],
+                       postDF[o6[(LTR + 1):(LTR + LO2R )], ],
+                       postDF[ o6[( (LTR + LO2R) + 1):nrow(postDF)], ])
+    }
+    if(Level== 3) {  #In this order: theta, Omega2, omega3
+      postDFb <- rbind(postDF[o6[1:LTR], ],                                   #Thetas
+                       postDF[o6[(LTR + 1):(LTR + LO2R )], ],                 #omega2
+                       postDF[o6[(LTR + LO2R + 1):(LTR + LO2R + 1)], ],       #omega3
+                       postDF[ o6[( (LTR + LO2R + LO3R) + 1):nrow(postDF)], ])  #all others
+    }
+    ## Put postDF in reverse order so that it will plot correctly
+    if(Level== 1) {
+      postDFa <- postDF[rev(1:LTR), ]
+    }
+    if(Level== 2) {
+      postDFa <- rbind(postDF[rev(1:LTR), ],
+                       postDF[rev(omega2_rows), ],
+                       postDF[ rev(( (LTR + LO2R) + 1):nrow(postDF)), ])
+    }
+    if(Level== 3) {  #In this order: theta, Omega2, omega3
+      postDFa <- rbind(postDF[ rev(1:LTR), ],                                   #Thetas
+                       postDF[ rev((LTR + 1):(LTR + LO2R )), ],                 #omega2
+                       postDF[ omega3_rows, ],                                  #omega3
+                       postDF[ rev(setdiff(1:(nrow(postDF)), c(1:(LTR + LO2R), omega3_rows))), ])  #all others
+    }
+
+    ## Get the level-3 rates if doing a level-3 model for the plot points
+    #I Changed Area into a 3 level factor to get a better 3rd level
+    if(Level== 3) {
+      hspa <- aggregate(datFrm[, Outcome] ~ datFrm[, Group3] + datFrm[, Group2] , data=datFrm, FUN="sum")
+    }
+    if(Level== 3) {
+      hspb <- aggregate(datFrm[, Outcome] ~ datFrm[, Group3] + datFrm[, Group2] , data=datFrm, FUN="length")
+    }
+    #Merge
+    if(Level== 3) {
+      a1hsp <- cbind(hspa, hspb[, 3])
+    }
+    if(Level== 3) {
+      colnames(a1hsp)[4] <- "Nsamp"
+    }
+    if(Level== 3) {
+      colnames(a1hsp)[1:3] <- c(Group3, Group2, Outcome)
+    }
+    ##(Add 1 to month and) make it a factor so it begins at 1
+    if(Level== 3) {
+      a1hsp[, Group2] <- as.numeric(a1hsp[, Group2])
+    }
+    if(Level== 3) {
+      a1hsp[, Group3] <- as.numeric( as.factor(a1hsp[, Group3]) )  #Turning into factor to get numeric
+    }
+    #Make the rate
+    if(Level== 3) {
+      a1hsp$Rate <- a1hsp[, (ncol(a1hsp)-1)] / a1hsp[, ncol(a1hsp)]
+    }
+    #For loop to create object
+    if(Level== 3) {  #Get group-3 rates
+      Group3.Obs <- list()
+      for (i in 1:LO2R) {
+        Group3.Obs[[i]] <- a1hsp[a1hsp[, Group3] == i, "Rate"]
+      }
+    } else {
+      Group3.Obs <- NULL
+    }
+    #Reverse order to match Post1
+    if(Level== 3) {  #Get group-3 rates
+      Group3.Obs1 <- rev(Group3.Obs)
+    } else {
+      Group3.Obs1 <- NULL
+    }
+    #Get numerical order to match with Post2
+    if(Level== 3) {  #Get group-3 rates
+      g3_order <- as.numeric(gsub("[^0-9.-]", "", rownames(postDFb[ ((LTR + 1):(LTR + LO2R )), ]) ))
+    } else {
+      g3_order <- NULL
+    }
+    #Get level-3 estimates in numerical order
+    if(Level== 3) {  #Get group-3 rates
+      Group3.Obs2 <- Group3.Obs[g3_order]
+    } else {
+      Group3.Obs2 <- NULL
+    }
+    return(list("Post"=postDF,"Post1"=postDFa, "Post2"=postDFb, "Level"=Level, "Outcome"=Outcome,
+                "Group2.Names"=Group2.Names, "Group3.Names"=Group3.Names,
+                "Group2"=Group2, "Group3"=Group3,
+                "Theta"=Theta, "Omega2"=Omega2, "Omega3"=Omega3, "Average"=Average,
+                "Order"=o6, "LTR"=LTR, "LO2R"=LO2R, "LO3R"=LO3R,
+                "Lower"= intersect("HDIlow", colnames(postDF)),
+                "Upper"= intersect("HDIhigh",colnames(postDF)),
+                "ciconf_lev"= unique(postDF$HDImass), "g3_order"=g3_order,
+                "Group3.Obs1"=Group3.Obs1, "Group3.Obs2"=Group3.Obs2 ))
+  }
+
+  ################################################################################
+  #           3. Function to plot HDIs for hierarchical estimation               #
+  ################################################################################
+  fncHdiBinP <- function(MCmatrix, Level, View.Order="Alphabetical", View.Level="No",  #View.Order= alpha/numerical, View.Level=Yes/No "View 3rd level?"
+                         GroupX=NULL, Lcol, Pcol, P3.col, tgt=NULL, tgt.col,
+                         Cbar, plyCol, labMulti=1, lineMulti=1,
+                         roundVal, XLim1, XLim2,Add.Lgd, Leg.Loc) {
+    # Assign objects from MCMC matrix objects
+    Group2 <- MCmatrix$Group2
+    Group3 <- MCmatrix$Group3
+    Outcome <- MCmatrix$Outcome
+    ciconf_lev <- MCmatrix$ciconf_lev
+    Average <- MCmatrix$Average
+    Theta <- MCmatrix$Theta
+    Omega2 <- MCmatrix$Omega2
+    Omega3 <- MCmatrix$Omega3
+    LTR <- MCmatrix$LTR
+    LO2R <- MCmatrix$LO2R
+    LO3R <- MCmatrix$LO3R
+    Lower <- MCmatrix$Lower
+    Upper <- MCmatrix$Upper
+    Group3.Obs1 <- MCmatrix$Group3.Obs1
+    Group3.Obs2 <- MCmatrix$Group3.Obs2
+
+    #Select the group levels that determine which rows go into the data frame
+    if(Level== 1) {
+      if (View.Level == "No") {
+        row_numbers <- 1:LTR
+      }
+    }
+    #Level-2, hierarchical model
+    if(Level== 2) {
+      if (View.Level == "No") {
+        row_numbers <- 1:(LTR + LO2R)
+      }
+    }
+    #Level-3, hierarchical model
+    if(Level== 3) {
+      if (View.Level == "Yes") {
+        row_numbers <- setdiff(1:(LTR + LO2R + LO3R), 1:LTR)
+      } else {
+        row_numbers <- setdiff(1:(LTR + LO2R + LO3R), (LTR + 1):(LTR + LO2R))
+      }
+    }
+    #Create hdidf table of Bayesian estimates
+    if(View.Order == "Alphabetical") {                                  #Post1
+      hdidf <- MCmatrix$Post1[row_numbers , c(Group2, Average, Lower, Upper, "Obs.Rate")]
+    }
+    if(View.Order == "Numerical") {                                  #Post2
+      hdidf <- MCmatrix$Post2[row_numbers , c(Group2, Average, Lower, Upper, "Obs.Rate")]
+    }
+    #Create adf table of observed values
+    if(View.Order == "Alphabetical") {                                  #Post1
+      adf <- MCmatrix$Post1[row_numbers , c(Group2, "Obs.Rate")]
+    }
+    if(View.Order == "Numerical") {                                  #Post2
+      adf <- MCmatrix$Post2[row_numbers , c(Group2, "Obs.Rate")]
+    }
+    #Hierarchical average for the highest level (e.g., Omega)
+    if(Level >= 2) {
+      mainYmn <- hdidf[nrow(hdidf), which(colnames(hdidf)== Average)]
+    } else {
+      mainYmn <- NA
+    }
+    #Select which 3-level category data gets reported
+    if(View.Order == "Alphabetical") {                                  #Post1
+      Group3.Obs <- Group3.Obs1
+    }
+    if(View.Order == "Numerical") {                                  #Post2
+      Group3.Obs <- Group3.Obs2
+    }
+    #Main X labels
+    if(Level >= 2) {
+      X_Label <- paste0("Dashed line= Overall hierarchical est. of ", round(mainYmn, roundVal), ", ", ciconf_lev * 100, "% ", "HDI",
+                        " [", round(hdidf[nrow(hdidf), which(colnames(hdidf)== "HDIlow")], roundVal), ", ",
+                        round(hdidf[nrow(hdidf), which(colnames(hdidf)== "HDIhigh")], roundVal),"]")
+    } else {
+      X_Label <- paste0(Group2, " posterior estimates")
+    }
+    #Main title
+    #Level-3, hierarchical model
+    if(Level== 3) {
+      if (View.Level == "Yes") {
+        main_ttl <- paste0(ciconf_lev * 100, "% ", "Highest Density Intervals of ", Outcome, " by ", Group3)
+      }
+    }
+    if(Level== 3) {
+      if (View.Level == "No") {
+        main_ttl <- paste0(ciconf_lev * 100, "% ", "Highest Density Intervals of ", Outcome, " by ", Group2)
+      }
+    }
+    if(Level < 3) {
+      main_ttl <- paste0(ciconf_lev * 100, "% ", "Highest Density Intervals of ", Outcome, " by ", Group2)
+    }
+    #Legend
+    #Level-3, hierarchical model
+    if(Level== 3) {
+      if (View.Level == "Yes") {
+        legend_text <- c(paste0("Observed ", Group2), paste0("Observed ", Group3), "Hierarchical Estimate")
+        legend_type <- c(3, 2, 24)
+        pcol_vector <- c(P3.col, Pcol, Pcol)
+      }
+    }
+    if(Level== 3) {
+      if (View.Level == "No") {
+        legend_text <- c("Observed Rate", "Hierarchical Estimate")
+        legend_type <- c(2, 24)
+        pcol_vector <- Pcol
+      }
+    }
+    if(Level == 2) {
+      legend_text <- c("Observed Rate", "Hierarchical Estimate")
+      legend_type <- c(2, 24)
+      pcol_vector <- Pcol
+    }
+    if(Level == 1) {
+      legend_text <- c("Estimate")
+      legend_type <- c(24)
+      pcol_vector <- Pcol
+    }
+
+    #Get names of level 1:3 or just overall level-3 groups
+    if(Level== 3) {
+      if (View.Level == "Yes") {
+        group_names <- hdidf[-nrow(hdidf), Group2]
+      } else {
+        group_names <- hdidf[1:LTR, Group2]
+      }
+    } else {
+      group_names <- hdidf[1:LTR, Group2]
+    }
+    #Determine which group names to plot
+    if (is.null(GroupX)) {
+      plot_group_names <- 1:length(group_names)
+    } else {
+      plot_group_names <- which(group_names %in% GroupX)
+    }
+
+    #Get rows to use for plots, level 1 print everything, other levels print everything - last row
+    if(Level== 1) {
+      plot_row_numbers <- (1:length(row_numbers))[plot_group_names]
+    } else {
+      plot_row_numbers <- (1:(length(row_numbers) - 1))[plot_group_names]
+    }
+    ## Create plot
+    rng <- seq(min(adf[, "Obs.Rate"], na.rm=TRUE)* 0.95, max(adf[, "Obs.Rate"], na.rm=TRUE)* 1.05, length.out=nrow(adf[plot_row_numbers,]))
+    par(mar=c(5,7,4,6))
+    plot(rng, 1:length(rng), type="n", ylab="",
+         xlab= X_Label,
+         axes=F,  cex.lab=1*labMulti, xlim=c(XLim1, XLim2))
+    #axes=F,  cex.lab=1*labMulti)
+    title(main_ttl, cex.main = 1*labMulti)
+    #Merge 2 tables so I can get points in correct order
+    for (i in 1:(length(plot_row_numbers)) ) {
+      lines(c(hdidf[plot_row_numbers, Lower][i], hdidf[plot_row_numbers, Upper][i]),
+            c((1:length(plot_row_numbers))[i], (1:length(plot_row_numbers))[i]),
+            lwd=1*lineMulti, col=Lcol)
+      #Points for observed rates and Bayesian estimates
+      points(hdidf[plot_row_numbers, Average][i ], i, pch=24, col=Pcol, lwd=1, bg=Pcol, cex=1.75*labMulti)
+      if(Level >= 2) {
+        points(hdidf[plot_row_numbers, "Obs.Rate"][i ], (1:length(plot_row_numbers))[i], pch=2, col=Pcol, lwd=1, bg=Pcol, cex=1.75*labMulti)
+      }
+    }
+    #Add points for the level-3 category for each group per category
+    if(Level== 3) {
+      if (View.Level == "Yes") {
+        for (i in 1:LO2R) {
+          points( Group3.Obs[[plot_row_numbers[i]]], rep( (1:LO2R)[i], length(Group3.Obs[[plot_row_numbers[i]]])), pch=3,
+                  col=P3.col, lwd=1)
+        }
+      }
+    }
+    #Mean line
+    if(Level >= 2) {
+      abline(v=mainYmn, lwd=1*lineMulti, col="grey", lty=3)
+    }
+    axis(1)
+    axis(2, at=1:length(plot_row_numbers), labels= substr(hdidf[plot_row_numbers, Group2], 1, 10), las=1, cex.axis=1*labMulti )
+    axis(4, at=1:length(plot_row_numbers), labels= round(hdidf[plot_row_numbers, Average], roundVal), las=1, cex.axis= 1*labMulti*.75 )
+    ## Add overall confidence bar ##
+    #Create x and y data
+    Cbar_x <- c(rep(hdidf[nrow(hdidf), Lower], length(plot_row_numbers)), rep(hdidf[nrow(hdidf), Upper], length(plot_row_numbers) ))
+    Cbar_y <- c(1:length(plot_row_numbers), length(plot_row_numbers):1)
+    #Create shading
+    if(Cbar=="Yes") {
+      polygon(Cbar_x, Cbar_y, col = adjustcolor(plyCol, alpha.f = 0.4), border= plyCol )
+    }
+    #Add legend
+    if(Add.Lgd =="Yes") {
+      legend(Leg.Loc, legend=legend_text, col=pcol_vector,
+             pch=legend_type, pt.bg=pcol_vector, cex = 2, bty="n", inset=c(0, .05))
+    }
+    #Target line
+    abline(v=tgt, lwd=1*lineMulti, col=tgt.col, lty=1)
+    box()
+  }
+
+  ################################################################################
+  #                  4. Posterior Predictive Check for groups                    #
+  ################################################################################
+  #Use the coda object and dataset. Works for normal and log-normal distributions.
+  fncGrpPostPredCheck <- function(Coda.Object, datFrm, Outcome, Group, Group.Level,
+                                  Mean.Var, SD.Var, MCnu, Distribution, Num.Lines=NULL,
+                                  Main.Title=NULL, X.Lab=NULL, Bar.Color=NULL,
+                                  Line.Color=NULL, Hist.Breaks=NULL, CEX.size=NULL,
+                                  X.Lim=NULL, Y.Lim=NULL, Min.Val=NULL, Max.Val=NULL, Round.Digits=NULL,
+                                  Point.Loc= NULL, PCol=NULL, Add.Lgd= NULL, Leg.Loc= NULL) {
+    #Make coda into as.matrix
+    MC.Chain <- as.matrix( Coda.Object )
+    chainLength <- NROW(MC.Chain)  #Chain length
+    #  par( mar=c(4,2,2.5,.25) , mgp=c(2.5,0.5,0) , pty="m" )
+
+    #Get a number of pseudo-random chains
+    pltIdx <- floor(seq(1, chainLength, length= Num.Lines))
+    #Get spread in outcome variable values
+    #  xComb <- seq( Min.Val , max(datFrm[, Outcome], na.rm=TRUE) , length=501 )
+    xComb <- seq( Min.Val , Max.Val , length=501 )
+    #Make X limit values, I can set my minimum value
+    if (is.null(X.Lim)) {
+      #    X.Lim <- c(Min.Val, round(max(datFrm[, Outcome], na.rm=TRUE), digits=Round.Digits))
+      X.Lim <- c(Min.Val, round(Max.Val, digits=Round.Digits))
+    }
+    ## Graph ##
+    #  par( mar=c(4,2,2.5,.25) , mgp=c(2.5,0.5,0) , pty="m" )
+    par( mar=c(8, 6, 3, .25) , mgp=c(2.5,0.5,0) , pty="m" )
+    #Allows me to run if I only have 1 group by leaving "generate levels =="No"
+    if (nchar(Group.Level) == 0 ) {
+      hist( datFrm[, Outcome], xlab= X.Lab, ylab=NULL,
+            main= Main.Title, breaks=Hist.Breaks, col= Bar.Color, border="white",
+            prob=TRUE, cex.lab=CEX.size, cex=CEX.size, cex.main=CEX.size,
+            xlim=X.Lim, ylim=Y.Lim, lab=NULL, axes=FALSE)
+    } else {
+      hist( datFrm[, Outcome][datFrm[, Group] == Group.Level] , xlab= X.Lab, ylab=NULL,
+            main= Main.Title, breaks=Hist.Breaks, col= Bar.Color, border="white",
+            prob=TRUE, cex.lab=CEX.size, cex=CEX.size, cex.main=CEX.size,
+            xlim=X.Lim, ylim=Y.Lim, lab=NULL, axes=FALSE)
+    }
+
+
+    axis(1)  #Put values in labels
+    #This adds in minimum value in case it isn't in range (e.g., show negatve range of normal distribution)
+    axis(1, at=X.Lim[1])
+    # box()   #Dropping this for now because it looks better without
+    #Add in posterior estimate lines
+    for ( chnIdx in pltIdx ) {
+      #Normal Distribution
+      if (Distribution == "Normal") {
+        lines( xComb ,
+               dnorm( xComb, MC.Chain[chnIdx, Mean.Var], MC.Chain[chnIdx, SD.Var] ),
+               col= Line.Color )
+      }
+      #Log-Normal Distribution
+      if (Distribution == "Log-normal") {
+        lines( xComb ,
+               dlnorm( xComb, MC.Chain[chnIdx, Mean.Var], MC.Chain[chnIdx, SD.Var] ),
+               col= Line.Color )
+      }
+      #Skew-Normal Distribution
+      if (Distribution == "Skew-normal") {
+        lines( xComb ,
+               dsn( xComb, xi=MC.Chain[chnIdx, Mean.Var], omega=MC.Chain[chnIdx, SD.Var],
+                    alpha=MC.Chain[chnIdx, MCnu]), col= Line.Color )
+      }
+      #Weibull Distribution
+      if (Distribution == "Weibull") {
+        lines( xComb ,
+               dweibull( xComb, shape=MC.Chain[chnIdx, Mean.Var], scale=MC.Chain[chnIdx, SD.Var] ),
+               col= Line.Color )
+      }
+      #Gamma Distribution
+      if (Distribution == "Gamma") {
+        lines( xComb ,
+               dgamma( xComb, shape=MC.Chain[chnIdx, Mean.Var], rate=MC.Chain[chnIdx, SD.Var] ),
+               col= Line.Color )
+      }
+      #t Distribution
+      if (Distribution == "t") {
+        lines( xComb ,
+               dt( xComb, df= MC.Chain[chnIdx, MCnu], ncp= MC.Chain[chnIdx, Mean.Var] ),
+               col= Line.Color )
+      }
+      #Add points
+      if (!is.null(Point.Loc)) {
+        for (i in 1:length(Point.Loc)) {
+          points(x=Point.Loc[i], y=0, pch=3, lwd=3, cex=CEX.size, col=PCol)
+        }
+      }
+      #Add legend
+      if(Add.Lgd =="Yes") {
+        legend_text <- c(paste0("Observed ", abbreviate(Group.Level, 8)), "Posterior Estimate")
+        legend_type <- c(1, 1)
+        pcol_vector <- c(Bar.Color, Line.Color)
+        legend(Leg.Loc, legend=legend_text, col=pcol_vector,
+               lty=legend_type, pt.bg=pcol_vector, cex = 2, bty="n", inset=c(0, .05))
+      }
+    }
+
+  } #End of function
+
+  ################################################################################
+  #             5. Posterior predictive check for ANOVA                          #
+  ################################################################################
+  #This is a modified function from PlotMCmeanC: Jags-Ymet-Xnom1fac-MrobustHet.r.
+  #The original plot produces a generic plot, then it shifts the X and Y axes to
+  #a completely different area to produce the graphs. Old code embedded below
+  #from what looks like normal distributions.
+  fncPlotMcANOVA <- function( codaSamples=NULL, datFrm=NULL , yName=NULL , xName=NULL,
+                              MCmean=NULL, MCsigma=NULL, MCnu=NULL, Num.Lines=NULL,
+                              Main.Title=NULL, X.Lab=NULL, Line.Color=NULL,
+                              CEX.size=NULL, X.Lim=NULL, Y.Lim=NULL, PCol = NULL,
+                              Add.Lgd= NULL, Leg.Loc=NULL, T.Percentage=NULL ) {
+    mcmcMat <- as.matrix(codaSamples, chains=TRUE)
+    chainLength <- NROW( mcmcMat )
+    y <- datFrm[, yName]
+    x <- as.numeric(as.factor(datFrm[, xName]))
+    xlevels <- levels(as.factor(datFrm[, xName]))
+    #Make x-limits
+    if (is.null(X.Lim)) {
+      X.Limits <- c(0.1,length(xlevels) + 0.1)
+    } else {
+      X.Limits <- X.Lim
+    }
+    #Make y-limits
+    if (is.null(Y.Lim)) {
+      Y.Limits <- c(min(y) - 0.2 * (max(y) - min(y)), max(y) + 0.2*(max(y) - min(y)))
+    } else {
+      Y.Limits <- Y.Lim
+    }
+    #Get generic mean parameter name to use for graphing
+    mean_par <- strsplit(MCmean, "[", fixed=TRUE)[[1]][1]
+    #Get generic sigma (SD) parameter name to use for graphing
+    sigma_par <- strsplit(MCsigma, "[", fixed=TRUE)[[1]][1]
+    # Display data with posterior predictive distributions
+    par( mar=c(5,6,2.5,.25))
+    plot(-1,0,
+         #       xlim=c(0.1,length(xlevels) + 0.1) ,
+         #       ylim=c(min(y) - 0.2 * (max(y) - min(y)), max(y) + 0.2*(max(y) - min(y))) ,
+         xlim= X.Limits, xlab=X.Lab , xaxt="n" , ylab= yName ,
+         ylim= Y.Limits, main=Main.Title,
+         cex.lab=CEX.size, cex=CEX.size, cex.main=CEX.size )
+    axis( 1 , at=1:length(xlevels) , tick=FALSE , lab=xlevels )
+    for ( xidx in 1:length(xlevels) ) {
+      xPlotVal = xidx
+      yVals = y[ x == xidx ]
+      points( rep(xPlotVal, length(yVals)) + runif(length(yVals), -0.05, 0.05) ,
+              yVals , pch=1 , cex=CEX.size , col= PCol ) #COLOR
+      chainSub = round(seq(1, chainLength, length= Num.Lines)) #20
+      for ( chnIdx in chainSub ) {
+        #      m = mcmcMat[chnIdx, paste("m[", xidx, "]", sep="")]
+        # m = mcmcMat[chnIdx,paste("b[",xidx,"]",sep="")]
+        #      s = mcmcMat[chnIdx, paste("ySigma[", xidx,"]", sep="")]
+        m = mcmcMat[chnIdx, paste(mean_par, "[", xidx, "]", sep="")]
+        s = mcmcMat[chnIdx, paste(sigma_par, "[", xidx,"]", sep="")]
+        nu = mcmcMat[chnIdx, MCnu]
+        #This controls tails of t distribution. Coverage "*.01" to get proportion
+        tlim= qt( c((0.5 - (T.Percentage*0.01)/2), (0.5 + (T.Percentage*0.01)/2)) , df= nu )
+        #This controls tails of t distribution
+        yl = m + tlim[1]*s
+        yh = m + tlim[2]*s
+        ycomb=seq(yl, yh, length=501) ##201
+        #ynorm = dnorm(ycomb,mean=m,sd=s)
+        #ynorm = 0.67*ynorm/max(ynorm)
+        yt = dt( (ycomb - m) / s , df= nu )
+        yt = 0.67 * yt / max(yt)           #This controls heighth of curve peaks
+        lines( xPlotVal - yt , ycomb , col= Line.Color ) #COLOR
+      }
+    }
+    #Add legend
+    if(Add.Lgd =="Yes") {
+      legend_text <- c("Observed Value", "Posterior Estimate")
+      legend_type <- c(0, 1)
+      pch_type <- c(1, -1)
+      pcol_vector <- c(PCol, Line.Color)
+      legend(Leg.Loc, legend=legend_text, col=pcol_vector,
+             lty=legend_type, pt.bg=pcol_vector, cex = 2, pch=pch_type,
+             bty="n", inset=c(0, .05))
+    }
+  }
+
+  ################################################################################
+  #             5B. Posterior predictive check for ANOVA, single group           #
+  ################################################################################
+  fncPlotSingleT <- function( codaSamples=NULL, datFrm=NULL , yName=NULL ,
+                              MCmean=NULL, MCsigma=NULL, MCnu=NULL, Num.Lines=NULL,
+                              Main.Title=NULL, X.Lab=NULL, Line.Color=NULL,
+                              CEX.size=NULL, X.Lim=NULL, Y.Lim=NULL, PCol = NULL,
+                              Add.Lgd= NULL, Leg.Loc=NULL, T.Percentage=NULL ) {
+    mcmcMat <- as.matrix(codaSamples, chains=TRUE)
+    chainLength <- NROW( mcmcMat )
+    y <- datFrm[, yName]
+    #  x <- as.numeric(as.factor(datFrm[, xName]))
+    #  xlevels <- levels(as.factor(datFrm[, xName]))
+    #Make x-limits
+    if (is.null(X.Lim)) {
+      X.Limits <- c(0.6, 1 + 0.1)
+    } else {
+      X.Limits <- X.Lim
+    }
+    #Make y-limits
+    if (is.null(Y.Lim)) {
+      Y.Limits <- c(min(y) - 0.2 * (max(y) - min(y)), max(y) + 0.2*(max(y) - min(y)))
+    } else {
+      Y.Limits <- Y.Lim
+    }
+    #Get generic mean parameter name to use for graphing
+    # mean_par <- strsplit(MCmean, "[", fixed=TRUE)[[1]][1]
+    #Get generic sigma (SD) parameter name to use for graphing
+    #  sigma_par <- strsplit(MCsigma, "[", fixed=TRUE)[[1]][1]
+    # Display data with posterior predictive distributions
+    par( mar=c(5,6,2.5,.25))
+    plot(-1,0,
+         xlim= X.Limits, xlab=X.Lab , xaxt="n" , ylab= yName ,
+         ylim= Y.Limits, main=Main.Title,
+         cex.lab=CEX.size, cex=CEX.size, cex.main=CEX.size )
+    #  axis( 1 , at=1:length(xlevels) , tick=FALSE , lab=xlevels )
+    for ( xidx in 1:1 ) {
+      xPlotVal = xidx
+      yVals = y
+      points( rep(xPlotVal, length(yVals)) + runif(length(yVals), -0.05, 0.05) ,
+              yVals , pch=1 , cex=CEX.size , col= PCol ) #COLOR
+      chainSub = round(seq(1, chainLength, length= Num.Lines)) #20
+      for ( chnIdx in chainSub ) {
+        #      m = mcmcMat[chnIdx, paste("m[", xidx, "]", sep="")]
+        # m = mcmcMat[chnIdx,paste("b[",xidx,"]",sep="")]
+        #      s = mcmcMat[chnIdx, paste("ySigma[", xidx,"]", sep="")]
+        m = mcmcMat[chnIdx, MCmean]
+        s = mcmcMat[chnIdx, MCsigma]
+        nu = mcmcMat[chnIdx, MCnu]
+        #This controls tails of t distribution. Coverage "*.01" to get proportion
+        tlim= qt( c((0.5 - (T.Percentage*0.01)/2), (0.5 + (T.Percentage*0.01)/2)) , df= nu )
+        #This controls tails of t distribution
+        yl = m + tlim[1]*s
+        yh = m + tlim[2]*s
+        ycomb=seq(yl, yh, length=501) ##201
+        #ynorm = dnorm(ycomb,mean=m,sd=s)
+        #ynorm = 0.67*ynorm/max(ynorm)
+        yt = dt( (ycomb - m) / s , df= nu )
+        #     yt = 0.67 * yt / max(yt)           #This controls heighth of curve peaks
+        #      lines( xPlotVal - yt , ycomb , col= Line.Color ) #COLOR
+        lines( xPlotVal - yt , ycomb , col= Line.Color ) #COLOR
+      }
+    }
+    #Add legend
+    if(Add.Lgd =="Yes") {
+      legend_text <- c("Observed Value", "Posterior Estimate")
+      legend_type <- c(0, 1)
+      pch_type <- c(1, -1)
+      pcol_vector <- c(PCol, Line.Color)
+      legend(Leg.Loc, legend=legend_text, col=pcol_vector,
+             lty=legend_type, pt.bg=pcol_vector, cex = 2, pch=pch_type,
+             bty="n", inset=c(0, .05))
+    }
+  }
+
+  ################################################################################
+  #           6. Get proportions above/below specific values                     #
+  ################################################################################
+  #This function calculates the proportion above specific values.
+  fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NULL,
+                          Center=NULL, Spread=NULL, Skew=NULL, CenTend=NULL ) {
+    #Convert into a matrix
+    MC.Matrix <- as.matrix(Coda.Object, chains=TRUE)
+
+    #Shape and rate parameters using the mode values of omega and kappa
+    a_shape <- MC.Matrix[, Center] * (MC.Matrix[, Spread] - 2) + 1
+    b_shape <- (1 - MC.Matrix[, Center]) * (MC.Matrix[, Spread] - 2) + 1
+
+    ###################
+    ## Mean for Beta ##
+    ###################
+    #if(!is.null(yVal)) {
+    if(Distribution == "Beta") {
+      mean_val <- a_shape/MC.Matrix[, Spread]
+    }
+    #  }
+
+    #  if(!is.null(yVal)) {
+    if(Distribution == "Beta") {
+      mean_val_dist <- summarizePost(mean_val)[c(c("Mode","Median",
+                                                   "Mean")[which(c("Mode","Median","Mean")== CenTend)],"HDIlow","HDIhigh")]
+    }
+    # }
+    else {
+      mean_val_dist <- NA
+    }
+
+    #Make NA if not from a beta distribution
+    #  if (Distribution == "Beta") {
+    #    mean_val_dist <- mean_val_dist
+    #  } else {
+    #    mean_val_dist <- NA
+    #  }
+
+    #######################
+    ## Beta distribution ##
+    #######################
+    ## Get summary ##
+    # Proportion greater than Y
+    PbetaGtY <- list()
+    if(!is.null(yVal)) {
+      if(Distribution == "Beta") {
+        for (i in 1:length(yVal)) {
+          PbetaGtY[[i]] <- summarizePost( 1- pbeta(yVal[i], a_shape,
+                                                   b_shape) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+          names(PbetaGtY)[i] <- paste0("Y_", yVal[i])
+        }
+      }
+    }
+    # Quantiles of Y
+    QbetaGtY <- list()
+    if(!is.null(qVal)) {
+      if(Distribution == "Beta") {
+        for (i in 1:length(qVal)) {
+          QbetaGtY[[i]] <- summarizePost( qbeta(qVal[i], a_shape,
+                                                b_shape) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+          names(QbetaGtY)[i] <- paste0("Percentile_", qVal[i])
+        }
+      }
+    }
+    #Effect size for 2 values, in "yVal"
+    betaEffSize2Y <- list()
+    if(length(yVal) == 2) {
+      if(Distribution == "Beta") {
+        es1 <- (asin(sign(1- pbeta(yVal[1], a_shape, b_shape) ) * sqrt(abs(1- pbeta(yVal[1], a_shape, b_shape) ))))*2
+        es2 <- (asin(sign(1- pbeta(yVal[2], a_shape, b_shape)  ) * sqrt(abs(1- pbeta(yVal[2], a_shape, b_shape) ))))*2
+        #Get the posterior summary on effect size between the 2 Y-values
+        betaEffSize2Y <- summarizePost(abs(es1 - es2) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+      }
+    }
+    #Return NAs for NULL objects
+    #probability
+    if (length(PbetaGtY)==0 ) {
+      PbetaGtY <- NA
+    } else {
+      PbetaGtY <- PbetaGtY
+    }
+    #quantile
+    if (length(QbetaGtY)==0 ) {
+      QbetaGtY <- NA
+    } else {
+      QbetaGtY <- QbetaGtY
+    }
+    #Effect size
+    if (length(betaEffSize2Y)== 0 ) {
+      betaEffSize2Y <- NA
+    } else {
+      betaEffSize2Y <- betaEffSize2Y
+    }
+
+    #############################
+    ## Log-normal distribution ##
+    #############################
+    ## Get summary ##
+    # Proportion greater than Y
+    PlogGtY <- list()
+    if(!is.null(yVal)) {
+      if(Distribution == "Log-normal") {
+        for (i in 1:length(yVal)) {
+          PlogGtY[[i]] <- summarizePost( plnorm(q=yVal[i], meanlog= MC.Matrix[, Center],
+                                                sdlog= MC.Matrix[, Spread], lower.tail=FALSE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+          names(PlogGtY)[i] <- paste0("Y_", yVal[i])
+        }
+      }
+    }
+    # Quantiles of Y
+    QlogGtY <- list()
+    if(!is.null(qVal)) {
+      if(Distribution == "Log-normal") {
+        for (i in 1:length(qVal)) {
+          QlogGtY[[i]] <- summarizePost( qlnorm(p=qVal[i], meanlog= MC.Matrix[, Center],
+                                                sdlog= MC.Matrix[, Spread]) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+          names(QlogGtY)[i] <- paste0("Percentile_", qVal[i])
+        }
+      }
+    }
+    #Return NAs for NULL objects
+    #probability
+    if (length(PlogGtY)==0 ) {
+      PlogGtY <- NA
+    } else {
+      PlogGtY <- PlogGtY
+    }
+    #quantile
+    if (length(QlogGtY)==0 ) {
+      QlogGtY <- NA
+    } else {
+      QlogGtY <- QlogGtY
+    }
+
+    #########################
+    ## Normal distribution ##
+    #########################
+    ## Get summary ##
+    # Proportion greater than Y
+    PnormGtY <- list()
+    if(!is.null(yVal)) {
+      if(Distribution == "Normal") {
+        for (i in 1:length(yVal)) {
+          PnormGtY[[i]] <- summarizePost( pnorm(q=yVal[i], mean= MC.Matrix[, Center],
+                                                sd= MC.Matrix[, Spread], lower.tail=FALSE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+          names(PnormGtY)[i] <- paste0("Y_", yVal[i])
+        }
+      }
+    }
+    # Quantiles of Y
+    QnormGtY <- list()
+    if(!is.null(qVal)) {
+      if(Distribution == "Normal") {
+        for (i in 1:length(qVal)) {
+          QnormGtY[[i]] <- summarizePost( qnorm(p=qVal[i], mean= MC.Matrix[, Center],
+                                                sd= MC.Matrix[, Spread]) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+          names(QnormGtY)[i] <- paste0("Percentile_", qVal[i])
+        }
+      }
+    }
+    #Return NAs for NULL objects
+    #probability
+    if (length(PnormGtY)==0 ) {
+      PnormGtY <- NA
+    } else {
+      PnormGtY <- PnormGtY
+    }
+    #quantile
+    if (length(QnormGtY)==0 ) {
+      QnormGtY <- NA
+    } else {
+      QnormGtY <- QnormGtY
+    }
+
+    ##############################
+    ## Skew-Normal distribution ##
+    ##############################
+    ## Get summary ##
+    # Proportion greater than Y
+    PsnormGtY <- list()
+    if(!is.null(yVal)) {
+      if(Distribution == "Skew-normal") {
+        for (i in 1:length(yVal)) {         #I need to subtract 1-psn to get the right prop > 1
+          PsnormGtY[[i]] <- summarizePost( 1 - psn(x=yVal[i], xi= MC.Matrix[, Center], omega= MC.Matrix[, Spread],
+                                                   alpha= MC.Matrix[, Skew], lower.tail=FALSE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+          names(PsnormGtY)[i] <- paste0("Y_", yVal[i])
+        }
+      }
+    }
+    # Quantiles of Y.
+    # Needs mapply for qsn() b/c it creates an impossible error for "omega" <= 0.
+    QsnormGtY <- list()
+    if(!is.null(qVal)) {
+      if(Distribution == "Skew-normal") {
+        for (i in 1:length(qVal)) {
+          QsnormGtY[[i]] <- summarizePost(mapply(qsn, p=qVal[i], xi=MC.Matrix[, Center], omega=MC.Matrix[, Spread],
+                                                 alpha=MC.Matrix[, Skew]))[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+          names(QsnormGtY)[i] <- paste0("Percentile_", qVal[i])
+        }
+      }
+    }
+
+    #Return NAs for NULL objects
+    #probability
+    if (length(PsnormGtY)==0 ) {
+      PsnormGtY <- NA
+    } else {
+      PsnormGtY <- PsnormGtY
+    }
+    #quantile
+    if (length(QsnormGtY)==0 ) {
+      QsnormGtY <- NA
+    } else {
+      QsnormGtY <- QsnormGtY
+    }
+
+    ####################
+    ## t distribution ##
+    ####################
+    ## Get summary ##
+    # Proportion greater than Y
+    PtGtY <- list()
+    if(!is.null(yVal)) {
+      if(Distribution == "t") {
+        for (i in 1:length(yVal)) {
+          PtGtY[[i]] <- summarizePost( pt(q=yVal[i], df= MC.Matrix[, Skew],
+                                          ncp= MC.Matrix[, Center], lower.tail=FALSE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+          names(PtGtY)[i] <- paste0("Y_", yVal[i])
+        }
+      }
+    }
+    # Quantiles of Y
+    QtGtY <- list()
+    if(!is.null(qVal)) {
+      if(Distribution == "t") {
+        for (i in 1:length(qVal)) {
+          QtGtY[[i]] <- summarizePost( qt(p=qVal[i], df= MC.Matrix[, Skew],
+                                          ncp= MC.Matrix[, Center]) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+          names(QtGtY)[i] <- paste0("Percentile_", qVal[i])
+        }
+      }
+    }
+    #Return NAs for NULL objects
+    #probability
+    if (length(PtGtY)==0 ) {
+      PtGtY <- NA
+    } else {
+      PtGtY <- PtGtY
+    }
+    #quantile
+    if (length(QtGtY)==0 ) {
+      QtGtY <- NA
+    } else {
+      QtGtY <- QtGtY
+    }
+
+    ##########################
+    ## Weibull distribution ##
+    ##########################
+    ## Get summary ##
+    # Proportion greater than Y
+    PWeibGtY <- list()
+    if(!is.null(yVal)) {
+      if(Distribution == "Weibull") {
+        for (i in 1:length(yVal)) {
+          PWeibGtY[[i]] <- summarizePost( pweibull(q=yVal[i], shape= MC.Matrix[, Center],
+                                                   scale= MC.Matrix[, Spread], lower.tail=FALSE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+          names(PWeibGtY)[i] <- paste0("Y_", yVal[i])
+        }
+      }
+    }
+    # Quantiles of Y
+    QWeibGtY <- list()
+    if(!is.null(qVal)) {
+      if(Distribution == "Weibull") {
+        for (i in 1:length(qVal)) {
+          QWeibGtY[[i]] <- summarizePost( qweibull(p=qVal[i], shape= MC.Matrix[, Center],
+                                                   scale= MC.Matrix[, Spread]) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+          names(QWeibGtY)[i] <- paste0("Percentile_", qVal[i])
+        }
+      }
+    }
+    #Return NAs for NULL objects
+    #probability
+    if (length(PWeibGtY)==0 ) {
+      PWeibGtY <- NA
+    } else {
+      PWeibGtY <- PWeibGtY
+    }
+    #quantile
+    if (length(QWeibGtY)==0 ) {
+      QWeibGtY <- NA
+    } else {
+      QWeibGtY <- QWeibGtY
+    }
+
+    ########################
+    ## Gamma distribution ##
+    ########################
+    ## Get summary ##
+    # Proportion greater than Y
+    PGammaGtY <- list()
+    if(!is.null(yVal)) {
+      if(Distribution == "Gamma") {
+        for (i in 1:length(yVal)) {
+          PGammaGtY[[i]] <- summarizePost( pgamma(q=yVal[i], shape= MC.Matrix[, Center],
+                                                  rate= MC.Matrix[, Spread], lower.tail=FALSE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+          names(PGammaGtY)[i] <- paste0("Y_", yVal[i])
+        }
+      }
+    }
+    # Quantiles of Y
+    QGammaGtY <- list()
+    if(!is.null(qVal)) {
+      if(Distribution == "Gamma") {
+        for (i in 1:length(qVal)) {
+          QGammaGtY[[i]] <- summarizePost( qgamma(p=qVal[i], shape= MC.Matrix[, Center],
+                                                  rate= MC.Matrix[, Spread]) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+          names(QGammaGtY)[i] <- paste0("Percentile_", qVal[i])
+        }
+      }
+    }
+    #Return NAs for NULL objects
+    #probability
+    if (length(PGammaGtY)==0 ) {
+      PGammaGtY <- NA
+    } else {
+      PGammaGtY <- PGammaGtY
+    }
+    #quantile
+    if (length(QGammaGtY)==0 ) {
+      QGammaGtY <- NA
+    } else {
+      QGammaGtY <- QGammaGtY
+    }
+
+    ######################################
+    ## Create final distribution values ##
+    ######################################
+    ## 1. Probability ##
+    if (Distribution == "Beta") {
+      PdisGtY <- PbetaGtY
+    }
+    if (Distribution == "Log-normal") {
+      PdisGtY <- PlogGtY
+    }
+    if (Distribution == "Normal") {
+      PdisGtY <- PnormGtY
+    }
+    if (Distribution == "Skew-normal") {
+      PdisGtY <- PsnormGtY
+    }
+    if (Distribution == "t") {
+      PdisGtY <- PtGtY
+    }
+    if (Distribution == "Weibull") {
+      PdisGtY <- PWeibGtY
+    }
+    if (Distribution == "Gamma") {
+      PdisGtY <- PGammaGtY
+    }
+    #Make NA if the above weren't selected
+    if (is.null(PdisGtY)) {
+      PdisGtY <- NA
+    }
+    ## 2. Quantile ##
+    if (Distribution == "Beta") {
+      QdisGtY <- QbetaGtY
+    }
+    if (Distribution == "Log-normal") {
+      QdisGtY <- QlogGtY
+    }
+    if (Distribution == "Normal") {
+      QdisGtY <- QnormGtY
+    }
+    if (Distribution == "Skew-normal") {
+      QdisGtY <- QsnormGtY
+    }
+    if (Distribution == "t") {
+      QdisGtY <- QtGtY
+    }
+    if (Distribution == "Weibull") {
+      QdisGtY <- QWeibGtY
+    }
+    if (Distribution == "Gamma") {
+      QdisGtY <- QGammaGtY
+    }
+    #Make NA if the above weren't selected
+    if (is.null(QdisGtY)) {
+      QdisGtY <- NA
+    }
+    ## 3. Effect size ##
+    if (Distribution == "Beta") {
+      disEsY <- betaEffSize2Y
+    }
+    ##################################################
+    ## Gets effect sizes for non-Beta distributions ##
+    ##################################################
+    nonBetaEffSize2Y <- vector()
+    if(length(yVal) == 2) {
+      if(Distribution != "Beta") {
+        oes1 <- (asin(sign( PdisGtY[[1]][1] ) * sqrt(abs(PdisGtY[[1]][1] ))))*2
+        oes2 <- (asin(sign( PdisGtY[[2]][1]) * sqrt(abs( PdisGtY[[2]][1]))))*2
+        #Get the posterior summary on effect size between the 2 Y-values
+        nonBetaEffSize2Y <- abs(oes1 - oes2)
+      }
+    }
+    #Effect size
+    if (length(nonBetaEffSize2Y)== 0 ) {
+      nonBetaEffSize2Y <- NA
+    } else {
+      nonBetaEffSize2Y <- nonBetaEffSize2Y
+    }
+
+    #This is temp code for log-normal that makes it NA for now
+    if (Distribution != "Beta") {
+      disEsY <- nonBetaEffSize2Y
+    }
+
+    #Make NA if the above weren't selected
+    if (is.null(disEsY)) {
+      disEsY <- NA
+    }
+
+    return(list("Est.Prop.GT.Y"= PdisGtY,
+                "Est.Effect.Size.2Y"= disEsY,
+                "Est.Quantile.Y"= QdisGtY,
+                "Est.Mean.Beta"=mean_val_dist) )
+  }
+
+  ################################################################################
+  #                 7. R2 for models with metric only predictors                 #
+  ################################################################################
+  #This produces R2 for normal or t-distribution models with only metric predictors.
+  #The formula is used in the bottom example, just needs the correlation matrix
+  #from the actual observed dataset and some matrix algebra of the MCMC object's
+  #beta coefficients to get the R2. This works on standardized data but
+  #it should work on regular data. And it might work with nominal predictors or
+  #maybe factors. The code for an older Kruschke version is below the function.
+
+  fncXmetR2 <- function( codaSamples=NULL , data=NULL ,
+                         Z.Beta=NULL, xName=NULL, yName=NULL) {
+    y = data[, yName]
+    x = as.matrix(data[, xName])
+    MCMC_Mat = as.matrix(codaSamples, chains=TRUE)
+    #  zbeta  = MCMC_Mat[,grep("^zbeta$|^zbeta\\[", colnames(MCMC_Mat))]
+    zbeta  = MCMC_Mat[,grep(paste0("^", Z.Beta,"$|^", Z.Beta, "\\[" ),colnames(MCMC_Mat))]
+    if ( ncol(x)==1 ) {
+      zbeta = matrix( zbeta , ncol=1 )
+    }
+    #-----------------------------------------------------------------------------
+    # Compute R^2 for credible parameters:
+    YcorX = cor( y , x ) # correlation of y with each x predictor
+    R2 = zbeta %*% matrix( YcorX , ncol=1 )
+    #-----------------------------------------------------------------------------
+    return( "R2"=R2)
+  }
+
+  ################################################################################
+  #           7B. Alternative R2 for models with metric only predictors          #
+  ################################################################################
+  fncSingleXR2 <- function( Coda.Object=NULL, Intercept=NULL, Betas=NULL,
+                            my.data=NULL, xName=NULL, yName=NULL) {
+    MCMC_Mat = as.matrix(Coda.Object, chains=TRUE)
+    chainLength <- nrow(MCMC_Mat)
+    Rsq = rep(0, chainLength)
+    for ( stepIdx in 1:chainLength ) {
+      predY = my.data[, xName] %*% cbind(MCMC_Mat[, Betas][stepIdx]) +
+        MCMC_Mat[, Intercept][stepIdx]
+      #    predY = t(my.data[, xName]) %*% as.matrix(cbind(MCMC_Mat[, Betas][stepIdx]) +
+      #      MCMC_Mat[, Intercept][stepIdx])
+    }
+    Rsq = cor(my.data[, yName], predY)^2
+    return("R.Square"=Rsq)
+  }
+  #m1r2 <- fncSingleXR2( Coda.Object=codaN1, Intercept="beta_0", Betas="beta_1",
+  #                      my.data=myd2, xName="hrt", yName="slos")
+  #summary(m1r2)
+
+  ################################################################################
+  #              7c. Gelman R2 for models with metric only predictors            #
+  ################################################################################
+
+  #Use the coda object and dataset. Works for normal and log-normal distributions.
+  fncBayesOlsR2 <- function(Coda_Object, datFrm, xName=NULL, Intercept=NULL,
+                            Betas=NULL, Level1.Sigma=NULL, Average.type =NULL) {
+    mcmc_coda_object <- as.matrix(Coda_Object, chains=TRUE)
+    mean.Intercept <-  mean(mcmc_coda_object[, which(colnames(mcmc_coda_object) == Intercept)])
+    median.Intercept <-  median(mcmc_coda_object[, which(colnames(mcmc_coda_object) == Intercept)])
+    #Make list to store fitted values (minus the intercept)
+    fitval.mean <- vector(mode="list", length= nrow(datFrm))
+    fitval.median <- vector(mode="list", length= nrow(datFrm))
+    #when there is only 1 X
+    #when there are multiple X
+    for (i in 1:nrow(datFrm)) {
+      for (j in 1:length(Betas)) {
+        if (Average.type=="Mean") {
+          fitval.mean[[i]][j] <- mean(mcmc_coda_object[, which(colnames(mcmc_coda_object) %in% Betas[j])]*
+                                        datFrm[, which(colnames(datFrm) %in% xName[j])][i])
+        } else {
+          fitval.median[[i]][j] <- median(mcmc_coda_object[, which(colnames(mcmc_coda_object) %in% Betas[j])]*
+                                            datFrm[, which(colnames(datFrm) %in% xName[j])][i])
+        }
+      }
+    }
+    #Get the predicted values from the mean
+    if (Average.type=="Mean") {
+      yPRED <- mapply(fitval.mean, FUN="sum", + mean.Intercept)
+    }
+    if (Average.type=="Median") {
+      yPRED <- mapply(fitval.median, FUN="sum", + median.Intercept)
+    }
+    #Get variance of the fit
+    varFit <- sd(yPRED)^2
+    #Get variance of the residuals
+    varRes <- mean(mcmc_coda_object[, Level1.Sigma]^2)
+    #Calculate R^2
+    R2 <- varFit/(varFit + varRes)
+    return(list("R2"=R2, "Variance.Pred.Y"=varFit, "Variance.Residuals"=varRes, "yPRED"=yPRED))
+  } #End of function
+
+
+  #fncBayesOlsR2(Coda.Object=codaSamples, mydf=mtcars, xName=c("hp","wt"),
+  #              Intercept= "beta0", Betas=c("beta1", "beta2"),
+  #              Level1.Sigma="sigma", Average.type="Mean")
+
+  ################################################################################
+  #                    8. Bayesian Effect sizes                                  #
+  ################################################################################
+  #This function calculates the proportion above specific values.
+  fncBayesEffectSize <- function( Coda.Object=NULL, Distribution=NULL,
+                                  yVal1=NULL, yVal2=NULL, CenTend=NULL ) {
+    #Convert into a matrix
+    MC.Matrix <- as.matrix(Coda.Object, chains=TRUE)
+
+    ###########################
+    ## Calculate effect size ##
+    ###########################
+
+    ##########
+    ## Beta ##
+    ##########
+    if(Distribution == "Beta") {
+      #    as1 <- (asin(sign(MC.Matrix[, yVal1]) * sqrt(abs(MC.Matrix[, yVal1]))))*2
+      #    as2 <- (asin(sign(MC.Matrix[, yVal2]) * sqrt(abs(MC.Matrix[, yVal2]))))*2
+      as1 <- (asin(sign( rowMeans(MC.Matrix[, yVal1, drop=FALSE]) ) * sqrt(abs( rowMeans(MC.Matrix[, yVal1, drop=FALSE]) ))))*2
+      as2 <- (asin(sign( rowMeans(MC.Matrix[, yVal2, drop=FALSE]) ) * sqrt(abs( rowMeans(MC.Matrix[, yVal2, drop=FALSE]) ))))*2
+      Effect.Size.Output <- abs(as1 - as2 )
+    }
+    ##########
+    ## t  ##
+    ##########
+    if(Distribution %in% c("No","Beta", "Normal", "Log-normal", "Skew-normal", "Gamma", "Weibull", "t")) {
+      tnum <- abs(MC.Matrix[, yVal1[1]] - MC.Matrix[, yVal2[1]])
+      tdenom <- mean(c(MC.Matrix[, yVal1[2]], MC.Matrix[, yVal2[2]]))
+      Effect.Size.Output <- tnum/tdenom
+    }
+    ################
+    # Correlations #
+    ################
+    #This calculates the q effec size index
+    if(Distribution == "Correlation") {
+      Zr1 <- 1/2 * log((1 + MC.Matrix[, yVal1[1]])/(1 - MC.Matrix[, yVal1[1]]))
+      Zr2 <- 1/2 * log((1 + MC.Matrix[, yVal2[1]])/(1 - MC.Matrix[, yVal2[1]]))
+      Effect.Size.Output <- abs(Zr1 -Zr2 )
+    }
+
+    return("Effect.Size.Posterior"=Effect.Size.Output )
+  }
+
+
+  ################################################################################
+  #                9. Posterior Predictive Check for trend lines                 #
+  ################################################################################
+  #May only need code converting y-axis to logits for logistic regression to work
+  fncBayesOlsPrtPred <- function(Coda.Object=NULL , datFrm=NULL,  Reg.Type=NULL,
+                                 Outcome=NULL , Group=NULL,
+                                 Group.Level=NULL, xName=NULL, parX=NULL, View.Lines=NULL,
+                                 Num.Lines=NULL, Main.Title=NULL, X.Lab=NULL,
+                                 Line.Color=NULL, CEX.size=NULL, X.Lim=NULL, Y.Lim=NULL,
+                                 X.Min=NULL, X.Max=NULL,
+                                 PCol=NULL, Add.Lgd=NULL, Leg.Loc=NULL) {
+    y = datFrm[, Outcome]
+    x = datFrm[, xName, drop=FALSE][1]
+    s = factor(datFrm[, Group])
+    nSubj = length(unique(s)) # should be same as max(s)
+    mcmcMat = as.matrix(Coda.Object, chains=TRUE)
+    chainLength = NROW( mcmcMat )
+    #-----------------------------------------------------------------------------
+    # datFrm with superimposed regression lines and noise distributions:
+    #  par( mar=c(4,2,2.5,.25) , mgp=c(2.5,0.5,0) , pty="m" ) #This matches other graphs
+    par( mar=c(8, 6, 3, .25) , mgp=c(2.5,0.5,0) , pty="m" ) #This matches other graphs
+    #Original par
+    #par( mar=c(2,2,1,0)+.5 , mgp=c(1.5,0.5,0) )
+    # Plot datFrm values:
+    xRang = max(x, na.rm=TRUE) - min(x, na.rm=TRUE)
+    yRang = max(y, na.rm=TRUE) - min(y, na.rm=TRUE)
+    xLimMult = 0.2
+    yLimMult = 0.2
+    xLim= c( min(x, na.rm=TRUE) - xLimMult*xRang , max(x, na.rm=TRUE) + xLimMult*xRang )
+    yLim= c( min(y) - yLimMult*yRang , max(y) + yLimMult*yRang )
+    #############################
+    ## Make prediction formula ##
+    #############################
+    #This creates the xComb based on the primary predictor
+    #  xComb = seq(xLim[1], xLim[2], length=301)
+    xComb = seq(X.Min, X.Max, length=301)
+    #parX vector stores the parameter names from the chains
+    #xName has X variable names
+    #Vector with X variable mean values
+    txVarMeans <- colMeans(datFrm[, xName, drop=FALSE], na.rm=TRUE)
+    #Get beta coefficient names
+    tlCoef <- vector()
+    for (i in 1:length(parX)) {
+      tlCoef[i] <- paste0("tlis$B", i-1, "[i]")
+    }
+    #Combines object elements and variable means for polynomial models.
+    ttfrm <- cbind(tlCoef[-1], txVarMeans)
+    #This will change the mean value to the xComb for linear models
+    if (Reg.Type %in% c("OLS: Linear", "OLS: Quadratic", "OLS: Cubic",
+                        "Logistic: Linear", "Logistic: Quadratic","Logistic: Cubic") ) {
+      ttfrm[1, 2] <- "xComb"
+    }
+    #This will change the mean value to the xComb^2 for quadratic models
+    if (Reg.Type %in% c("OLS: Quadratic", "OLS: Cubic",
+                        "Logistic: Quadratic","Logistic: Cubic")) {
+      ttfrm[2, 2] <- "xComb^2"
+    }
+    #This will change the mean value to the xComb^3 for cubic models
+    if (Reg.Type %in% c("OLS: Cubic","Logistic: Cubic")) {
+      ttfrm[2, 3] <- "xComb^3"
+    }
+    #This multiplies each coefficient by the x-value and stores it in a vector
+    ttnew <- vector()
+    for (i in 1:nrow(ttfrm)) {
+      ttnew[i] <- paste(ttfrm[i, ], collapse = "*")
+    }
+    #This adds coefficients*x-value and put in intercept
+    ttnew2 <- paste(c(tlCoef[1], ttnew), collapse = "+")
+    #Make list that has key parameter names
+    tlis <- list()
+    for (i in 1:length(parX)) {
+      tlis[[i]] <- NA
+      names(tlis)[i] <- paste0("B", i-1)
+    }
+    #This adds coefficients to each of the key parameter names
+    trow_ls <- floor(seq(1, nrow(mcmcMat), length= Num.Lines))
+    #This creates the values needed for the graphs
+    for (i in 1:length(trow_ls)) {
+      for (j in 1:length(parX)) {
+        tlis[[ j]][i] <- mcmcMat[i, paste0( parX[j])]
+      }
+    }
+    ## Points vs. lines for observed data ##
+    if (View.Lines == "All") {
+      line_type <-  "p"
+    }
+    if (View.Lines == "All: Lines") {
+      line_type <-  "o"
+    }
+    if (View.Lines == "Unit") {
+      line_type <-  "p"
+    }
+    if (View.Lines == "Unit: Lines") {
+      line_type <-  "o"
+    }
+    ##############################################################################
+    # DID functions
+    if (Reg.Type %in% "OLS: DID" ) {
+      tab1 <- table(datFrm[, xName[1]], datFrm[, xName[2]])
+      xvalPost <- as.numeric(rownames(tab1))
+    }
+    PostVals <- vector()
+    if (Reg.Type %in% "OLS: DID" ) {
+      if (nrow(tab1) >  ncol(tab1)) {  #Leaving this in case people put in Time and Intervention backwards
+        PostVals <- xvalPost[which(tab1[, 2] > 0 )]
+      }
+    }
+    #Creates zComb for DID intervention binary indicator
+    if (Reg.Type %in% "OLS: DID" ) {
+      zComb0 <- rep(0, 301)
+      zComb1 <- ifelse(xComb < min(PostVals), 0, 1)
+    }
+    #This makes it for the DID lines (1 for an intervention, 1 for control)
+    #Combines object elements and variable means for polynomial models.
+    if (Reg.Type %in% "OLS: DID" ) {
+      DIDfrm0 <- cbind(tlCoef[-1], txVarMeans)
+      DIDfrm1 <- cbind(tlCoef[-1], txVarMeans)
+    }
+    #This will change the mean value to the xComb for linear models
+    if (Reg.Type %in% "OLS: DID" ) {
+      DIDfrm0[1, 2] <- "xComb"
+      DIDfrm1[1, 2] <- "xComb"
+      DIDfrm0[2, 2] <- "zComb0"
+      DIDfrm1[2, 2] <- "zComb1"
+      DIDfrm0[3, 2] <- "xComb*zComb0"
+      DIDfrm1[3, 2] <- "xComb*zComb1"
+    }
+    #This multiplies each coefficient by the x-value and stores it in a vector
+    if (Reg.Type %in% "OLS: DID" ) {
+      DIDnew0 <- vector()
+      DIDnew1 <- vector()
+    }
+    #This creates the DID regression weights for the intervention and control groups
+    if (Reg.Type %in% "OLS: DID" ) {
+      for (i in 1:nrow(DIDfrm0)) {
+        DIDnew0[i] <- paste(DIDfrm0[i, ], collapse = "*")
+        DIDnew1[i] <- paste(DIDfrm1[i, ], collapse = "*")
+      }
+    }
+    #This adds DID coefficients*x-value and put in intercept
+    if (Reg.Type %in% "OLS: DID" ) {
+      DIDnew02 <- paste(c(tlCoef[1], DIDnew0), collapse = "+")
+      DIDnew12 <- paste(c(tlCoef[1], DIDnew1), collapse = "+")
+    }
+    #Aggregates data to put in as optional observed trend values
+    #Make smaller datasets for the intervention and control groups
+    if (Reg.Type %in% "OLS: DID" ) {
+      datFrm0 <- datFrm[which( datFrm[, xName[2]] == min(datFrm[, xName[2]], na.rm=T)), c(Outcome, xName[1:2])]
+      datFrm1 <- datFrm[which( datFrm[, xName[2]] == max(datFrm[, xName[2]], na.rm=T)), c(Outcome, xName[1:2])]
+    }
+    #Make DID aggregated data observed points in the graph
+    if (Reg.Type %in% "OLS: DID" ) {
+      agDID0  <- aggregate(datFrm0[, Outcome] ~ datFrm0[, xName[1]] + datFrm0[, xName[2]], FUN="mean")
+      agDID1a <- aggregate(datFrm1[, Outcome] ~ datFrm1[, xName[1]] + datFrm1[, xName[2]], FUN="mean")
+    }
+    ##############################################################################
+
+    ##################
+    ## Create plots ##
+    ##################
+    plot( unlist(x) , y , pch="" , cex=CEX.size , col="black" ,
+          xlim=X.Lim, ylim=Y.Lim,xlab=X.Lab , ylab=Outcome ,
+          main= Main.Title, cex.lab=CEX.size, cex.main=CEX.size, cex.axis=CEX.size )
+    #All groups added at once for the overall term
+    if (Reg.Type %in% c("OLS: Linear", "OLS: Quadratic", "OLS: Cubic") ) {
+      if (View.Lines %in% c("All", "All: Lines")) {
+        for ( sIdx in 1:nSubj ) {
+          thisSrows = (as.numeric(s)==sIdx)
+          lines( x[thisSrows, ] , y[thisSrows] , type=line_type , pch=19, col= PCol, cex=CEX.size*0.75)
+        }
+      }
+    }
+    #Logistic regression probabilities
+    if (Reg.Type %in% c("Logistic: Linear", "Logistic: Quadratic","Logistic: Cubic") ) {
+      if (View.Lines %in% c("All", "All: Lines")) {
+        for ( sIdx in 1:nSubj ) {
+          thisSrows = (as.numeric(s)==sIdx)
+          lines( x[thisSrows, ] , y[thisSrows] , type=line_type , pch=19, col= PCol, cex=CEX.size*0.75)
+        }
+      }
+    }
+    # Superimpose a smattering of believable regression lines:
+    #For each line (e.g., 30), it cycles the 301 X-comb values to create 301 Ys for plot
+    #This plots out random regression lines
+    if (Reg.Type %in% c("OLS: Linear", "OLS: Quadratic", "OLS: Cubic") ) {
+      for ( i in 1:length(floor(seq(1, nrow(mcmcMat), length = Num.Lines))) ) {
+        lines( xComb , eval(parse(text= ttnew2)) , col= Line.Color )
+      }
+    }
+    #Logistic regression probabilities
+    if (Reg.Type %in% c("Logistic: Linear", "Logistic: Quadratic","Logistic: Cubic") ) {
+      for ( i in 1:length(floor(seq(1, nrow(mcmcMat), length = Num.Lines))) ) {
+        lines( xComb , (1/(1+ exp(-( (eval(parse(text= ttnew2))) )))) , col= Line.Color )
+      }
+    }
+    #DID posterior lines
+    if (Reg.Type %in% "OLS: DID" ) {
+      for ( i in 1:length(floor(seq(1, nrow(mcmcMat), length = Num.Lines))) ) {
+        lines( xComb , eval(parse(text= DIDnew12)) , col= Line.Color[2] )
+        lines( xComb , eval(parse(text= DIDnew02)) , col= Line.Color[1] )
+        #SAVE: these 2 lines make are transparent, they' wi'll blend colors for groups, pre-intervention
+        #      lines( xComb , eval(parse(text= DIDnew12)) , col= adjustcolor( Line.Color[2], alpha.f = 0.4) )
+        #      lines( xComb , eval(parse(text= DIDnew02)) , col= adjustcolor( Line.Color[1], alpha.f = 0.4) )
+      }
+    }
+
+    #Determine which observed datFrm lines to view
+    if (View.Lines %in% c("Unit", "Unit: Lines")) {
+      #For specific groups
+      for ( sIdx in 1:nSubj ) {
+        thisSrows <- (as.numeric(s) == as.numeric(s[s == Group.Level]))
+        lines( x[thisSrows, ] , y[thisSrows] , type= line_type, pch=19, col= PCol, cex=CEX.size )
+      }
+    }
+
+    #DID observed data
+    if (View.Lines == "DID: Groups") {
+      #For specific groups
+      for ( sIdx in 1:nSubj ) {
+        thisSrows <- (as.numeric(s) == as.numeric(s[s == Group.Level]))
+        lines(agDID1a[,1], agDID1a[,3], type="o" , pch=19, col= tail(PCol, 1), cex=CEX.size)
+        lines(agDID0[, 1], agDID0[, 3], type="o" , pch=19, col= head(PCol, 1), cex=CEX.size)
+      }
+    }
+
+    #Legend color
+    if (View.Lines== "None") {
+      pcol_vector <- c(Line.Color)
+    }
+    if (View.Lines== "Unit") {
+      pcol_vector <- c(PCol, Line.Color)
+    }
+    if (View.Lines== "All") {
+      pcol_vector <- c(PCol, Line.Color)
+    }
+    if (View.Lines == "DID: Groups") {
+      pcol_vector <- c(PCol, Line.Color)
+    }
+    #Legend text
+    if (Reg.Type %in% c("OLS: Linear", "OLS: Quadratic", "OLS: Cubic",
+                        "Logistic: Linear", "Logistic: Quadratic","Logistic: Cubic") ) {
+      if (View.Lines== "None") {
+        if (nchar(Group.Level) > 0 ){
+          legend_text <- c(paste0("Posterior Estimate ", abbreviate(Group, 8), ": ",
+                                  abbreviate(Group.Level, 8)))
+        } else {
+          legend_text <- c(paste0("Posterior Estimate: ", abbreviate(Group, 8)))
+        }
+      }
+    }
+    if (View.Lines== "Unit") {
+      legend_text <- c(paste0("Observed ", abbreviate(Group, 8), ": ",
+                              abbreviate(Group.Level, 8)), "Posterior Estimate")
+    }
+    if (View.Lines== "All") {
+      legend_text <- c(paste0("Observed ", abbreviate(Group, 8),": All"), "Posterior Estimate")
+    }
+    #DID
+    if (Reg.Type %in% "OLS: DID" ) {
+      if (View.Lines== "DID: Groups") {
+        legend_text <- c("Observed: Control", "Observed: Intervention", "Posterior Estimate: Control", "Posterior Estimate: Intervention")
+      } else {
+        legend_text <- c("Posterior Estimate: Control", "Posterior Estimate: Intervention")
+      }
+    }
+
+    #Legend points
+    if (View.Lines== "None") {
+      legend_points <- NULL
+    }
+    if (View.Lines== "Unit") {
+      legend_points <- c(19, NA)
+    }
+    if (View.Lines== "All") {
+      legend_points <- c(19, NA)
+    }
+    if (View.Lines== "DID: Groups") {
+      legend_points <- c(19,19, NA, NA)
+    }
+
+    #Add legend
+    if(Add.Lgd == "Yes") {
+      legend_type <- c(1)
+      legend(Leg.Loc, legend=legend_text, col=pcol_vector, lty=legend_type,
+             pch=legend_points, pt.bg=pcol_vector, cex = 2, lwd=3,  bty="n", inset=c(0, .05))
+    }
+    #  return(list(ttnew2=ttnew2 ))
+    #-----------------------------------------------------------------------------
+  }
+
+  ################################################################################
+
+  ################################################################################
+  #             10. Function to sort parameter names into a list                 #
+  ################################################################################
+  fncBayesMultiOlsPPpar <- function(Coda.Object=NULL , datFrm=NULL,  Reg.Type=NULL,
+                                    Outcome=NULL , Group=NULL,
+                                    xName=NULL, parX=NULL) {
+    #Make list of parameter names, requires that they are entered by parameter type
+    num_parX <- length(parX) #number of parameters
+    #Create lists to store parameters
+    if(Reg.Type %in% c("Hierarchical OLS: Linear","Hierarchical Log OLS: Linear",
+                       "Hierarchical Logistic: Linear")) {
+      parX_ls <- vector(mode="list", length= num_parX/2)
+      num_parX_types <- 2 #The number of parameters for linear models
+    }
+    #Use this for a quadratic model
+    if(Reg.Type %in% c("Hierarchical OLS: Quadratic", "Hierarchical Log OLS: Quadratic",
+                       "Hierarchical Logistic: Quadratic")) {
+      parX_ls <- vector(mode="list", length= num_parX/3)
+      num_parX_types <- 3 #The number of parameters for quadratic models
+    }
+    #Use this for a cubic model
+    if(Reg.Type %in% c("Hierarchical OLS: Cubic", "Hierarchical Log OLS: Cubic",
+                       "Hierarchical Logistic: Cubic")) {
+      parX_ls <- vector(mode="list", length= num_parX/4)
+      num_parX_types <- 4 #The number of parameters for cubic models
+    }
+    #Put parameters into the list in the appropriate order
+    group_sorted_parX <- list()
+    if(Reg.Type %in% c("Hierarchical OLS: Linear","Hierarchical Log OLS: Linear",
+                       "Hierarchical Logistic: Linear")) {
+      for (i in 1:(num_parX/num_parX_types)) {
+        group_sorted_parX[[i]] <- parX[seq(i, i + (num_parX/num_parX_types), by= num_parX/num_parX_types)]
+      }
+    }
+    #Quadratic models
+    if(Reg.Type %in% c("Hierarchical OLS: Quadratic", "Hierarchical Log OLS: Quadratic",
+                       "Hierarchical Logistic: Quadratic")) {
+      for (i in 1:(num_parX/num_parX_types)) {
+        group_sorted_parX[[i]] <- parX[seq(i, i + (num_parX/num_parX_types)*2, by= num_parX/num_parX_types)]
+      }
+    }
+    #Cubic models
+    if(Reg.Type %in% c("Hierarchical OLS: Cubic", "Hierarchical Log OLS: Cubic",
+                       "Hierarchical Logistic: Cubic")) {
+      for (i in 1:(num_parX/num_parX_types)) {
+        group_sorted_parX[[i]] <- parX[seq(i, i + (num_parX/num_parX_types)*3, by= num_parX/num_parX_types)]
+      }
+    }
+    return(group_sorted_parX)
+  }
+
+  ################################################################################
+  #                11. Function to put coefficients into a formula               #
+  ################################################################################
+  fncBayesOlsPPcoef <- function( parX=NULL, Coda.Object=NULL , datFrm=NULL,
+                                 Reg.Type=NULL, Outcome=NULL, Group=NULL,
+                                 xName=NULL, mc_row_number=NULL) {
+    #Makes the mcmc object
+    mcmcMat = as.matrix(Coda.Object, chains=TRUE)
+    #Row number if still == NULL
+    if (is.null(  mc_row_number)) {
+      mc_row_number <- 1
+    }
+    #parX vector stores the parameter names from the chains
+    #xName has X variable names
+    #Vector with X variable mean values
+    txVarMeans <- colMeans(datFrm[, xName, drop=FALSE], na.rm=TRUE)
+    #Get beta coefficient names
+    tlCoef <- vector()
+    for (i in 1:length(parX)) {
+      tlCoef[i] <- paste0("tlis$B", i-1, "[i]")
+    }
+    #Combines object elements and variable means for polynomial models.
+    ttfrm <- cbind(tlCoef[-1], txVarMeans)
+    #This will change the mean value to the xComb for linear models
+    if (Reg.Type %in% c("Hierarchical OLS: Linear", "Hierarchical OLS: Quadratic", "Hierarchical OLS: Cubic",
+                        "Hierarchical Log OLS: Linear", "Hierarchical Log OLS: Quadratic",
+                        "Hierarchical Log OLS: Cubic","Hierarchical Logistic: Linear",
+                        "Hierarchical Logistic: Quadratic", "Hierarchical Logistic: Cubic") ) {
+      ttfrm[1, 2] <- "xComb"
+    }
+    #This will change the mean value to the xComb^2 for quadratic models
+    if (Reg.Type %in% c("Hierarchical OLS: Quadratic", "Hierarchical OLS: Cubic",
+                        "Hierarchical Log OLS: Quadratic", "Hierarchical Log OLS: Cubic",
+                        "Hierarchical Logistic: Quadratic", "Hierarchical Logistic: Cubic")) {
+      ttfrm[2, 2] <- "xComb^2"
+    }
+    #This will change the mean value to the xComb^3 for cubic models
+    if (Reg.Type %in% c("Hierarchical OLS: Cubic", "Hierarchical Log OLS: Cubic",
+                        "Hierarchical Logistic: Cubic")) {
+      ttfrm[2, 3] <- "xComb^3"
+    }
+    #This multiplies each coefficient by the x-value and stores it in a vector
+    ttnew <- vector()
+    for (i in 1:nrow(ttfrm)) {
+      ttnew[i] <- paste(ttfrm[i, ], collapse = "*")
+    }
+    #This adds coefficients*x-value and put in intercept
+    ttnew2 <- paste(c(tlCoef[1], ttnew), collapse = "+")
+    #Make list that has key parameter names
+    tlis <- list()
+    for (i in 1:length(parX)) {
+      tlis[[i]] <- NA
+      names(tlis)[i] <- paste0("B", i-1)
+    }
+    #This adds coefficients to each of the key parameter names
+    #This creates the values needed for the graphs
+    for (j in 1:length(parX)) {
+      tlis[[ j]] <- mcmcMat[mc_row_number, paste0( parX[j])]
+    }
+    return(list( "ttnew2"=ttnew2, "tlis"=tlis))
+  }  #end of subfunction
+
+
+  ################################################################################
+  #       12. Function to graph multiple hierarchical regression lines           #
+  ################################################################################
+  fncBayesMultiOlsPrtPred <- function(Coda.Object=NULL , datFrm=NULL,  Reg.Type=NULL,
+                                      Outcome=NULL , Group=NULL, xName=NULL, parX=NULL,
+                                      View.Lines=NULL, Main.Title=NULL, X.Lab=NULL,
+                                      Line.Color=NULL, CEX.size=NULL, X.Lim=NULL, Y.Lim=NULL,
+                                      X.Min=NULL, X.Max=NULL, PCol=NULL, Add.Lgd=NULL,
+                                      Leg.Loc=NULL, mc_row_number=NULL) {
+    #-----------------------------------------------------------------------------
+    y = datFrm[, Outcome]
+    x = datFrm[, xName, drop=FALSE][1]
+    s = factor(datFrm[, Group])
+    nSubj = length(unique(s)) # should be same as max(s)
+    mcmcMat = as.matrix(Coda.Object, chains=TRUE)
+    chainLength = NROW( mcmcMat )
+    # Plot settings
+    par( mar=c(8, 6, 3, .25) , mgp=c(2.5,0.5,0) , pty="m" ) #This matches other graphs
+    #Original par
+    xRang = max(x, na.rm=TRUE) - min(x, na.rm=TRUE)
+    yRang = max(y, na.rm=TRUE) - min(y, na.rm=TRUE)
+    xLimMult = 0.2
+    yLimMult = 0.2
+    xLim= c( min(x, na.rm=TRUE) - xLimMult*xRang , max(x, na.rm=TRUE) + xLimMult*xRang )
+    yLim= c( min(y) - yLimMult*yRang , max(y) + yLimMult*yRang )
+    #The min and max are alternatives to x limits
+    #This creates the xComb based on the primary predictor
+    #  xComb = seq(xLim[1], xLim[2], length=301)
+    xComb = seq(X.Min, X.Max, length=301)
+    ## Make parameters ##
+    multi_pars <- fncBayesMultiOlsPPpar(Coda.Object=Coda.Object , datFrm=datFrm,
+                                        Reg.Type=Reg.Type, Outcome=Outcome , Group=Group,
+                                        xName=xName, parX=parX)
+    #Get the list of parameters for ttnew2 and tlis
+    multi_coefs <- lapply(multi_pars, fncBayesOlsPPcoef, Coda.Object=Coda.Object, datFrm=datFrm,
+                          Reg.Type=Reg.Type, Outcome=Outcome, Group=Group, xName=xName,
+                          mc_row_number=mc_row_number)
+    #Seperate the list elements
+    tl11 <- lapply(multi_coefs, `[[`, 1) #linear formula
+    tl22 <- lapply(multi_coefs, `[[`, 2) #regression coefficients
+
+    #Convert into a data frame for graphing
+    tlis <- do.call(rbind.data.frame, tl22)
+    #Convert into linear formula for graphing
+    ttnew2 <- as.character(tl11)
+    #Make line colors, 1st spot is for the overall mean if needed
+    multi_line_color <- c()
+    if(length(Line.Color) ==1 ) {
+      multi_line_color <- rep(Line.Color, nSubj)
+    } else {
+      multi_line_color <- c( rep(Line.Color[1], length(ttnew2)-1), Line.Color[2])
+    }
+    #Multiple line width
+    multi_line_width <- c()
+    if(length(Line.Color) ==1 ) {
+      multi_line_width <- rep(4, nSubj)
+    } else {
+      multi_line_width <- c( rep(4, length(ttnew2)-1), 7)
+    }
+
+    ##################
+    ## Create plots ##
+    ##################
+    plot( unlist(x) , y , pch="" , cex=CEX.size , col="black" ,
+          xlim=X.Lim, ylim=Y.Lim,xlab=X.Lab , ylab=Outcome ,
+          main= Main.Title, cex.lab=CEX.size, cex.main=CEX.size, cex.axis=CEX.size )
+    #All groups added at once for the overall term
+    if (Reg.Type %in% c("Hierarchical OLS: Linear", "Hierarchical OLS: Quadratic", "Hierarchical OLS: Cubic",
+                        "Hierarchical Log OLS: Linear", "Hierarchical Log OLS: Quadratic", "Hierarchical Log OLS: Cubic",
+                        "Hierarchical Logistic: Linear", "Hierarchical Logistic: Quadratic", "Hierarchical Logistic: Cubic") ) {
+      if (View.Lines %in% c("All", "All: Lines")) {
+        for ( sIdx in 1:nSubj ) {
+          thisSrows = (as.numeric(s)==sIdx)
+          lines( x[thisSrows, ] , y[thisSrows] , type="p" , pch=19, col= PCol, cex=CEX.size*0.75)
+        }
+      }
+    }
+    # Superimpose a smattering of believable regression lines:
+    #For each line (e.g., 30), it cycles the 301 X-comb values to create 301 Ys for plot
+    #This plots out random regression lines
+    if (Reg.Type %in% c("Hierarchical OLS: Linear", "Hierarchical OLS: Quadratic", "Hierarchical OLS: Cubic")) {
+      for ( i in 1:length(ttnew2) ) {
+        lines( xComb , eval(parse(text= ttnew2[i])) , col= multi_line_color[i], lwd= multi_line_width[i] )
+      }
+    }
+    #Log-normal models
+    if (Reg.Type %in% c("Hierarchical Log OLS: Linear", "Hierarchical Log OLS: Quadratic", "Hierarchical Log OLS: Cubic")) {
+      for ( i in 1:length(ttnew2) ) {
+        lines( xComb , exp(eval(parse(text= ttnew2[i]))) , col= multi_line_color[i], lwd= multi_line_width[i] )
+      }
+    }
+    #Probabilities from logistic regression models
+    if (Reg.Type %in% c("Hierarchical Logistic: Linear", "Hierarchical Logistic: Quadratic", "Hierarchical Logistic: Cubic")) {
+      for ( i in 1:length(ttnew2) ) {
+        lines( xComb, 1 /(1+ exp(-( (eval(parse(text= ttnew2[i]))) ))), col= multi_line_color[i], lwd= multi_line_width[i] )
+      }
+    }
+    #Legend color
+    if (View.Lines %in% c("All", "All: Lines")) {
+      pcol_vector <- c(PCol, Line.Color)
+    } else {
+      pcol_vector <- c(Line.Color)
+    }
+
+    #Legend text
+    if (View.Lines %in% c("All", "All: Lines")) {
+      if (length(Line.Color) == 1) {
+        legend_text <- c(paste0("Observed ", abbreviate(Group, 8),": All"), "Posterior Estimate")
+      } else {
+        legend_text <- c(paste0("Observed ", abbreviate(Group, 8),": All"), "Group Posterior Estimate", "Overall Posterior Estimate")
+      }
+    } else {
+      if (length(Line.Color) == 1) {
+        legend_text <- c( "Posterior Estimate")
+      } else {
+        legend_text <- c( "Group Posterior Estimate", "Overall Posterior Estimate")
+      }
+    }
+
+    #Legend points
+    if (View.Lines %in% c("All", "All: Lines")) {
+      legend_points <- c(19, NA, NA)
+    } else {
+      legend_points <- c(NA, NA, NA)
+    }
+
+    #Legend type
+    if (View.Lines %in% c("All", "All: Lines")) {
+      legend_type <- c(NA,1,1)
+    } else {
+      legend_type <- c(1,1)
+    }
+
+    #Add legend
+    if(Add.Lgd == "Yes") {
+      legend(Leg.Loc, legend=legend_text, col=pcol_vector, lty=legend_type,
+             pch=legend_points, pt.bg=pcol_vector, cex = 2, lwd=3,  bty="n", inset=c(0, .05))
+    }
+    #-----------------------------------------------------------------------------
+  }
+
+  ##########################################
+  ## DBDA Functions for Bayesian analysis ##
+  ##########################################
+
+  ## Need summarizePost and HDIofMCMC
+  ########################
+  ## DBDA function code ##
+  ########################
+  summarizePost <- function( paramSampleVec ,
+                             compVal=NULL , ROPE=NULL , credMass=0.95 ) {
+    meanParam = mean( paramSampleVec )
+    medianParam = median( paramSampleVec )
+    dres = density( paramSampleVec )
+    modeParam = dres$x[which.max(dres$y)]
+    mcmcEffSz = round( fncESS( paramSampleVec ) , 1 )
+    names(mcmcEffSz) = NULL
+    hdiLim = HDIofMCMC( paramSampleVec , credMass=credMass )
+    if ( !is.null(compVal) ) {
+      pcgtCompVal = ( 100 * sum( paramSampleVec > compVal )
+                      / length( paramSampleVec ) )
+    } else {
+      compVal=NA
+      pcgtCompVal=NA
+    }
+    if ( !is.null(ROPE) ) {
+      pcltRope = ( 100 * sum( paramSampleVec < ROPE[1] )
+                   / length( paramSampleVec ) )
+      pcgtRope = ( 100 * sum( paramSampleVec > ROPE[2] )
+                   / length( paramSampleVec ) )
+      pcinRope = 100-(pcltRope+pcgtRope)
+    } else {
+      ROPE = c(NA,NA)
+      pcltRope=NA
+      pcgtRope=NA
+      pcinRope=NA
+    }
+    return( c( Mean=meanParam , Median=medianParam , Mode=modeParam ,
+               ESS=mcmcEffSz ,
+               HDImass=credMass , HDIlow=hdiLim[1] , HDIhigh=hdiLim[2] ,
+               CompVal=compVal , PcntGtCompVal=pcgtCompVal ,
+               ROPElow=ROPE[1] , ROPEhigh=ROPE[2] ,
+               PcntLtROPE=pcltRope , PcntInROPE=pcinRope , PcntGtROPE=pcgtRope ) )
+  }
+
+  ########################
+  ## DBDA function code ##
+  ########################
+  HDIofMCMC <- function( sampleVec , credMass=0.95 ) {
+    # Computes highest density interval from a sample of representative values,
+    #   estimated as shortest credible interval.
+    # Arguments:
+    #   sampleVec
+    #     is a vector of representative values from a probability distribution.
+    #   credMass
+    #     is a scalar between 0 and 1, indicating the mass within the credible
+    #     interval that is to be estimated.
+    # Value:
+    #   HDIlim is a vector containing the limits of the HDI
+    sortedPts = sort( sampleVec )
+    ciIdxInc = ceiling( credMass * length( sortedPts ) )
+    nCIs = length( sortedPts ) - ciIdxInc
+    ciWidth = rep( 0 , nCIs )
+    for ( i in 1:nCIs ) {
+      ciWidth[ i ] = sortedPts[ i + ciIdxInc ] - sortedPts[ i ]
+    }
+    HDImin = sortedPts[ which.min( ciWidth ) ]
+    HDImax = sortedPts[ which.min( ciWidth ) + ciIdxInc ]
+    HDIlim = c( HDImin , HDImax )
+    return( HDIlim )
+  }
+
+  #######################
+  ## Chain Diagnostics ##
+  #######################
+  diagMCMC <- function( codaObject , parName=varnames(codaObject)[1] ,
+                        saveName=NULL , saveType="jpg" ) {
+    DBDAplColors = c("skyblue","black","royalblue","steelblue")
+    #  openGraph(height=5,width=7)
+    par( mar=0.5+c(3,4,1,0) , oma=0.1+c(0,0,2,0) , mgp=c(2.25,0.7,0) ,
+         cex.lab=1.75 )
+    layout(matrix(1:4,nrow=2))
+    # traceplot and gelman.plot are from CODA package:
+    require(coda)
+    coda::traceplot( codaObject[,c(parName)] , main="" , ylab="Param. Value" ,
+                     col=DBDAplColors )
+    tryVal = try(
+      coda::gelman.plot( codaObject[,c(parName)] , main="" , auto.layout=FALSE ,
+                         col=DBDAplColors, autoburnin=FALSE )  #This is the fix so I will always get shrink factor
+    )
+    # if it runs, gelman.plot returns a list with finite shrink values:
+    if ( class(tryVal)=="try-error" ) {
+      plot.new()
+      print(paste0("Warning: coda::gelman.plot fails for ",parName))
+    } else {
+      if ( class(tryVal)=="list" & !is.finite(tryVal$shrink[1]) ) {
+        plot.new()
+        print(paste0("Warning: coda::gelman.plot fails for ",parName))
+      }
+    }
+    DbdaAcfPlot(codaObject,parName,plColors=DBDAplColors)
+    DbdaDensPlot(codaObject,parName,plColors=DBDAplColors)
+    mtext( text=parName , outer=TRUE , adj=c(0.5,0.5) , cex=2.0 )
+    if ( !is.null(saveName) ) {
+      saveGraph( file=paste0(saveName,"Diag",parName), type=saveType)
+    }
+  }
+
+  # Function(s) for plotting properties of mcmc coda objects.
+  DbdaAcfPlot <- function( codaObject , parName=varnames(codaObject)[1] , plColors=NULL ) {
+    if ( all( parName != varnames(codaObject) ) ) {
+      stop("parName must be a column name of coda object")
+    }
+    nChain = length(codaObject)
+    if ( is.null(plColors) ) plColors=1:nChain
+    xMat = NULL
+    yMat = NULL
+    for ( cIdx in 1:nChain ) {
+      acfInfo = acf(codaObject[,c(parName)][[cIdx]],plot=FALSE)
+      xMat = cbind(xMat,acfInfo$lag)
+      yMat = cbind(yMat,acfInfo$acf)
+    }
+    matplot( xMat , yMat , type="o" , pch=20 , col=plColors , ylim=c(0,1) ,
+             main="" , xlab="Lag" , ylab="Autocorrelation" )
+    abline(h=0,lty="dashed")
+    EffChnLngth = fncESS(codaObject[,c(parName)])
+    text( x=max(xMat) , y=max(yMat) , adj=c(1.0,1.0) , cex=1.5 ,
+          labels=paste("ESS =",round(EffChnLngth,1)) )
+  }
+
+  DbdaDensPlot <- function( codaObject , parName=varnames(codaObject)[1] , plColors=NULL ) {
+    if ( all( parName != varnames(codaObject) ) ) {
+      stop("parName must be a column name of coda object")
+    }
+    nChain = length(codaObject) # or nchain(codaObject)
+    if ( is.null(plColors) ) plColors=1:nChain
+    xMat = NULL
+    yMat = NULL
+    hdiLims = NULL
+    for ( cIdx in 1:nChain ) {
+      densInfo = density(codaObject[,c(parName)][[cIdx]])
+      xMat = cbind(xMat,densInfo$x)
+      yMat = cbind(yMat,densInfo$y)
+      hdiLims = cbind(hdiLims,HDIofMCMC(codaObject[,c(parName)][[cIdx]]))
+    }
+    matplot( xMat , yMat , type="l" , col=plColors ,
+             main="" , xlab="Param. Value" , ylab="Density" )
+    abline(h=0)
+    points( hdiLims[1,] , rep(0,nChain) , col=plColors , pch="|" )
+    points( hdiLims[2,] , rep(0,nChain) , col=plColors , pch="|" )
+    text( mean(hdiLims) , 0 , "95% HDI" , adj=c(0.5,-0.2) )
+    EffChnLngth = fncESS(codaObject[,c(parName)])
+    MCSE = sd(as.matrix(codaObject[,c(parName)]))/sqrt(EffChnLngth)
+    text( max(xMat) , max(yMat) , adj=c(1.0,1.0) , cex=1.5 ,
+          paste("MCSE =\n",signif(MCSE,3)) )
+  }
+
+  #############################
+  ## Posterior distributions ##
+  #############################
+  plotPost <- function( paramSampleVec , cenTend=c("mode","median","mean")[1] ,
+                        compVal=NULL, ROPE=NULL, credMass=0.95, HDItextPlace=0.7,
+                        xlab=NULL , xlim=NULL , yaxt=NULL , ylab=NULL ,
+                        main=NULL , cex=NULL , cex.lab=NULL ,
+                        col=NULL , border=NULL , showCurve=FALSE , breaks=NULL ,
+                        ... ) {
+    # Override defaults of hist function, if not specified by user:
+    # (additional arguments "..." are passed to the hist function)
+    if ( is.null(xlab) ) xlab="Param. Val."
+    if ( is.null(cex.lab) ) cex.lab=1.5
+    if ( is.null(cex) ) cex=1.4
+    if ( is.null(xlim) ) xlim=range( c( compVal , ROPE , paramSampleVec ) )
+    if ( is.null(main) ) main=""
+    if ( is.null(yaxt) ) yaxt="n"
+    if ( is.null(ylab) ) ylab=""
+    if ( is.null(col) ) col="skyblue"
+    if ( is.null(border) ) border="white"
+
+    # convert coda object to matrix:
+    if ( class(paramSampleVec) == "mcmc.list" ) {
+      paramSampleVec = as.matrix(paramSampleVec)
+    }
+
+    summaryColNames = c("ESS","mean","median","mode",
+                        "hdiMass","hdiLow","hdiHigh",
+                        "compVal","pGtCompVal",
+                        "ROPElow","ROPEhigh","pLtROPE","pInROPE","pGtROPE")
+    postSummary = matrix( NA , nrow=1 , ncol=length(summaryColNames) ,
+                          dimnames=list( c( xlab ) , summaryColNames ) )
+
+    # for fncESS function
+    postSummary[,"ESS"] = fncESS(paramSampleVec)
+
+    postSummary[,"mean"] = mean(paramSampleVec)
+    postSummary[,"median"] = median(paramSampleVec)
+    mcmcDensity = density(paramSampleVec)
+    postSummary[,"mode"] = mcmcDensity$x[which.max(mcmcDensity$y)]
+
+    HDI = HDIofMCMC( paramSampleVec , credMass )
+    postSummary[,"hdiMass"]=credMass
+    postSummary[,"hdiLow"]=HDI[1]
+    postSummary[,"hdiHigh"]=HDI[2]
+
+    # Plot histogram.
+    cvCol = "darkgreen"
+    ropeCol = "darkred"
+    if ( is.null(breaks) ) {
+      if ( max(paramSampleVec) > min(paramSampleVec) ) {
+        breaks = c( seq( from=min(paramSampleVec) , to=max(paramSampleVec) ,
+                         by=(HDI[2]-HDI[1])/18 ) , max(paramSampleVec) )
+      } else {
+        breaks=c(min(paramSampleVec)-1.0E-6,max(paramSampleVec)+1.0E-6)
+        border="skyblue"
+      }
+    }
+    if ( !showCurve ) {
+      par(xpd=NA)
+      histinfo = hist( paramSampleVec , xlab=xlab , yaxt=yaxt , ylab=ylab ,
+                       freq=F , border=border , col=col ,
+                       xlim=xlim , main=main , cex=cex , cex.lab=cex.lab ,
+                       breaks=breaks , ... )
+    }
+    if ( showCurve ) {
+      par(xpd=NA)
+      histinfo = hist( paramSampleVec , plot=F )
+      densCurve = density( paramSampleVec , adjust=2 )
+      plot( densCurve$x , densCurve$y , type="l" , lwd=5 , col=col , bty="n" ,
+            xlim=xlim , xlab=xlab , yaxt=yaxt , ylab=ylab ,
+            main=main , cex=cex , cex.lab=cex.lab , ... )
+    }
+    cenTendHt = 0.9*max(histinfo$density)
+    cvHt = 0.7*max(histinfo$density)
+    ROPEtextHt = 0.55*max(histinfo$density)
+    # Display central tendency:
+    mn = mean(paramSampleVec)
+    med = median(paramSampleVec)
+    mcmcDensity = density(paramSampleVec)
+    mo = mcmcDensity$x[which.max(mcmcDensity$y)]
+    if ( cenTend=="mode" ){
+      text( mo , cenTendHt ,
+            bquote(mode==.(signif(mo,3))) , adj=c(.5,0) , cex=cex )
+    }
+    if ( cenTend=="median" ){
+      text( med , cenTendHt ,
+            bquote(median==.(signif(med,3))) , adj=c(.5,0) , cex=cex , col=cvCol )
+    }
+    if ( cenTend=="mean" ){
+      text( mn , cenTendHt ,
+            bquote(mean==.(signif(mn,3))) , adj=c(.5,0) , cex=cex )
+    }
+    # Display the comparison value.
+    if ( !is.null( compVal ) ) {
+      pGtCompVal = sum( paramSampleVec > compVal ) / length( paramSampleVec )
+      pLtCompVal = 1 - pGtCompVal
+      lines( c(compVal,compVal) , c(0.96*cvHt,0) ,
+             lty="dotted" , lwd=2 , col=cvCol )
+      text( compVal , cvHt ,
+            bquote( .(round(100*pLtCompVal,1)) * "% < " *
+                      .(signif(compVal,3)) * " < " *
+                      .(round(100*pGtCompVal,1)) * "%" ) ,
+            adj=c(pLtCompVal,0) , cex=0.8*cex , col=cvCol )
+      postSummary[,"compVal"] = compVal
+      postSummary[,"pGtCompVal"] = pGtCompVal
+    }
+    # Display the ROPE.
+    if ( !is.null( ROPE ) ) {
+      pInROPE = ( sum( paramSampleVec > ROPE[1] & paramSampleVec < ROPE[2] )
+                  / length( paramSampleVec ) )
+      pGtROPE = ( sum( paramSampleVec >= ROPE[2] ) / length( paramSampleVec ) )
+      pLtROPE = ( sum( paramSampleVec <= ROPE[1] ) / length( paramSampleVec ) )
+      lines( c(ROPE[1],ROPE[1]) , c(0.96*ROPEtextHt,0) , lty="dotted" , lwd=2 ,
+             col=ropeCol )
+      lines( c(ROPE[2],ROPE[2]) , c(0.96*ROPEtextHt,0) , lty="dotted" , lwd=2 ,
+             col=ropeCol)
+      text( mean(ROPE) , ROPEtextHt ,
+            bquote( .(round(100*pLtROPE,1)) * "% < " * .(ROPE[1]) * " < " *
+                      .(round(100*pInROPE,1)) * "% < " * .(ROPE[2]) * " < " *
+                      .(round(100*pGtROPE,1)) * "%" ) ,
+            adj=c(pLtROPE+.5*pInROPE,0) , cex=1 , col=ropeCol )
+
+      postSummary[,"ROPElow"]=ROPE[1]
+      postSummary[,"ROPEhigh"]=ROPE[2]
+      postSummary[,"pLtROPE"]=pLtROPE
+      postSummary[,"pInROPE"]=pInROPE
+      postSummary[,"pGtROPE"]=pGtROPE
+    }
+    # Display the HDI.
+    lines( HDI , c(0,0) , lwd=4 , lend=1 )
+    text( mean(HDI) , 0 , bquote(.(100*credMass) * "% HDI" ) ,
+          adj=c(.5,-1.7) , cex=cex )
+    text( HDI[1] , 0 , bquote(.(signif(HDI[1],3))) ,
+          adj=c(HDItextPlace,-0.5) , cex=cex )
+    text( HDI[2] , 0 , bquote(.(signif(HDI[2],3))) ,
+          adj=c(1.0-HDItextPlace,-0.5) , cex=cex )
+    par(xpd=F)
+    #
+    return( postSummary )
+  }
+
+
+  #------------------------------------------------------------------------------
+
+  ################################################################################
+  #                     Modified effective sample size                           #
+  ################################################################################
+  fncESS <- function (x)  {
+    spectral <- function(x) {
+      x <- as.matrix(x)
+      v0 <- order <- numeric(ncol(x))
+      names(v0) <- names(order) <- colnames(x)
+      z <- 1:nrow(x)
+      for (i in 1:ncol(x)) {
+        lm.out <- lm(x[, i] ~ z)
+        if (identical(all.equal(sd(residuals(lm.out)), 0), TRUE)) {
+          v0[i] <- 0
+          order[i] <- 0
+        }
+        else {
+          ar.out <- ar(x[, i], aic = TRUE)
+          v0[i] <- ar.out$var.pred/(1 - sum(ar.out$ar))^2
+          order[i] <- ar.out$order
+        }
+      }
+      return(list(spec = v0, order = order))
+    }
+    #Run ESS
+    x <- as.matrix(x)
+    spec <- spectral(x)$spec
+    ans <- ifelse(spec == 0, 0, nrow(x) * apply(x, 2, var)/spec)
+    return(ans)
+  }
+
+  ## End of Bayesian section ##
+  ################################################################################
+
+
+
+} #end of plot.bayes
+

@@ -1,13 +1,11 @@
 #' Summarize Bayesian Markov Chain Monte Carlo (MCMC) object
 #'
 #' Convert a list of Bayesian analysis chains (e.g., coda package mcmc.list objects) into a data frame
-#' for analysis and creating plots. Calculates a set of descriptive statistics that summarize
+#' for analysis and creating plots. Calculates a set of descriptive statistics that summarizes
 #' MCMC parameters. MCMC converted to data frame and summary values are also returned as a data frame.
 #'
 #' @param x list object of MCMC chains (e.g, mcmc.list).
 #' @param parameter single character vector name of parameter in MCMC chains to produce summary statistics. Default is NULL.
-#' @param center character vector that selects the type of central tendency to use when reporting parameter values.
-#' Choices include: 'mean', 'median', and 'mode'. Default is 'mode'.
 #' @param mass numeric vector the specifies the credible mass used in the Highest Density Interval (HDI). Default is 0.95.
 #' @param compare numeric vector with one comparison value to determine how much of the distribution is above or below
 #' the comparison value. Default is NULL.
@@ -35,7 +33,7 @@
 #' ## Hospital LOS and readmissions ##
 #' # X-bar chart statistics
 
-bayes <- function(x, parameter=NULL, center="mode", mass=NULL, compare=NULL,
+bayes <- function(x, parameter=NULL, mass=NULL, compare=NULL,
                     rope=NULL, newdata=FALSE) {
   #Looking for a list
   if (any(class(x) %in% c("list", "mcmc.list")) == FALSE) {stop("Error: Expecting list class object." )}
@@ -61,10 +59,6 @@ bayes <- function(x, parameter=NULL, center="mode", mass=NULL, compare=NULL,
   if(length(compare) > 1 ) {
     stop("Error: Expecting only 1 compare value.")
   }
-  #Looking for 1 parameter name
-    if(!center %in% c("mode","median","mean")) {
-      stop("Error: Expecting center as either 'mode', 'median', or 'mean'.")
-    }
   #Looking for 2 ROPE values
   if(!is.null(rope) ) {
     if(length(rope) != 2 ) {
@@ -120,8 +114,7 @@ HDIofMCMC <- function( sampleVec , credMass=0.95 ) {
 #############################
 ## Posterior distributions ##
 #############################
-sumPost <- function( paramSampleVec , cenTend=c("mode","median","mean")[1] ,
-                     compVal=NULL, ROPE=NULL, credMass=0.95 ) {
+sumPost <- function( paramSampleVec , compVal=NULL, ROPE=NULL, credMass=0.95 ) {
   # Override defaults of hist function, if not specified by user:
   # (additional arguments "..." are passed to the hist function)
 #  if ( is.null(xlab) ) xlab="Param. Val."
@@ -208,7 +201,6 @@ fncESS <- function (x)  {
   # Reset object names #
   ######################
   paramSampleVec <- MCMC[, parameter]
-  cenTend <- center
   compVal <- compare
   ROPE <- rope
   credMass <- mass
@@ -218,7 +210,7 @@ fncESS <- function (x)  {
   #################
   #posterior
   if(!is.null(parameter)) {
-    Posterior.Summary <- data.frame(sumPost( paramSampleVec=paramSampleVec , cenTend=cenTend ,
+    Posterior.Summary <- data.frame(sumPost( paramSampleVec=paramSampleVec ,
                                   compVal=compVal, ROPE=ROPE, credMass=credMass ))
   } else {
     Posterior.Summary <- NA
