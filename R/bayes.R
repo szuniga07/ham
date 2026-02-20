@@ -22,6 +22,9 @@
 #' be used for analysis or plots. The default is newdata=FALSE.
 #'
 #' @return data frame of summary statistics for MCMC parameter's distribution and/or MCMC data frame.
+#' Statistics include highest density interval, effective sample size, proportion of distribution
+#' within and outside of a ROPE, distribution compared with a set value, and the parameter's mean,
+#' median, and mode. And a MCMC data frame.
 #' @importFrom stats sd ar density median residuals var
 #' @export
 #' @references
@@ -221,11 +224,13 @@ fncESS <- function (x)  {
     Posterior.Summary <- NA
   }
   #Final output
-  if(newdata == TRUE) {
-    return(list(Posterior.Summary=Posterior.Summary, MCMC=MCMC))
-  } else {
-    return(list(Posterior.Summary=Posterior.Summary, MCMC=NA))
+  if(newdata == FALSE) {
+    MCMC <- NA
   }
-
+  #Combine in list
+  z <- list(Posterior.Summary=Posterior.Summary, MCMC=MCMC)
+  # Assign ham classes
+  class(z) <- c("bayes","ham", "list")
+  return(z)
 } # End of Bayesian section #
 

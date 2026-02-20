@@ -40,6 +40,9 @@ be used for analysis or plots. The default is newdata=FALSE.}
 }
 \value{
 data frame of summary statistics for MCMC parameter's distribution and/or MCMC data frame.
+Statistics include highest density interval, effective sample size, proportion of distribution
+within and outside of a ROPE, distribution compared with a set value, and the parameter's mean,
+median, and mode. And a MCMC data frame.
 }
 \description{
 Convert a list of Bayesian analysis chains (e.g., coda package mcmc.list objects) into a data frame
