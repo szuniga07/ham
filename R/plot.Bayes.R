@@ -75,7 +75,7 @@
 plot.Bayes <- function(x, y=NULL, xlim=NULL, ylim=NULL, xlab=NULL, ylab=NULL, main=NULL, lwd=NULL,
                        bcol=NULL, lcol=NULL, pcol=NULL, tgt=NULL, tgtcol="gray", tpline=NULL, tpcol=NULL, cex=1,
                          cex.lab=NULL, cex.axis=NULL, cex.main=NULL, cex.text=NULL, x.axis=NULL, y.axis=NULL, round.c=NULL, ...) {
-  if (any(class(x) == "bayes") == FALSE) {stop("Error: Expecting bayes class object." )}
+  if (any(class(x) == "Bayes") == FALSE) {stop("Error: Expecting bayes class object." )}
   #Looking for 1 parameter name
   if(!center %in% c("mode","median","mean")) {
     stop("Error: Expecting center as either 'mode', 'median', or 'mean'.")

@@ -222,7 +222,7 @@ fncESS <- function (x)  {
   #Combine in list
   z <- list(Posterior.Summary=Posterior.Summary, MCMC=MCMC)
   # Assign ham classes
-  class(z) <- c("bayes","ham", "list")
+  class(z) <- c("Bayes","ham", "list")
   return(z)
 } # End of Bayesian section #
 
