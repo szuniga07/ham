@@ -126,3 +126,7 @@ y.axis=seq(min(spc_u$HAI)*1000, max(spc_u$HAI)*1000, length.out=nrow(spc_u)),
 xlab="Months (starting at year 2)", icol="gray", lwd=2, cex=2,
 cex.axis=1.1, cex.main=1.25, cex.text=1.25)
 }
+\references{
+Ryan, T. (2011). Statistical Methods for Quality Improvement, Third Edition.
+John Wiley & Sons, Inc. ISBN: 978-0-470-59074-4.
+}

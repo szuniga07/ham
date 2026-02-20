@@ -45,6 +45,9 @@
 #' @importFrom methods is
 #' @importFrom stats lm
 #' @export
+#' @references
+#' Ryan, T. (2011). Statistical Methods for Quality Improvement, Third Edition.
+#' John Wiley & Sons, Inc. ISBN: 978-0-470-59074-4.
 #'
 #' @examples
 #' ## Hospital LOS and readmissions ##

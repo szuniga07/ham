@@ -71,5 +71,5 @@ print(spc_u) # get data frame output
 }
 \references{
 Ryan, T. (2011). Statistical Methods for Quality Improvement, Third Edition.
-John Wiley & Sons, Inc. ISBN: 978-0-470-59074-4.
+New Jersey: John Wiley & Sons, Inc. ISBN: 978-0-470-59074-4.
 }
