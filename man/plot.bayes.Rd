@@ -13,11 +13,9 @@
   ylab = NULL,
   main = NULL,
   lwd = NULL,
-  col = NULL,
-  iname = NULL,
-  icol = "black",
-  trend = FALSE,
-  trcol = "gray",
+  bcol = NULL,
+  lcol = NULL,
+  pcol = NULL,
   tgt = NULL,
   tgtcol = "gray",
   tpline = NULL,
@@ -51,6 +49,18 @@ Default is NULL, if nothing is selected, a posterior summary plot is produced.}
 \item{main}{the main title of the plot.}
 
 \item{lwd}{select the line width.}
+
+\item{bcol}{a single or multiple element character vector to specify the bar color(s).
+When Bayesian estimates and observed values are present, the first colors are Bayesian estimates
+while the last colors are observed values. Defaults to, if nothing selected, 'gray'.}
+
+\item{lcol}{a single or multiple element character vector to specify the line color(s).
+When Bayesian estimates and observed values are present, the first colors are Bayesian estimates
+while the last colors are observed values. Defaults to, if nothing selected, 'gray'.}
+
+\item{pcol}{a single or multiple element character vector to specify the point color(s).
+When Bayesian estimates and observed values are present, the first colors are Bayesian estimates
+while the last colors are observed values. Defaults to, if nothing selected, 'gray'.}
 
 \item{tgt}{specify 1 or more values on the y-axis of where to add one or more horizontal target lines. Default is NULL.}
 
@@ -101,18 +111,6 @@ is within or without the ROPE. Parameter value declared not credible if the enti
 outside the HDI of the parameter’s posterior (i.e., we reject the null hypothesis). For example,
 the ROPE of a coin is set to 0.45 to 0.55 but the posterior 95\% HDI is 0.61 - 0.69 so we reject
 the null hypothesis value of 0.50. We can accept the null hypothesis if the entire 95\% HDI falls with the ROPE. Default is NULL.}
-
-\item{bcol}{a single or multiple element character vector to specify the bar color(s).
-When Bayesian estimates and observed values are present, the first colors are Bayesian estimates
-while the last colors are observed values. Defaults to, if nothing selected, 'gray'.}
-
-\item{lcol}{a single or multiple element character vector to specify the line color(s).
-When Bayesian estimates and observed values are present, the first colors are Bayesian estimates
-while the last colors are observed values. Defaults to, if nothing selected, 'gray'.}
-
-\item{pcol}{a single or multiple element character vector to specify the point color(s).
-When Bayesian estimates and observed values are present, the first colors are Bayesian estimates
-while the last colors are observed values. Defaults to, if nothing selected, 'gray'.}
 }
 \value{
 plot of Shewhart control charts: X-bar charts, p-charts, and u-charts with 3-sigma control limits.

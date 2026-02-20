@@ -1,7 +1,7 @@
 #' Summarize Bayesian Markov Chain Monte Carlo (MCMC) object
 #'
 #' Convert a list of Bayesian analysis chains (e.g., coda package mcmc.list objects) into a data frame
-#' for analysis and creating plots. Calculates a set of descriptive statistics that summarizes
+#' for analysis and creating plots. Calculates a set of descriptive statistics that summarize
 #' MCMC parameters. MCMC converted to data frame and summary values are also returned as a data frame.
 #'
 #' @param x list object of MCMC chains (e.g, mcmc.list).
