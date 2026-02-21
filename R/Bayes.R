@@ -114,52 +114,40 @@ HDIofMCMC <- function( sampleVec , credMass=0.95 ) {
 #############################
 ## Posterior distributions ##
 #############################
-sumPost <- function( paramSampleVec , compVal=NULL, ROPE=NULL, credMass=0.95 ) {
-  # Override defaults of hist function, if not specified by user:
-  # (additional arguments "..." are passed to the hist function)
-#  if ( is.null(xlab) ) xlab="Param. Val."
-  xlab <- parameter
-
-  summaryColNames = c("ESS","mean","median","mode",
-                      "hdiMass","hdiLow","hdiHigh",
-                      "compVal","pGtCompVal",
-                      "ROPElow","ROPEhigh","pLtROPE","pInROPE","pGtROPE")
-  postSummary = matrix( NA , nrow=1 , ncol=length(summaryColNames) ,
-                        dimnames=list( c( xlab ) , summaryColNames ) )
-
-  # for fncESS function
-  postSummary[,"ESS"] = fncESS(paramSampleVec)
-
-  postSummary[,"mean"] = mean(paramSampleVec)
-  postSummary[,"median"] = median(paramSampleVec)
-  mcmcDensity = density(paramSampleVec)
-  postSummary[,"mode"] = mcmcDensity$x[which.max(mcmcDensity$y)]
-
-  HDI = HDIofMCMC( paramSampleVec , credMass )
-  postSummary[,"hdiMass"]=credMass
-  postSummary[,"hdiLow"]=HDI[1]
-  postSummary[,"hdiHigh"]=HDI[2]
-
-  # comparison value.
-  if ( !is.null( compVal ) ) {
-    pGtCompVal = sum( paramSampleVec > compVal ) / length( paramSampleVec )
-    pLtCompVal = 1 - pGtCompVal
-    postSummary[,"compVal"] = compVal
-    postSummary[,"pGtCompVal"] = pGtCompVal
+summarizePost <- function( paramSampleVec ,
+                           compVal=NULL , ROPE=NULL , credMass=0.95 ) {
+  meanParam = mean( paramSampleVec )
+  medianParam = median( paramSampleVec )
+  dres = density( paramSampleVec )
+  modeParam = dres$x[which.max(dres$y)]
+  mcmcEffSz = round( fncESS( paramSampleVec ) , 1 )
+  names(mcmcEffSz) = NULL
+  hdiLim = HDIofMCMC( paramSampleVec , credMass=credMass )
+  if ( !is.null(compVal) ) {
+    pcgtCompVal = ( 100 * sum( paramSampleVec > compVal )
+                    / length( paramSampleVec ) )
+  } else {
+    compVal=NA
+    pcgtCompVal=NA
   }
-  # ROPE.
-  if ( !is.null( ROPE ) ) {
-    pInROPE = ( sum( paramSampleVec > ROPE[1] & paramSampleVec < ROPE[2] )
-                / length( paramSampleVec ) )
-    pGtROPE = ( sum( paramSampleVec >= ROPE[2] ) / length( paramSampleVec ) )
-    pLtROPE = ( sum( paramSampleVec <= ROPE[1] ) / length( paramSampleVec ) )
-    postSummary[,"ROPElow"]=ROPE[1]
-    postSummary[,"ROPEhigh"]=ROPE[2]
-    postSummary[,"pLtROPE"]=pLtROPE
-    postSummary[,"pInROPE"]=pInROPE
-    postSummary[,"pGtROPE"]=pGtROPE
+  if ( !is.null(ROPE) ) {
+    pcltRope = ( 100 * sum( paramSampleVec < ROPE[1] )
+                 / length( paramSampleVec ) )
+    pcgtRope = ( 100 * sum( paramSampleVec > ROPE[2] )
+                 / length( paramSampleVec ) )
+    pcinRope = 100-(pcltRope+pcgtRope)
+  } else {
+    ROPE = c(NA,NA)
+    pcltRope=NA
+    pcgtRope=NA
+    pcinRope=NA
   }
-  return( postSummary )
+  return( c( Mean=meanParam , Median=medianParam , Mode=modeParam ,
+             ESS=mcmcEffSz ,
+             HDImass=credMass , HDIlow=hdiLim[1] , HDIhigh=hdiLim[2] ,
+             CompVal=compVal , PcntGtCompVal=pcgtCompVal ,
+             ROPElow=ROPE[1] , ROPEhigh=ROPE[2] ,
+             PcntLtROPE=pcltRope , PcntInROPE=pcinRope , PcntGtROPE=pcgtRope ) )
 }
 
 ################################################################################
@@ -210,8 +198,8 @@ fncESS <- function (x)  {
   #################
   #posterior
   if(!is.null(parameter)) {
-    Posterior.Summary <- data.frame(sumPost( paramSampleVec=paramSampleVec ,
-                                  compVal=compVal, ROPE=ROPE, credMass=credMass ))
+    Posterior.Summary <- as.data.frame(as.list(summarizePost( paramSampleVec=paramSampleVec ,
+                                         compVal=compVal, ROPE=ROPE, credMass=credMass )))
   } else {
     Posterior.Summary <- NA
   }

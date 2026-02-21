@@ -7,12 +7,19 @@
 \method{plot}{Bayes}(
   x,
   y = NULL,
+  parameter = NULL,
+  center = "mode",
+  mass = 0.95,
+  compare = NULL,
+  rope = NULL,
+  curve = FALSE,
   xlim = NULL,
   ylim = NULL,
   xlab = NULL,
   ylab = NULL,
   main = NULL,
   lwd = NULL,
+  breaks = NULL,
   bcol = NULL,
   lcol = NULL,
   pcol = NULL,
@@ -27,16 +34,39 @@
   cex.text = NULL,
   x.axis = NULL,
   y.axis = NULL,
+  HDItext = 0.7,
   round.c = NULL,
   ...
 )
 }
 \arguments{
-\item{x}{list object of MCMC chains (e.g, mcmc.list).}
+\item{x}{Bayes object.}
 
-\item{y}{character vector for the type of plot to graph. Select 'post', 'check', 'multi', or 'target'
-for posterior summary, posterior predictive check, multilevel or hierarchical model, or target summary plots.
-Default is NULL, if nothing is selected, a posterior summary plot is produced.}
+\item{y}{character vector for the type of plot to graph. Select 'post', 'dx', 'check', 'multi', or 'target'
+for posterior summary, diagnostics, posterior predictive check, multilevel or hierarchical model, or target summary plots.
+Default is 'post'.}
+
+\item{parameter}{a character vector of length == 1 or a 2 element list with the name(s) of parameter in MCMC chains to produce
+summary statistics. Use a 1 element vector to get posterior estimates of a single parameter. Use a 2 element list to perform
+mathematical calculations of multiple parameters. For example, use parameter=list('hospital_A', 'hospital_Z') if you want to
+estimate the difference between the hospital's outcomes. Use parameter=list(c('hospital_A','hospital_B'),
+('hospital_Y','hospital_Z')) to estimate how different the combined hospitals A and B values are from the combined Hospital Y
+and Z are.}
+
+\item{center}{character vector that selects the type of central tendency to use when reporting parameter values.
+Choices include: 'mean', 'median', and 'mode'. Default is 'mode'.}
+
+\item{mass}{numeric vector the specifies the credible mass used in the Highest Density Interval (HDI). Default is 0.95.}
+
+\item{compare}{numeric vector with one comparison value to determine how much of the distribution is above or below
+the comparison value. Default is NULL.}
+
+\item{rope}{numeric vector with two values that define the Region of Practical Equivalence (ROPE).
+Test hypotheses by setting low and high values to determine if the Highest Density Interval (HDI)
+is within or without the ROPE. Parameter value declared not credible if the entire ROPE lies
+outside the HDI of the parameter’s posterior (i.e., we reject the null hypothesis). For example,
+the ROPE of a coin is set to 0.45 to 0.55 but the posterior 95\% HDI is 0.61 - 0.69 so we reject
+the null hypothesis value of 0.50. We can accept the null hypothesis if the entire 95\% HDI falls with the ROPE. Default is NULL.}
 
 \item{xlim}{specify plot's x-axis limits with a 2 element numeric vector.}
 
@@ -50,13 +80,17 @@ Default is NULL, if nothing is selected, a posterior summary plot is produced.}
 
 \item{lwd}{select the line width.}
 
-\item{bcol}{a single or multiple element character vector to specify the bar color(s).
+\item{breaks}{number of breaks in a histogram.}
+
+\item{bcol}{a single or multiple element character vector to specify the bar or band color(s).
 When Bayesian estimates and observed values are present, the first colors are Bayesian estimates
 while the last colors are observed values. Defaults to, if nothing selected, 'gray'.}
 
 \item{lcol}{a single or multiple element character vector to specify the line color(s).
 When Bayesian estimates and observed values are present, the first colors are Bayesian estimates
-while the last colors are observed values. Defaults to, if nothing selected, 'gray'.}
+while the last colors are observed values. When multiple lines are needed, single use lines
+precede multiple use lines. For example, a single comparison value line will be assigned lcol\link{1}
+while both rope lines will be given the same color of lcol\link{2} when y='post'. Defaults to 'gray' if nothing selected.}
 
 \item{pcol}{a single or multiple element character vector to specify the point color(s).
 When Bayesian estimates and observed values are present, the first colors are Bayesian estimates
@@ -80,37 +114,20 @@ while the last colors are observed values. Defaults to, if nothing selected, 'gr
 
 \item{cex.text}{The magnification to be used for the iname text added into the plot relative to the current setting of 1.}
 
-\item{x.axis}{a vector of unique character or numeric values that makes up x-axis values to
-replace the time variable values. This will be most helpful if you prefer current calendar
-months/years instead of values starting at 1 (e.g., x.axis= sort(unique(data$Year)) for 1900-1999,
-not 1-100). Must have equal lengths for unique x.axis values and replaced values (i.e., nrow(x)). Default is NULL.}
-
-\item{y.axis}{a vector of unique character or numeric values that makes up y-axis values to replace
-the outcome variable values. This will be most helpful if your outcome needs to be converted such as rate per
-1,000 patient days (e.g., y.axis= seq(min(x$HAI)*1000, max(x$HAI)*1000, length.out=nrow(x))). Must have equal
-lengths for unique y.axis values and replaced values (i.e., nrow(x)). Default is NULL.}
+\item{HDItext}{numeric vector of length == 1 that can be a negative or positive value. Identifies placement of HDI text near credible interval
+when y='post'. Values are relative to the x-axis values. Default is 0.7.}
 
 \item{round.c}{an integer indicating the number of decimal places when rounding numbers such as for y.axis.
 Default is 2.}
 
 \item{...}{additional arguments.}
 
-\item{parameter}{single character vector name of parameter in MCMC chains to produce summary statistics. Default is NULL.}
-
-\item{center}{character vector that selects the type of central tendency to use when reporting parameter values.
-Choices include: 'mean', 'median', and 'mode'. Default is 'mode'.}
-
-\item{mass}{numeric vector the specifies the credible mass used in the Highest Density Interval (HDI). Default is 0.95.}
-
-\item{compare}{numeric vector with one comparison value to determine how much of the distribution is above or below
-the comparison value. Default is NULL.}
-
-\item{rope}{numeric vector with two values that define the Region of Practical Equivalence (ROPE).
-Test hypotheses by setting low and high values to determine if the Highest Density Interval (HDI)
-is within or without the ROPE. Parameter value declared not credible if the entire ROPE lies
-outside the HDI of the parameter’s posterior (i.e., we reject the null hypothesis). For example,
-the ROPE of a coin is set to 0.45 to 0.55 but the posterior 95\% HDI is 0.61 - 0.69 so we reject
-the null hypothesis value of 0.50. We can accept the null hypothesis if the entire 95\% HDI falls with the ROPE. Default is NULL.}
+\item{math}{mathematics function performed between multiple parameters when y='post'. Available functions are: 'add', 'subtract', 'divide',
+'multiply', 'correlate', 'covary', or 'n' for no functions. Indicate parameters with parameter argument.
+For example, when math='subtract', use parameter=list('hospital_A', 'hospital_Z') if you want to
+estimate the difference between the hospital's outcomes. Use parameter=list(c('hospital_A','hospital_B'),
+('hospital_Y','hospital_Z')) to estimate how different the combined hospitals A and B values are from the
+combined hospitals Y and Z.}
 }
 \value{
 plot of Shewhart control charts: X-bar charts, p-charts, and u-charts with 3-sigma control limits.
