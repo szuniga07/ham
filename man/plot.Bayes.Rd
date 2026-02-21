@@ -34,7 +34,7 @@
   cex.text = NULL,
   HDItext = 0.7,
   math = "n",
-  round.c = NULL,
+  round.c = 2,
   ...
 )
 }
@@ -45,12 +45,13 @@
 for posterior summary, diagnostics, posterior predictive check, multilevel or hierarchical model, or target summary plots.
 Default is 'post'.}
 
-\item{parameter}{a character vector of length == 1 or a 2 element list with the name(s) of parameter in MCMC chains to produce
-summary statistics. Use a 1 element vector to get posterior estimates of a single parameter. Use a 2 element list to perform
-mathematical calculations of multiple parameters. For example, use parameter=list('hospital_A', 'hospital_Z') if you want to
-estimate the difference between the hospital's outcomes. Use parameter=list(c('hospital_A','hospital_B'),
-('hospital_Y','hospital_Z')) to estimate how different the combined hospitals A and B values are from the combined Hospital Y
-and Z are.}
+\item{parameter}{a character vector of length >= 1 or a 2 element list with the name(s) of parameter in MCMC chains to produce
+summary statistics. Use a 1 element vector to get posterior estimates of a single parameter. Use a 2 or more element vector
+to estimate the average joint effects of multiple parameters (e.g., average infection rate for interventions A and B when
+parameter= c('IntA', 'IntB')). Use a 2 element list to perform mathematical calculations of multiple parameters (see 'math' below).
+For example, use parameter=list('hospital_A', 'hospital_Z') if you want to estimate the difference between the hospital's outcomes.
+Use parameter= list(c('hospital_A','hospital_B'), ('hospital_Y','hospital_Z')) to estimate how different the combined hospitals A
+and B values are from the combined Hospital Y and Z values.}
 
 \item{center}{character vector that selects the type of central tendency to use when reporting parameter values.
 Choices include: 'mean', 'median', and 'mode'. Default is 'mode'.}
@@ -118,12 +119,13 @@ while the last colors are observed values. Defaults to, if nothing selected, 'gr
 \item{HDItext}{numeric vector of length == 1 that can be a negative or positive value. Identifies placement of HDI text near credible interval
 when y='post'. Values are relative to the x-axis values. Default is 0.7.}
 
-\item{math}{mathematics function performed between multiple parameters when y='post'. Available functions are: 'add', 'subtract', 'divide',
-'multiply', 'correlate', 'covary', or 'n' for no functions. Indicate parameters with parameter argument.
+\item{math}{mathematics function performed between multiple parameters when y='post'. Available functions are: 'add', 'subtract', 'multiply',
+'divide', or 'n' for none (i,e., no functions). Indicate parameters with parameter argument.
 For example, when math='subtract', use parameter=list('hospital_A', 'hospital_Z') if you want to
 estimate the difference between the hospital's outcomes. Use parameter=list(c('hospital_A','hospital_B'),
 ('hospital_Y','hospital_Z')) to estimate how different the combined hospitals A and B values are from the
-combined hospitals Y and Z.}
+combined hospitals Y and Z. Additionally, compute statistics like the coefficient of variation when math='divide'
+and parameter= list('Standard_Deviation', 'Mean'). Default is 'n' for no math function.}
 
 \item{round.c}{an integer indicating the number of decimal places when rounding numbers such as for y.axis.
 Default is 2.}

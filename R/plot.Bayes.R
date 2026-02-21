@@ -9,12 +9,13 @@
 #' @param y character vector for the type of plot to graph. Select 'post', 'dx', 'check', 'multi', or 'target'
 #' for posterior summary, diagnostics, posterior predictive check, multilevel or hierarchical model, or target summary plots.
 #' Default is 'post'.
-#' @param parameter a character vector of length == 1 or a 2 element list with the name(s) of parameter in MCMC chains to produce
-#' summary statistics. Use a 1 element vector to get posterior estimates of a single parameter. Use a 2 element list to perform
-#' mathematical calculations of multiple parameters. For example, use parameter=list('hospital_A', 'hospital_Z') if you want to
-#' estimate the difference between the hospital's outcomes. Use parameter=list(c('hospital_A','hospital_B'),
-#' ('hospital_Y','hospital_Z')) to estimate how different the combined hospitals A and B values are from the combined Hospital Y
-#' and Z are.
+#' @param parameter a character vector of length >= 1 or a 2 element list with the name(s) of parameter in MCMC chains to produce
+#' summary statistics. Use a 1 element vector to get posterior estimates of a single parameter. Use a 2 or more element vector
+#' to estimate the average joint effects of multiple parameters (e.g., average infection rate for interventions A and B when
+#' parameter= c('IntA', 'IntB')). Use a 2 element list to perform mathematical calculations of multiple parameters (see 'math' below).
+#' For example, use parameter=list('hospital_A', 'hospital_Z') if you want to estimate the difference between the hospital's outcomes.
+#' Use parameter= list(c('hospital_A','hospital_B'), ('hospital_Y','hospital_Z')) to estimate how different the combined hospitals A
+#' and B values are from the combined Hospital Y and Z values.
 #' @param center character vector that selects the type of central tendency to use when reporting parameter values.
 #' Choices include: 'mean', 'median', and 'mode'. Default is 'mode'.
 #' @param mass numeric vector the specifies the credible mass used in the Highest Density Interval (HDI). Default is 0.95.
@@ -56,12 +57,13 @@
 #' @param cex.text The magnification to be used for the iname text added into the plot relative to the current setting of 1.
 #' @param HDItext numeric vector of length == 1 that can be a negative or positive value. Identifies placement of HDI text near credible interval
 #' when y='post'. Values are relative to the x-axis values. Default is 0.7.
-#' @param math mathematics function performed between multiple parameters when y='post'. Available functions are: 'add', 'subtract', 'divide',
-#' 'multiply', 'correlate', 'covary', or 'n' for no functions. Indicate parameters with parameter argument.
+#' @param math mathematics function performed between multiple parameters when y='post'. Available functions are: 'add', 'subtract', 'multiply',
+#' 'divide', or 'n' for none (i,e., no functions). Indicate parameters with parameter argument.
 #' For example, when math='subtract', use parameter=list('hospital_A', 'hospital_Z') if you want to
 #' estimate the difference between the hospital's outcomes. Use parameter=list(c('hospital_A','hospital_B'),
 #' ('hospital_Y','hospital_Z')) to estimate how different the combined hospitals A and B values are from the
-#' combined hospitals Y and Z.
+#' combined hospitals Y and Z. Additionally, compute statistics like the coefficient of variation when math='divide'
+#' and parameter= list('Standard_Deviation', 'Mean'). Default is 'n' for no math function.
 #' @param round.c an integer indicating the number of decimal places when rounding numbers such as for y.axis.
 #' Default is 2.
 #' @param ... additional arguments.
@@ -84,21 +86,37 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
                        curve=FALSE, xlim=NULL, ylim=NULL, xlab=NULL, ylab=NULL, main=NULL, lwd=NULL, breaks=NULL,
                        bcol=NULL, lcol=NULL, pcol=NULL, tgt=NULL, tgtcol="gray", tpline=NULL, tpcol=NULL, cex=1,
                          cex.lab=NULL, cex.axis=NULL, cex.main=NULL, cex.text=NULL,
-                       HDItext=0.7, math="n", round.c=NULL, ...) {
+                       HDItext=0.7, math="n", round.c=2, ...) {
   if (any(class(x) == "Bayes") == FALSE) {stop("Error: Expecting Bayes class object." )}
   #Looking for 1 parameter name
   if(!center %in% c("mode","median","mean")) {
     stop("Error: Expecting center as either 'mode', 'median', or 'mean'.")
   }
+  # ensure
+  if(math != "n") {
+    if(class(parameter) != "list") {
+      stop("Error: Expecting a parameter list when math is not 'n'.")
+    }
+  }
+
 #Assign new objects
   MCMC <- x$MCMC
-  paramSampleVec <- MCMC[, parameter]
   cenTend <- center
   compVal <- compare
   ROPE <- rope
   credMass <- mass
   showCurve <- curve
   HDItextPlace <- HDItext
+  ########################
+  ## Set math functions ##
+  ########################
+  paramSampleVec <- switch(math,
+                           "n" =   rowMeans(as.matrix(MCMC[, parameter, drop=FALSE])),
+                           "add" =  rowMeans(as.matrix(MCMC[, parameter[[1]], drop=FALSE ])) + rowMeans(as.matrix(MCMC[, parameter[[2]], drop=FALSE ])),
+                           "subtract" = rowMeans(as.matrix(MCMC[, parameter[[1]], drop=FALSE ])) - rowMeans(as.matrix(MCMC[, parameter[[2]], drop=FALSE ])),
+                           "multiply" = rowMeans(as.matrix(MCMC[, parameter[[1]], drop=FALSE ])) * rowMeans(as.matrix(MCMC[, parameter[[2]], drop=FALSE ])),
+                           "divide" = rowMeans(as.matrix(MCMC[, parameter[[1]], drop=FALSE ])) / rowMeans(as.matrix(MCMC[, parameter[[2]], drop=FALSE ]))
+  )
 
 
 ################################################################################
@@ -2147,12 +2165,12 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
   ## DBDA function code ##
   ########################
   summarizePost <- function( paramSampleVec ,
-                             compVal=NULL , ROPE=NULL , credMass=0.95 ) {
+                             compVal=NULL , ROPE=NULL , credMass=0.95, round.c ) {
     meanParam = mean( paramSampleVec )
     medianParam = median( paramSampleVec )
     dres = density( paramSampleVec )
     modeParam = dres$x[which.max(dres$y)]
-    mcmcEffSz = round( fncESS( paramSampleVec ) , 1 )
+    mcmcEffSz = round( fncESS( paramSampleVec ) , round.c )
     names(mcmcEffSz) = NULL
     hdiLim = HDIofMCMC( paramSampleVec , credMass=credMass )
     if ( !is.null(compVal) ) {
@@ -2263,7 +2281,7 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
     abline(h=0,lty="dashed")
     EffChnLngth = fncESS(codaObject[,c(parName)])
     text( x=max(xMat) , y=max(yMat) , adj=c(1.0,1.0) , cex=1.5 ,
-          labels=paste("ESS =",round(EffChnLngth,1)) )
+          labels=paste("ESS =",round(EffChnLngth, round.c)) )
   }
 
   DbdaDensPlot <- function( codaObject , parName=varnames(codaObject)[1] , plColors=NULL ) {
@@ -2301,11 +2319,18 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
                         xlab=NULL , xlim=NULL , yaxt=NULL , ylab=NULL ,
                         main=NULL , cex=NULL , cex.lab=NULL ,
                         bcol=NULL , lcol=NULL ,
-                        border=NULL , showCurve=FALSE , breaks=NULL ,
+                        border=NULL, showCurve=FALSE, breaks=NULL, math=math,
                         ... ) {
     # Override defaults of hist function, if not specified by user:
     # (additional arguments "..." are passed to the hist function)
-    if ( is.null(xlab) ) xlab= parameter
+    if(is.null(xlab)) {
+      if(math != "n") {
+        xlab <- math
+      } else {
+#        xlab <- parameter
+        xlab <- math
+      }
+    }
     if ( is.null(cex.lab) ) cex.lab=1.5
     if ( is.null(cex) ) cex=1.4
     if ( is.null(xlim) ) xlim=range( c( compVal , ROPE , paramSampleVec ) )
@@ -2392,9 +2417,9 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
       lines( c(compVal,compVal) , c(0.96*cvHt,0) ,
              lty="dotted" , lwd=2 , col=cvCol )
       text( compVal , cvHt ,
-            bquote( .(round(100*pLtCompVal,1)) * "% < " *
+            bquote( .(round(100*pLtCompVal, round.c)) * "% < " *
                       .(signif(compVal,3)) * " < " *
-                      .(round(100*pGtCompVal,1)) * "%" ) ,
+                      .(round(100*pGtCompVal, round.c)) * "%" ) ,
             adj=c(pLtCompVal,0) , cex=0.8*cex , col=cvCol )
       postSummary[,"compVal"] = compVal
       postSummary[,"pGtCompVal"] = pGtCompVal
@@ -2410,9 +2435,9 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
       lines( c(ROPE[2], ROPE[2]) , c(0.96*ROPEtextHt,0) , lty="dotted" , lwd=2 ,
              col= ropeCol[2])
       text( mean(ROPE) , ROPEtextHt ,
-            bquote( .(round(100*pLtROPE,1)) * "% < " * .(ROPE[1]) * " < " *
-                      .(round(100*pInROPE,1)) * "% < " * .(ROPE[2]) * " < " *
-                      .(round(100*pGtROPE,1)) * "%" ) ,
+            bquote( .(round(100*pLtROPE, round.c)) * "% < " * .(ROPE[1]) * " < " *
+                      .(round(100*pInROPE, round.c)) * "% < " * .(ROPE[2]) * " < " *
+                      .(round(100*pGtROPE, round.c)) * "%" ) ,
             adj=c(pLtROPE+.5*pInROPE,0) , cex=1 , col=ropeCol )
 
       postSummary[,"ROPElow"]=ROPE[1]
@@ -2476,7 +2501,7 @@ if(y == "post") {
                         xlab=xlab , xlim=xlim , yaxt=NULL , ylab=ylab ,
                         main=main , cex=cex , cex.lab=cex.lab ,
                         bcol=bcol , lcol=lcol , border=NULL ,
-            showCurve=showCurve , breaks=breaks , ... )
+            showCurve=showCurve , breaks=breaks , math=math, ... )
   }
 
 
