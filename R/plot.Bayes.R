@@ -26,6 +26,7 @@
 #' outside the HDI of the parameter’s posterior (i.e., we reject the null hypothesis). For example,
 #' the ROPE of a coin is set to 0.45 to 0.55 but the posterior 95% HDI is 0.61 - 0.69 so we reject
 #' the null hypothesis value of 0.50. We can accept the null hypothesis if the entire 95% HDI falls with the ROPE. Default is NULL.
+#' @param curve select a curve to display instead of a histogram when y='post'. Default is FALSE.
 #' @param xlim specify plot's x-axis limits with a 2 element numeric vector.
 #' @param ylim specify plot's y-axis limits with a 2 element numeric vector.
 #' @param xlab a character vector label for the x-axis.
@@ -39,8 +40,8 @@
 #' @param lcol a single or multiple element character vector to specify the line color(s).
 #' When Bayesian estimates and observed values are present, the first colors are Bayesian estimates
 #' while the last colors are observed values. When multiple lines are needed, single use lines
-#' precede multiple use lines. For example, a single comparison value line will be assigned lcol[1]
-#' while both rope lines will be given the same color of lcol[2] when y='post'. Defaults to 'gray' if nothing selected.
+#' precede multiple use lines. For example, a single comparison value line will be assigned the first lcol
+#' while both rope lines will be given the same color of the second lcol when y='post'. Defaults to 'gray' if nothing selected.
 #' @param pcol a single or multiple element character vector to specify the point color(s).
 #' When Bayesian estimates and observed values are present, the first colors are Bayesian estimates
 #' while the last colors are observed values. Defaults to, if nothing selected, 'gray'.
@@ -82,8 +83,8 @@
 plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, compare=NULL, rope=NULL,
                        curve=FALSE, xlim=NULL, ylim=NULL, xlab=NULL, ylab=NULL, main=NULL, lwd=NULL, breaks=NULL,
                        bcol=NULL, lcol=NULL, pcol=NULL, tgt=NULL, tgtcol="gray", tpline=NULL, tpcol=NULL, cex=1,
-                         cex.lab=NULL, cex.axis=NULL, cex.main=NULL, cex.text=NULL, x.axis=NULL, y.axis=NULL,
-                       HDItext=0.7, round.c=NULL, ...) {
+                         cex.lab=NULL, cex.axis=NULL, cex.main=NULL, cex.text=NULL,
+                       HDItext=0.7, math="n", round.c=NULL, ...) {
   if (any(class(x) == "Bayes") == FALSE) {stop("Error: Expecting Bayes class object." )}
   #Looking for 1 parameter name
   if(!center %in% c("mode","median","mean")) {

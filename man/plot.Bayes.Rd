@@ -32,9 +32,8 @@
   cex.axis = NULL,
   cex.main = NULL,
   cex.text = NULL,
-  x.axis = NULL,
-  y.axis = NULL,
   HDItext = 0.7,
+  math = "n",
   round.c = NULL,
   ...
 )
@@ -68,6 +67,8 @@ outside the HDI of the parameter’s posterior (i.e., we reject the null hypothe
 the ROPE of a coin is set to 0.45 to 0.55 but the posterior 95\% HDI is 0.61 - 0.69 so we reject
 the null hypothesis value of 0.50. We can accept the null hypothesis if the entire 95\% HDI falls with the ROPE. Default is NULL.}
 
+\item{curve}{select a curve to display instead of a histogram when y='post'. Default is FALSE.}
+
 \item{xlim}{specify plot's x-axis limits with a 2 element numeric vector.}
 
 \item{ylim}{specify plot's y-axis limits with a 2 element numeric vector.}
@@ -89,8 +90,8 @@ while the last colors are observed values. Defaults to, if nothing selected, 'gr
 \item{lcol}{a single or multiple element character vector to specify the line color(s).
 When Bayesian estimates and observed values are present, the first colors are Bayesian estimates
 while the last colors are observed values. When multiple lines are needed, single use lines
-precede multiple use lines. For example, a single comparison value line will be assigned lcol\link{1}
-while both rope lines will be given the same color of lcol\link{2} when y='post'. Defaults to 'gray' if nothing selected.}
+precede multiple use lines. For example, a single comparison value line will be assigned the first lcol
+while both rope lines will be given the same color of the second lcol when y='post'. Defaults to 'gray' if nothing selected.}
 
 \item{pcol}{a single or multiple element character vector to specify the point color(s).
 When Bayesian estimates and observed values are present, the first colors are Bayesian estimates
@@ -117,17 +118,17 @@ while the last colors are observed values. Defaults to, if nothing selected, 'gr
 \item{HDItext}{numeric vector of length == 1 that can be a negative or positive value. Identifies placement of HDI text near credible interval
 when y='post'. Values are relative to the x-axis values. Default is 0.7.}
 
-\item{round.c}{an integer indicating the number of decimal places when rounding numbers such as for y.axis.
-Default is 2.}
-
-\item{...}{additional arguments.}
-
 \item{math}{mathematics function performed between multiple parameters when y='post'. Available functions are: 'add', 'subtract', 'divide',
 'multiply', 'correlate', 'covary', or 'n' for no functions. Indicate parameters with parameter argument.
 For example, when math='subtract', use parameter=list('hospital_A', 'hospital_Z') if you want to
 estimate the difference between the hospital's outcomes. Use parameter=list(c('hospital_A','hospital_B'),
 ('hospital_Y','hospital_Z')) to estimate how different the combined hospitals A and B values are from the
 combined hospitals Y and Z.}
+
+\item{round.c}{an integer indicating the number of decimal places when rounding numbers such as for y.axis.
+Default is 2.}
+
+\item{...}{additional arguments.}
 }
 \value{
 plot of Shewhart control charts: X-bar charts, p-charts, and u-charts with 3-sigma control limits.
