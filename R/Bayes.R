@@ -33,7 +33,7 @@
 #' ## Hospital LOS and readmissions ##
 #' # X-bar chart statistics
 
-Bayes <- function(x, parameter=NULL, mass=NULL, compare=NULL,
+Bayes <- function(x, parameter=NULL, mass=.95, compare=NULL,
                     rope=NULL, newdata=FALSE) {
   #Looking for a list
   if (any(class(x) %in% c("list", "mcmc.list")) == FALSE) {stop("Error: Expecting list class object." )}
@@ -71,7 +71,8 @@ Bayes <- function(x, parameter=NULL, mass=NULL, compare=NULL,
 ################################################################################
 
 fncMCMC <- function(x) {
-  #Get the number of chains, rows, and columns per chain
+  #Get the column names, number of chains, rows, and columns per chain
+  df_nms <- colnames(as.matrix(x[[1]]))
   n_chains <- length(x)
   n_rows <- dim(x[[1]])[1]
   n_cols <- dim(x[[1]])[2]
@@ -81,8 +82,23 @@ fncMCMC <- function(x) {
   mcmc$CHAIN <- rep(1:n_chains, each=n_rows)
   #Re-order so CHAIN is in the 1st spot
   mcmc <- mcmc[, c((n_cols+1), 1:n_cols)]
+  #Put original column names back in
+  colnames(mcmc)[-1] <- df_nms
   return(mcmc)
-  }
+}
+
+#################
+## Create MCMC ##
+#################
+MCMC <- fncMCMC(x)
+
+######################
+# Reset object names #
+######################
+paramSampleVec <- MCMC[, parameter]
+compVal <- compare
+ROPE <- rope
+credMass <- mass
 
 ########################
 ## DBDA function code ##
@@ -175,42 +191,29 @@ fncESS <- function (x)  {
   }
   #Run ESS
   x <- as.matrix(x)
-    spec <- spectral(x)$spec
-    ans <- ifelse(spec == 0, 0, nrow(x) * apply(x, 2, var)/spec)
+  spec <- spectral(x)$spec
+  ans <- ifelse(spec == 0, 0, nrow(x) * apply(x, 2, var)/spec)
   return(ans)
 }
 
-  #################
-  ## Create MCMC ##
-  #################
-  MCMC <- fncMCMC(x)
-
-  ######################
-  # Reset object names #
-  ######################
-  paramSampleVec <- MCMC[, parameter]
-  compVal <- compare
-  ROPE <- rope
-  credMass <- mass
-
-  #################
-  ## Run objects ##
-  #################
-  #posterior
-  if(!is.null(parameter)) {
-    Posterior.Summary <- as.data.frame(as.list(summarizePost( paramSampleVec=paramSampleVec ,
-                                         compVal=compVal, ROPE=ROPE, credMass=credMass )))
-  } else {
-    Posterior.Summary <- NA
-  }
-  #Final output
-  if(newdata == FALSE) {
-    MCMC <- NA
-  }
-  #Combine in list
-  z <- list(Posterior.Summary=Posterior.Summary, MCMC=MCMC)
-  # Assign ham classes
-  class(z) <- c("Bayes","ham", "list")
-  return(z)
+#################
+## Run objects ##
+#################
+#posterior
+if(!is.null(parameter)) {
+  Posterior.Summary <- as.data.frame(as.list(summarizePost( paramSampleVec=paramSampleVec ,
+                                                            compVal=compVal, ROPE=ROPE, credMass=credMass )))
+} else {
+  Posterior.Summary <- NA
+}
+#Final output
+if(newdata == FALSE) {
+  MCMC <- NA
+}
+#Combine in list
+z <- list(Posterior.Summary=Posterior.Summary, MCMC=MCMC)
+# Assign ham classes
+class(z) <- c("Bayes","ham", "list")
+return(z)
 } # End of Bayesian section #
 

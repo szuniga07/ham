@@ -34,6 +34,7 @@
   cex.text = NULL,
   HDItext = 0.7,
   math = "n",
+  es = "n",
   round.c = 2,
   ...
 )
@@ -126,6 +127,12 @@ estimate the difference between the hospital's outcomes. Use parameter=list(c('h
 ('hospital_Y','hospital_Z')) to estimate how different the combined hospitals A and B values are from the
 combined hospitals Y and Z. Additionally, compute statistics like the coefficient of variation when math='divide'
 and parameter= list('Standard_Deviation', 'Mean'). Default is 'n' for no math function.}
+
+\item{es}{one element vector that indicates which type likelihood distribution is relevant in calculating Jacob Cohen's
+effect sizes between 2 parameters when y='post'. Options are 'beta' and 'n' for the beta distribution for binary outcomes
+and none (i.e., no distribution, hence no effect size calculated). For example, to get the posterior distribution summary
+for the difference between the intervention and control groups on 30-day readmissions or not, use es='beta' when y='post',
+math='subtract', and parameter=list('intMean', 'ctlMean'). Default is 'n' which indicates not to calculate the effect size.}
 
 \item{round.c}{an integer indicating the number of decimal places when rounding numbers such as for y.axis.
 Default is 2.}

@@ -7,7 +7,7 @@
 Bayes(
   x,
   parameter = NULL,
-  mass = NULL,
+  mass = 0.95,
   compare = NULL,
   rope = NULL,
   newdata = FALSE

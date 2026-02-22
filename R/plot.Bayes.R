@@ -64,6 +64,11 @@
 #' ('hospital_Y','hospital_Z')) to estimate how different the combined hospitals A and B values are from the
 #' combined hospitals Y and Z. Additionally, compute statistics like the coefficient of variation when math='divide'
 #' and parameter= list('Standard_Deviation', 'Mean'). Default is 'n' for no math function.
+#' @param es one element vector that indicates which type likelihood distribution is relevant in calculating Jacob Cohen's
+#' effect sizes between 2 parameters when y='post'. Options are 'beta' and 'n' for the beta distribution for binary outcomes
+#' and none (i.e., no distribution, hence no effect size calculated). For example, to get the posterior distribution summary
+#' for the difference between the intervention and control groups on 30-day readmissions or not, use es='beta' when y='post',
+#' math='subtract', and parameter=list('intMean', 'ctlMean'). Default is 'n' which indicates not to calculate the effect size.
 #' @param round.c an integer indicating the number of decimal places when rounding numbers such as for y.axis.
 #' Default is 2.
 #' @param ... additional arguments.
@@ -86,18 +91,25 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
                        curve=FALSE, xlim=NULL, ylim=NULL, xlab=NULL, ylab=NULL, main=NULL, lwd=NULL, breaks=NULL,
                        bcol=NULL, lcol=NULL, pcol=NULL, tgt=NULL, tgtcol="gray", tpline=NULL, tpcol=NULL, cex=1,
                          cex.lab=NULL, cex.axis=NULL, cex.main=NULL, cex.text=NULL,
-                       HDItext=0.7, math="n", round.c=2, ...) {
+                       HDItext=0.7, math="n", es="n", round.c=2, ...) {
   if (any(class(x) == "Bayes") == FALSE) {stop("Error: Expecting Bayes class object." )}
   #Looking for 1 parameter name
   if(!center %in% c("mode","median","mean")) {
     stop("Error: Expecting center as either 'mode', 'median', or 'mean'.")
   }
-  # ensure
+  # ensure parameter list isn't used for non-math function 'post' graphs
   if(math != "n") {
     if(class(parameter) != "list") {
       stop("Error: Expecting a parameter list when math is not 'n'.")
     }
   }
+  # ensure no other distributions for effect sizes are used right now
+  if(es != "n") {
+    if(es != "beta") {
+      stop("Error: Expecting 'beta' distribution for es argument or 'n'.")
+    }
+  }
+
 
 #Assign new objects
   MCMC <- x$MCMC
@@ -107,13 +119,30 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
   credMass <- mass
   showCurve <- curve
   HDItextPlace <- HDItext
+
+  ####################
+  # Effect size Beta #
+  ####################
+  fncESBeta <-  function(yVal1, yVal2) {
+    as1 <- (asin(sign( rowMeans(yVal1) ) * sqrt(abs( rowMeans(yVal1) ))))*2
+    as2 <- (asin(sign( rowMeans(yVal2) ) * sqrt(abs( rowMeans(yVal2) ))))*2
+#    as1 <- (asin(sign( rowMeans(MC.Matrix[, yVal1, drop=FALSE]) ) *
+#                   sqrt(abs( rowMeans(MC.Matrix[, yVal1, drop=FALSE]) ))))*2
+#    as2 <- (asin(sign( rowMeans(MC.Matrix[, yVal2, drop=FALSE]) ) *
+#                   sqrt(abs( rowMeans(MC.Matrix[, yVal2, drop=FALSE]) ))))*2
+    Effect.Size.Output <- abs(as1 - as2 )
+
+    return(Effect.Size.Output )
+  }
+
   ########################
   ## Set math functions ##
   ########################
   paramSampleVec <- switch(math,
                            "n" =   rowMeans(as.matrix(MCMC[, parameter, drop=FALSE])),
                            "add" =  rowMeans(as.matrix(MCMC[, parameter[[1]], drop=FALSE ])) + rowMeans(as.matrix(MCMC[, parameter[[2]], drop=FALSE ])),
-                           "subtract" = rowMeans(as.matrix(MCMC[, parameter[[1]], drop=FALSE ])) - rowMeans(as.matrix(MCMC[, parameter[[2]], drop=FALSE ])),
+                           "subtract" = if(es== "beta") fncESBeta(rowMeans(as.matrix(MCMC[, parameter[[1]], drop=FALSE ])), rowMeans(as.matrix(MCMC[, parameter[[2]], drop=FALSE ]))) else
+                             rowMeans(as.matrix(MCMC[, parameter[[1]], drop=FALSE ])) - rowMeans(as.matrix(MCMC[, parameter[[2]], drop=FALSE ])),
                            "multiply" = rowMeans(as.matrix(MCMC[, parameter[[1]], drop=FALSE ])) * rowMeans(as.matrix(MCMC[, parameter[[2]], drop=FALSE ])),
                            "divide" = rowMeans(as.matrix(MCMC[, parameter[[1]], drop=FALSE ])) / rowMeans(as.matrix(MCMC[, parameter[[2]], drop=FALSE ]))
   )
@@ -1568,11 +1597,9 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
   #                    8. Bayesian Effect sizes                                  #
   ################################################################################
   #This function calculates the proportion above specific values.
-  fncBayesEffectSize <- function( Coda.Object=NULL, Distribution=NULL,
-                                  yVal1=NULL, yVal2=NULL, CenTend=NULL ) {
+  fncBayesEffectSize <- function( mcmc, Distribution=NULL, yVal1=NULL, yVal2=NULL, yVal3=NULL, CenTend=NULL ) {
     #Convert into a matrix
-    MC.Matrix <- as.matrix(Coda.Object, chains=TRUE)
-
+    MC.Matrix <- as.matrix(mcmc[, -1])
     ###########################
     ## Calculate effect size ##
     ###########################
@@ -1580,9 +1607,7 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
     ##########
     ## Beta ##
     ##########
-    if(Distribution == "Beta") {
-      #    as1 <- (asin(sign(MC.Matrix[, yVal1]) * sqrt(abs(MC.Matrix[, yVal1]))))*2
-      #    as2 <- (asin(sign(MC.Matrix[, yVal2]) * sqrt(abs(MC.Matrix[, yVal2]))))*2
+    if(Distribution == "beta") {
       as1 <- (asin(sign( rowMeans(MC.Matrix[, yVal1, drop=FALSE]) ) * sqrt(abs( rowMeans(MC.Matrix[, yVal1, drop=FALSE]) ))))*2
       as2 <- (asin(sign( rowMeans(MC.Matrix[, yVal2, drop=FALSE]) ) * sqrt(abs( rowMeans(MC.Matrix[, yVal2, drop=FALSE]) ))))*2
       Effect.Size.Output <- abs(as1 - as2 )
@@ -1590,7 +1615,7 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
     ##########
     ## t  ##
     ##########
-    if(Distribution %in% c("No","Beta", "Normal", "Log-normal", "Skew-normal", "Gamma", "Weibull", "t")) {
+    if(Distribution %in% c("n","normal", "logn", "skewn", "gamma", "weibull", "t")) {
       tnum <- abs(MC.Matrix[, yVal1[1]] - MC.Matrix[, yVal2[1]])
       tdenom <- mean(c(MC.Matrix[, yVal1[2]], MC.Matrix[, yVal2[2]]))
       Effect.Size.Output <- tnum/tdenom
@@ -1599,15 +1624,13 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
     # Correlations #
     ################
     #This calculates the q effec size index
-    if(Distribution == "Correlation") {
+    if(Distribution == "correlation") {
       Zr1 <- 1/2 * log((1 + MC.Matrix[, yVal1[1]])/(1 - MC.Matrix[, yVal1[1]]))
       Zr2 <- 1/2 * log((1 + MC.Matrix[, yVal2[1]])/(1 - MC.Matrix[, yVal2[1]]))
       Effect.Size.Output <- abs(Zr1 -Zr2 )
     }
-
     return("Effect.Size.Posterior"=Effect.Size.Output )
   }
-
 
   ################################################################################
   #                9. Posterior Predictive Check for trend lines                 #
