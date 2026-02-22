@@ -103,6 +103,11 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
       stop("Error: Expecting a parameter list when math is not 'n'.")
     }
   }
+  if(math == "n") {
+    if(class(parameter) == "list") {
+      stop("Error: Expecting a character vector when math is 'n'.")
+    }
+  }
   # ensure no other distributions for effect sizes are used right now
   if(es != "n") {
     if(es != "beta") {
@@ -124,15 +129,11 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
   # Effect size Beta #
   ####################
   fncESBeta <-  function(yVal1, yVal2) {
-    as1 <- (asin(sign( rowMeans(yVal1) ) * sqrt(abs( rowMeans(yVal1) ))))*2
-    as2 <- (asin(sign( rowMeans(yVal2) ) * sqrt(abs( rowMeans(yVal2) ))))*2
-#    as1 <- (asin(sign( rowMeans(MC.Matrix[, yVal1, drop=FALSE]) ) *
-#                   sqrt(abs( rowMeans(MC.Matrix[, yVal1, drop=FALSE]) ))))*2
-#    as2 <- (asin(sign( rowMeans(MC.Matrix[, yVal2, drop=FALSE]) ) *
-#                   sqrt(abs( rowMeans(MC.Matrix[, yVal2, drop=FALSE]) ))))*2
+    as1 <- (asin(sign( yVal1)  * sqrt(abs( yVal1 ))))*2
+    as2 <- (asin(sign( yVal2 ) * sqrt(abs( yVal2 ))))*2
     Effect.Size.Output <- abs(as1 - as2 )
 
-    return(Effect.Size.Output )
+    return("Effect.Size.Posterior"=Effect.Size.Output )
   }
 
   ########################
@@ -149,25 +150,6 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
 
 
 ################################################################################
-
-  ################################################################################
-  #                 Function to convert coda to data frame                       #
-  ################################################################################
-
-  fncMCMC <- function(x) {
-    #Get the number of chains, rows, and columns per chain
-    n_chains <- length(x)
-    n_rows <- dim(x[[1]])[1]
-    n_cols <- dim(x[[1]])[2]
-    #Convert coda object to data.frame
-    mcmc <- data.frame(do.call(rbind, x)) #drop data.frame if matrix/array needed
-    #Create CHAIN variable
-    mcmc$CHAIN <- rep(1:n_chains, each=n_rows)
-    #Re-order so CHAIN is in the 1st spot
-    mcmc <- mcmc[, c((n_cols+1), 1:n_cols)]
-    return(mcmc)
-  }
-
 
 
   ################################################################################
@@ -2341,8 +2323,8 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
                         compVal=NULL, ROPE=NULL, credMass=0.95, HDItextPlace=0.7,
                         xlab=NULL , xlim=NULL , yaxt=NULL , ylab=NULL ,
                         main=NULL , cex=NULL , cex.lab=NULL ,
-                        bcol=NULL , lcol=NULL ,
-                        border=NULL, showCurve=FALSE, breaks=NULL, math=math,
+                        bcol=NULL , lcol=NULL , border=NULL, showCurve=FALSE,
+                        breaks=NULL, math=math, es=es, round.c=round.c,
                         ... ) {
     # Override defaults of hist function, if not specified by user:
     # (additional arguments "..." are passed to the hist function)
@@ -2350,8 +2332,7 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
       if(math != "n") {
         xlab <- math
       } else {
-#        xlab <- parameter
-        xlab <- math
+        xlab <- parameter
       }
     }
     if ( is.null(cex.lab) ) cex.lab=1.5
