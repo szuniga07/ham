@@ -2282,12 +2282,8 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
   #######################
   ## Chain Diagnostics ##
   #######################
-  #diagMCMC <- function( codaObject , parName=varnames(codaObject)[1] ,
-  #                      saveName=NULL , saveType="jpg", round.c ) {
   diagMCMC <- function( MCMC , parName ) {
     DBDAplColors = c("skyblue","black","royalblue","steelblue")
-    #  openGraph(height=5,width=7)
-#    layout(matrix(1:4,nrow=2))
     # traceplot and gelman.plot are from CODA package:
     traceplot <- function(MCMC, parameter, n_rowchn) {
       #plot works much faster than lines, doesn't matter if it's a for loop
@@ -2314,7 +2310,6 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
     #Density plots
     DbdaDensPlot(MCMC=MCMC, parName=parameter, nChain=n_chains,
                  plColors=DBDAplColors)
-    mtext( text=parameter , outer=TRUE , adj=c(0.5,0.5) , cex=2.0 )
   }
 
   # Function(s) for plotting properties of mcmc coda objects.
