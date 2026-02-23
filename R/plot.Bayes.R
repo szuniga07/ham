@@ -6,9 +6,10 @@
 #' returned in a data frame.
 #'
 #' @param x Bayes object.
-#' @param y character vector for the type of plot to graph. Select 'post', 'dx', 'check',
-#' 'multi', or 'target' for posterior summary, diagnostics (4 plots produced), posterior predictive check, multilevel or hierarchical
-#' model, or target summary plots. Default is 'post'.
+#' @param y character vector for the type of plot to graph. Select 'post', 'dxa', 'dxd', 'dxg', 'dxt', 'check',
+#' 'multi', or 'target' for posterior summary, diagnostics (4 'dx' plots produced: autocorrelation factor,
+#' density plots on chain convergence, Gelman-Rubin statistic, and traceplot), posterior predictive check,
+#' multilevel or hierarchical model summary, or target summary plots. Default is 'post'.
 #' @param parameter a character vector of length >= 1 or a 2 element list with the name(s) of parameter in MCMC chains to produce
 #' summary statistics. Use a 1 element vector to get posterior estimates of a single parameter. Use a 2 or more element vector
 #' to estimate the average joint effects of multiple parameters (e.g., average infection rate for interventions A and B when
@@ -115,9 +116,9 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
     }
   }
   # ensure parameter only has 1 item for diagnostics
-  if(y == "dx") {
+  if(y %in% c('dxa', 'dxd', 'dxg', 'dxt')) {
     if(length(parameter) != 1) {
-      stop("Error: Expecting only 1 parameter when doing diagnostics.")
+      stop("Error: Expecting 1 single parameter when doing diagnostics.")
     }
   }
 
@@ -131,10 +132,11 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
   showCurve <- curve
   HDItextPlace <- HDItext
   #Chain statistics
-  if(y %in% c("dx")) {
+  if(y %in% c('dxa', 'dxd', 'dxg', 'dxt')) {
   n_rows <- dim(MCMC[, parameter, drop=FALSE])[1]
   n_chains <- max(MCMC[, "CHAIN"])
   n_rowchn <- n_rows/n_chains
+  DBDAplColors = c("skyblue","black","royalblue","steelblue")
   }
 
   ####################
@@ -2229,9 +2231,14 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
     HDIlim = c( HDImin , HDImax )
     return( HDIlim )
   }
-################################################################################
-#                      Function for Gelman-Rubin statistic                     #
-################################################################################
+
+  ################################################################################
+  #                          Functions for Chain Diagnostics                     #
+  ################################################################################
+
+  #######################
+  ## Run Gelman-Rubin  ##
+  #######################
   gelman.rubin <- function(MCMC, parameter, n_rows, n_chains, n_rowchn, samp) {
     #Make a chain list with 1 element per chain
     chain_ls <- vector(mode="list", length=n_chains)
@@ -2267,25 +2274,10 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
     R_hat <- sqrt(var_plus / W)
     return(R_hat)
   }
-  #######################
-  ## Run Gelman-Rubin  ##
-  #######################
-  if(y== "dx") {
-    glsamp <- sort(round(c(100, (n_rowchn)/5:1)))
-    glstat <- vector(length= length(glsamp))
-    for(i in 1:length(glsamp)) {
-      glstat[i] <- gelman.rubin(MCMC=MCMC, parameter=parameter, n_rows=n_rows,
-                                n_chains=n_chains, n_rowchn=n_rowchn, samp=glsamp[i])
-    }
-  }
-
-  #######################
-  ## Chain Diagnostics ##
-  #######################
-  diagMCMC <- function( MCMC , parName ) {
-    DBDAplColors = c("skyblue","black","royalblue","steelblue")
-    # traceplot and gelman.plot are from CODA package:
-    traceplot <- function(MCMC, parameter, n_rowchn) {
+  #############
+  # Traceplot #
+  #############
+  traceplot <- function(MCMC, parameter, n_rowchn) {
       #plot works much faster than lines, doesn't matter if it's a for loop
       plot(1:(n_rowchn), MCMC[1:(n_rowchn), parameter], type="n",
            main="Traceplot", ylab="Param. Value", xlab="Chain iterations")
@@ -2293,26 +2285,9 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
         lines(MCMC[MCMC$CHAIN == i, parameter], lty=i, col=DBDAplColors[i])
       }
     }
-    #############
-    # Traceplot #
-    #############
-    traceplot( MCMC=MCMC, parameter=parameter, n_rowchn=n_rowchn)
-    ###############
-    # Gelman plot #
-    ###############
-    plot(glsamp, glstat, main="Gelman-Rubin Statistic", xlab="Chain iterations",
-         ylab= "Shrink Factor", type='b', col=DBDAplColors[3])
     ########################
     # Autocorrelation plot #
     ########################
-    DbdaAcfPlot(MCMC=MCMC, parName=parameter, nChain=n_chains,
-                plColors=DBDAplColors)
-    #Density plots
-    DbdaDensPlot(MCMC=MCMC, parName=parameter, nChain=n_chains,
-                 plColors=DBDAplColors)
-  }
-
-  # Function(s) for plotting properties of mcmc coda objects.
   DbdaAcfPlot <- function( MCMC , parName, nChain,
                            plColors=NULL ) {
     #Make a chain list with 1 element per chain
@@ -2338,7 +2313,9 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
     text( x=max(xMat) , y=max(yMat) , adj=c(1.0,1.0) , cex=1.5 ,
           labels=paste("Eff.Samp.Size =",round(EffChnLngth, 1)) )
   }
-
+  ################
+  # Density plot #
+  ################
   DbdaDensPlot <- function( MCMC , parName, plColors, nChain) {
     #Make a chain list with 1 element per chain
     chain_ls <- vector(mode="list", length=nChain)
@@ -2560,11 +2537,28 @@ if(y == "post") {
                         bcol=bcol , lcol=lcol , border=NULL ,
             showCurve=showCurve , breaks=breaks , math=math, es=es, ... )
   }
-
-  if(y == "dx") {
-    diagMCMC( MCMC=MCMC , parName=parameter, ... )
+  ## Diagnostics ##
+  if(y == "dxa") {
+    DbdaAcfPlot(MCMC=MCMC, parName=parameter, nChain=n_chains,
+                plColors=DBDAplColors)
   }
-
+  if(y == "dxd") {
+    DbdaDensPlot(MCMC=MCMC, parName=parameter, nChain=n_chains,
+                 plColors=DBDAplColors)
+  }
+  if(y== "dxg") {
+    glsamp <- sort(round(c(100,500, (n_rowchn)/5:1)))
+    glstat <- vector(length= length(glsamp))
+    for(i in 1:length(glsamp)) {
+      glstat[i] <- gelman.rubin(MCMC=MCMC, parameter=parameter, n_rows=n_rows,
+                                n_chains=n_chains, n_rowchn=n_rowchn, samp=glsamp[i])
+    }
+    plot(glsamp, glstat, main="Gelman-Rubin statistic", xlab="Chain iterations",
+         ylab= "Shrink Factor", type='b', col=DBDAplColors[3])
+  }
+  if(y == "dxt") {
+    traceplot( MCMC=MCMC, parameter=parameter, n_rowchn=n_rowchn)
+  }
 
 } #end of plot.bayes
 

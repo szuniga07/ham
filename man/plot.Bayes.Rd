@@ -42,9 +42,10 @@
 \arguments{
 \item{x}{Bayes object.}
 
-\item{y}{character vector for the type of plot to graph. Select 'post', 'dx', 'check',
-'multi', or 'target' for posterior summary, diagnostics (4 plots produced), posterior predictive check, multilevel or hierarchical
-model, or target summary plots. Default is 'post'.}
+\item{y}{character vector for the type of plot to graph. Select 'post', 'dxa', 'dxd', 'dxg', 'dxt', 'check',
+'multi', or 'target' for posterior summary, diagnostics (4 'dx' plots produced: autocorrelation factor,
+density plots on chain convergence, Gelman-Rubin statistic, and traceplot), posterior predictive check,
+multilevel or hierarchical model summary, or target summary plots. Default is 'post'.}
 
 \item{parameter}{a character vector of length >= 1 or a 2 element list with the name(s) of parameter in MCMC chains to produce
 summary statistics. Use a 1 element vector to get posterior estimates of a single parameter. Use a 2 or more element vector
