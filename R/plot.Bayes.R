@@ -1,4 +1,4 @@
-#' Shewhart control charts
+#' Bayesian plots for various analyses
 #'
 #' Graph X-bar charts, p-charts, and u-charts. This includes
 #' producing means center lines, 3-sigma upper and lower control limits. Users can also calculate
@@ -6,9 +6,9 @@
 #' returned in a data frame.
 #'
 #' @param x Bayes object.
-#' @param y character vector for the type of plot to graph. Select 'post', 'dx', 'check', 'multi', or 'target'
-#' for posterior summary, diagnostics, posterior predictive check, multilevel or hierarchical model, or target summary plots.
-#' Default is 'post'.
+#' @param y character vector for the type of plot to graph. Select 'post', 'dx', 'check',
+#' 'multi', or 'target' for posterior summary, diagnostics, posterior predictive check, multilevel or hierarchical
+#' model, or target summary plots. Default is 'post'.
 #' @param parameter a character vector of length >= 1 or a 2 element list with the name(s) of parameter in MCMC chains to produce
 #' summary statistics. Use a 1 element vector to get posterior estimates of a single parameter. Use a 2 or more element vector
 #' to estimate the average joint effects of multiple parameters (e.g., average infection rate for interventions A and B when
@@ -99,12 +99,12 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
   }
   # ensure parameter list isn't used for non-math function 'post' graphs
   if(math != "n") {
-    if(class(parameter) != "list") {
+    if(!is.list(parameter)) {
       stop("Error: Expecting a parameter list when math is not 'n'.")
     }
   }
   if(math == "n") {
-    if(class(parameter) == "list") {
+    if(is.list(parameter)) {
       stop("Error: Expecting a character vector when math is 'n'.")
     }
   }
@@ -124,6 +124,10 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
   credMass <- mass
   showCurve <- curve
   HDItextPlace <- HDItext
+  #Chain statistics
+  n_rows <- dim(MCMC[, parameter, drop=FALSE])[1]
+  n_chains <- max(MCMC[, "CHAIN"])
+  n_rowchn <- n_rows/n_chains
 
   ####################
   # Effect size Beta #
@@ -155,10 +159,6 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
   ################################################################################
   #                           Bayesian Analysis                                  #
   ################################################################################
-
-  ########################################
-  ## My functions for Bayesian analysis ##
-  ########################################
 
   ################################################################################
   #                  1. Expand aggregated data into  full data                   #
@@ -742,7 +742,6 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
     }
     ## Create plot
     rng <- seq(min(adf[, "Obs.Rate"], na.rm=TRUE)* 0.95, max(adf[, "Obs.Rate"], na.rm=TRUE)* 1.05, length.out=nrow(adf[plot_row_numbers,]))
-    #par(mar=c(5,7,4,6))
     plot(rng, 1:length(rng), type="n", ylab="",
          xlab= X_Label,
          axes=F,  cex.lab=1*labMulti, xlim=c(XLim1, XLim2))
@@ -806,7 +805,6 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
     #Make coda into as.matrix
     MC.Chain <- as.matrix( Coda.Object )
     chainLength <- NROW(MC.Chain)  #Chain length
-    #par( mar=c(4,2,2.5,.25) , mgp=c(2.5,0.5,0) , pty="m" )
 
     #Get a number of pseudo-random chains
     pltIdx <- floor(seq(1, chainLength, length= Num.Lines))
@@ -819,8 +817,6 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
       X.Lim <- c(Min.Val, round(Max.Val, digits=Round.Digits))
     }
     ## Graph ##
-    #par( mar=c(4,2,2.5,.25) , mgp=c(2.5,0.5,0) , pty="m" )
-    #par( mar=c(8, 6, 3, .25) , mgp=c(2.5,0.5,0) , pty="m" )
     #Allows me to run if I only have 1 group by leaving "generate levels =="No"
     if (nchar(Group.Level) == 0 ) {
       hist( datFrm[, Outcome], xlab= X.Lab, ylab=NULL,
@@ -927,7 +923,6 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
     #Get generic sigma (SD) parameter name to use for graphing
     sigma_par <- strsplit(MCsigma, "[", fixed=TRUE)[[1]][1]
     # Display data with posterior predictive distributions
-    #par( mar=c(5,6,2.5,.25))
     plot(-1,0,
          #       xlim=c(0.1,length(xlevels) + 0.1) ,
          #       ylim=c(min(y) - 0.2 * (max(y) - min(y)), max(y) + 0.2*(max(y) - min(y))) ,
@@ -1003,7 +998,6 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
     #Get generic sigma (SD) parameter name to use for graphing
     #  sigma_par <- strsplit(MCsigma, "[", fixed=TRUE)[[1]][1]
     # Display data with posterior predictive distributions
-    #par( mar=c(5,6,2.5,.25))
     plot(-1,0,
          xlim= X.Limits, xlab=X.Lab , xaxt="n" , ylab= yName ,
          ylim= Y.Limits, main=Main.Title,
@@ -1633,10 +1627,7 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
     chainLength = NROW( mcmcMat )
     #-----------------------------------------------------------------------------
     # datFrm with superimposed regression lines and noise distributions:
-    #par( mar=c(4,2,2.5,.25) , mgp=c(2.5,0.5,0) , pty="m" ) #This matches other graphs
-    #par( mar=c(8, 6, 3, .25) , mgp=c(2.5,0.5,0) , pty="m" ) #This matches other graphs
     #Original par
-    #par( mar=c(2,2,1,0)+.5 , mgp=c(1.5,0.5,0) )
     # Plot datFrm values:
     xRang = max(x, na.rm=TRUE) - min(x, na.rm=TRUE)
     yRang = max(y, na.rm=TRUE) - min(y, na.rm=TRUE)
@@ -2037,7 +2028,6 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
     mcmcMat = as.matrix(Coda.Object, chains=TRUE)
     chainLength = NROW( mcmcMat )
     # Plot settings
-    #par( mar=c(8, 6, 3, .25) , mgp=c(2.5,0.5,0) , pty="m" ) #This matches other graphs
     #Original par
     xRang = max(x, na.rm=TRUE) - min(x, na.rm=TRUE)
     yRang = max(y, na.rm=TRUE) - min(y, na.rm=TRUE)
@@ -2170,12 +2160,12 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
   ## DBDA function code ##
   ########################
   summarizePost <- function( paramSampleVec ,
-                             compVal=NULL , ROPE=NULL , credMass=0.95, round.c ) {
+                             compVal=NULL , ROPE=NULL , credMass=0.95 ) {
     meanParam = mean( paramSampleVec )
     medianParam = median( paramSampleVec )
     dres = density( paramSampleVec )
     modeParam = dres$x[which.max(dres$y)]
-    mcmcEffSz = round( fncESS( paramSampleVec ) , round.c )
+    mcmcEffSz = round( fncESS( paramSampleVec ) , 1 )
     names(mcmcEffSz) = NULL
     hdiLim = HDIofMCMC( paramSampleVec , credMass=credMass )
     if ( !is.null(compVal) ) {
@@ -2231,87 +2221,148 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
     HDIlim = c( HDImin , HDImax )
     return( HDIlim )
   }
+################################################################################
+#                      Function for Gelman-Rubin statistic                     #
+################################################################################
+  gelman.rubin <- function(MCMC, parameter, n_rows, n_chains, n_rowchn, samp) {
+    #Make a chain list with 1 element per chain
+    chain_ls <- vector(mode="list", length=n_chains)
+    for(i in 1:n_chains) {
+      chain_ls[[i]] <- MCMC[MCMC$CHAIN== i, parameter]
+    }
+    #Make chains object
+    chains <- data.frame(do.call(cbind, chain_ls))
+    chains <- chains[1:samp, ]
+    m <- n_chains
+    n <-  n_rowchn
+
+    if (m < 2) {
+      stop("Gelman-Rubin statistic requires at least 2 chains.")
+    }
+    if (length(unique(sapply(chains, length))) > 1) {
+      stop("All chains must have the same number of iterations.")
+    }
+    # 1. Calculate the mean of each chain (theta_j_bar)
+    chain_means <- sapply(chains, mean)
+    # 2. Calculate the grand mean across all chains (theta_double_bar)
+    grand_mean <- mean(chain_means)
+    # 3. Calculate the between-chain variance (B)
+    B <- n / (m - 1) * sum((chain_means - grand_mean)^2)
+    # 4. Calculate the variance within each chain (s_j^2)
+    # The snippet below does this in one go for all chains
+    within_chain_vars <- sapply(chains, var) # In R, var() uses (n-1) in the denominator
+    # 5. Calculate the average of the within-chain variances (W)
+    W <- mean(within_chain_vars)
+    # 6. Calculate the estimated posterior variance (var_plus)
+    var_plus <- (n - 1) / n * W + B / n
+    # 7. Calculate the Potential Scale Reduction Factor (PSRF), R-hat
+    R_hat <- sqrt(var_plus / W)
+    return(R_hat)
+  }
+  #######################
+  ## Run Gelman-Rubin  ##
+  #######################
+  if(y== "dx") {
+    glsamp <- sort(round(c(100, (n_rowchn)/5:1)))
+    glstat <- vector(length= length(glsamp))
+    for(i in 1:length(glsamp)) {
+      glstat[i] <- gelman.rubin(MCMC=MCMC, parameter=parameter, n_rows=n_rows,
+                                n_chains=n_chains, n_rowchn=n_rowchn, samp=glsamp[i])
+    }
+  }
 
   #######################
   ## Chain Diagnostics ##
   #######################
-  diagMCMC <- function( codaObject , parName=varnames(codaObject)[1] ,
-                        saveName=NULL , saveType="jpg" ) {
+  #diagMCMC <- function( codaObject , parName=varnames(codaObject)[1] ,
+  #                      saveName=NULL , saveType="jpg", round.c ) {
+  diagMCMC <- function( MCMC , parName ) {
     DBDAplColors = c("skyblue","black","royalblue","steelblue")
     #  openGraph(height=5,width=7)
-    #par( mar=0.5+c(3,4,1,0), oma=0.1+c(0,0,2,0),mgp=c(2.25,0.7,0),cex.lab=1.75 )
-    layout(matrix(1:4,nrow=2))
+#    layout(matrix(1:4,nrow=2))
     # traceplot and gelman.plot are from CODA package:
-    require(coda)
-    coda::traceplot( codaObject[,c(parName)] , main="" , ylab="Param. Value" ,
-                     col=DBDAplColors )
-    tryVal = try(
-      coda::gelman.plot( codaObject[,c(parName)] , main="" , auto.layout=FALSE ,
-                         col=DBDAplColors, autoburnin=FALSE )  #This is the fix so I will always get shrink factor
-    )
-    # if it runs, gelman.plot returns a list with finite shrink values:
-    if ( class(tryVal)=="try-error" ) {
-      plot.new()
-      print(paste0("Warning: coda::gelman.plot fails for ",parName))
-    } else {
-      if ( class(tryVal)=="list" & !is.finite(tryVal$shrink[1]) ) {
-        plot.new()
-        print(paste0("Warning: coda::gelman.plot fails for ",parName))
+    traceplot <- function(MCMC, parameter, n_rowchn) {
+      #plot works much faster than lines, doesn't matter if it's a for loop
+      plot(1:(n_rowchn), MCMC[1:(n_rowchn), parameter], type="n",
+           main="Traceplot", ylab="Param. Value", xlab="Chain iterations")
+      for(i in 1:max(MCMC$CHAIN)) {
+        lines(MCMC[MCMC$CHAIN == i, parameter], lty=i, col=DBDAplColors[i])
       }
     }
-    DbdaAcfPlot(codaObject,parName,plColors=DBDAplColors)
-    DbdaDensPlot(codaObject,parName,plColors=DBDAplColors)
-    mtext( text=parName , outer=TRUE , adj=c(0.5,0.5) , cex=2.0 )
-    if ( !is.null(saveName) ) {
-      saveGraph( file=paste0(saveName,"Diag",parName), type=saveType)
-    }
+    #############
+    # Traceplot #
+    #############
+    traceplot( MCMC=MCMC, parameter=parameter, n_rowchn=n_rowchn)
+    ###############
+    # Gelman plot #
+    ###############
+    plot(glsamp, glstat, main="Gelman-Rubin Statistic", xlab="Chain iterations",
+         ylab= "Shrink Factor", type='b', col=DBDAplColors[3])
+    ########################
+    # Autocorrelation plot #
+    ########################
+    DbdaAcfPlot(MCMC=MCMC, parName=parameter, nChain=n_chains,
+                plColors=DBDAplColors)
+    #Density plots
+    DbdaDensPlot(MCMC=MCMC, parName=parameter, nChain=n_chains,
+                 plColors=DBDAplColors)
+    mtext( text=parameter , outer=TRUE , adj=c(0.5,0.5) , cex=2.0 )
   }
 
   # Function(s) for plotting properties of mcmc coda objects.
-  DbdaAcfPlot <- function( codaObject , parName=varnames(codaObject)[1] , plColors=NULL ) {
-    if ( all( parName != varnames(codaObject) ) ) {
-      stop("parName must be a column name of coda object")
+  DbdaAcfPlot <- function( MCMC , parName, nChain,
+                           plColors=NULL ) {
+    #Make a chain list with 1 element per chain
+    chain_ls <- vector(mode="list", length=nChain)
+    for(i in 1:nChain) {
+      chain_ls[[i]] <- MCMC[MCMC$CHAIN== i, parName]
     }
-    nChain = length(codaObject)
+    #Make codaObject out of chain list
+    codaObject <- chain_ls
+
     if ( is.null(plColors) ) plColors=1:nChain
     xMat = NULL
     yMat = NULL
     for ( cIdx in 1:nChain ) {
-      acfInfo = acf(codaObject[,c(parName)][[cIdx]],plot=FALSE)
+      acfInfo = acf(codaObject[[cIdx]],plot=FALSE)
       xMat = cbind(xMat,acfInfo$lag)
       yMat = cbind(yMat,acfInfo$acf)
     }
     matplot( xMat , yMat , type="o" , pch=20 , col=plColors , ylim=c(0,1) ,
-             main="" , xlab="Lag" , ylab="Autocorrelation" )
+             main="Autocorrelation factor" , xlab="Lag" , ylab="Autocorrelation" )
     abline(h=0,lty="dashed")
-    EffChnLngth = fncESS(codaObject[,c(parName)])
+    EffChnLngth = fncESS(MCMC[,c(parName)])
     text( x=max(xMat) , y=max(yMat) , adj=c(1.0,1.0) , cex=1.5 ,
-          labels=paste("ESS =",round(EffChnLngth, round.c)) )
+          labels=paste("Eff.Samp.Size =",round(EffChnLngth, 1)) )
   }
 
-  DbdaDensPlot <- function( codaObject , parName=varnames(codaObject)[1] , plColors=NULL ) {
-    if ( all( parName != varnames(codaObject) ) ) {
-      stop("parName must be a column name of coda object")
+  DbdaDensPlot <- function( MCMC , parName, plColors, nChain) {
+    #Make a chain list with 1 element per chain
+    chain_ls <- vector(mode="list", length=nChain)
+    for(i in 1:nChain) {
+      chain_ls[[i]] <- MCMC[MCMC$CHAIN== i, parName]
     }
-    nChain = length(codaObject) # or nchain(codaObject)
+    #Make codaObject out of chain list
+    codaObject <- chain_ls
+
     if ( is.null(plColors) ) plColors=1:nChain
     xMat = NULL
     yMat = NULL
     hdiLims = NULL
     for ( cIdx in 1:nChain ) {
-      densInfo = density(codaObject[,c(parName)][[cIdx]])
+      densInfo = density(codaObject[[cIdx]])
       xMat = cbind(xMat,densInfo$x)
       yMat = cbind(yMat,densInfo$y)
-      hdiLims = cbind(hdiLims,HDIofMCMC(codaObject[,c(parName)][[cIdx]]))
+      hdiLims = cbind(hdiLims,HDIofMCMC(codaObject[[cIdx]]))
     }
     matplot( xMat , yMat , type="l" , col=plColors ,
-             main="" , xlab="Param. Value" , ylab="Density" )
+             main="Density plots for convergence" , xlab="Param. Value" , ylab="Density" )
     abline(h=0)
     points( hdiLims[1,] , rep(0,nChain) , col=plColors , pch="|" )
     points( hdiLims[2,] , rep(0,nChain) , col=plColors , pch="|" )
     text( mean(hdiLims) , 0 , "95% HDI" , adj=c(0.5,-0.2) )
-    EffChnLngth = fncESS(codaObject[,c(parName)])
-    MCSE = sd(as.matrix(codaObject[,c(parName)]))/sqrt(EffChnLngth)
+    EffChnLngth = fncESS(MCMC[,c(parName)])
+    MCSE = sd(MCMC[, parName])/sqrt(EffChnLngth)
     text( max(xMat) , max(yMat) , adj=c(1.0,1.0) , cex=1.5 ,
           paste("MCSE =\n",signif(MCSE,3)) )
   }
@@ -2324,7 +2375,7 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
                         xlab=NULL , xlim=NULL , yaxt=NULL , ylab=NULL ,
                         main=NULL , cex=NULL , cex.lab=NULL ,
                         bcol=NULL , lcol=NULL , border=NULL, showCurve=FALSE,
-                        breaks=NULL, math=math, es=es, round.c=round.c,
+                        breaks=NULL, math=math, es=es,
                         ... ) {
     # Override defaults of hist function, if not specified by user:
     # (additional arguments "..." are passed to the hist function)
@@ -2345,7 +2396,7 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
     if ( is.null(border) ) border= bcol
 
     # convert coda object to matrix:
-    if ( class(paramSampleVec) == "mcmc.list" ) {
+    if (any(class(paramSampleVec) == "mcmc.list") == TRUE) {
       paramSampleVec = as.matrix(paramSampleVec)
     }
 
@@ -2421,9 +2472,9 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
       lines( c(compVal,compVal) , c(0.96*cvHt,0) ,
              lty="dotted" , lwd=2 , col=cvCol )
       text( compVal , cvHt ,
-            bquote( .(round(100*pLtCompVal, round.c)) * "% < " *
+            bquote( .(round(100*pLtCompVal, 1)) * "% < " *
                       .(signif(compVal,3)) * " < " *
-                      .(round(100*pGtCompVal, round.c)) * "%" ) ,
+                      .(round(100*pGtCompVal, 1)) * "%" ) ,
             adj=c(pLtCompVal,0) , cex=0.8*cex , col=cvCol )
       postSummary[,"compVal"] = compVal
       postSummary[,"pGtCompVal"] = pGtCompVal
@@ -2439,9 +2490,9 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
       lines( c(ROPE[2], ROPE[2]) , c(0.96*ROPEtextHt,0) , lty="dotted" , lwd=2 ,
              col= ropeCol[2])
       text( mean(ROPE) , ROPEtextHt ,
-            bquote( .(round(100*pLtROPE, round.c)) * "% < " * .(ROPE[1]) * " < " *
-                      .(round(100*pInROPE, round.c)) * "% < " * .(ROPE[2]) * " < " *
-                      .(round(100*pGtROPE, round.c)) * "%" ) ,
+            bquote( .(round(100*pLtROPE, 1)) * "% < " * .(ROPE[1]) * " < " *
+                      .(round(100*pInROPE, 1)) * "% < " * .(ROPE[2]) * " < " *
+                      .(round(100*pGtROPE, 1)) * "%" ) ,
             adj=c(pLtROPE+.5*pInROPE,0) , cex=1 , col=ropeCol )
 
       postSummary[,"ROPElow"]=ROPE[1]
@@ -2458,7 +2509,6 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
           adj=c(HDItextPlace,-0.5) , cex=cex )
     text( HDI[2] , 0 , bquote(.(signif(HDI[2],3))) ,
           adj=c(1.0-HDItextPlace,-0.5) , cex=cex )
-    #par(xpd=F)
     #
    # return( postSummary )
   }
@@ -2505,7 +2555,11 @@ if(y == "post") {
                         xlab=xlab , xlim=xlim , yaxt=NULL , ylab=ylab ,
                         main=main , cex=cex , cex.lab=cex.lab ,
                         bcol=bcol , lcol=lcol , border=NULL ,
-            showCurve=showCurve , breaks=breaks , math=math, ... )
+            showCurve=showCurve , breaks=breaks , math=math, es=es, ... )
+  }
+
+  if(y == "dx") {
+    diagMCMC( MCMC=MCMC , parName=parameter, ... )
   }
 
 
