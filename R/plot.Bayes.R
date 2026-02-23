@@ -7,7 +7,7 @@
 #'
 #' @param x Bayes object.
 #' @param y character vector for the type of plot to graph. Select 'post', 'dx', 'check',
-#' 'multi', or 'target' for posterior summary, diagnostics, posterior predictive check, multilevel or hierarchical
+#' 'multi', or 'target' for posterior summary, diagnostics (4 plots produced), posterior predictive check, multilevel or hierarchical
 #' model, or target summary plots. Default is 'post'.
 #' @param parameter a character vector of length >= 1 or a 2 element list with the name(s) of parameter in MCMC chains to produce
 #' summary statistics. Use a 1 element vector to get posterior estimates of a single parameter. Use a 2 or more element vector
@@ -114,6 +114,12 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
       stop("Error: Expecting 'beta' distribution for es argument or 'n'.")
     }
   }
+  # ensure parameter only has 1 item for diagnostics
+  if(y == "dx") {
+    if(length(parameter) != 1) {
+      stop("Error: Expecting only 1 parameter when doing diagnostics.")
+    }
+  }
 
 
 #Assign new objects
@@ -125,9 +131,11 @@ plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, comp
   showCurve <- curve
   HDItextPlace <- HDItext
   #Chain statistics
+  if(y %in% c("dx")) {
   n_rows <- dim(MCMC[, parameter, drop=FALSE])[1]
   n_chains <- max(MCMC[, "CHAIN"])
   n_rowchn <- n_rows/n_chains
+  }
 
   ####################
   # Effect size Beta #
