@@ -10,13 +10,27 @@
 #' 'multi', or 'target' for posterior summary, diagnostics (4 'dx' plots produced: autocorrelation factor,
 #' density plots on chain convergence, Gelman-Rubin statistic, and traceplot), posterior predictive check,
 #' multilevel or hierarchical model summary, or target summary plots. Default is 'post'.
+#' @param ctype character vector of length == 1 that indicates posterior predictive check type when y='check'.
+#' Posterior predictive checks allow us to see how well our estimates match the observed data. These checks are
+#' available for Bayesian estimation of outcomes and regression polynomial trend line using various distributions in the
+#' likelihood function. Select 'n', 'ln', 'sn', 'w', 'g', 't', 't1', 'taov', 'ol', 'oq','oc', 'hol', 'hoq', 'hoc',
+#' 'hlol', 'hloq', 'hloc', 'odid', 'logl', 'logq', 'logc', 'hlogl', 'hlogq', 'hlogc' for these respective options:
+#' 'Normal', 'Log-normal', 'Skew-normal', 'Weibull', 'Gamma', 't', 't: 1 group', 't: ANOVA', 'OLS: Linear',
+#' 'OLS: Quadratic', 'OLS: Cubic', 'Hierarchical OLS: Linear', 'Hierarchical OLS: Quadratic', 'Hierarchical OLS: Cubic',
+#' 'Hierarchical Log OLS: Linear', 'Hierarchical Log OLS: Quadratic', 'Hierarchical Log OLS: Cubic', 'OLS: DID',
+#' 'Logistic: Linear', 'Logistic: Quadratic', 'Logistic: Cubic', 'Hierarchical Logistic: Linear',
+#' 'Hierarchical Logistic: Quadratic', and 'Hierarchical Logistic: Cubic'. The first 8 selections are for Bayesian
+#' estimation of outcomes and the remaining options were developed to assess regression trend lines. Default is NULL.
 #' @param parameter a character vector of length >= 1 or a 2 element list with the name(s) of parameter in MCMC chains to produce
 #' summary statistics. Use a 1 element vector to get posterior estimates of a single parameter. Use a 2 or more element vector
 #' to estimate the average joint effects of multiple parameters (e.g., average infection rate for interventions A and B when
 #' parameter= c('IntA', 'IntB')). Use a 2 element list to perform mathematical calculations of multiple parameters (see 'math' below).
 #' For example, use parameter=list('hospital_A', 'hospital_Z') if you want to estimate the difference between the hospital's outcomes.
 #' Use parameter= list(c('hospital_A','hospital_B'), ('hospital_Y','hospital_Z')) to estimate how different the combined hospitals A
-#' and B values are from the combined Hospital Y and Z values.
+#' and B values are from the combined Hospital Y and Z values. When y='check', use either a multiple element character vector that represent
+#' distribution parameters in order (e.g., mean, sd, nu from a t-distribution) or regression parameters in order (e.g., intercept, B1).
+#' When y='multi', use a multiple element character vector to list the parameter names of the hierarchy, in order of the
+#' nesting (e.g., responses, person, organization).
 #' @param center character vector that selects the type of central tendency to use when reporting parameter values.
 #' Choices include: 'mean', 'median', and 'mode'. Default is 'mode'.
 #' @param mass numeric vector the specifies the credible mass used in the Highest Density Interval (HDI). Default is 0.95.
@@ -28,12 +42,28 @@
 #' outside the HDI of the parameter’s posterior (i.e., we reject the null hypothesis). For example,
 #' the ROPE of a coin is set to 0.45 to 0.55 but the posterior 95% HDI is 0.61 - 0.69 so we reject
 #' the null hypothesis value of 0.50. We can accept the null hypothesis if the entire 95% HDI falls with the ROPE. Default is NULL.
-#' @param curve select a curve to display instead of a histogram when y='post'. Default is FALSE.
-#' @param xlim specify plot's x-axis limits with a 2 element numeric vector.
-#' @param ylim specify plot's y-axis limits with a 2 element numeric vector.
+#' @param data object name for the observed data when y='check' or y='multi'.
+#' @param dv character vector of length == 1 for the dependent variable name in the observed data frame
+#' when y='check' or y='multi'.
+#' @param iv character vector of length >= 1 for the independent variable name(s) in the observed data frame
+#' when y='check' or y='multi'.
+#' @param group character vector of length == 1 for the grouping variable name in the observed data frame.
+#' This is primarily used for multilevel or hierarchical models when y='check' or y='multi' that the hierarchies
+#' are based on (e.g., hospitals nested within health systems).
+#' @param add.data character vector of length == 1 to determine the type of observed data added to the plot
+#' when y='check'. Select 'a', 'u', 'al', 'ul', 'dg', 'n' for these options: 'All', 'Unit','All: Lines',
+#' 'Unit: Lines','DID: Groups', 'none'. Default is 'n' for none.
+#' @param main the main title of the plot.
 #' @param xlab a character vector label for the x-axis.
 #' @param ylab a character vector label for the y-axis.
-#' @param main the main title of the plot.
+#' @param xlim specify plot's x-axis limits with a 2 element numeric vector.
+#' @param ylim specify plot's y-axis limits with a 2 element numeric vector.
+#' @param vlim two element vector to specify limits for minimum and maximum values used to extrapolate posterior
+#' lines along the x-axis. For example, when drawing a log-normal distribution, we may want to have our
+#' posterior lines fit within a narrower range while having our graph's x-axis limits extend past those lines.
+#' If so, our value limits (vlim) help us keep our posterior predictive check lines within desired limits.
+#' Default is NULL.
+#' @param curve select a curve to display instead of a histogram when y='post'. Default is FALSE.
 #' @param lwd select the line width.
 #' @param breaks number of breaks in a histogram.
 #' @param bcol a single or multiple element character vector to specify the bar or band color(s).
@@ -43,7 +73,11 @@
 #' When Bayesian estimates and observed values are present, the first colors are Bayesian estimates
 #' while the last colors are observed values. When multiple lines are needed, single use lines
 #' precede multiple use lines. For example, a single comparison value line will be assigned the first lcol
-#' while both rope lines will be given the same color of the second lcol when y='post'. Defaults to 'gray' if nothing selected.
+#' while both rope lines will be given the same color of the second lcol when y='post'. Defaults to 'gray'
+#' if nothing selected.
+#' @param xpt a numeric vector of single or multiple values that indicate placement of points (+) on the
+#' x-axis when y='check'. This is intended for the graphs with predictive checks on Bayesian estimation
+#' (i.e., not trend lines). Default is NULL.
 #' @param pcol a single or multiple element character vector to specify the point color(s).
 #' When Bayesian estimates and observed values are present, the first colors are Bayesian estimates
 #' while the last colors are observed values. Defaults to, if nothing selected, 'gray'.
@@ -51,11 +85,18 @@
 #' @param tgtcol select one or multiple colors for one or multiple target lines. Default is 'gray'.
 #' @param tpline add one or more time point vertical lines using x-axis values. Default is NULL (i.e., no lines).
 #' @param tpcol specify a color for the time point line, tpline. Default is NULL.
+#' @param pline a numeric vector of length == 1 for the number of random posterior predictive check
+#' lines when y='check'. Default is 20.
+#' @param add.legend add a legend by selecting the location as "bottomright", "bottom", "bottomleft",
+#' "left", "topleft", "top", "topright", "right", "center". No legend if nothing selected.
+#' @param legend a character vector of length >= 1 to appear when y='check' or y='multi'. Legends to represent
+#' hierarchical estimates and observed values.
 #' @param cex A numerical value giving the amount by which plotting text and symbols should be magnified relative to the default of 1.
 #' @param cex.axis The magnification to be used for axis annotation relative to the current setting of cex.
 #' @param cex.lab The magnification to be used for x and y labels relative to the current setting of cex.
 #' @param cex.main The magnification to be used for main titles relative to the current setting of cex.
 #' @param cex.text The magnification to be used for the iname text added into the plot relative to the current setting of 1.
+#' @param cex.legend The magnification to be used for the legend added into the plot relative to the current setting of 1.
 #' @param HDItext numeric vector of length == 1 that can be a negative or positive value. Identifies placement of HDI text near credible interval
 #' when y='post'. Values are relative to the x-axis values. Default is 0.7.
 #' @param math mathematics function performed between multiple parameters when y='post'. Available functions are: 'add', 'subtract', 'multiply',
@@ -88,11 +129,12 @@
 #' ## Hospital LOS and readmissions ##
 
 
-plot.Bayes <- function(x, y=NULL, parameter=NULL, center="mode", mass=0.95, compare=NULL, rope=NULL,
-                       curve=FALSE, xlim=NULL, ylim=NULL, xlab=NULL, ylab=NULL, main=NULL, lwd=NULL, breaks=NULL,
-                       bcol=NULL, lcol=NULL, pcol=NULL, tgt=NULL, tgtcol="gray", tpline=NULL, tpcol=NULL, cex=1,
-                         cex.lab=NULL, cex.axis=NULL, cex.main=NULL, cex.text=NULL,
-                       HDItext=0.7, math="n", es="n", round.c=2, ...) {
+plot.Bayes <- function(x, y=NULL, ctype="n", parameter=NULL, center="mode", mass=0.95, compare=NULL, rope=NULL,
+                       data=NULL, dv=NULL, iv=NULL, group=NULL, add.data="n",
+                       main=NULL, xlab=NULL, ylab=NULL, xlim=NULL, ylim=NULL, vlim=NULL, curve=FALSE, lwd=NULL, breaks=NULL,
+                       bcol=NULL, lcol=NULL, xpt=NULL, pcol=NULL, tgt=NULL, tgtcol="gray", tpline=NULL, tpcol=NULL,
+                       pline=1, add.legend=NULL, legend=NULL, cex=1, cex.lab=NULL, cex.axis=NULL, cex.main=NULL,
+                       cex.text=NULL, cex.legend=NULL, HDItext=0.7, math="n", es="n", round.c=2, ...) {
   if (any(class(x) == "Bayes") == FALSE) {stop("Error: Expecting Bayes class object." )}
   #Looking for 1 parameter name
   if(!center %in% c("mode","median","mean")) {
