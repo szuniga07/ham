@@ -28,9 +28,9 @@
 #' For example, use parameter=list('hospital_A', 'hospital_Z') if you want to estimate the difference between the hospital's outcomes.
 #' Use parameter= list(c('hospital_A','hospital_B'), ('hospital_Y','hospital_Z')) to estimate how different the combined hospitals A
 #' and B values are from the combined Hospital Y and Z values. When y='check', use either a multiple element character vector that represents
-#' center, spread, and additional distribution parameters in order (e.g., mean, sd, nu from a t-distribution) or regression parameters in order (e.g., intercept, B1).
-#' When y='multi', use a multiple element character vector to list the parameter names of the hierarchy, in order of the
-#' nesting (e.g., responses, person, organization).
+#' center, spread, and additional distribution parameters in order of 1st, 2nd, and 3rd distribution parameters (e.g., mean, sd, nu from a t-distribution)
+#' or regression parameters in order (e.g., intercept, B1). When y='multi', use a multiple element character vector to list the parameter
+#' names of the hierarchy, in order of the nesting (e.g., responses, person, organization).
 #' @param center character vector that selects the type of central tendency to use when reporting parameter values.
 #' Choices include: 'mean', 'median', and 'mode'. Default is 'mode'.
 #' @param mass numeric vector the specifies the credible mass used in the Highest Density Interval (HDI). Default is 0.95.
@@ -119,7 +119,7 @@
 #' @importFrom graphics lines plot abline points text arrows hist layout matplot mtext plot.new
 #' @importFrom utils head tail
 #' @importFrom methods is
-#' @importFrom stats lm acf cor dgamma dlnorm dnorm dt dweibull pbeta pgamma plnorm pnorm pweibull qbeta qgamma qlnorm qweibull runif
+#' @importFrom stats lm acf cor dgamma dlnorm dnorm dt dweibull pbeta pgamma plnorm pnorm pweibull qbeta qgamma qlnorm qweibull runif qchisq
 #' @export
 #' @references
 #' Kruschke, J. (2014). Doing Bayesian Data Analysis: A Tutorial with R, JAGS, and
@@ -909,6 +909,209 @@ plot.Bayes <- function(x, y=NULL, ctype="n", parameter=NULL, center="mode", mass
   }
 
   ################################################################################
+  #                            4a. Skew-normal density                           #
+  ################################################################################
+  #density
+  dskewn <- function (x, xi = 0, omega = 1, alpha = 0, tau = 0, dp = NULL,
+                      log = FALSE)
+  {
+    if (!is.null(dp)) {
+      if (!missing(alpha))
+        stop("You cannot set both 'dp' and component parameters")
+      xi <- dp[1]
+      omega <- dp[2]
+      alpha <- dp[3]
+      tau <- if (length(dp) > 3)
+        dp[4]
+      else 0
+    }
+    za <- cbind((x - xi)/omega, alpha)
+    z <- za[, 1]
+    alpha <- za[, 2]
+    logN <- (-log(sqrt(2 * pi)) - logb(omega) - z^2/2)
+    logS <- numeric(length(z))
+    ok <- (abs(alpha) < Inf)
+    logS[ok] <- pnorm(tau * sqrt(1 + alpha[ok]^2) + (alpha *
+                                                       z)[ok], log.p = TRUE)
+    logS[!ok] <- log(as.numeric((sign(alpha) * z)[!ok] + tau >
+                                  0))
+    logPDF <- as.numeric(logN + logS - pnorm(tau, log.p = TRUE))
+    logPDF <- replace(logPDF, abs(x) == Inf, -Inf)
+    logPDF <- replace(logPDF, omega <= 0, NaN)
+    out <- if (log)
+      logPDF
+    else exp(logPDF)
+    names(out) <- names(x)
+    return(out)
+  }
+  #probability
+  pskewn <- function (x, xi = 0, omega = 1, alpha = 0, tau = 0, dp = NULL,
+                      engine, ...)
+  {
+    if (!is.null(dp)) {
+      if (!missing(alpha))
+        stop("You cannot set both 'dp' and component parameters")
+      xi <- dp[1]
+      omega <- dp[2]
+      alpha <- dp[3]
+      tau <- if (length(dp) > 3)
+        dp[4]
+      else 0
+    }
+    z <- (x - xi)/omega
+    prob <- rep(NA, length(z))
+    plain <- is.finite(z) & (omega > 0)
+    if (any(!plain)) {
+      prob <- replace(prob, z == -Inf, 0)
+      prob <- replace(prob, z == Inf, 1)
+      prob <- replace(prob, is.na(z) | (omega <= 0), NA)
+    }
+    if (sum(plain) == 0)
+      return(prob)
+    na <- length(alpha)
+    za <- matrix(cbind(z, alpha), ncol = 2)[plain, , drop = FALSE]
+    z <- za[, 1]
+    nz <- length(z)
+    if (missing(engine))
+      engine <- if (na == 1 & nz > 3 & all(z * za[, 2] > -5) &
+                    (tau == 0))
+        "T.Owen"
+#    else "biv.nt.prob" #removing biv.nt.prob from mnormt
+    if (engine == "T.Owen") {
+      if (tau != 0 | na > 1)
+        stop("engine='T.Owen' not compatible with other arguments")
+      p <- pnorm(z) - 2 * T.Owen(z, alpha, ...)
+    }
+    else {
+      p <- numeric(nz)
+      alpha <- za[, 2]
+      delta <- delta.etc(alpha)
+      p.tau <- pnorm(tau)
+      for (k in seq_len(nz)) {
+        if (abs(z[k]) == Inf)
+          p[k] <- (sign(z[k]) + 1)/2
+        else {
+          if (abs(alpha[k]) == Inf) {
+            p[k] <- if (alpha[k] > 0)
+              (pnorm(pmax(z[k], -tau)) - pnorm(-tau))/p.tau
+            else {
+              1 - (pnorm(tau) - pnorm(pmin(z[k], tau)))/p.tau
+            }
+          }
+#          else { #removing mnormt
+#            R <- matrix(c(1, -delta[k], -delta[k], 1),
+#                        2, 2)
+#            p[k] <- mnormt::biv.nt.prob(0, rep(-Inf, 2),
+#                                        c(z[k], tau), c(0, 0), R)/p.tau
+#          }
+        }
+      }
+    }
+    p <- pmin(1, pmax(0, as.numeric(p)))
+    names(prob) <- names(x)
+    replace(prob, plain, p)
+  }
+  #quantile
+  qskewn <- function (p, xi = 0, omega = 1, alpha = 0, tau = 0, dp = NULL,
+                      tol = 0.00000001, solver = "NR", ...)
+  {
+    if (!is.null(dp)) {
+      if (!missing(alpha))
+        stop("You cannot set both 'dp' and component parameters")
+      xi <- dp[1]
+      omega <- dp[2]
+      alpha <- dp[3]
+      tau <- if (length(dp) > 3)
+        dp[4]
+      else 0
+    }
+    if (omega <= 0)
+      stop("argument 'omega' (or dp[2]) must be positive")
+    max.q <- sqrt(qchisq(p, 1)) + tau
+    min.q <- -sqrt(qchisq(1 - p, 1)) + tau
+    if (tau == 0) {
+      if (alpha == Inf)
+        return(xi + omega * max.q)
+      if (alpha == -Inf)
+        return(xi + omega * min.q)
+    }
+    na <- is.na(p) | (p < 0) | (p > 1)
+    zero <- (p == 0)
+    one <- (p == 1)
+    ok <- !(na | zero | one)
+    q.all <- numeric(length(p))
+    names(q.all) <- names(p)
+    q.all <- replace(q.all, na, NA)
+    q.all <- replace(q.all, zero, -Inf)
+    q.all <- replace(q.all, one, Inf)
+    if (sum(ok) == 0)
+      return(q.all)
+    p <- p[ok]
+    dp0 <- c(0, 1, alpha, tau)
+    if (solver == "NR") {
+      dp0 <- c(0, 1, alpha, tau)
+      cum <- sn.cumulants(dp = dp0, n = 4)
+      g1 <- cum[3]/cum[2]^(3/2)
+      g2 <- cum[4]/cum[2]^2
+      x <- qnorm(p)
+      x <- (x + (x^2 - 1) * g1/6 + x * (x^2 - 3) * g2/24 -
+              x * (2 * x^2 - 5) * g1^2/36)
+      x <- cum[1] + sqrt(cum[2]) * x
+      px <- pskewn(x, dp = dp0, ...)
+      max.err <- 1
+      while (max.err > tol) {
+        x1 <- x - (px - p)/dskewn(x, dp = dp0)
+        x <- x1
+        px <- pskewn(x, dp = dp0, ...)
+        max.err <- max(abs(px - p))
+        if (is.na(max.err))
+          stop("failed convergence, try with solver=\"RFB\"")
+      }
+      q <- as.numeric(xi + omega * x)
+    }
+    else {
+      if (solver == "RFB") {
+        abs.alpha <- abs(alpha)
+        if (alpha < 0)
+          p <- (1 - p)
+        x <- xa <- xb <- xc <- fa <- fb <- fc <- rep(NA,
+                                                     length(p))
+        nc <- rep(TRUE, length(p))
+        fc[!nc] <- 0
+        xa[nc] <- qnorm(p[nc])
+        xb[nc] <- sqrt(qchisq(p[nc], 1)) + abs(tau)
+        fa[nc] <- pskewn(xa[nc], 0, 1, abs.alpha, tau, ...) -
+          p[nc]
+        fb[nc] <- pskewn(xb[nc], 0, 1, abs.alpha, tau, ...) -
+          p[nc]
+        regula.falsi <- FALSE
+        while (sum(nc) > 0) {
+          xc[nc] <- if (regula.falsi)
+            xb[nc] - fb[nc] * (xb[nc] - xa[nc])/(fb[nc] -
+                                                   fa[nc])
+          else (xb[nc] + xa[nc])/2
+          fc[nc] <- pskewn(xc[nc], 0, 1, abs.alpha, tau,
+                        ...) - p[nc]
+          pos <- (fc[nc] > 0)
+          xa[nc][!pos] <- xc[nc][!pos]
+          fa[nc][!pos] <- fc[nc][!pos]
+          xb[nc][pos] <- xc[nc][pos]
+          fb[nc][pos] <- fc[nc][pos]
+          x[nc] <- xc[nc]
+          nc[(abs(fc) < tol)] <- FALSE
+          regula.falsi <- !regula.falsi
+        }
+        Sign <- function(x) sign(x) + as.numeric(x == 0)
+        q <- as.numeric(xi + omega * Sign(alpha) * x)
+      }
+      else stop("unknown solver")
+    }
+    q.all[ok] <- q
+    names(q.all) <- names(q)
+    return(q.all)
+  }
+
+  ################################################################################
   #                  4. Posterior Predictive Check for groups                    #
   ################################################################################
   #Use the coda object and dataset. Works for normal and log-normal distributions.
@@ -979,7 +1182,7 @@ plot.Bayes <- function(x, y=NULL, ctype="n", parameter=NULL, center="mode", mass
       #Skew-Normal Distribution
       if (Distribution == "sn") {
         lines( xComb ,
-               dsn( xComb, xi=MC.Chain[chnIdx, Mean.Var], omega=MC.Chain[chnIdx, SD.Var],
+               dskewn( xComb, xi=MC.Chain[chnIdx, Mean.Var], omega=MC.Chain[chnIdx, SD.Var],
                     alpha=MC.Chain[chnIdx, MCnu]), col= Line.Color, lwd=lwd )
       }
       #Weibull Distribution
@@ -1355,19 +1558,20 @@ plot.Bayes <- function(x, y=NULL, ctype="n", parameter=NULL, center="mode", mass
     if(!is.null(yVal)) {
       if(Distribution == "Skew-normal") {
         for (i in 1:length(yVal)) {         #I need to subtract 1-psn to get the right prop > 1
-          PsnormGtY[[i]] <- summarizePost( 1 - psn(x=yVal[i], xi= MC.Matrix[, Center], omega= MC.Matrix[, Spread],
+          PsnormGtY[[i]] <- summarizePost( 1 - pskewn(x=yVal[i], xi= MC.Matrix[, Center], omega= MC.Matrix[, Spread],
                                                    alpha= MC.Matrix[, Skew], lower.tail=FALSE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
           names(PsnormGtY)[i] <- paste0("Y_", yVal[i])
         }
       }
     }
     # Quantiles of Y.
-    # Needs mapply for qsn() b/c it creates an impossible error for "omega" <= 0.
+    # Needs mapply for qskewn() b/c it creates an impossible error for "omega" <= 0.
     QsnormGtY <- list()
     if(!is.null(qVal)) {
       if(Distribution == "Skew-normal") {
         for (i in 1:length(qVal)) {
-          QsnormGtY[[i]] <- summarizePost(mapply(qsn, p=qVal[i], xi=MC.Matrix[, Center], omega=MC.Matrix[, Spread],
+#          QsnormGtY[[i]] <- summarizePost(mapply(qsn, p=qVal[i], xi=MC.Matrix[, Center], omega=MC.Matrix[, Spread],
+          QsnormGtY[[i]] <- summarizePost(mapply(qskewn, p=qVal[i], xi=MC.Matrix[, Center], omega=MC.Matrix[, Spread],
                                                  alpha=MC.Matrix[, Skew]))[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
           names(QsnormGtY)[i] <- paste0("Percentile_", qVal[i])
         }
@@ -2697,96 +2901,39 @@ if(y == "check") {
                                    Max.Val=vlim[2], Round.Digits=round.c, Point.Loc= xpt, PCol=pcol,
                                    Leg.Loc= add.legend, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
                                    cex.axis=cex.axis, legend=legend, cex.legend=cex.legend, lwd=lwd, Y.Lab=ylab ),
-         #MCnu extra parameter not in above!!!!!!
-             "Skew-normal" =     fncGrpPostPredCheck(Coda.Object=DBDA_coda_object_df(), datFrm=df(),
-                                                     Outcome=dbda_post_check_grp_Y(), Group=dbda_post_check_grp_X(),
-                                                     Group.Level=dbda_post_check_grp_level_X(),
-                                                     Mean.Var=dbda_post_check_grp_pm(),
-                                                     SD.Var=dbda_post_check_grp_psd(), MCnu= dbda_post_check_grp_pnu(), #MCnu extra
-                                                     Distribution=dbda_post_check_grp_distr(),
-                                                     Num.Lines=dbda_post_check_grp_number_lines(),
-                                                     Main.Title=dbda_post_check_grp_main_title(),
-                                                     X.Lab=dbda_post_check_grp_x_label(),
-                                                     Bar.Color=dbda_post_check_grp_bar_colors(),
-                                                     Line.Color=dbda_post_check_grp_line_colors(),
-                                                     Hist.Breaks=dbda_post_check_grp_number_bars(),
-                                                     CEX.size=dbda_post_check_grp_label_multiplier(),
-                                                     X.Lim=(eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
-                                                     Y.Lim=(eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
-                                                     Min.Val=dbda_post_check_grp_min_value(),
-                                                     Max.Val=dbda_post_check_grp_max_value(),
-                                                     Round.Digits=dbda_post_check_grp_round_place(),
-                                                     Point.Loc= (eval(parse(text=dbda_post_check_grp_x_axis_points() )) ),
-                                                     PCol = dbda_post_check_point_colors(),
-                                                     Add.Lgd= dbda_post_check_add_legend(),
-                                                     Leg.Loc=dbda_post_check_legend_location() ) ,
-             "Weibull" =     fncGrpPostPredCheck(Coda.Object=DBDA_coda_object_df(), datFrm=df(),
-                                                 Outcome=dbda_post_check_grp_Y(), Group=dbda_post_check_grp_X(),
-                                                 Group.Level=dbda_post_check_grp_level_X(),
-                                                 Mean.Var=dbda_post_check_grp_pm(),
-                                                 SD.Var=dbda_post_check_grp_psd(), MCnu= dbda_post_check_grp_pnu(),
-                                                 Distribution=dbda_post_check_grp_distr(),
-                                                 Num.Lines=dbda_post_check_grp_number_lines(),
-                                                 Main.Title=dbda_post_check_grp_main_title(),
-                                                 X.Lab=dbda_post_check_grp_x_label(),
-                                                 Bar.Color=dbda_post_check_grp_bar_colors(),
-                                                 Line.Color=dbda_post_check_grp_line_colors(),
-                                                 Hist.Breaks=dbda_post_check_grp_number_bars(),
-                                                 CEX.size=dbda_post_check_grp_label_multiplier(),
-                                                 X.Lim=(eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
-                                                 Y.Lim=(eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
-                                                 Min.Val=dbda_post_check_grp_min_value(),
-                                                 Max.Val=dbda_post_check_grp_max_value(),
-                                                 Round.Digits=dbda_post_check_grp_round_place(),
-                                                 Point.Loc= (eval(parse(text=dbda_post_check_grp_x_axis_points() )) ),
-                                                 PCol = dbda_post_check_point_colors(),
-                                                 Add.Lgd= dbda_post_check_add_legend(),
-                                                 Leg.Loc=dbda_post_check_legend_location() ) ,
-             "Gamma" =     fncGrpPostPredCheck(Coda.Object=DBDA_coda_object_df(), datFrm=df(),
-                                               Outcome=dbda_post_check_grp_Y(), Group=dbda_post_check_grp_X(),
-                                               Group.Level=dbda_post_check_grp_level_X(),
-                                               Mean.Var=dbda_post_check_grp_pm(),
-                                               SD.Var=dbda_post_check_grp_psd(), MCnu= dbda_post_check_grp_pnu(),
-                                               Distribution=dbda_post_check_grp_distr(),
-                                               Num.Lines=dbda_post_check_grp_number_lines(),
-                                               Main.Title=dbda_post_check_grp_main_title(),
-                                               X.Lab=dbda_post_check_grp_x_label(),
-                                               Bar.Color=dbda_post_check_grp_bar_colors(),
-                                               Line.Color=dbda_post_check_grp_line_colors(),
-                                               Hist.Breaks=dbda_post_check_grp_number_bars(),
-                                               CEX.size=dbda_post_check_grp_label_multiplier(),
-                                               X.Lim=(eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
-                                               Y.Lim=(eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
-                                               Min.Val=dbda_post_check_grp_min_value(),
-                                               Max.Val=dbda_post_check_grp_max_value(),
-                                               Round.Digits=dbda_post_check_grp_round_place(),
-                                               Point.Loc= (eval(parse(text=dbda_post_check_grp_x_axis_points() )) ),
-                                               PCol = dbda_post_check_point_colors(),
-                                               Add.Lgd= dbda_post_check_add_legend(),
-                                               Leg.Loc=dbda_post_check_legend_location() ) ,
-             "t" =     fncGrpPostPredCheck(Coda.Object=DBDA_coda_object_df(), datFrm=df(),
-                                           Outcome=dbda_post_check_grp_Y(), Group=dbda_post_check_grp_X(),
-                                           Group.Level=dbda_post_check_grp_level_X(),
-                                           Mean.Var=dbda_post_check_grp_pm(),
-                                           SD.Var=dbda_post_check_grp_psd(), MCnu= dbda_post_check_grp_pnu(),
-                                           Distribution=dbda_post_check_grp_distr(),
-                                           Num.Lines=dbda_post_check_grp_number_lines(),
-                                           Main.Title=dbda_post_check_grp_main_title(),
-                                           X.Lab=dbda_post_check_grp_x_label(),
-                                           Bar.Color=dbda_post_check_grp_bar_colors(),
-                                           Line.Color=dbda_post_check_grp_line_colors(),
-                                           Hist.Breaks=dbda_post_check_grp_number_bars(),
-                                           CEX.size=dbda_post_check_grp_label_multiplier(),
-                                           X.Lim=(eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
-                                           Y.Lim=(eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
-                                           Min.Val=dbda_post_check_grp_min_value(),
-                                           Max.Val=dbda_post_check_grp_max_value(),
-                                           Round.Digits=dbda_post_check_grp_round_place(),
-                                           Point.Loc= (eval(parse(text=dbda_post_check_grp_x_axis_points() )) ),
-                                           PCol = dbda_post_check_point_colors(),
-                                           Add.Lgd= dbda_post_check_add_legend(),
-                                           Leg.Loc=dbda_post_check_legend_location() ) ,
-             "t: 1 group" = fncPlotSingleT(codaSamples=DBDA_coda_object_df(), datFrm=df(),
+         "sn" = fncGrpPostPredCheck(MCMC=MCMC, datFrm=data, Outcome=dv, Group=group[[1]],
+                                    Group.Level=group[[2]], Mean.Var=parameter[1], SD.Var=parameter[2],
+                                    MCnu=parameter[3], Distribution=ctype, Num.Lines=pline,
+                                    Main.Title=main, X.Lab=xlab, Bar.Color=bcol,
+                                    Line.Color=lcol, Hist.Breaks=breaks, X.Lim=xlim, Y.Lim=ylim,  Min.Val=vlim[1],
+                                    Max.Val=vlim[2], Round.Digits=round.c, Point.Loc= xpt, PCol=pcol,
+                                    Leg.Loc= add.legend, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
+                                    cex.axis=cex.axis, legend=legend, cex.legend=cex.legend, lwd=lwd, Y.Lab=ylab ),
+         "w" = fncGrpPostPredCheck(MCMC=MCMC, datFrm=data, Outcome=dv, Group=group[[1]],
+                                    Group.Level=group[[2]], Mean.Var=parameter[1], SD.Var=parameter[2],
+                                    MCnu=parameter[3], Distribution=ctype, Num.Lines=pline,
+                                    Main.Title=main, X.Lab=xlab, Bar.Color=bcol,
+                                    Line.Color=lcol, Hist.Breaks=breaks, X.Lim=xlim, Y.Lim=ylim,  Min.Val=vlim[1],
+                                    Max.Val=vlim[2], Round.Digits=round.c, Point.Loc= xpt, PCol=pcol,
+                                    Leg.Loc= add.legend, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
+                                    cex.axis=cex.axis, legend=legend, cex.legend=cex.legend, lwd=lwd, Y.Lab=ylab ),
+         "g" = fncGrpPostPredCheck(MCMC=MCMC, datFrm=data, Outcome=dv, Group=group[[1]],
+                                    Group.Level=group[[2]], Mean.Var=parameter[1], SD.Var=parameter[2],
+                                    MCnu=NULL, Distribution=ctype, Num.Lines=pline,
+                                    Main.Title=main, X.Lab=xlab, Bar.Color=bcol,
+                                    Line.Color=lcol, Hist.Breaks=breaks, X.Lim=xlim, Y.Lim=ylim,  Min.Val=vlim[1],
+                                    Max.Val=vlim[2], Round.Digits=round.c, Point.Loc= xpt, PCol=pcol,
+                                    Leg.Loc= add.legend, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
+                                    cex.axis=cex.axis, legend=legend, cex.legend=cex.legend, lwd=lwd, Y.Lab=ylab ),
+         "t" = fncGrpPostPredCheck(MCMC=MCMC, datFrm=data, Outcome=dv, Group=group[[1]],
+                                    Group.Level=group[[2]], Mean.Var=parameter[1], SD.Var=parameter[2],
+                                    MCnu=parameter[3], Distribution=ctype, Num.Lines=pline,
+                                    Main.Title=main, X.Lab=xlab, Bar.Color=bcol,
+                                    Line.Color=lcol, Hist.Breaks=breaks, X.Lim=xlim, Y.Lim=ylim,  Min.Val=vlim[1],
+                                    Max.Val=vlim[2], Round.Digits=round.c, Point.Loc= xpt, PCol=pcol,
+                                    Leg.Loc= add.legend, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
+                                    cex.axis=cex.axis, legend=legend, cex.legend=cex.legend, lwd=lwd, Y.Lab=ylab ),
+         "t: 1 group" = fncPlotSingleT(codaSamples=DBDA_coda_object_df(), datFrm=df(),
                                            yName=dbda_post_check_grp_Y(),
                                            MCmean=dbda_post_check_grp_pm(),
                                            MCsigma=dbda_post_check_grp_psd(),
