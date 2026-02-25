@@ -27,8 +27,8 @@
 #' parameter= c('IntA', 'IntB')). Use a 2 element list to perform mathematical calculations of multiple parameters (see 'math' below).
 #' For example, use parameter=list('hospital_A', 'hospital_Z') if you want to estimate the difference between the hospital's outcomes.
 #' Use parameter= list(c('hospital_A','hospital_B'), ('hospital_Y','hospital_Z')) to estimate how different the combined hospitals A
-#' and B values are from the combined Hospital Y and Z values. When y='check', use either a multiple element character vector that represent
-#' distribution parameters in order (e.g., mean, sd, nu from a t-distribution) or regression parameters in order (e.g., intercept, B1).
+#' and B values are from the combined Hospital Y and Z values. When y='check', use either a multiple element character vector that represents
+#' center, spread, and additional distribution parameters in order (e.g., mean, sd, nu from a t-distribution) or regression parameters in order (e.g., intercept, B1).
 #' When y='multi', use a multiple element character vector to list the parameter names of the hierarchy, in order of the
 #' nesting (e.g., responses, person, organization).
 #' @param center character vector that selects the type of central tendency to use when reporting parameter values.
@@ -47,9 +47,9 @@
 #' when y='check' or y='multi'.
 #' @param iv character vector of length >= 1 for the independent variable name(s) in the observed data frame
 #' when y='check' or y='multi'.
-#' @param group character vector of length == 1 for the grouping variable name in the observed data frame.
-#' This is primarily used for multilevel or hierarchical models when y='check' or y='multi' that the hierarchies
-#' are based on (e.g., hospitals nested within health systems).
+#' @param group character list of length == 2 for 1) the grouping variable name and 2) specific group(s) in the
+#' observed data frame. This is primarily used for multilevel or hierarchical models when y='check' or y='multi'
+#' that the hierarchies are based on (e.g., hospitals nested within health systems).
 #' @param add.data character vector of length == 1 to determine the type of observed data added to the plot
 #' when y='check'. Select 'a', 'u', 'al', 'ul', 'dg', 'n' for these options: 'All', 'Unit','All: Lines',
 #' 'Unit: Lines','DID: Groups', 'none'. Default is 'n' for none.
@@ -65,7 +65,7 @@
 #' Default is NULL.
 #' @param curve select a curve to display instead of a histogram when y='post'. Default is FALSE.
 #' @param lwd select the line width.
-#' @param breaks number of breaks in a histogram.
+#' @param breaks number of breaks in a histogram. Default is 15.
 #' @param bcol a single or multiple element character vector to specify the bar or band color(s).
 #' When Bayesian estimates and observed values are present, the first colors are Bayesian estimates
 #' while the last colors are observed values. Defaults to, if nothing selected, 'gray'.
@@ -75,12 +75,12 @@
 #' precede multiple use lines. For example, a single comparison value line will be assigned the first lcol
 #' while both rope lines will be given the same color of the second lcol when y='post'. Defaults to 'gray'
 #' if nothing selected.
-#' @param xpt a numeric vector of single or multiple values that indicate placement of points (+) on the
-#' x-axis when y='check'. This is intended for the graphs with predictive checks on Bayesian estimation
-#' (i.e., not trend lines). Default is NULL.
 #' @param pcol a single or multiple element character vector to specify the point color(s).
 #' When Bayesian estimates and observed values are present, the first colors are Bayesian estimates
 #' while the last colors are observed values. Defaults to, if nothing selected, 'gray'.
+#' @param xpt a numeric vector of single or multiple values that indicate placement of points (+) on the
+#' x-axis when y='check'. This is intended for the graphs with predictive checks on Bayesian estimation
+#' (i.e., not trend lines). Default is NULL.
 #' @param tgt specify 1 or more values on the y-axis of where to add one or more horizontal target lines. Default is NULL.
 #' @param tgtcol select one or multiple colors for one or multiple target lines. Default is 'gray'.
 #' @param tpline add one or more time point vertical lines using x-axis values. Default is NULL (i.e., no lines).
@@ -131,9 +131,9 @@
 
 plot.Bayes <- function(x, y=NULL, ctype="n", parameter=NULL, center="mode", mass=0.95, compare=NULL, rope=NULL,
                        data=NULL, dv=NULL, iv=NULL, group=NULL, add.data="n",
-                       main=NULL, xlab=NULL, ylab=NULL, xlim=NULL, ylim=NULL, vlim=NULL, curve=FALSE, lwd=NULL, breaks=NULL,
-                       bcol=NULL, lcol=NULL, xpt=NULL, pcol=NULL, tgt=NULL, tgtcol="gray", tpline=NULL, tpcol=NULL,
-                       pline=1, add.legend=NULL, legend=NULL, cex=1, cex.lab=NULL, cex.axis=NULL, cex.main=NULL,
+                       main=NULL, xlab=NULL, ylab=NULL, xlim=NULL, ylim=NULL, vlim=NULL, curve=FALSE, lwd=NULL, breaks=15,
+                       bcol=NULL, lcol=NULL, pcol=NULL, xpt=NULL, tgt=NULL, tgtcol="gray", tpline=NULL, tpcol=NULL,
+                       pline=20, add.legend=NULL, legend=NULL, cex=1, cex.lab=NULL, cex.axis=NULL, cex.main=NULL,
                        cex.text=NULL, cex.legend=NULL, HDItext=0.7, math="n", es="n", round.c=2, ...) {
   if (any(class(x) == "Bayes") == FALSE) {stop("Error: Expecting Bayes class object." )}
   #Looking for 1 parameter name
@@ -163,8 +163,20 @@ plot.Bayes <- function(x, y=NULL, ctype="n", parameter=NULL, center="mode", mass
       stop("Error: Expecting 1 single parameter when doing diagnostics.")
     }
   }
-
-
+  # ensure data and dependent variable are both selected if needed
+  if(!is.null(data)) {
+    if(is.null(dv)) {
+      stop("Error: Expecting 'dv' argument has an input when 'data' argument is not NULL.")
+    }
+  }
+#Hierarchical group variable and group level
+  if ( !is.null(ctype)) {
+    if ( !is.null(group)) {
+      if ( length(group) != 2) {
+        stop("Error: Expecting a 2 element list with group variable and specific group level.")
+      }
+    }
+  }
 #Assign new objects
   MCMC <- x$MCMC
   cenTend <- center
@@ -173,6 +185,58 @@ plot.Bayes <- function(x, y=NULL, ctype="n", parameter=NULL, center="mode", mass
   credMass <- mass
   showCurve <- curve
   HDItextPlace <- HDItext
+  #bar colors
+  if(is.null(bcol)) {
+    bcol <- "gray"
+  } else {
+    bcol <- bcol
+  }
+  #point colors
+  if(is.null(pcol)) {
+    pcol <- "gray"
+  } else {
+    pcol <- pcol
+  }
+  #Line colors
+  if(is.null(lcol)) {
+    lcol <- "gray"
+  } else {
+    lcol <- lcol
+  }
+  #######
+  # CEX #
+  #######
+  #Make CEX for legend
+  if(!is.null(cex.legend)) {
+    cex.legend <- cex.legend
+  } else {
+    cex.legend <- 1
+  }
+  #cex.axis
+  if(!is.null(cex.axis)) {
+    cex.axis <- cex.axis
+  } else {
+    cex.axis <- 1
+  }
+  #cex.lab
+  if(!is.null(cex.lab)) {
+    cex.lab <- cex.lab
+  } else {
+    cex.lab <- 1
+  }
+  #cex.main
+  if(!is.null(cex.main)) {
+    cex.main <- cex.main
+  } else {
+    cex.main <- 1
+  }
+  #cex.text
+  if(!is.null(cex.text)) {
+    cex.text <- cex.text
+  } else {
+    cex.text <- 1
+  }
+
   #Chain statistics
   if(y %in% c('dxa', 'dxd', 'dxg', 'dxt')) {
   n_rows <- dim(MCMC[, parameter, drop=FALSE])[1]
@@ -821,7 +885,7 @@ plot.Bayes <- function(x, y=NULL, ctype="n", parameter=NULL, center="mode", mass
     }
     #Mean line
     if(Level >= 2) {
-      abline(v=mainYmn, lwd=1*lineMulti, col="grey", lty=3)
+      abline(v=mainYmn, lwd=lwd, col="grey", lty=3)
     }
     axis(1)
     axis(2, at=1:length(plot_row_numbers), labels= substr(hdidf[plot_row_numbers, Group2], 1, 10), las=1, cex.axis=1*labMulti )
@@ -836,11 +900,11 @@ plot.Bayes <- function(x, y=NULL, ctype="n", parameter=NULL, center="mode", mass
     }
     #Add legend
     if(Add.Lgd =="Yes") {
-      legend(Leg.Loc, legend=legend_text, col=pcol_vector,
+      legend(Leg.Loc, legend=legend_text, col=pcol_vector, lwd=lwd,
              pch=legend_type, pt.bg=pcol_vector, cex = 2, bty="n", inset=c(0, .05))
     }
     #Target line
-    abline(v=tgt, lwd=1*lineMulti, col=tgt.col, lty=1)
+    abline(v=tgt, lwd=lwd, col=tgt.col, lty=1)
     box()
   }
 
@@ -848,16 +912,28 @@ plot.Bayes <- function(x, y=NULL, ctype="n", parameter=NULL, center="mode", mass
   #                  4. Posterior Predictive Check for groups                    #
   ################################################################################
   #Use the coda object and dataset. Works for normal and log-normal distributions.
-  fncGrpPostPredCheck <- function(Coda.Object, datFrm, Outcome, Group, Group.Level,
-                                  Mean.Var, SD.Var, MCnu, Distribution, Num.Lines=NULL,
-                                  Main.Title=NULL, X.Lab=NULL, Bar.Color=NULL,
-                                  Line.Color=NULL, Hist.Breaks=NULL, CEX.size=NULL,
-                                  X.Lim=NULL, Y.Lim=NULL, Min.Val=NULL, Max.Val=NULL, Round.Digits=NULL,
-                                  Point.Loc= NULL, PCol=NULL, Add.Lgd= NULL, Leg.Loc= NULL) {
+  fncGrpPostPredCheck <- function(MCMC, datFrm, Outcome, Group=NULL, Group.Level=NULL,
+                                  Mean.Var, SD.Var, MCnu=NULL, Distribution, Num.Lines=NULL,
+                                  Main.Title=NULL, X.Lab=NULL, Y.Lab=NULL, #new
+                                  Bar.Color=NULL, lwd=NULL, #new
+                                  Line.Color=NULL, Hist.Breaks=NULL,
+                                  #CEX.size=NULL,
+                                  cex.lab=NULL, cex= 1, cex.main=NULL, cex.axis=NULL, #new
+                                  X.Lim=NULL, Y.Lim=NULL,
+                                  Min.Val=NULL, Max.Val=NULL, Round.Digits=NULL,
+                                  Point.Loc= NULL, PCol=NULL,
+                                  #Add.Lgd= NULL, #drop arg...replace with loc
+                                  Leg.Loc= NULL, legend= NULL, cex.legend= NULL ) { #new
     #Make coda into as.matrix
-    MC.Chain <- as.matrix( Coda.Object )
+    MC.Chain <- MCMC
     chainLength <- NROW(MC.Chain)  #Chain length
-
+    #Get min and max value for key parameter
+    if(is.null(Min.Val)) {
+      Min.Val <- min(MC.Chain[, Mean.Var])
+    }
+    if(is.null(Max.Val)) {
+      Max.Val <- max(MC.Chain[, Mean.Var])
+    }
     #Get a number of pseudo-random chains
     pltIdx <- floor(seq(1, chainLength, length= Num.Lines))
     #Get spread in outcome variable values
@@ -870,75 +946,75 @@ plot.Bayes <- function(x, y=NULL, ctype="n", parameter=NULL, center="mode", mass
     }
     ## Graph ##
     #Allows me to run if I only have 1 group by leaving "generate levels =="No"
-    if (nchar(Group.Level) == 0 ) {
-      hist( datFrm[, Outcome], xlab= X.Lab, ylab=NULL,
+    if ( is.null(Group)) {
+      hist( datFrm[, Outcome], xlab= X.Lab, ylab=Y.Lab,
             main= Main.Title, breaks=Hist.Breaks, col= Bar.Color, border="white",
-            prob=TRUE, cex.lab=CEX.size, cex=CEX.size, cex.main=CEX.size,
-            xlim=X.Lim, ylim=Y.Lim, lab=NULL, axes=FALSE)
+            prob=TRUE, cex.lab=cex.lab, cex=cex, cex.main=cex.main,
+            xlim=X.Lim, ylim=Y.Lim, axes=FALSE)
     } else {
-      hist( datFrm[, Outcome][datFrm[, Group] == Group.Level] , xlab= X.Lab, ylab=NULL,
+      hist( datFrm[, Outcome][datFrm[, Group] == Group.Level], xlab= X.Lab, ylab=Y.Lab,
             main= Main.Title, breaks=Hist.Breaks, col= Bar.Color, border="white",
-            prob=TRUE, cex.lab=CEX.size, cex=CEX.size, cex.main=CEX.size,
-            xlim=X.Lim, ylim=Y.Lim, lab=NULL, axes=FALSE)
+            prob=TRUE, cex.lab=cex.lab, cex=cex, cex.main=cex.main,
+            xlim=X.Lim, ylim=Y.Lim, axes=FALSE)
     }
-    axis(1)  #Put values in labels
+    axis(1, cex.axis=cex.axis)  #Put values in labels
     #This adds in minimum value in case it isn't in range (e.g., show negatve range of normal distribution)
-    axis(1, at=X.Lim[1])
+    axis(1, at=X.Lim[1], cex.axis=cex.axis)
+    axis(2, cex.axis=cex.axis)  #Put values in density
     # box()   #Dropping this for now because it looks better without
     #Add in posterior estimate lines
     for ( chnIdx in pltIdx ) {
       #Normal Distribution
-      if (Distribution == "Normal") {
+      if (Distribution == "n") {
         lines( xComb ,
                dnorm( xComb, MC.Chain[chnIdx, Mean.Var], MC.Chain[chnIdx, SD.Var] ),
-               col= Line.Color )
+               col= Line.Color, lwd=lwd )
       }
       #Log-Normal Distribution
-      if (Distribution == "Log-normal") {
+      if (Distribution == "ln") {
         lines( xComb ,
                dlnorm( xComb, MC.Chain[chnIdx, Mean.Var], MC.Chain[chnIdx, SD.Var] ),
-               col= Line.Color )
+               col= Line.Color , lwd=lwd)
       }
       #Skew-Normal Distribution
-      if (Distribution == "Skew-normal") {
+      if (Distribution == "sn") {
         lines( xComb ,
                dsn( xComb, xi=MC.Chain[chnIdx, Mean.Var], omega=MC.Chain[chnIdx, SD.Var],
-                    alpha=MC.Chain[chnIdx, MCnu]), col= Line.Color )
+                    alpha=MC.Chain[chnIdx, MCnu]), col= Line.Color, lwd=lwd )
       }
       #Weibull Distribution
-      if (Distribution == "Weibull") {
+      if (Distribution == "w") {
         lines( xComb ,
                dweibull( xComb, shape=MC.Chain[chnIdx, Mean.Var], scale=MC.Chain[chnIdx, SD.Var] ),
-               col= Line.Color )
+               col= Line.Color, lwd=lwd )
       }
       #Gamma Distribution
-      if (Distribution == "Gamma") {
+      if (Distribution == "g") {
         lines( xComb ,
                dgamma( xComb, shape=MC.Chain[chnIdx, Mean.Var], rate=MC.Chain[chnIdx, SD.Var] ),
-               col= Line.Color )
+               col= Line.Color, lwd=lwd )
       }
       #t Distribution
       if (Distribution == "t") {
         lines( xComb ,
                dt( xComb, df= MC.Chain[chnIdx, MCnu], ncp= MC.Chain[chnIdx, Mean.Var] ),
-               col= Line.Color )
+               col= Line.Color, lwd=lwd )
       }
       #Add points
       if (!is.null(Point.Loc)) {
         for (i in 1:length(Point.Loc)) {
-          points(x=Point.Loc[i], y=0, pch=3, lwd=3, cex=CEX.size, col=PCol)
+          points(x=Point.Loc[i], y=0, pch=3, lwd=3, cex=cex, col=PCol)
         }
       }
       #Add legend
-      if(Add.Lgd =="Yes") {
-        legend_text <- c(paste0("Observed ", abbreviate(Group.Level, 8)), "Posterior Estimate")
+      if(!is.null(Leg.Loc) ) {
+        legend_text <- if (!is.null(legend)) legend else c(paste0("Observed ", abbreviate(Group.Level, 8)), "Posterior Estimate")
         legend_type <- c(1, 1)
         pcol_vector <- c(Bar.Color, Line.Color)
-        legend(Leg.Loc, legend=legend_text, col=pcol_vector,
-               lty=legend_type, pt.bg=pcol_vector, cex = 2, bty="n", inset=c(0, .05))
+        legend(x=Leg.Loc, legend=legend_text, col=pcol_vector, lty=legend_type,
+               pt.bg=pcol_vector, cex = cex.legend, bty="n", inset=c(0, .05))
       }
     }
-
   } #End of function
 
   ################################################################################
@@ -1625,9 +1701,9 @@ plot.Bayes <- function(x, y=NULL, ctype="n", parameter=NULL, center="mode", mass
   #                    8. Bayesian Effect sizes                                  #
   ################################################################################
   #This function calculates the proportion above specific values.
-  fncBayesEffectSize <- function( mcmc, Distribution=NULL, yVal1=NULL, yVal2=NULL, yVal3=NULL, CenTend=NULL ) {
+  fncBayesEffectSize <- function( MCMC, Distribution=NULL, yVal1=NULL, yVal2=NULL, yVal3=NULL, CenTend=NULL ) {
     #Convert into a matrix
-    MC.Matrix <- as.matrix(mcmc[, -1])
+    MC.Matrix <- as.matrix(MCMC[, -1])
     ###########################
     ## Calculate effect size ##
     ###########################
@@ -2601,6 +2677,458 @@ if(y == "post") {
   if(y == "dxt") {
     traceplot( MCMC=MCMC, parameter=parameter, n_rowchn=n_rowchn)
   }
+  ## Posterior Predictive Checks ##
+if(y == "check") {
+  switch(ctype,
+         "n" = fncGrpPostPredCheck(MCMC=MCMC, datFrm=data, Outcome=dv, Group=group[[1]],
+                                   Group.Level=group[[2]], Mean.Var=parameter[1], SD.Var=parameter[2],
+                                   MCnu=NULL, Distribution=ctype, Num.Lines=pline,
+                                   Main.Title=main, X.Lab=xlab, Bar.Color=bcol,
+                                   Line.Color=lcol, Hist.Breaks=breaks, X.Lim=xlim, Y.Lim=ylim,  Min.Val=vlim[1],
+                                   Max.Val=vlim[2], Round.Digits=round.c, Point.Loc= xpt, PCol=pcol,
+                                   Leg.Loc= add.legend, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
+                                   cex.axis=cex.axis, legend=legend, cex.legend=cex.legend, lwd=lwd, Y.Lab=ylab ),
+         "ln" = fncGrpPostPredCheck(MCMC=MCMC, datFrm=data, Outcome=dv, Group=group[[1]],
+                                   Group.Level=group[[2]], Mean.Var=parameter[1], SD.Var=parameter[2],
+                                   MCnu=NULL, Distribution=ctype, Num.Lines=pline,
+                                   Main.Title=main, X.Lab=xlab, Bar.Color=bcol,
+                                   Line.Color=lcol, Hist.Breaks=breaks, X.Lim=xlim, Y.Lim=ylim,  Min.Val=vlim[1],
+                                   Max.Val=vlim[2], Round.Digits=round.c, Point.Loc= xpt, PCol=pcol,
+                                   Leg.Loc= add.legend, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
+                                   cex.axis=cex.axis, legend=legend, cex.legend=cex.legend, lwd=lwd, Y.Lab=ylab ),
+         #MCnu extra parameter not in above!!!!!!
+             "Skew-normal" =     fncGrpPostPredCheck(Coda.Object=DBDA_coda_object_df(), datFrm=df(),
+                                                     Outcome=dbda_post_check_grp_Y(), Group=dbda_post_check_grp_X(),
+                                                     Group.Level=dbda_post_check_grp_level_X(),
+                                                     Mean.Var=dbda_post_check_grp_pm(),
+                                                     SD.Var=dbda_post_check_grp_psd(), MCnu= dbda_post_check_grp_pnu(), #MCnu extra
+                                                     Distribution=dbda_post_check_grp_distr(),
+                                                     Num.Lines=dbda_post_check_grp_number_lines(),
+                                                     Main.Title=dbda_post_check_grp_main_title(),
+                                                     X.Lab=dbda_post_check_grp_x_label(),
+                                                     Bar.Color=dbda_post_check_grp_bar_colors(),
+                                                     Line.Color=dbda_post_check_grp_line_colors(),
+                                                     Hist.Breaks=dbda_post_check_grp_number_bars(),
+                                                     CEX.size=dbda_post_check_grp_label_multiplier(),
+                                                     X.Lim=(eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                                     Y.Lim=(eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                     Min.Val=dbda_post_check_grp_min_value(),
+                                                     Max.Val=dbda_post_check_grp_max_value(),
+                                                     Round.Digits=dbda_post_check_grp_round_place(),
+                                                     Point.Loc= (eval(parse(text=dbda_post_check_grp_x_axis_points() )) ),
+                                                     PCol = dbda_post_check_point_colors(),
+                                                     Add.Lgd= dbda_post_check_add_legend(),
+                                                     Leg.Loc=dbda_post_check_legend_location() ) ,
+             "Weibull" =     fncGrpPostPredCheck(Coda.Object=DBDA_coda_object_df(), datFrm=df(),
+                                                 Outcome=dbda_post_check_grp_Y(), Group=dbda_post_check_grp_X(),
+                                                 Group.Level=dbda_post_check_grp_level_X(),
+                                                 Mean.Var=dbda_post_check_grp_pm(),
+                                                 SD.Var=dbda_post_check_grp_psd(), MCnu= dbda_post_check_grp_pnu(),
+                                                 Distribution=dbda_post_check_grp_distr(),
+                                                 Num.Lines=dbda_post_check_grp_number_lines(),
+                                                 Main.Title=dbda_post_check_grp_main_title(),
+                                                 X.Lab=dbda_post_check_grp_x_label(),
+                                                 Bar.Color=dbda_post_check_grp_bar_colors(),
+                                                 Line.Color=dbda_post_check_grp_line_colors(),
+                                                 Hist.Breaks=dbda_post_check_grp_number_bars(),
+                                                 CEX.size=dbda_post_check_grp_label_multiplier(),
+                                                 X.Lim=(eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                                 Y.Lim=(eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                 Min.Val=dbda_post_check_grp_min_value(),
+                                                 Max.Val=dbda_post_check_grp_max_value(),
+                                                 Round.Digits=dbda_post_check_grp_round_place(),
+                                                 Point.Loc= (eval(parse(text=dbda_post_check_grp_x_axis_points() )) ),
+                                                 PCol = dbda_post_check_point_colors(),
+                                                 Add.Lgd= dbda_post_check_add_legend(),
+                                                 Leg.Loc=dbda_post_check_legend_location() ) ,
+             "Gamma" =     fncGrpPostPredCheck(Coda.Object=DBDA_coda_object_df(), datFrm=df(),
+                                               Outcome=dbda_post_check_grp_Y(), Group=dbda_post_check_grp_X(),
+                                               Group.Level=dbda_post_check_grp_level_X(),
+                                               Mean.Var=dbda_post_check_grp_pm(),
+                                               SD.Var=dbda_post_check_grp_psd(), MCnu= dbda_post_check_grp_pnu(),
+                                               Distribution=dbda_post_check_grp_distr(),
+                                               Num.Lines=dbda_post_check_grp_number_lines(),
+                                               Main.Title=dbda_post_check_grp_main_title(),
+                                               X.Lab=dbda_post_check_grp_x_label(),
+                                               Bar.Color=dbda_post_check_grp_bar_colors(),
+                                               Line.Color=dbda_post_check_grp_line_colors(),
+                                               Hist.Breaks=dbda_post_check_grp_number_bars(),
+                                               CEX.size=dbda_post_check_grp_label_multiplier(),
+                                               X.Lim=(eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                               Y.Lim=(eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                               Min.Val=dbda_post_check_grp_min_value(),
+                                               Max.Val=dbda_post_check_grp_max_value(),
+                                               Round.Digits=dbda_post_check_grp_round_place(),
+                                               Point.Loc= (eval(parse(text=dbda_post_check_grp_x_axis_points() )) ),
+                                               PCol = dbda_post_check_point_colors(),
+                                               Add.Lgd= dbda_post_check_add_legend(),
+                                               Leg.Loc=dbda_post_check_legend_location() ) ,
+             "t" =     fncGrpPostPredCheck(Coda.Object=DBDA_coda_object_df(), datFrm=df(),
+                                           Outcome=dbda_post_check_grp_Y(), Group=dbda_post_check_grp_X(),
+                                           Group.Level=dbda_post_check_grp_level_X(),
+                                           Mean.Var=dbda_post_check_grp_pm(),
+                                           SD.Var=dbda_post_check_grp_psd(), MCnu= dbda_post_check_grp_pnu(),
+                                           Distribution=dbda_post_check_grp_distr(),
+                                           Num.Lines=dbda_post_check_grp_number_lines(),
+                                           Main.Title=dbda_post_check_grp_main_title(),
+                                           X.Lab=dbda_post_check_grp_x_label(),
+                                           Bar.Color=dbda_post_check_grp_bar_colors(),
+                                           Line.Color=dbda_post_check_grp_line_colors(),
+                                           Hist.Breaks=dbda_post_check_grp_number_bars(),
+                                           CEX.size=dbda_post_check_grp_label_multiplier(),
+                                           X.Lim=(eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                           Y.Lim=(eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                           Min.Val=dbda_post_check_grp_min_value(),
+                                           Max.Val=dbda_post_check_grp_max_value(),
+                                           Round.Digits=dbda_post_check_grp_round_place(),
+                                           Point.Loc= (eval(parse(text=dbda_post_check_grp_x_axis_points() )) ),
+                                           PCol = dbda_post_check_point_colors(),
+                                           Add.Lgd= dbda_post_check_add_legend(),
+                                           Leg.Loc=dbda_post_check_legend_location() ) ,
+             "t: 1 group" = fncPlotSingleT(codaSamples=DBDA_coda_object_df(), datFrm=df(),
+                                           yName=dbda_post_check_grp_Y(),
+                                           MCmean=dbda_post_check_grp_pm(),
+                                           MCsigma=dbda_post_check_grp_psd(),
+                                           MCnu= dbda_post_check_grp_pnu(),
+                                           Num.Lines=dbda_post_check_grp_number_lines(),
+                                           Main.Title=dbda_post_check_grp_main_title(),
+                                           X.Lab=dbda_post_check_grp_x_label(),
+                                           Line.Color=dbda_post_check_grp_line_colors(),
+                                           CEX.size=dbda_post_check_grp_label_multiplier(),
+                                           X.Lim=(eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                           Y.Lim=(eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                           PCol = dbda_post_check_point_colors(),
+                                           Add.Lgd= dbda_post_check_add_legend(),
+                                           Leg.Loc=dbda_post_check_legend_location(),
+                                           T.Percentage=dbda_post_check_grp_min_value() ),
+             "t: ANOVA" = fncPlotMcANOVA(codaSamples=DBDA_coda_object_df(), datFrm=df(),
+                                         yName=dbda_post_check_grp_Y(), xName=dbda_post_check_grp_X(),
+                                         MCmean=dbda_post_check_grp_pm(),
+                                         MCsigma=dbda_post_check_grp_psd(),
+                                         MCnu= dbda_post_check_grp_pnu(),
+                                         Num.Lines=dbda_post_check_grp_number_lines(),
+                                         Main.Title=dbda_post_check_grp_main_title(),
+                                         X.Lab=dbda_post_check_grp_x_label(),
+                                         Line.Color=dbda_post_check_grp_line_colors(),
+                                         CEX.size=dbda_post_check_grp_label_multiplier(),
+                                         X.Lim=(eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                         Y.Lim=(eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                         PCol = dbda_post_check_point_colors(),
+                                         Add.Lgd= dbda_post_check_add_legend(),
+                                         Leg.Loc=dbda_post_check_legend_location(),
+                                         T.Percentage=dbda_post_check_grp_min_value() ),
+             "OLS: Linear" = fncBayesOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
+                                                Reg.Type= dbda_post_check_grp_distr(),
+                                                Outcome= dbda_post_check_grp_Y(),
+                                                Group= dbda_post_check_grp_X(),
+                                                Group.Level= dbda_post_check_grp_level_X(),
+                                                xName= dbda_post_check_part_pred_X(),
+                                                parX= dbda_post_check_part_pred_pars(),
+                                                View.Lines= dbda_post_check_part_pred_data(),
+                                                Num.Lines= dbda_post_check_grp_number_lines(),
+                                                Main.Title= dbda_post_check_grp_main_title(),
+                                                X.Lab= dbda_post_check_grp_x_label(),
+                                                Line.Color= dbda_post_check_grp_line_colors(),
+                                                CEX.size= dbda_post_check_grp_label_multiplier(),
+                                                X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                                Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                X.Min= dbda_post_check_grp_min_value(),
+                                                X.Max= dbda_post_check_grp_max_value(),
+                                                PCol= dbda_post_check_point_colors(),
+                                                Add.Lgd= dbda_post_check_add_legend(),
+                                                Leg.Loc= dbda_post_check_legend_location()),
+             "OLS: Quadratic" = fncBayesOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
+                                                   Reg.Type= dbda_post_check_grp_distr(),
+                                                   Outcome= dbda_post_check_grp_Y(),
+                                                   Group= dbda_post_check_grp_X(),
+                                                   Group.Level= dbda_post_check_grp_level_X(),
+                                                   xName= dbda_post_check_part_pred_X(),
+                                                   parX= dbda_post_check_part_pred_pars(),
+                                                   View.Lines= dbda_post_check_part_pred_data(),
+                                                   Num.Lines= dbda_post_check_grp_number_lines(),
+                                                   Main.Title= dbda_post_check_grp_main_title(),
+                                                   X.Lab= dbda_post_check_grp_x_label(),
+                                                   Line.Color= dbda_post_check_grp_line_colors(),
+                                                   CEX.size= dbda_post_check_grp_label_multiplier(),
+                                                   X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                                   Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                   X.Min= dbda_post_check_grp_min_value(),
+                                                   X.Max= dbda_post_check_grp_max_value(),
+                                                   PCol= dbda_post_check_point_colors(),
+                                                   Add.Lgd= dbda_post_check_add_legend(),
+                                                   Leg.Loc= dbda_post_check_legend_location()),
+             "OLS: Cubic" = fncBayesOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
+                                               Reg.Type= dbda_post_check_grp_distr(),
+                                               Outcome= dbda_post_check_grp_Y(),
+                                               Group= dbda_post_check_grp_X(),
+                                               Group.Level= dbda_post_check_grp_level_X(),
+                                               xName= dbda_post_check_part_pred_X(),
+                                               parX= dbda_post_check_part_pred_pars(),
+                                               View.Lines= dbda_post_check_part_pred_data(),
+                                               Num.Lines= dbda_post_check_grp_number_lines(),
+                                               Main.Title= dbda_post_check_grp_main_title(),
+                                               X.Lab= dbda_post_check_grp_x_label(),
+                                               Line.Color= dbda_post_check_grp_line_colors(),
+                                               CEX.size= dbda_post_check_grp_label_multiplier(),
+                                               X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                               Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                               X.Min= dbda_post_check_grp_min_value(),
+                                               X.Max= dbda_post_check_grp_max_value(),
+                                               PCol= dbda_post_check_point_colors(),
+                                               Add.Lgd= dbda_post_check_add_legend(),
+                                               Leg.Loc= dbda_post_check_legend_location()),
+             "Logistic: Linear" = fncBayesOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
+                                                     Reg.Type= dbda_post_check_grp_distr(),
+                                                     Outcome= dbda_post_check_grp_Y(),
+                                                     Group= dbda_post_check_grp_X(),
+                                                     Group.Level= dbda_post_check_grp_level_X(),
+                                                     xName= dbda_post_check_part_pred_X(),
+                                                     parX= dbda_post_check_part_pred_pars(),
+                                                     View.Lines= dbda_post_check_part_pred_data(),
+                                                     Num.Lines= dbda_post_check_grp_number_lines(),
+                                                     Main.Title= dbda_post_check_grp_main_title(),
+                                                     X.Lab= dbda_post_check_grp_x_label(),
+                                                     Line.Color= dbda_post_check_grp_line_colors(),
+                                                     CEX.size= dbda_post_check_grp_label_multiplier(),
+                                                     X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                                     Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                     X.Min= dbda_post_check_grp_min_value(),
+                                                     X.Max= dbda_post_check_grp_max_value(),
+                                                     PCol= dbda_post_check_point_colors(),
+                                                     Add.Lgd= dbda_post_check_add_legend(),
+                                                     Leg.Loc= dbda_post_check_legend_location()),
+             "Logistic: Quadratic" = fncBayesOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
+                                                        Reg.Type= dbda_post_check_grp_distr(),
+                                                        Outcome= dbda_post_check_grp_Y(),
+                                                        Group= dbda_post_check_grp_X(),
+                                                        Group.Level= dbda_post_check_grp_level_X(),
+                                                        xName= dbda_post_check_part_pred_X(),
+                                                        parX= dbda_post_check_part_pred_pars(),
+                                                        View.Lines= dbda_post_check_part_pred_data(),
+                                                        Num.Lines= dbda_post_check_grp_number_lines(),
+                                                        Main.Title= dbda_post_check_grp_main_title(),
+                                                        X.Lab= dbda_post_check_grp_x_label(),
+                                                        Line.Color= dbda_post_check_grp_line_colors(),
+                                                        CEX.size= dbda_post_check_grp_label_multiplier(),
+                                                        X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                                        Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                        X.Min= dbda_post_check_grp_min_value(),
+                                                        X.Max= dbda_post_check_grp_max_value(),
+                                                        PCol= dbda_post_check_point_colors(),
+                                                        Add.Lgd= dbda_post_check_add_legend(),
+                                                        Leg.Loc= dbda_post_check_legend_location()),
+             "Logistic: Cubic" = fncBayesOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
+                                                    Reg.Type= dbda_post_check_grp_distr(),
+                                                    Outcome= dbda_post_check_grp_Y(),
+                                                    Group= dbda_post_check_grp_X(),
+                                                    Group.Level= dbda_post_check_grp_level_X(),
+                                                    xName= dbda_post_check_part_pred_X(),
+                                                    parX= dbda_post_check_part_pred_pars(),
+                                                    View.Lines= dbda_post_check_part_pred_data(),
+                                                    Num.Lines= dbda_post_check_grp_number_lines(),
+                                                    Main.Title= dbda_post_check_grp_main_title(),
+                                                    X.Lab= dbda_post_check_grp_x_label(),
+                                                    Line.Color= dbda_post_check_grp_line_colors(),
+                                                    CEX.size= dbda_post_check_grp_label_multiplier(),
+                                                    X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                                    Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                    X.Min= dbda_post_check_grp_min_value(),
+                                                    X.Max= dbda_post_check_grp_max_value(),
+                                                    PCol= dbda_post_check_point_colors(),
+                                                    Add.Lgd= dbda_post_check_add_legend(),
+                                                    Leg.Loc= dbda_post_check_legend_location()),
+             "OLS: DID" = fncBayesOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
+                                             Reg.Type= dbda_post_check_grp_distr(),
+                                             Outcome= dbda_post_check_grp_Y(),
+                                             Group= dbda_post_check_grp_X(),
+                                             Group.Level= dbda_post_check_grp_level_X(),
+                                             xName= dbda_post_check_part_pred_X(),
+                                             parX= dbda_post_check_part_pred_pars(),
+                                             View.Lines= dbda_post_check_part_pred_data(),
+                                             Num.Lines= dbda_post_check_grp_number_lines(),
+                                             Main.Title= dbda_post_check_grp_main_title(),
+                                             X.Lab= dbda_post_check_grp_x_label(),
+                                             Line.Color= dbda_post_check_grp_line_colors(),
+                                             CEX.size= dbda_post_check_grp_label_multiplier(),
+                                             X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                             Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                             PCol= dbda_post_check_point_colors(),
+                                             Add.Lgd= dbda_post_check_add_legend(),
+                                             Leg.Loc= dbda_post_check_legend_location()),
+             "Hierarchical OLS: Linear" = fncBayesMultiOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
+                                                                  Reg.Type= dbda_post_check_grp_distr(),
+                                                                  Outcome= dbda_post_check_grp_Y(),
+                                                                  Group= dbda_post_check_grp_X(),
+                                                                  xName= dbda_post_check_part_pred_X(),
+                                                                  parX= dbda_post_check_part_pred_pars(),
+                                                                  View.Lines= dbda_post_check_part_pred_data(),
+                                                                  Main.Title= dbda_post_check_grp_main_title(),
+                                                                  X.Lab= dbda_post_check_grp_x_label(),
+                                                                  Line.Color= dbda_post_check_grp_line_colors(),
+                                                                  CEX.size= dbda_post_check_grp_label_multiplier(),
+                                                                  X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                                                  Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                                  X.Min= dbda_post_check_grp_min_value(),
+                                                                  X.Max= dbda_post_check_grp_max_value(),
+                                                                  PCol= dbda_post_check_point_colors(),
+                                                                  Add.Lgd= dbda_post_check_add_legend(),
+                                                                  Leg.Loc= dbda_post_check_legend_location(),
+                                                                  mc_row_number= dbda_post_check_grp_number_lines()),
+             "Hierarchical OLS: Quadratic" = fncBayesMultiOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
+                                                                     Reg.Type= dbda_post_check_grp_distr(),
+                                                                     Outcome= dbda_post_check_grp_Y(),
+                                                                     Group= dbda_post_check_grp_X(),
+                                                                     xName= dbda_post_check_part_pred_X(),
+                                                                     parX= dbda_post_check_part_pred_pars(),
+                                                                     View.Lines= dbda_post_check_part_pred_data(),
+                                                                     Main.Title= dbda_post_check_grp_main_title(),
+                                                                     X.Lab= dbda_post_check_grp_x_label(),
+                                                                     Line.Color= dbda_post_check_grp_line_colors(),
+                                                                     CEX.size= dbda_post_check_grp_label_multiplier(),
+                                                                     X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                                                     Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                                     X.Min= dbda_post_check_grp_min_value(),
+                                                                     X.Max= dbda_post_check_grp_max_value(),
+                                                                     PCol= dbda_post_check_point_colors(),
+                                                                     Add.Lgd= dbda_post_check_add_legend(),
+                                                                     Leg.Loc= dbda_post_check_legend_location(),
+                                                                     mc_row_number= dbda_post_check_grp_number_lines()),
+             "Hierarchical OLS: Cubic" = fncBayesMultiOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
+                                                                 Reg.Type= dbda_post_check_grp_distr(),
+                                                                 Outcome= dbda_post_check_grp_Y(),
+                                                                 Group= dbda_post_check_grp_X(),
+                                                                 xName= dbda_post_check_part_pred_X(),
+                                                                 parX= dbda_post_check_part_pred_pars(),
+                                                                 View.Lines= dbda_post_check_part_pred_data(),
+                                                                 Main.Title= dbda_post_check_grp_main_title(),
+                                                                 X.Lab= dbda_post_check_grp_x_label(),
+                                                                 Line.Color= dbda_post_check_grp_line_colors(),
+                                                                 CEX.size= dbda_post_check_grp_label_multiplier(),
+                                                                 X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                                                 Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                                 X.Min= dbda_post_check_grp_min_value(),
+                                                                 X.Max= dbda_post_check_grp_max_value(),
+                                                                 PCol= dbda_post_check_point_colors(),
+                                                                 Add.Lgd= dbda_post_check_add_legend(),
+                                                                 Leg.Loc= dbda_post_check_legend_location(),
+                                                                 mc_row_number= dbda_post_check_grp_number_lines()),
+             "Hierarchical Log OLS: Linear" = fncBayesMultiOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
+                                                                      Reg.Type= dbda_post_check_grp_distr(),
+                                                                      Outcome= dbda_post_check_grp_Y(),
+                                                                      Group= dbda_post_check_grp_X(),
+                                                                      xName= dbda_post_check_part_pred_X(),
+                                                                      parX= dbda_post_check_part_pred_pars(),
+                                                                      View.Lines= dbda_post_check_part_pred_data(),
+                                                                      Main.Title= dbda_post_check_grp_main_title(),
+                                                                      X.Lab= dbda_post_check_grp_x_label(),
+                                                                      Line.Color= dbda_post_check_grp_line_colors(),
+                                                                      CEX.size= dbda_post_check_grp_label_multiplier(),
+                                                                      X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                                                      Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                                      X.Min= dbda_post_check_grp_min_value(),
+                                                                      X.Max= dbda_post_check_grp_max_value(),
+                                                                      PCol= dbda_post_check_point_colors(),
+                                                                      Add.Lgd= dbda_post_check_add_legend(),
+                                                                      Leg.Loc= dbda_post_check_legend_location(),
+                                                                      mc_row_number= dbda_post_check_grp_number_lines()),
+             "Hierarchical Log OLS: Quadratic" = fncBayesMultiOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
+                                                                         Reg.Type= dbda_post_check_grp_distr(),
+                                                                         Outcome= dbda_post_check_grp_Y(),
+                                                                         Group= dbda_post_check_grp_X(),
+                                                                         xName= dbda_post_check_part_pred_X(),
+                                                                         parX= dbda_post_check_part_pred_pars(),
+                                                                         View.Lines= dbda_post_check_part_pred_data(),
+                                                                         Main.Title= dbda_post_check_grp_main_title(),
+                                                                         X.Lab= dbda_post_check_grp_x_label(),
+                                                                         Line.Color= dbda_post_check_grp_line_colors(),
+                                                                         CEX.size= dbda_post_check_grp_label_multiplier(),
+                                                                         X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                                                         Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                                         X.Min= dbda_post_check_grp_min_value(),
+                                                                         X.Max= dbda_post_check_grp_max_value(),
+                                                                         PCol= dbda_post_check_point_colors(),
+                                                                         Add.Lgd= dbda_post_check_add_legend(),
+                                                                         Leg.Loc= dbda_post_check_legend_location(),
+                                                                         mc_row_number= dbda_post_check_grp_number_lines()),
+             "Hierarchical Log OLS: Cubic" = fncBayesMultiOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
+                                                                     Reg.Type= dbda_post_check_grp_distr(),
+                                                                     Outcome= dbda_post_check_grp_Y(),
+                                                                     Group= dbda_post_check_grp_X(),
+                                                                     xName= dbda_post_check_part_pred_X(),
+                                                                     parX= dbda_post_check_part_pred_pars(),
+                                                                     View.Lines= dbda_post_check_part_pred_data(),
+                                                                     Main.Title= dbda_post_check_grp_main_title(),
+                                                                     X.Lab= dbda_post_check_grp_x_label(),
+                                                                     Line.Color= dbda_post_check_grp_line_colors(),
+                                                                     CEX.size= dbda_post_check_grp_label_multiplier(),
+                                                                     X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                                                     Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                                     X.Min= dbda_post_check_grp_min_value(),
+                                                                     X.Max= dbda_post_check_grp_max_value(),
+                                                                     PCol= dbda_post_check_point_colors(),
+                                                                     Add.Lgd= dbda_post_check_add_legend(),
+                                                                     Leg.Loc= dbda_post_check_legend_location(),
+                                                                     mc_row_number= dbda_post_check_grp_number_lines()),
+             "Hierarchical Logistic: Linear" = fncBayesMultiOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
+                                                                       Reg.Type= dbda_post_check_grp_distr(),
+                                                                       Outcome= dbda_post_check_grp_Y(),
+                                                                       Group= dbda_post_check_grp_X(),
+                                                                       xName= dbda_post_check_part_pred_X(),
+                                                                       parX= dbda_post_check_part_pred_pars(),
+                                                                       View.Lines= dbda_post_check_part_pred_data(),
+                                                                       Main.Title= dbda_post_check_grp_main_title(),
+                                                                       X.Lab= dbda_post_check_grp_x_label(),
+                                                                       Line.Color= dbda_post_check_grp_line_colors(),
+                                                                       CEX.size= dbda_post_check_grp_label_multiplier(),
+                                                                       X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                                                       Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                                       X.Min= dbda_post_check_grp_min_value(),
+                                                                       X.Max= dbda_post_check_grp_max_value(),
+                                                                       PCol= dbda_post_check_point_colors(),
+                                                                       Add.Lgd= dbda_post_check_add_legend(),
+                                                                       Leg.Loc= dbda_post_check_legend_location(),
+                                                                       mc_row_number= dbda_post_check_grp_number_lines()),
+             "Hierarchical Logistic: Quadratic" = fncBayesMultiOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
+                                                                          Reg.Type= dbda_post_check_grp_distr(),
+                                                                          Outcome= dbda_post_check_grp_Y(),
+                                                                          Group= dbda_post_check_grp_X(),
+                                                                          xName= dbda_post_check_part_pred_X(),
+                                                                          parX= dbda_post_check_part_pred_pars(),
+                                                                          View.Lines= dbda_post_check_part_pred_data(),
+                                                                          Main.Title= dbda_post_check_grp_main_title(),
+                                                                          X.Lab= dbda_post_check_grp_x_label(),
+                                                                          Line.Color= dbda_post_check_grp_line_colors(),
+                                                                          CEX.size= dbda_post_check_grp_label_multiplier(),
+                                                                          X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                                                          Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                                          X.Min= dbda_post_check_grp_min_value(),
+                                                                          X.Max= dbda_post_check_grp_max_value(),
+                                                                          PCol= dbda_post_check_point_colors(),
+                                                                          Add.Lgd= dbda_post_check_add_legend(),
+                                                                          Leg.Loc= dbda_post_check_legend_location(),
+                                                                          mc_row_number= dbda_post_check_grp_number_lines()),
+             "Hierarchical Logistic: Cubic" = fncBayesMultiOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
+                                                                      Reg.Type= dbda_post_check_grp_distr(),
+                                                                      Outcome= dbda_post_check_grp_Y(),
+                                                                      Group= dbda_post_check_grp_X(),
+                                                                      xName= dbda_post_check_part_pred_X(),
+                                                                      parX= dbda_post_check_part_pred_pars(),
+                                                                      View.Lines= dbda_post_check_part_pred_data(),
+                                                                      Main.Title= dbda_post_check_grp_main_title(),
+                                                                      X.Lab= dbda_post_check_grp_x_label(),
+                                                                      Line.Color= dbda_post_check_grp_line_colors(),
+                                                                      CEX.size= dbda_post_check_grp_label_multiplier(),
+                                                                      X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
+                                                                      Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
+                                                                      X.Min= dbda_post_check_grp_min_value(),
+                                                                      X.Max= dbda_post_check_grp_max_value(),
+                                                                      PCol= dbda_post_check_point_colors(),
+                                                                      Add.Lgd= dbda_post_check_add_legend(),
+                                                                      Leg.Loc= dbda_post_check_legend_location(),
+                                                                      mc_row_number= dbda_post_check_grp_number_lines())
+      )
+    }
+
 
 } #end of plot.bayes
 

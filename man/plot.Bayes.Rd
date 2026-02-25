@@ -26,16 +26,16 @@
   vlim = NULL,
   curve = FALSE,
   lwd = NULL,
-  breaks = NULL,
+  breaks = 15,
   bcol = NULL,
   lcol = NULL,
-  xpt = NULL,
   pcol = NULL,
+  xpt = NULL,
   tgt = NULL,
   tgtcol = "gray",
   tpline = NULL,
   tpcol = NULL,
-  pline = 1,
+  pline = 20,
   add.legend = NULL,
   legend = NULL,
   cex = 1,
@@ -77,8 +77,8 @@ to estimate the average joint effects of multiple parameters (e.g., average infe
 parameter= c('IntA', 'IntB')). Use a 2 element list to perform mathematical calculations of multiple parameters (see 'math' below).
 For example, use parameter=list('hospital_A', 'hospital_Z') if you want to estimate the difference between the hospital's outcomes.
 Use parameter= list(c('hospital_A','hospital_B'), ('hospital_Y','hospital_Z')) to estimate how different the combined hospitals A
-and B values are from the combined Hospital Y and Z values. When y='check', use either a multiple element character vector that represent
-distribution parameters in order (e.g., mean, sd, nu from a t-distribution) or regression parameters in order (e.g., intercept, B1).
+and B values are from the combined Hospital Y and Z values. When y='check', use either a multiple element character vector that represents
+center, spread, and additional distribution parameters in order (e.g., mean, sd, nu from a t-distribution) or regression parameters in order (e.g., intercept, B1).
 When y='multi', use a multiple element character vector to list the parameter names of the hierarchy, in order of the
 nesting (e.g., responses, person, organization).}
 
@@ -105,9 +105,9 @@ when y='check' or y='multi'.}
 \item{iv}{character vector of length >= 1 for the independent variable name(s) in the observed data frame
 when y='check' or y='multi'.}
 
-\item{group}{character vector of length == 1 for the grouping variable name in the observed data frame.
-This is primarily used for multilevel or hierarchical models when y='check' or y='multi' that the hierarchies
-are based on (e.g., hospitals nested within health systems).}
+\item{group}{character list of length == 2 for 1) the grouping variable name and 2) specific group(s) in the
+observed data frame. This is primarily used for multilevel or hierarchical models when y='check' or y='multi'
+that the hierarchies are based on (e.g., hospitals nested within health systems).}
 
 \item{add.data}{character vector of length == 1 to determine the type of observed data added to the plot
 when y='check'. Select 'a', 'u', 'al', 'ul', 'dg', 'n' for these options: 'All', 'Unit','All: Lines',
@@ -133,7 +133,7 @@ Default is NULL.}
 
 \item{lwd}{select the line width.}
 
-\item{breaks}{number of breaks in a histogram.}
+\item{breaks}{number of breaks in a histogram. Default is 15.}
 
 \item{bcol}{a single or multiple element character vector to specify the bar or band color(s).
 When Bayesian estimates and observed values are present, the first colors are Bayesian estimates
@@ -146,13 +146,13 @@ precede multiple use lines. For example, a single comparison value line will be 
 while both rope lines will be given the same color of the second lcol when y='post'. Defaults to 'gray'
 if nothing selected.}
 
-\item{xpt}{a numeric vector of single or multiple values that indicate placement of points (+) on the
-x-axis when y='check'. This is intended for the graphs with predictive checks on Bayesian estimation
-(i.e., not trend lines). Default is NULL.}
-
 \item{pcol}{a single or multiple element character vector to specify the point color(s).
 When Bayesian estimates and observed values are present, the first colors are Bayesian estimates
 while the last colors are observed values. Defaults to, if nothing selected, 'gray'.}
+
+\item{xpt}{a numeric vector of single or multiple values that indicate placement of points (+) on the
+x-axis when y='check'. This is intended for the graphs with predictive checks on Bayesian estimation
+(i.e., not trend lines). Default is NULL.}
 
 \item{tgt}{specify 1 or more values on the y-axis of where to add one or more horizontal target lines. Default is NULL.}
 
