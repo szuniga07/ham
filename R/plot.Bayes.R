@@ -1012,7 +1012,8 @@ plot.Bayes <- function(x, y=NULL, ctype="n", parameter=NULL, center="mode", mass
         legend_type <- c(1, 1)
         pcol_vector <- c(Bar.Color, Line.Color)
         legend(x=Leg.Loc, legend=legend_text, col=pcol_vector, lty=legend_type,
-               pt.bg=pcol_vector, cex = cex.legend, bty="n", inset=c(0, .05))
+               pt.bg=pcol_vector, cex = cex.legend, bty="n", inset=c(0, .05),
+               lwd=cex.legend)
       }
     }
   } #End of function
