@@ -78,9 +78,11 @@ parameter= c('IntA', 'IntB')). Use a 2 element list to perform mathematical calc
 For example, use parameter=list('hospital_A', 'hospital_Z') if you want to estimate the difference between the hospital's outcomes.
 Use parameter= list(c('hospital_A','hospital_B'), ('hospital_Y','hospital_Z')) to estimate how different the combined hospitals A
 and B values are from the combined Hospital Y and Z values. When y='check', use either a multiple element character vector that represents
-center, spread, and additional distribution parameters in order of 1st, 2nd, and 3rd distribution parameters (e.g., mean, sd, nu from a t-distribution)
-or regression parameters in order (e.g., intercept, B1). When y='multi', use a multiple element character vector to list the parameter
-names of the hierarchy, in order of the nesting (e.g., responses, person, organization).}
+center, spread, and additional distribution parameters in order of 1st, 2nd, and 3rd distribution parameters. For example,
+mean and sd for a normal distribution; mean log and sd log of a log-normal dist.; xi, omega, and alpha of a skew-normal dist.;
+shape, scale, and lambda of a Weibull dist.; shape and rate of a Gamma dist.; and mean, SD and nu/d.f. of a t-distribution.
+Or indicate regression parameters in order (e.g., intercept, B1, B2, etc.). When y='multi', use a multiple element character vector
+to list the parameter names of the hierarchy, in order of the nesting with the lowest level first (e.g., responses, person, organization).}
 
 \item{center}{character vector that selects the type of central tendency to use when reporting parameter values.
 Choices include: 'mean', 'median', and 'mode'. Default is 'mode'.}
