@@ -13,9 +13,9 @@
 #' @param ctype character vector of length == 1 that indicates posterior predictive check type when y='check'.
 #' Posterior predictive checks allow us to see how well our estimates match the observed data. These checks are
 #' available for Bayesian estimation of outcomes and regression polynomial trend line using various distributions in the
-#' likelihood function. Select 'n', 'ln', 'sn', 'w', 'g', 't', 't1', 'taov', 'ol', 'oq','oc', 'hol', 'hoq', 'hoc',
+#' likelihood function. Select 'n', 'ln', 'sn', 'w', 'g', 't', 'taov', 'taov1', 'ol', 'oq','oc', 'hol', 'hoq', 'hoc',
 #' 'hlol', 'hloq', 'hloc', 'odid', 'logl', 'logq', 'logc', 'hlogl', 'hlogq', 'hlogc' for these respective options:
-#' 'Normal', 'Log-normal', 'Skew-normal', 'Weibull', 'Gamma', 't', 't: 1 group', 't: ANOVA', 'OLS: Linear',
+#' 'Normal', 'Log-normal', 'Skew-normal', 'Weibull', 'Gamma', 't', 't: ANOVA', 't: ANOVA 1 group', 'OLS: Linear',
 #' 'OLS: Quadratic', 'OLS: Cubic', 'Hierarchical OLS: Linear', 'Hierarchical OLS: Quadratic', 'Hierarchical OLS: Cubic',
 #' 'Hierarchical Log OLS: Linear', 'Hierarchical Log OLS: Quadratic', 'Hierarchical Log OLS: Cubic', 'OLS: DID',
 #' 'Logistic: Linear', 'Logistic: Quadratic', 'Logistic: Cubic', 'Hierarchical Logistic: Linear',
@@ -89,6 +89,8 @@
 #' @param tpcol specify a color for the time point line, tpline. Default is NULL.
 #' @param pline a numeric vector of length == 1 for the number of random posterior predictive check
 #' lines when y='check'. Default is 20.
+#' @param pct a numeric integer vector of length == 1 for the percentage of the posterior predictive check heavy tail lines
+#' to be drawn when ctype= 'taov' or 'taov1'. Valid values are 0 < pct < 100. Default is 95 (e.g., 95%).
 #' @param add.legend add a legend by selecting the location as "bottomright", "bottom", "bottomleft",
 #' "left", "topleft", "top", "topright", "right", "center". No legend if nothing selected.
 #' @param legend a character vector of length >= 1 to appear when y='check' or y='multi'. Legends to represent
@@ -135,7 +137,7 @@ plot.Bayes <- function(x, y=NULL, ctype="n", parameter=NULL, center="mode", mass
                        data=NULL, dv=NULL, iv=NULL, group=NULL, add.data="n",
                        main=NULL, xlab=NULL, ylab=NULL, xlim=NULL, ylim=NULL, vlim=NULL, curve=FALSE, lwd=NULL, breaks=15,
                        bcol=NULL, lcol=NULL, pcol=NULL, xpt=NULL, tgt=NULL, tgtcol="gray", tpline=NULL, tpcol=NULL,
-                       pline=20, add.legend=NULL, legend=NULL, cex=1, cex.lab=NULL, cex.axis=NULL, cex.main=NULL,
+                       pline=20, pct=95, add.legend=NULL, legend=NULL, cex=1, cex.lab=NULL, cex.axis=NULL, cex.main=NULL,
                        cex.text=NULL, cex.legend=NULL, HDItext=0.7, math="n", es="n", round.c=2, ...) {
   if (any(class(x) == "Bayes") == FALSE) {stop("Error: Expecting Bayes class object." )}
   #Looking for 1 parameter name
@@ -179,6 +181,11 @@ plot.Bayes <- function(x, y=NULL, ctype="n", parameter=NULL, center="mode", mass
       }
     }
   }
+  #pct within the right range
+  if(pct <= 0 & pct >= 100) {
+    stop("Error: Expecting pct within this range: 0 < pct < 100.")
+    }
+
 #Assign new objects
   MCMC <- x$MCMC
   cenTend <- center
@@ -948,8 +955,62 @@ plot.Bayes <- function(x, y=NULL, ctype="n", parameter=NULL, center="mode", mass
   }
   #probability
   pskewn <- function (x, xi = 0, omega = 1, alpha = 0, tau = 0, dp = NULL,
-                      engine, ...)
+                      engine="T.Owen", ...)
   {
+    T.Owen <- function (h, a, jmax = 50, cut.point = 8)
+    {
+      T.int <- function(h, a, jmax, cut.point) {
+        fui <- function(h, i) (h^(2 * i))/((2^i) * gamma(i +
+                                                           1))
+        seriesL <- seriesH <- NULL
+        i <- 0:jmax
+        low <- (h <= cut.point)
+        hL <- h[low]
+        hH <- h[!low]
+        L <- length(hL)
+        if (L > 0) {
+          b <- outer(hL, i, fui)
+          cumb <- apply(b, 1, cumsum)
+          b1 <- exp(-0.5 * hL^2) * t(cumb)
+          matr <- matrix(1, jmax + 1, L) - t(b1)
+          jk <- rep(c(1, -1), jmax)[1:(jmax + 1)]/(2 * i +
+                                                     1)
+          matr <- t(matr * jk) %*% a^(2 * i + 1)
+          seriesL <- (atan(a) - as.vector(matr))/(2 * pi)
+        }
+        if (length(hH) > 0)
+          seriesH <- atan(a) * exp(-0.5 * (hH^2) * a/atan(a)) *
+          (1 + 0.00868 * (hH * a)^4)/(2 * pi)
+        series <- c(seriesL, seriesH)
+        id <- c((1:length(h))[low], (1:length(h))[!low])
+        series[id] <- series
+        series
+      }
+      if (!is.vector(a) | length(a) > 1)
+        stop("'a' must be a vector of length 1")
+      if (!is.vector(h))
+        stop("'h' must be a vector")
+      aa <- abs(a)
+      ah <- abs(h)
+      if (is.na(aa))
+        stop("parameter 'a' is NA")
+      if (aa == Inf)
+        return(sign(a) * 0.5 * pnorm(-ah))
+      if (aa == 0)
+        return(rep(0, length(h)))
+      na <- is.na(h)
+      inf <- (ah == Inf)
+      ah <- replace(ah, (na | inf), 0)
+      if (aa <= 1)
+        owen <- T.int(ah, aa, jmax, cut.point)
+      else owen <- (0.5 * pnorm(ah) + pnorm(aa * ah) * (0.5 -
+                                                          pnorm(ah)) - T.int(aa * ah, (1/aa), jmax, cut.point))
+      owen <- replace(owen, na, NA)
+      owen <- replace(owen, inf, 0)
+      return(owen * sign(a))
+    }
+
+    #pskewn code
     if (!is.null(dp)) {
       if (!missing(alpha))
         stop("You cannot set both 'dp' and component parameters")
@@ -984,31 +1045,31 @@ plot.Bayes <- function(x, y=NULL, ctype="n", parameter=NULL, center="mode", mass
         stop("engine='T.Owen' not compatible with other arguments")
       p <- pnorm(z) - 2 * T.Owen(z, alpha, ...)
     }
-    else {
-      p <- numeric(nz)
-      alpha <- za[, 2]
-      delta <- delta.etc(alpha)
-      p.tau <- pnorm(tau)
-      for (k in seq_len(nz)) {
-        if (abs(z[k]) == Inf)
-          p[k] <- (sign(z[k]) + 1)/2
-        else {
-          if (abs(alpha[k]) == Inf) {
-            p[k] <- if (alpha[k] > 0)
-              (pnorm(pmax(z[k], -tau)) - pnorm(-tau))/p.tau
-            else {
-              1 - (pnorm(tau) - pnorm(pmin(z[k], tau)))/p.tau
-            }
-          }
-#          else { #removing mnormt
-#            R <- matrix(c(1, -delta[k], -delta[k], 1),
-#                        2, 2)
-#            p[k] <- mnormt::biv.nt.prob(0, rep(-Inf, 2),
-#                                        c(z[k], tau), c(0, 0), R)/p.tau
+#    else {
+#      p <- numeric(nz)
+#      alpha <- za[, 2]
+#      delta <- delta.etc(alpha)
+#      p.tau <- pnorm(tau)
+#      for (k in seq_len(nz)) {
+#        if (abs(z[k]) == Inf)
+#          p[k] <- (sign(z[k]) + 1)/2
+#        else {
+#          if (abs(alpha[k]) == Inf) {
+#            p[k] <- if (alpha[k] > 0)
+#              (pnorm(pmax(z[k], -tau)) - pnorm(-tau))/p.tau
+#            else {
+#              1 - (pnorm(tau) - pnorm(pmin(z[k], tau)))/p.tau
+#            }
 #          }
-        }
-      }
-    }
+##          else { #removing mnormt
+##            R <- matrix(c(1, -delta[k], -delta[k], 1),
+##                        2, 2)
+##            p[k] <- mnormt::biv.nt.prob(0, rep(-Inf, 2),
+##                                        c(z[k], tau), c(0, 0), R)/p.tau
+##          }
+#        }
+#      }
+#    }
     p <- pmin(1, pmax(0, as.numeric(p)))
     names(prob) <- names(x)
     replace(prob, plain, p)
@@ -1017,6 +1078,88 @@ plot.Bayes <- function(x, y=NULL, ctype="n", parameter=NULL, center="mode", mass
   qskewn <- function (p, xi = 0, omega = 1, alpha = 0, tau = 0, dp = NULL,
                       tol = 0.00000001, solver = "NR", ...)
   {
+    sn.cumulants <- function (xi = 0, omega = 1, alpha = 0, tau = 0, dp = NULL,
+                              n = 4)
+    {
+      #zeta
+      zeta <- function (k, x)
+      {
+        if (k < 0 | k > 5 | k != round(k))
+          return(NULL)
+        na <- is.na(x)
+        x <- replace(x, na, 0)
+        x2 <- x^2
+        z <- switch(k + 1, pnorm(x, log.p = TRUE) + log(2), ifelse(x >
+                    (-50), exp(dnorm(x, log = TRUE) - pnorm(x, log.p = TRUE)),
+                     -x/(1 - 1/(x2 + 2) + 1/((x2 + 2) * (x2 + 4)) - 5/((x2 +
+                      2) * (x2 + 4) * (x2 + 6)) + 9/((x2 + 2) * (x2 +
+                       4) * (x2 + 6) * (x2 + 8)) - 129/((x2 + 2) * (x2 +
+                        4) * (x2 + 6) * (x2 + 8) * (x2 + 10)))), (-zeta(1,
+                         x) * (x + zeta(1, x))), (-zeta(2, x) * (x + zeta(1,
+                          x)) - zeta(1, x) * (1 + zeta(2, x))), (-zeta(3, x) *
+                             (x + 2 * zeta(1, x)) - 2 * zeta(2, x) * (1 + zeta(2,
+                               x))), (-zeta(4, x) * (x + 2 * zeta(1, x)) - zeta(3,
+                                x) * (3 + 4 * zeta(2, x)) - 2 * zeta(2, x) * zeta(3,
+                                 x)), NULL)
+        neg.inf <- (x == -Inf)
+        if (any(neg.inf))
+          z <- switch(k + 1, z, replace(z, neg.inf, Inf), replace(z,
+                       neg.inf, -1), replace(z, neg.inf, 0), replace(z,
+                        neg.inf, 0), replace(z, neg.inf, 0), NULL)
+        if (k > 1)
+          z <- replace(z, x == Inf, 0)
+        replace(z, na, NA)
+      }
+      cumulants.half.norm <- function(n = 4) {
+        n <- max(n, 2)
+        n <- as.integer(2 * ceiling(n/2))
+        half.n <- as.integer(n/2)
+        m <- 0:(half.n - 1)
+        a <- sqrt(2/pi)/(gamma(m + 1) * 2^m * (2 * m + 1))
+        signs <- rep(c(1, -1), half.n)[seq_len(half.n)]
+        a <- as.vector(rbind(signs * a, rep(0, half.n)))
+        coeff <- rep(a[1], n)
+        for (k in 2:n) {
+          ind <- seq_len(k - 1)
+          coeff[k] <- a[k] - sum(ind * coeff[ind] * a[rev(ind)]/k)
+        }
+        kappa <- coeff * gamma(seq_len(n) + 1)
+        kappa[2] <- 1 + kappa[2]
+        return(kappa)
+      }
+      if (!is.null(dp)) {
+        if (!missing(alpha))
+          stop("You cannot set both 'dp' and the component parameters")
+        dp <- c(dp, 0)[1:4]
+        dp <- matrix(dp, 1, ncol = length(dp))
+      }
+      else dp <- cbind(xi, omega, alpha, tau)
+      delta <- ifelse(abs(dp[, 3]) < Inf, dp[, 3]/sqrt(1 + dp[,
+                                                              3]^2), sign(dp[, 3]))
+      tau <- dp[, 4]
+      if (all(tau == 0)) {
+        kv <- cumulants.half.norm(n)
+        if (length(kv) > n)
+          kv <- kv[-(n + 1)]
+        kv[2] <- kv[2] - 1
+        kappa <- outer(delta, 1:n, "^") * matrix(rep(kv, nrow(dp)),
+                                                 ncol = n, byrow = TRUE)
+      }
+      else {
+        if (n > 4) {
+          warning("n>4 not allowed with ESN distribution")
+          n <- min(n, 4)
+        }
+        kappa <- matrix(0, nrow = length(delta), ncol = 0)
+        for (k in 1:n) kappa <- cbind(kappa, zeta(k, tau) *
+                                        delta^k)
+      }
+      kappa[, 2] <- kappa[, 2] + 1
+      kappa <- kappa * outer(dp[, 2], (1:n), "^")
+      kappa[, 1] <- kappa[, 1] + dp[, 1]
+      kappa[, , drop = TRUE]
+    }
+    #qskewn code starts below
     if (!is.null(dp)) {
       if (!missing(alpha))
         stop("You cannot set both 'dp' and component parameters")
@@ -1305,16 +1448,16 @@ plot.Bayes <- function(x, y=NULL, ctype="n", parameter=NULL, center="mode", mass
   ################################################################################
   #             5B. Posterior predictive check for ANOVA, single group           #
   ################################################################################
-  fncPlotSingleT <- function( codaSamples=NULL, datFrm=NULL , yName=NULL ,
+  fncPlotSingleT <- function( MCMC, datFrm=NULL , yName=NULL ,
                               MCmean=NULL, MCsigma=NULL, MCnu=NULL, Num.Lines=NULL,
-                              Main.Title=NULL, X.Lab=NULL, Line.Color=NULL,
-                              CEX.size=NULL, X.Lim=NULL, Y.Lim=NULL, PCol = NULL,
-                              Add.Lgd= NULL, Leg.Loc=NULL, T.Percentage=NULL ) {
-    mcmcMat <- as.matrix(codaSamples, chains=TRUE)
+                              Main.Title=NULL, X.Lab=NULL, Line.Color=NULL, cex=NULL,
+                              cex.legend=NULL, cex.lab=NULL, cex.main=NULL, cex.axis=NULL,
+                              X.Lim=NULL, Y.Lim=NULL, PCol = NULL, lwd=NULL, legend=NULL,
+                              Leg.Loc=NULL, T.Percentage=NULL ) {
+    #Make coda into as.matrix
+    mcmcMat <- MCMC
     chainLength <- NROW( mcmcMat )
     y <- datFrm[, yName]
-    #  x <- as.numeric(as.factor(datFrm[, xName]))
-    #  xlevels <- levels(as.factor(datFrm[, xName]))
     #Make x-limits
     if (is.null(X.Lim)) {
       X.Limits <- c(0.6, 1 + 0.1)
@@ -1327,26 +1470,25 @@ plot.Bayes <- function(x, y=NULL, ctype="n", parameter=NULL, center="mode", mass
     } else {
       Y.Limits <- Y.Lim
     }
+    #Make x-label
+    if (!is.null(X.Lab)) {
+      X.Lab <- X.Lab
+    } else {
+      X.Lab <- ""
+    }
     #Get generic mean parameter name to use for graphing
-    # mean_par <- strsplit(MCmean, "[", fixed=TRUE)[[1]][1]
-    #Get generic sigma (SD) parameter name to use for graphing
-    #  sigma_par <- strsplit(MCsigma, "[", fixed=TRUE)[[1]][1]
     # Display data with posterior predictive distributions
     plot(-1,0,
          xlim= X.Limits, xlab=X.Lab , xaxt="n" , ylab= yName ,
-         ylim= Y.Limits, main=Main.Title,
-         cex.lab=CEX.size, cex=CEX.size, cex.main=CEX.size )
-    #  axis( 1 , at=1:length(xlevels) , tick=FALSE , lab=xlevels )
+         ylim= Y.Limits, main=Main.Title, cex.axis=cex.axis,
+         cex.lab=cex.lab, cex=cex, cex.main=cex.main )
     for ( xidx in 1:1 ) {
       xPlotVal = xidx
       yVals = y
       points( rep(xPlotVal, length(yVals)) + runif(length(yVals), -0.05, 0.05) ,
-              yVals , pch=1 , cex=CEX.size , col= PCol ) #COLOR
+              yVals , pch=1 , cex=cex , col= PCol ) #COLOR
       chainSub = round(seq(1, chainLength, length= Num.Lines)) #20
       for ( chnIdx in chainSub ) {
-        #      m = mcmcMat[chnIdx, paste("m[", xidx, "]", sep="")]
-        # m = mcmcMat[chnIdx,paste("b[",xidx,"]",sep="")]
-        #      s = mcmcMat[chnIdx, paste("ySigma[", xidx,"]", sep="")]
         m = mcmcMat[chnIdx, MCmean]
         s = mcmcMat[chnIdx, MCsigma]
         nu = mcmcMat[chnIdx, MCnu]
@@ -1356,22 +1498,18 @@ plot.Bayes <- function(x, y=NULL, ctype="n", parameter=NULL, center="mode", mass
         yl = m + tlim[1]*s
         yh = m + tlim[2]*s
         ycomb=seq(yl, yh, length=501) ##201
-        #ynorm = dnorm(ycomb,mean=m,sd=s)
-        #ynorm = 0.67*ynorm/max(ynorm)
         yt = dt( (ycomb - m) / s , df= nu )
-        #     yt = 0.67 * yt / max(yt)           #This controls heighth of curve peaks
-        #      lines( xPlotVal - yt , ycomb , col= Line.Color ) #COLOR
-        lines( xPlotVal - yt , ycomb , col= Line.Color ) #COLOR
+        lines( xPlotVal - yt , ycomb , col= Line.Color, lwd=lwd ) #COLOR
       }
     }
     #Add legend
-    if(Add.Lgd =="Yes") {
-      legend_text <- c("Observed Value", "Posterior Estimate")
+    if(!is.null(Leg.Loc) ) {
+      legend_text <- if (!is.null(legend)) legend else c(paste0("Observed ", abbreviate(Group.Level, 8)), "Posterior Estimate")
       legend_type <- c(0, 1)
       pch_type <- c(1, -1)
       pcol_vector <- c(PCol, Line.Color)
       legend(Leg.Loc, legend=legend_text, col=pcol_vector,
-             lty=legend_type, pt.bg=pcol_vector, cex = 2, pch=pch_type,
+             lty=legend_type, pt.bg=pcol_vector, cex = cex, pch=pch_type,
              bty="n", inset=c(0, .05))
     }
   }
@@ -2935,23 +3073,7 @@ if(y == "check") {
                                     Max.Val=vlim[2], Round.Digits=round.c, Point.Loc= xpt, PCol=pcol,
                                     Leg.Loc= add.legend, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
                                     cex.axis=cex.axis, legend=legend, cex.legend=cex.legend, lwd=lwd, Y.Lab=ylab ),
-         "t: 1 group" = fncPlotSingleT(codaSamples=DBDA_coda_object_df(), datFrm=df(),
-                                           yName=dbda_post_check_grp_Y(),
-                                           MCmean=dbda_post_check_grp_pm(),
-                                           MCsigma=dbda_post_check_grp_psd(),
-                                           MCnu= dbda_post_check_grp_pnu(),
-                                           Num.Lines=dbda_post_check_grp_number_lines(),
-                                           Main.Title=dbda_post_check_grp_main_title(),
-                                           X.Lab=dbda_post_check_grp_x_label(),
-                                           Line.Color=dbda_post_check_grp_line_colors(),
-                                           CEX.size=dbda_post_check_grp_label_multiplier(),
-                                           X.Lim=(eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
-                                           Y.Lim=(eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
-                                           PCol = dbda_post_check_point_colors(),
-                                           Add.Lgd= dbda_post_check_add_legend(),
-                                           Leg.Loc=dbda_post_check_legend_location(),
-                                           T.Percentage=dbda_post_check_grp_min_value() ),
-             "t: ANOVA" = fncPlotMcANOVA(codaSamples=DBDA_coda_object_df(), datFrm=df(),
+             "taov" = fncPlotMcANOVA(codaSamples=DBDA_coda_object_df(), datFrm=df(),
                                          yName=dbda_post_check_grp_Y(), xName=dbda_post_check_grp_X(),
                                          MCmean=dbda_post_check_grp_pm(),
                                          MCsigma=dbda_post_check_grp_psd(),
@@ -2967,7 +3089,14 @@ if(y == "check") {
                                          Add.Lgd= dbda_post_check_add_legend(),
                                          Leg.Loc=dbda_post_check_legend_location(),
                                          T.Percentage=dbda_post_check_grp_min_value() ),
-             "OLS: Linear" = fncBayesOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
+         "taov1" = fncPlotSingleT(MCMC=MCMC, datFrm=data, yName=dv,
+                                  MCmean=parameter[1], MCsigma=parameter[2], MCnu=parameter[3],
+                                  Num.Lines=pline, Main.Title=main, X.Lab=xlab,
+                                  Line.Color=lcol, X.Lim=xlim, Y.Lim=ylim,  T.Percentage=pct,
+                                  PCol=pcol, Leg.Loc= add.legend, cex= cex, cex.legend=cex.legend,
+                                  cex.axis=cex.axis, cex.lab= cex.lab, cex.main=cex.main,
+                                  lwd=lwd, legend=legend),
+         "OLS: Linear" = fncBayesOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
                                                 Reg.Type= dbda_post_check_grp_distr(),
                                                 Outcome= dbda_post_check_grp_Y(),
                                                 Group= dbda_post_check_grp_X(),

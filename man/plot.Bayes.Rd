@@ -36,6 +36,7 @@
   tpline = NULL,
   tpcol = NULL,
   pline = 20,
+  pct = 95,
   add.legend = NULL,
   legend = NULL,
   cex = 1,
@@ -62,9 +63,9 @@ multilevel or hierarchical model summary, or target summary plots. Default is 'p
 \item{ctype}{character vector of length == 1 that indicates posterior predictive check type when y='check'.
 Posterior predictive checks allow us to see how well our estimates match the observed data. These checks are
 available for Bayesian estimation of outcomes and regression polynomial trend line using various distributions in the
-likelihood function. Select 'n', 'ln', 'sn', 'w', 'g', 't', 't1', 'taov', 'ol', 'oq','oc', 'hol', 'hoq', 'hoc',
+likelihood function. Select 'n', 'ln', 'sn', 'w', 'g', 't', 'taov', 'taov1', 'ol', 'oq','oc', 'hol', 'hoq', 'hoc',
 'hlol', 'hloq', 'hloc', 'odid', 'logl', 'logq', 'logc', 'hlogl', 'hlogq', 'hlogc' for these respective options:
-'Normal', 'Log-normal', 'Skew-normal', 'Weibull', 'Gamma', 't', 't: 1 group', 't: ANOVA', 'OLS: Linear',
+'Normal', 'Log-normal', 'Skew-normal', 'Weibull', 'Gamma', 't', 't: ANOVA', 't: ANOVA 1 group', 'OLS: Linear',
 'OLS: Quadratic', 'OLS: Cubic', 'Hierarchical OLS: Linear', 'Hierarchical OLS: Quadratic', 'Hierarchical OLS: Cubic',
 'Hierarchical Log OLS: Linear', 'Hierarchical Log OLS: Quadratic', 'Hierarchical Log OLS: Cubic', 'OLS: DID',
 'Logistic: Linear', 'Logistic: Quadratic', 'Logistic: Cubic', 'Hierarchical Logistic: Linear',
@@ -166,6 +167,9 @@ x-axis when y='check'. This is intended for the graphs with predictive checks on
 
 \item{pline}{a numeric vector of length == 1 for the number of random posterior predictive check
 lines when y='check'. Default is 20.}
+
+\item{pct}{a numeric integer vector of length == 1 for the percentage of the posterior predictive check heavy tail lines
+to be drawn when ctype= 'taov' or 'taov1'. Valid values are 0 < pct < 100. Default is 95 (e.g., 95\%).}
 
 \item{add.legend}{add a legend by selecting the location as "bottomright", "bottom", "bottomleft",
 "left", "topleft", "top", "topright", "right", "center". No legend if nothing selected.}
