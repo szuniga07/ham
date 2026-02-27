@@ -33,6 +33,8 @@
 #' shape, scale, and lambda of a Weibull dist.; shape and rate of a Gamma dist.; and mean, SD and nu/d.f. of a t-distribution.
 #' Or indicate regression parameters in order (e.g., intercept, B1, B2, etc.). When y='multi', use a multiple element character vector
 #' to list the parameter names of the hierarchy, in order of the nesting with the lowest level first (e.g., responses, person, organization).
+#' When y='multi', for parameters from multiple groups such as various hospitals, only enter the first unit of each parameter and the remaining
+#' units will get set up to graph all units. For example, parameter=c(`mu[1]`, `sigma[1]`) will plot data for `mu[8]` and `sigma[8]` as well.
 #' @param center character vector that selects the type of central tendency to use when reporting parameter values.
 #' Choices include: 'mean', 'median', and 'mode'. Default is 'mode'.
 #' @param mass numeric vector the specifies the credible mass used in the Highest Density Interval (HDI). Default is 0.95.
@@ -2376,7 +2378,7 @@ plot.Bayes <- function(x, y=NULL, ctype="n", parameter=NULL, center="mode", mass
         #} else {
         #  legend_text <- if (!is.null(legend)) legend else c(paste0("Posterior Estimate: ", abbreviate(Group, 8)))
         #}
-          legend_text <- if (!is.null(legend)) legend else c(paste0("Posterior Estimate: ", xName[i]))
+          legend_text <- if (!is.null(legend)) legend else c(paste0("Posterior Estimate: ", xName[1]))
       }
     }
 #    if (View.Lines== "u") {
@@ -2388,7 +2390,7 @@ plot.Bayes <- function(x, y=NULL, ctype="n", parameter=NULL, center="mode", mass
 #    }
     # for no groups
     if (View.Lines %in% c("a", "al")) {
-      legend_text <- if (!is.null(legend)) legend else c(paste0("Observed ", xName[i],": All"), "Posterior Estimate")
+      legend_text <- if (!is.null(legend)) legend else c(paste0("Observed ", xName[1],": All"), "Posterior Estimate")
     }
 
     #DID

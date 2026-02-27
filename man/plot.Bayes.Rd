@@ -83,7 +83,9 @@ center, spread, and additional distribution parameters in order of 1st, 2nd, and
 mean and sd for a normal distribution; mean log and sd log of a log-normal dist.; xi, omega, and alpha of a skew-normal dist.;
 shape, scale, and lambda of a Weibull dist.; shape and rate of a Gamma dist.; and mean, SD and nu/d.f. of a t-distribution.
 Or indicate regression parameters in order (e.g., intercept, B1, B2, etc.). When y='multi', use a multiple element character vector
-to list the parameter names of the hierarchy, in order of the nesting with the lowest level first (e.g., responses, person, organization).}
+to list the parameter names of the hierarchy, in order of the nesting with the lowest level first (e.g., responses, person, organization).
+When y='multi', for parameters from multiple groups such as various hospitals, only enter the first unit of each parameter and the remaining
+units will get set up to graph all units. For example, parameter=c(\code{mu[1]}, \code{sigma[1]}) will plot data for \code{mu[8]} and \code{sigma[8]} as well.}
 
 \item{center}{character vector that selects the type of central tendency to use when reporting parameter values.
 Choices include: 'mean', 'median', and 'mode'. Default is 'mode'.}
