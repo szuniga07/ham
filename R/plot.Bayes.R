@@ -14,8 +14,8 @@
 #' Posterior predictive checks allow us to see how well our estimates match the observed data. These checks are
 #' available for Bayesian estimation of outcomes and regression polynomial trend line using various distributions in the
 #' likelihood function. Select 'n', 'ln', 'sn', 'w', 'g', 't', 'taov', 'taov1', 'ol', 'oq','oc', 'hol', 'hoq', 'hoc',
-#' 'hlol', 'hloq', 'hloc', 'odid', 'logl', 'logq', 'logc', 'hlogl', 'hlogq', 'hlogc' for these respective options:
-#' 'Normal', 'Log-normal', 'Skew-normal', 'Weibull', 'Gamma', 't', 't: ANOVA', 't: ANOVA 1 group', 'OLS: Linear',
+#' 'hlol', 'hloq', 'hloc', 'did', 'logl', 'logq', 'logc', 'hlogl', 'hlogq', 'hlogc' for these respective options:
+#' 'Normal', 'Log-normal', 'Skew-normal', 'Weibull', 'Gamma', 't', 't: ANOVA, side view', 't: ANOVA 1 group, side view', 'OLS: Linear',
 #' 'OLS: Quadratic', 'OLS: Cubic', 'Hierarchical OLS: Linear', 'Hierarchical OLS: Quadratic', 'Hierarchical OLS: Cubic',
 #' 'Hierarchical Log OLS: Linear', 'Hierarchical Log OLS: Quadratic', 'Hierarchical Log OLS: Cubic', 'OLS: DID',
 #' 'Logistic: Linear', 'Logistic: Quadratic', 'Logistic: Cubic', 'Hierarchical Logistic: Linear',
@@ -46,15 +46,16 @@
 #' the null hypothesis value of 0.50. We can accept the null hypothesis if the entire 95% HDI falls with the ROPE. Default is NULL.
 #' @param data object name for the observed data when y='check' or y='multi'.
 #' @param dv character vector of length == 1 for the dependent variable name in the observed data frame
-#' when y='check' or y='multi'.
+#' when y='check' or y='multi'. Default is NULL.
 #' @param iv character vector of length >= 1 for the independent variable name(s) in the observed data frame
-#' when y='check' or y='multi'.
+#' when y='check' or y='multi'. When y='taov', enter the name of the test group variable.  Default is NULL.
 #' @param group character list of length == 2 for 1) the grouping variable name and 2) specific group(s) in the
 #' observed data frame. This is primarily used for multilevel or hierarchical models when y='check' or y='multi'
 #' that the hierarchies are based on (e.g., hospitals nested within health systems).
 #' @param add.data character vector of length == 1 to determine the type of observed data added to the plot
-#' when y='check'. Select 'a', 'u', 'al', 'ul', 'dg', 'n' for these options: 'All', 'Unit','All: Lines',
-#' 'Unit: Lines','DID: Groups', 'none'. Default is 'n' for none.
+#' when y='check' and ctype= 'ol', 'oq','oc', 'hol', 'hoq', 'hoc', 'hlol', 'hloq', 'hloc', 'did', 'logl', 'logq',
+#' 'logc', 'hlogl', 'hlogq', or 'hlogc'. Select 'a', 'u', 'al', 'ul', 'dg', 'n' for these options: 'All', 'Unit',
+#' 'All: Lines', 'Unit: Lines','DID: Groups', 'none'. Default is 'n' for none.
 #' @param main the main title of the plot.
 #' @param xlab a character vector label for the x-axis.
 #' @param ylab a character vector label for the y-axis.
@@ -1373,12 +1374,14 @@ plot.Bayes <- function(x, y=NULL, ctype="n", parameter=NULL, center="mode", mass
   #The original plot produces a generic plot, then it shifts the X and Y axes to
   #a completely different area to produce the graphs. Old code embedded below
   #from what looks like normal distributions.
-  fncPlotMcANOVA <- function( codaSamples=NULL, datFrm=NULL , yName=NULL , xName=NULL,
+  fncPlotMcANOVA <- function( MCMC=NULL, datFrm=NULL , yName=NULL , xName=NULL,
                               MCmean=NULL, MCsigma=NULL, MCnu=NULL, Num.Lines=NULL,
-                              Main.Title=NULL, X.Lab=NULL, Line.Color=NULL,
-                              CEX.size=NULL, X.Lim=NULL, Y.Lim=NULL, PCol = NULL,
-                              Add.Lgd= NULL, Leg.Loc=NULL, T.Percentage=NULL ) {
-    mcmcMat <- as.matrix(codaSamples, chains=TRUE)
+                              Main.Title=NULL, X.Lab=NULL, Line.Color=NULL, cex=NULL,
+                              cex.legend=NULL, cex.lab=NULL, cex.main=NULL, cex.axis=NULL,
+                              X.Lim=NULL, Y.Lim=NULL, PCol = NULL, lwd=NULL, legend=NULL,
+                              Leg.Loc=NULL, T.Percentage=NULL ) {
+    #Make coda into as.matrix
+    mcmcMat <- MCMC
     chainLength <- NROW( mcmcMat )
     y <- datFrm[, yName]
     x <- as.numeric(as.factor(datFrm[, xName]))
@@ -1395,28 +1398,29 @@ plot.Bayes <- function(x, y=NULL, ctype="n", parameter=NULL, center="mode", mass
     } else {
       Y.Limits <- Y.Lim
     }
+    #Make x-label
+    if (!is.null(X.Lab)) {
+      X.Lab <- X.Lab
+    } else {
+      X.Lab <- ""
+    }
     #Get generic mean parameter name to use for graphing
     mean_par <- strsplit(MCmean, "[", fixed=TRUE)[[1]][1]
     #Get generic sigma (SD) parameter name to use for graphing
     sigma_par <- strsplit(MCsigma, "[", fixed=TRUE)[[1]][1]
     # Display data with posterior predictive distributions
     plot(-1,0,
-         #       xlim=c(0.1,length(xlevels) + 0.1) ,
-         #       ylim=c(min(y) - 0.2 * (max(y) - min(y)), max(y) + 0.2*(max(y) - min(y))) ,
          xlim= X.Limits, xlab=X.Lab , xaxt="n" , ylab= yName ,
-         ylim= Y.Limits, main=Main.Title,
-         cex.lab=CEX.size, cex=CEX.size, cex.main=CEX.size )
+         ylim= Y.Limits, main=Main.Title, cex.axis=cex.axis,
+         cex.lab=cex.lab, cex=cex, cex.main=cex.main )
     axis( 1 , at=1:length(xlevels) , tick=FALSE , lab=xlevels )
     for ( xidx in 1:length(xlevels) ) {
       xPlotVal = xidx
       yVals = y[ x == xidx ]
       points( rep(xPlotVal, length(yVals)) + runif(length(yVals), -0.05, 0.05) ,
-              yVals , pch=1 , cex=CEX.size , col= PCol ) #COLOR
+              yVals , pch=1 , cex=cex , col= PCol ) #COLOR
       chainSub = round(seq(1, chainLength, length= Num.Lines)) #20
       for ( chnIdx in chainSub ) {
-        #      m = mcmcMat[chnIdx, paste("m[", xidx, "]", sep="")]
-        # m = mcmcMat[chnIdx,paste("b[",xidx,"]",sep="")]
-        #      s = mcmcMat[chnIdx, paste("ySigma[", xidx,"]", sep="")]
         m = mcmcMat[chnIdx, paste(mean_par, "[", xidx, "]", sep="")]
         s = mcmcMat[chnIdx, paste(sigma_par, "[", xidx,"]", sep="")]
         nu = mcmcMat[chnIdx, MCnu]
@@ -1426,21 +1430,19 @@ plot.Bayes <- function(x, y=NULL, ctype="n", parameter=NULL, center="mode", mass
         yl = m + tlim[1]*s
         yh = m + tlim[2]*s
         ycomb=seq(yl, yh, length=501) ##201
-        #ynorm = dnorm(ycomb,mean=m,sd=s)
-        #ynorm = 0.67*ynorm/max(ynorm)
         yt = dt( (ycomb - m) / s , df= nu )
         yt = 0.67 * yt / max(yt)           #This controls heighth of curve peaks
-        lines( xPlotVal - yt , ycomb , col= Line.Color ) #COLOR
+        lines( xPlotVal - yt , ycomb , col= Line.Color, lwd=lwd ) #COLOR
       }
     }
     #Add legend
-    if(Add.Lgd =="Yes") {
-      legend_text <- c("Observed Value", "Posterior Estimate")
+    if(!is.null(Leg.Loc) ) {
+      legend_text <- if (!is.null(legend)) legend else c(paste0("Observed ", yName), "Posterior Estimate")
       legend_type <- c(0, 1)
       pch_type <- c(1, -1)
       pcol_vector <- c(PCol, Line.Color)
-      legend(Leg.Loc, legend=legend_text, col=pcol_vector,
-             lty=legend_type, pt.bg=pcol_vector, cex = 2, pch=pch_type,
+      legend(Leg.Loc, legend=legend_text, col=pcol_vector, lwd=cex.legend,
+             lty=legend_type, pt.bg=pcol_vector, cex= cex.legend, pch=pch_type,
              bty="n", inset=c(0, .05))
     }
   }
@@ -1504,12 +1506,12 @@ plot.Bayes <- function(x, y=NULL, ctype="n", parameter=NULL, center="mode", mass
     }
     #Add legend
     if(!is.null(Leg.Loc) ) {
-      legend_text <- if (!is.null(legend)) legend else c(paste0("Observed ", abbreviate(Group.Level, 8)), "Posterior Estimate")
+      legend_text <- if (!is.null(legend)) legend else c(paste0("Observed ", yName), "Posterior Estimate")
       legend_type <- c(0, 1)
       pch_type <- c(1, -1)
       pcol_vector <- c(PCol, Line.Color)
-      legend(Leg.Loc, legend=legend_text, col=pcol_vector,
-             lty=legend_type, pt.bg=pcol_vector, cex = cex, pch=pch_type,
+      legend(Leg.Loc, legend=legend_text, col=pcol_vector, lwd=cex.legend,
+             lty=legend_type, pt.bg=pcol_vector, cex = cex.legend, pch=pch_type,
              bty="n", inset=c(0, .05))
     }
   }
@@ -2085,18 +2087,24 @@ plot.Bayes <- function(x, y=NULL, ctype="n", parameter=NULL, center="mode", mass
   #                9. Posterior Predictive Check for trend lines                 #
   ################################################################################
   #May only need code converting y-axis to logits for logistic regression to work
-  fncBayesOlsPrtPred <- function(Coda.Object=NULL , datFrm=NULL,  Reg.Type=NULL,
+  fncBayesOlsPrtPred <- function(MCMC=NULL , datFrm=NULL,  Reg.Type=NULL,
                                  Outcome=NULL , Group=NULL,
                                  Group.Level=NULL, xName=NULL, parX=NULL, View.Lines=NULL,
-                                 Num.Lines=NULL, Main.Title=NULL, X.Lab=NULL,
-                                 Line.Color=NULL, CEX.size=NULL, X.Lim=NULL, Y.Lim=NULL,
-                                 X.Min=NULL, X.Max=NULL,
+                                 Num.Lines=NULL, Main.Title=NULL, X.Lab=NULL, Y.Lab=NULL,
+                                 Line.Color=NULL, cex.lab = cex.lab, cex = cex,
+                                 cex.main=cex.main, cex.axis=cex.axis, cex.legend=cex.legend,
+                                 X.Lim=NULL, Y.Lim=NULL, X.Min=NULL, X.Max=NULL,
                                  PCol=NULL, Add.Lgd=NULL, Leg.Loc=NULL) {
-    y = datFrm[, Outcome]
-    x = datFrm[, xName, drop=FALSE][1]
-    s = factor(datFrm[, Group])
-    nSubj = length(unique(s)) # should be same as max(s)
-    mcmcMat = as.matrix(Coda.Object, chains=TRUE)
+    y = datFrm[complete.cases(datFrm), Outcome]
+    x = datFrm[complete.cases(datFrm), xName, drop=FALSE][1]
+    if(Reg.Type == "did") {
+      if(!is.null(Group)) {
+      s = factor(datFrm[, Group])
+      nSubj = length(unique(s)) # should be same as max(s)
+      }
+    }
+    #Make coda into as.matrix
+    mcmcMat <- MCMC
     chainLength = NROW( mcmcMat )
     #-----------------------------------------------------------------------------
     # datFrm with superimposed regression lines and noise distributions:
@@ -2111,6 +2119,17 @@ plot.Bayes <- function(x, y=NULL, ctype="n", parameter=NULL, center="mode", mass
     #############################
     ## Make prediction formula ##
     #############################
+    #X.Min and X.Max
+    if (!is.null(X.Min)) {
+      X.Min <- X.Min
+    } else {
+      X.Min <- min(data[, iv[1]], na.rm=TRUE)
+    }
+    if (!is.null(X.Max)) {
+      X.Max <- X.Max
+    } else {
+      X.Max <- max(data[, iv[1]], na.rm=TRUE)
+    }
     #This creates the xComb based on the primary predictor
     #  xComb = seq(xLim[1], xLim[2], length=301)
     xComb = seq(X.Min, X.Max, length=301)
@@ -2126,17 +2145,15 @@ plot.Bayes <- function(x, y=NULL, ctype="n", parameter=NULL, center="mode", mass
     #Combines object elements and variable means for polynomial models.
     ttfrm <- cbind(tlCoef[-1], txVarMeans)
     #This will change the mean value to the xComb for linear models
-    if (Reg.Type %in% c("OLS: Linear", "OLS: Quadratic", "OLS: Cubic",
-                        "Logistic: Linear", "Logistic: Quadratic","Logistic: Cubic") ) {
+    if (Reg.Type %in% c("ol", "oq", "oc", "logl", "logq", "logc") ) {
       ttfrm[1, 2] <- "xComb"
     }
     #This will change the mean value to the xComb^2 for quadratic models
-    if (Reg.Type %in% c("OLS: Quadratic", "OLS: Cubic",
-                        "Logistic: Quadratic","Logistic: Cubic")) {
+    if (Reg.Type %in% c("oq", "oc", "logq", "logc")) {
       ttfrm[2, 2] <- "xComb^2"
     }
     #This will change the mean value to the xComb^3 for cubic models
-    if (Reg.Type %in% c("OLS: Cubic","Logistic: Cubic")) {
+    if (Reg.Type %in% c("oc", "logc")) {
       ttfrm[2, 3] <- "xComb^3"
     }
     #This multiplies each coefficient by the x-value and stores it in a vector
@@ -2161,43 +2178,43 @@ plot.Bayes <- function(x, y=NULL, ctype="n", parameter=NULL, center="mode", mass
       }
     }
     ## Points vs. lines for observed data ##
-    if (View.Lines == "All") {
+    if (View.Lines == "a") {
       line_type <-  "p"
     }
-    if (View.Lines == "All: Lines") {
+    if (View.Lines == "al") {
       line_type <-  "o"
     }
-    if (View.Lines == "Unit") {
+    if (View.Lines == "u") {
       line_type <-  "p"
     }
-    if (View.Lines == "Unit: Lines") {
+    if (View.Lines == "ul") {
       line_type <-  "o"
     }
     ##############################################################################
     # DID functions
-    if (Reg.Type %in% "OLS: DID" ) {
+    if (Reg.Type %in% "did" ) {
       tab1 <- table(datFrm[, xName[1]], datFrm[, xName[2]])
       xvalPost <- as.numeric(rownames(tab1))
     }
     PostVals <- vector()
-    if (Reg.Type %in% "OLS: DID" ) {
+    if (Reg.Type %in% "did" ) {
       if (nrow(tab1) >  ncol(tab1)) {  #Leaving this in case people put in Time and Intervention backwards
         PostVals <- xvalPost[which(tab1[, 2] > 0 )]
       }
     }
     #Creates zComb for DID intervention binary indicator
-    if (Reg.Type %in% "OLS: DID" ) {
+    if (Reg.Type %in% "did" ) {
       zComb0 <- rep(0, 301)
       zComb1 <- ifelse(xComb < min(PostVals), 0, 1)
     }
     #This makes it for the DID lines (1 for an intervention, 1 for control)
     #Combines object elements and variable means for polynomial models.
-    if (Reg.Type %in% "OLS: DID" ) {
+    if (Reg.Type %in% "did" ) {
       DIDfrm0 <- cbind(tlCoef[-1], txVarMeans)
       DIDfrm1 <- cbind(tlCoef[-1], txVarMeans)
     }
     #This will change the mean value to the xComb for linear models
-    if (Reg.Type %in% "OLS: DID" ) {
+    if (Reg.Type %in% "did" ) {
       DIDfrm0[1, 2] <- "xComb"
       DIDfrm1[1, 2] <- "xComb"
       DIDfrm0[2, 2] <- "zComb0"
@@ -2206,75 +2223,107 @@ plot.Bayes <- function(x, y=NULL, ctype="n", parameter=NULL, center="mode", mass
       DIDfrm1[3, 2] <- "xComb*zComb1"
     }
     #This multiplies each coefficient by the x-value and stores it in a vector
-    if (Reg.Type %in% "OLS: DID" ) {
+    if (Reg.Type %in% "did" ) {
       DIDnew0 <- vector()
       DIDnew1 <- vector()
     }
     #This creates the DID regression weights for the intervention and control groups
-    if (Reg.Type %in% "OLS: DID" ) {
+    if (Reg.Type %in% "did" ) {
       for (i in 1:nrow(DIDfrm0)) {
         DIDnew0[i] <- paste(DIDfrm0[i, ], collapse = "*")
         DIDnew1[i] <- paste(DIDfrm1[i, ], collapse = "*")
       }
     }
     #This adds DID coefficients*x-value and put in intercept
-    if (Reg.Type %in% "OLS: DID" ) {
+    if (Reg.Type %in% "did" ) {
       DIDnew02 <- paste(c(tlCoef[1], DIDnew0), collapse = "+")
       DIDnew12 <- paste(c(tlCoef[1], DIDnew1), collapse = "+")
     }
     #Aggregates data to put in as optional observed trend values
     #Make smaller datasets for the intervention and control groups
-    if (Reg.Type %in% "OLS: DID" ) {
+    if (Reg.Type %in% "did" ) {
       datFrm0 <- datFrm[which( datFrm[, xName[2]] == min(datFrm[, xName[2]], na.rm=T)), c(Outcome, xName[1:2])]
       datFrm1 <- datFrm[which( datFrm[, xName[2]] == max(datFrm[, xName[2]], na.rm=T)), c(Outcome, xName[1:2])]
     }
     #Make DID aggregated data observed points in the graph
-    if (Reg.Type %in% "OLS: DID" ) {
+    if (Reg.Type %in% "did" ) {
       agDID0  <- aggregate(datFrm0[, Outcome] ~ datFrm0[, xName[1]] + datFrm0[, xName[2]], FUN="mean")
       agDID1a <- aggregate(datFrm1[, Outcome] ~ datFrm1[, xName[1]] + datFrm1[, xName[2]], FUN="mean")
     }
     ##############################################################################
+    #X and Y labels
+    if (!is.null(X.Lab)) {
+      X.Lab <- X.Lab
+    } else {
+      X.Lab <- iv[1]
+    }
+    if (!is.null(Y.Lab)) {
+      Y.Lab <- Y.Lab
+    } else {
+      Y.Lab <- dv
+    }
 
     ##################
     ## Create plots ##
     ##################
-    plot( unlist(x) , y , pch="" , cex=CEX.size , col="black" ,
-          xlim=X.Lim, ylim=Y.Lim,xlab=X.Lab , ylab=Outcome ,
-          main= Main.Title, cex.lab=CEX.size, cex.main=CEX.size, cex.axis=CEX.size )
-    #All groups added at once for the overall term
-    if (Reg.Type %in% c("OLS: Linear", "OLS: Quadratic", "OLS: Cubic") ) {
-      if (View.Lines %in% c("All", "All: Lines")) {
-        for ( sIdx in 1:nSubj ) {
-          thisSrows = (as.numeric(s)==sIdx)
-          lines( x[thisSrows, ] , y[thisSrows] , type=line_type , pch=19, col= PCol, cex=CEX.size*0.75)
+    plot( unlist(x) , y , pch="" , cex=cex ,
+          type= "n", #col="black" ,
+          xlim=X.Lim, ylim=Y.Lim,xlab=X.Lab , ylab=Y.Lab ,
+          main= Main.Title, cex.lab=cex.lab, cex.main=cex.main, cex.axis=cex.axis )
+    #With groups: All groups added at once for the overall term
+#    if (Reg.Type %in% c("ol", "oq", "oc") ) {
+#      if (View.Lines %in% c('a', 'al')) {
+#        if(!is.null(Group)) {
+#          for ( sIdx in 1:nSubj ) {
+#            thisSrows = (as.numeric(s)==sIdx)
+#            lines( x[thisSrows, ] , y[thisSrows] , type=line_type , pch=19, col= PCol, cex=cex, lwd=lwd)
+#          }
+#        }
+#      }
+#    }
+    #No groups: All groups added at once for the overall term
+    if (Reg.Type %in% c("ol", "oq", "oc") ) {
+      if (View.Lines %in% c('a', 'al')) {
+        if(is.null(Group)) {
+          lines( unlist(x), y, type=line_type , pch=19, col= PCol, cex=cex, lwd=lwd)
         }
       }
     }
     #Logistic regression probabilities
-    if (Reg.Type %in% c("Logistic: Linear", "Logistic: Quadratic","Logistic: Cubic") ) {
-      if (View.Lines %in% c("All", "All: Lines")) {
-        for ( sIdx in 1:nSubj ) {
-          thisSrows = (as.numeric(s)==sIdx)
-          lines( x[thisSrows, ] , y[thisSrows] , type=line_type , pch=19, col= PCol, cex=CEX.size*0.75)
+#    if (Reg.Type %in% c("logl", "logq", "logc") ) {
+#      if (View.Lines %in% c('a', 'al')) {
+#        if(!is.null(Group)) {
+#          for ( sIdx in 1:nSubj ) {
+#            thisSrows = (as.numeric(s)==sIdx)
+#            lines( x[thisSrows, ] , y[thisSrows] , type=line_type , pch=19, col= PCol, cex=cex, lwd=lwd)
+#          }
+#        }
+#      }
+#    }
+    #Logistic regression probabilities: No groups
+    if (Reg.Type %in% c("logl", "logq", "logc") ) {
+      if (View.Lines %in% c('a', 'al')) {
+        if(is.null(Group)) {
+          lines( unlist(x), y, type=line_type , pch=19, col= PCol, cex=cex, lwd=lwd)
         }
       }
     }
     # Superimpose a smattering of believable regression lines:
     #For each line (e.g., 30), it cycles the 301 X-comb values to create 301 Ys for plot
     #This plots out random regression lines
-    if (Reg.Type %in% c("OLS: Linear", "OLS: Quadratic", "OLS: Cubic") ) {
+    if (Reg.Type %in% c("ol", "oq", "oc") ) {
       for ( i in 1:length(floor(seq(1, nrow(mcmcMat), length = Num.Lines))) ) {
         lines( xComb , eval(parse(text= ttnew2)) , col= Line.Color )
       }
     }
     #Logistic regression probabilities
-    if (Reg.Type %in% c("Logistic: Linear", "Logistic: Quadratic","Logistic: Cubic") ) {
+    if (Reg.Type %in% c("logl", "logq", "logc") ) {
       for ( i in 1:length(floor(seq(1, nrow(mcmcMat), length = Num.Lines))) ) {
         lines( xComb , (1/(1+ exp(-( (eval(parse(text= ttnew2))) )))) , col= Line.Color )
       }
     }
     #DID posterior lines
-    if (Reg.Type %in% "OLS: DID" ) {
+    if (Reg.Type %in% "did" ) {
       for ( i in 1:length(floor(seq(1, nrow(mcmcMat), length = Num.Lines))) ) {
         lines( xComb , eval(parse(text= DIDnew12)) , col= Line.Color[2] )
         lines( xComb , eval(parse(text= DIDnew02)) , col= Line.Color[1] )
@@ -2285,87 +2334,93 @@ plot.Bayes <- function(x, y=NULL, ctype="n", parameter=NULL, center="mode", mass
     }
 
     #Determine which observed datFrm lines to view
-    if (View.Lines %in% c("Unit", "Unit: Lines")) {
-      #For specific groups
-      for ( sIdx in 1:nSubj ) {
-        thisSrows <- (as.numeric(s) == as.numeric(s[s == Group.Level]))
-        lines( x[thisSrows, ] , y[thisSrows] , type= line_type, pch=19, col= PCol, cex=CEX.size )
+    if (View.Lines %in% c("u", "ul")) {
+      if(!is.null(Group)) {
+        #For specific groups
+        for ( sIdx in 1:nSubj ) {
+          thisSrows <- (as.numeric(s) == as.numeric(s[s == Group.Level]))
+          lines( x[thisSrows, ] , y[thisSrows] , type= line_type, pch=19, col= PCol, cex=cex, lwd=lwd )
+        }
       }
     }
 
     #DID observed data
-    if (View.Lines == "DID: Groups") {
+    if (View.Lines == "dg") {
       #For specific groups
       for ( sIdx in 1:nSubj ) {
         thisSrows <- (as.numeric(s) == as.numeric(s[s == Group.Level]))
-        lines(agDID1a[,1], agDID1a[,3], type="o" , pch=19, col= tail(PCol, 1), cex=CEX.size)
-        lines(agDID0[, 1], agDID0[, 3], type="o" , pch=19, col= head(PCol, 1), cex=CEX.size)
+        lines(agDID1a[,1], agDID1a[,3], type="o" , pch=19, col= tail(PCol, 1), cex=cex, lwd=lwd)
+        lines(agDID0[, 1], agDID0[, 3], type="o" , pch=19, col= head(PCol, 1), cex=cex, lwd=lwd)
       }
     }
 
     #Legend color
-    if (View.Lines== "None") {
+    if (View.Lines== "n") {
       pcol_vector <- c(Line.Color)
     }
-    if (View.Lines== "Unit") {
+    if (View.Lines== "u") {
       pcol_vector <- c(PCol, Line.Color)
     }
-    if (View.Lines== "All") {
+    if (View.Lines %in% c("a", "al")) {
       pcol_vector <- c(PCol, Line.Color)
     }
-    if (View.Lines == "DID: Groups") {
+    if (View.Lines == "dg") {
       pcol_vector <- c(PCol, Line.Color)
     }
     #Legend text
-    if (Reg.Type %in% c("OLS: Linear", "OLS: Quadratic", "OLS: Cubic",
-                        "Logistic: Linear", "Logistic: Quadratic","Logistic: Cubic") ) {
-      if (View.Lines== "None") {
-        if (nchar(Group.Level) > 0 ){
-          legend_text <- c(paste0("Posterior Estimate ", abbreviate(Group, 8), ": ",
-                                  abbreviate(Group.Level, 8)))
-        } else {
-          legend_text <- c(paste0("Posterior Estimate: ", abbreviate(Group, 8)))
-        }
+    if (Reg.Type %in% c("ol", "oq", "oc", "logl", "logq", "logc") ) {
+      if (View.Lines== "n") {
+        #if (nchar(Group.Level) > 0 ){
+        #  legend_text <- if (!is.null(legend)) legend else c(paste0("Posterior Estimate ", abbreviate(Group, 8), ": ",
+        #                                                            abbreviate(Group.Level, 8)))
+        #} else {
+        #  legend_text <- if (!is.null(legend)) legend else c(paste0("Posterior Estimate: ", abbreviate(Group, 8)))
+        #}
+          legend_text <- if (!is.null(legend)) legend else c(paste0("Posterior Estimate: ", xName[i]))
       }
     }
-    if (View.Lines== "Unit") {
-      legend_text <- c(paste0("Observed ", abbreviate(Group, 8), ": ",
-                              abbreviate(Group.Level, 8)), "Posterior Estimate")
+#    if (View.Lines== "u") {
+#      legend_text <- if (!is.null(legend)) legend else c(paste0("Observed ", abbreviate(Group, 8), ": ",
+#                                                                abbreviate(Group.Level, 8)), "Posterior Estimate")
+#    }
+#    if (View.Lines== "a") {
+#      legend_text <- if (!is.null(legend)) legend else c(paste0("Observed ", abbreviate(Group, 8),": All"), "Posterior Estimate")
+#    }
+    # for no groups
+    if (View.Lines %in% c("a", "al")) {
+      legend_text <- if (!is.null(legend)) legend else c(paste0("Observed ", xName[i],": All"), "Posterior Estimate")
     }
-    if (View.Lines== "All") {
-      legend_text <- c(paste0("Observed ", abbreviate(Group, 8),": All"), "Posterior Estimate")
-    }
+
     #DID
-    if (Reg.Type %in% "OLS: DID" ) {
-      if (View.Lines== "DID: Groups") {
-        legend_text <- c("Observed: Control", "Observed: Intervention", "Posterior Estimate: Control", "Posterior Estimate: Intervention")
+    if (Reg.Type %in% "did" ) {
+      if (View.Lines== "dg") {
+        legend_text <- if (!is.null(legend)) legend else c("Observed: Control", "Observed: Intervention", "Posterior Estimate: Control", "Posterior Estimate: Intervention")
       } else {
-        legend_text <- c("Posterior Estimate: Control", "Posterior Estimate: Intervention")
+        legend_text <- if (!is.null(legend)) legend else c("Posterior Estimate: Control", "Posterior Estimate: Intervention")
       }
     }
 
     #Legend points
-    if (View.Lines== "None") {
+    if (View.Lines== "n") {
       legend_points <- NULL
     }
-    if (View.Lines== "Unit") {
+    if (View.Lines== "u") {
       legend_points <- c(19, NA)
     }
-    if (View.Lines== "All") {
+    if (View.Lines %in% c("a", "al")) {
       legend_points <- c(19, NA)
     }
-    if (View.Lines== "DID: Groups") {
+    if (View.Lines== "dg") {
       legend_points <- c(19,19, NA, NA)
     }
 
     #Add legend
-    if(Add.Lgd == "Yes") {
+    if(!is.null(Leg.Loc) ) {
       legend_type <- c(1)
       legend(Leg.Loc, legend=legend_text, col=pcol_vector, lty=legend_type,
-             pch=legend_points, pt.bg=pcol_vector, cex = 2, lwd=3,  bty="n", inset=c(0, .05))
+             pch=legend_points, pt.bg=pcol_vector, cex = cex.legend, lwd=cex.legend,
+             bty="n",  inset=c(0, .05))
     }
-    #  return(list(ttnew2=ttnew2 ))
-    #-----------------------------------------------------------------------------
   }
 
   ################################################################################
@@ -3073,22 +3128,13 @@ if(y == "check") {
                                     Max.Val=vlim[2], Round.Digits=round.c, Point.Loc= xpt, PCol=pcol,
                                     Leg.Loc= add.legend, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
                                     cex.axis=cex.axis, legend=legend, cex.legend=cex.legend, lwd=lwd, Y.Lab=ylab ),
-             "taov" = fncPlotMcANOVA(codaSamples=DBDA_coda_object_df(), datFrm=df(),
-                                         yName=dbda_post_check_grp_Y(), xName=dbda_post_check_grp_X(),
-                                         MCmean=dbda_post_check_grp_pm(),
-                                         MCsigma=dbda_post_check_grp_psd(),
-                                         MCnu= dbda_post_check_grp_pnu(),
-                                         Num.Lines=dbda_post_check_grp_number_lines(),
-                                         Main.Title=dbda_post_check_grp_main_title(),
-                                         X.Lab=dbda_post_check_grp_x_label(),
-                                         Line.Color=dbda_post_check_grp_line_colors(),
-                                         CEX.size=dbda_post_check_grp_label_multiplier(),
-                                         X.Lim=(eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
-                                         Y.Lim=(eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
-                                         PCol = dbda_post_check_point_colors(),
-                                         Add.Lgd= dbda_post_check_add_legend(),
-                                         Leg.Loc=dbda_post_check_legend_location(),
-                                         T.Percentage=dbda_post_check_grp_min_value() ),
+         "taov" = fncPlotMcANOVA(MCMC=MCMC, datFrm=data, yName=dv, xName=iv[1],
+                                  MCmean=parameter[1], MCsigma=parameter[2], MCnu=parameter[3],
+                                  Num.Lines=pline, Main.Title=main, X.Lab=xlab,
+                                  Line.Color=lcol, X.Lim=xlim, Y.Lim=ylim,  T.Percentage=pct,
+                                  PCol=pcol, Leg.Loc= add.legend, cex= cex, cex.legend=cex.legend,
+                                  cex.axis=cex.axis, cex.lab= cex.lab, cex.main=cex.main,
+                                  lwd=lwd, legend=legend),
          "taov1" = fncPlotSingleT(MCMC=MCMC, datFrm=data, yName=dv,
                                   MCmean=parameter[1], MCsigma=parameter[2], MCnu=parameter[3],
                                   Num.Lines=pline, Main.Title=main, X.Lab=xlab,
@@ -3096,27 +3142,21 @@ if(y == "check") {
                                   PCol=pcol, Leg.Loc= add.legend, cex= cex, cex.legend=cex.legend,
                                   cex.axis=cex.axis, cex.lab= cex.lab, cex.main=cex.main,
                                   lwd=lwd, legend=legend),
-         "OLS: Linear" = fncBayesOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
-                                                Reg.Type= dbda_post_check_grp_distr(),
-                                                Outcome= dbda_post_check_grp_Y(),
-                                                Group= dbda_post_check_grp_X(),
-                                                Group.Level= dbda_post_check_grp_level_X(),
-                                                xName= dbda_post_check_part_pred_X(),
-                                                parX= dbda_post_check_part_pred_pars(),
-                                                View.Lines= dbda_post_check_part_pred_data(),
-                                                Num.Lines= dbda_post_check_grp_number_lines(),
-                                                Main.Title= dbda_post_check_grp_main_title(),
-                                                X.Lab= dbda_post_check_grp_x_label(),
-                                                Line.Color= dbda_post_check_grp_line_colors(),
-                                                CEX.size= dbda_post_check_grp_label_multiplier(),
-                                                X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
-                                                Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
-                                                X.Min= dbda_post_check_grp_min_value(),
-                                                X.Max= dbda_post_check_grp_max_value(),
-                                                PCol= dbda_post_check_point_colors(),
-                                                Add.Lgd= dbda_post_check_add_legend(),
-                                                Leg.Loc= dbda_post_check_legend_location()),
-             "OLS: Quadratic" = fncBayesOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
+         "ol" = fncBayesOlsPrtPred(MCMC=MCMC, datFrm=data, Reg.Type=ctype,
+                                   Outcome=dv , Group=group[[1]], Group.Level=group[[2]],
+                                   xName=iv, parX=parameter, View.Lines=add.data, Num.Lines=pline,
+                                   Main.Title=main, X.Lab=xlab, Line.Color=lcol,
+                                   cex.lab= cex.lab, cex= cex, cex.main=cex.main, cex.axis=cex.axis,
+                                   cex.legend=cex.legend, X.Lim=xlim, Y.Lim=ylim,
+                                   X.Min=vlim[1], X.Max=vlim[2], PCol=pcol, Leg.Loc=add.legend),
+         "oq" = fncBayesOlsPrtPred(MCMC=MCMC, datFrm=data, Reg.Type=ctype,
+                                   Outcome=dv , Group=group[[1]], Group.Level=group[[2]],
+                                   xName=iv, parX=parameter, View.Lines=add.data, Num.Lines=pline,
+                                   Main.Title=main, X.Lab=xlab, Line.Color=lcol,
+                                   cex.lab= cex.lab, cex= cex, cex.main=cex.main, cex.axis=cex.axis,
+                                   cex.legend=cex.legend, X.Lim=xlim, Y.Lim=ylim,
+                                   X.Min=vlim[1], X.Max=vlim[2], PCol=pcol, Leg.Loc=add.legend),
+         "OLS: Quadratic" = fncBayesOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
                                                    Reg.Type= dbda_post_check_grp_distr(),
                                                    Outcome= dbda_post_check_grp_Y(),
                                                    Group= dbda_post_check_grp_X(),

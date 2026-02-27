@@ -64,8 +64,8 @@ multilevel or hierarchical model summary, or target summary plots. Default is 'p
 Posterior predictive checks allow us to see how well our estimates match the observed data. These checks are
 available for Bayesian estimation of outcomes and regression polynomial trend line using various distributions in the
 likelihood function. Select 'n', 'ln', 'sn', 'w', 'g', 't', 'taov', 'taov1', 'ol', 'oq','oc', 'hol', 'hoq', 'hoc',
-'hlol', 'hloq', 'hloc', 'odid', 'logl', 'logq', 'logc', 'hlogl', 'hlogq', 'hlogc' for these respective options:
-'Normal', 'Log-normal', 'Skew-normal', 'Weibull', 'Gamma', 't', 't: ANOVA', 't: ANOVA 1 group', 'OLS: Linear',
+'hlol', 'hloq', 'hloc', 'did', 'logl', 'logq', 'logc', 'hlogl', 'hlogq', 'hlogc' for these respective options:
+'Normal', 'Log-normal', 'Skew-normal', 'Weibull', 'Gamma', 't', 't: ANOVA, side view', 't: ANOVA 1 group, side view', 'OLS: Linear',
 'OLS: Quadratic', 'OLS: Cubic', 'Hierarchical OLS: Linear', 'Hierarchical OLS: Quadratic', 'Hierarchical OLS: Cubic',
 'Hierarchical Log OLS: Linear', 'Hierarchical Log OLS: Quadratic', 'Hierarchical Log OLS: Cubic', 'OLS: DID',
 'Logistic: Linear', 'Logistic: Quadratic', 'Logistic: Cubic', 'Hierarchical Logistic: Linear',
@@ -103,18 +103,19 @@ the null hypothesis value of 0.50. We can accept the null hypothesis if the enti
 \item{data}{object name for the observed data when y='check' or y='multi'.}
 
 \item{dv}{character vector of length == 1 for the dependent variable name in the observed data frame
-when y='check' or y='multi'.}
+when y='check' or y='multi'. Default is NULL.}
 
 \item{iv}{character vector of length >= 1 for the independent variable name(s) in the observed data frame
-when y='check' or y='multi'.}
+when y='check' or y='multi'. When y='taov', enter the name of the test group variable.  Default is NULL.}
 
 \item{group}{character list of length == 2 for 1) the grouping variable name and 2) specific group(s) in the
 observed data frame. This is primarily used for multilevel or hierarchical models when y='check' or y='multi'
 that the hierarchies are based on (e.g., hospitals nested within health systems).}
 
 \item{add.data}{character vector of length == 1 to determine the type of observed data added to the plot
-when y='check'. Select 'a', 'u', 'al', 'ul', 'dg', 'n' for these options: 'All', 'Unit','All: Lines',
-'Unit: Lines','DID: Groups', 'none'. Default is 'n' for none.}
+when y='check' and ctype= 'ol', 'oq','oc', 'hol', 'hoq', 'hoc', 'hlol', 'hloq', 'hloc', 'did', 'logl', 'logq',
+'logc', 'hlogl', 'hlogq', or 'hlogc'. Select 'a', 'u', 'al', 'ul', 'dg', 'n' for these options: 'All', 'Unit',
+'All: Lines', 'Unit: Lines','DID: Groups', 'none'. Default is 'n' for none.}
 
 \item{main}{the main title of the plot.}
 
