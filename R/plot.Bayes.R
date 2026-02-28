@@ -13,14 +13,21 @@
 #' @param ctype character vector of length == 1 that indicates posterior predictive check type when y='check'.
 #' Posterior predictive checks allow us to see how well our estimates match the observed data. These checks are
 #' available for Bayesian estimation of outcomes and regression polynomial trend line using various distributions in the
-#' likelihood function. Select 'n', 'ln', 'sn', 'w', 'g', 't', 'taov', 'taov1', 'ol', 'oq','oc', 'hol', 'hoq', 'hoc',
-#' 'hlol', 'hloq', 'hloc', 'did', 'logl', 'logq', 'logc', 'hlogl', 'hlogq', 'hlogc' for these respective options:
-#' 'Normal', 'Log-normal', 'Skew-normal', 'Weibull', 'Gamma', 't', 't: ANOVA, side view', 't: ANOVA 1 group, side view', 'OLS: Linear',
-#' 'OLS: Quadratic', 'OLS: Cubic', 'Hierarchical OLS: Linear', 'Hierarchical OLS: Quadratic', 'Hierarchical OLS: Cubic',
-#' 'Hierarchical Log OLS: Linear', 'Hierarchical Log OLS: Quadratic', 'Hierarchical Log OLS: Cubic', 'OLS: DID',
-#' 'Logistic: Linear', 'Logistic: Quadratic', 'Logistic: Cubic', 'Hierarchical Logistic: Linear',
-#' 'Hierarchical Logistic: Quadratic', and 'Hierarchical Logistic: Cubic'. The first 8 selections are for Bayesian
-#' estimation of outcomes and the remaining options were developed to assess regression trend lines. Default is NULL.
+#' likelihood function. Select 'n', 'ln', 'sn', 'w', 'g', 't', 'taov', 'taov1', 'ol', 'oq','oc', 'lnl', 'lnq', 'lnc',
+#' 'logl', 'logq', 'logc', 'hol', 'hoq', 'hoc', 'hlnl', 'hlnq', 'hlnc', 'hlogl', 'hlogq', 'hlogc' for these respective options
+#' for Bayesian estimation: 'Normal', 'Log-normal', 'Skew-normal', 'Weibull', 'Gamma', 't', 't: ANOVA, side view',
+#' 't: ANOVA 1 group, side view'; and for regression trend lines: 'OLS: Linear', 'OLS: Quadratic', 'OLS: Cubic',
+#' 'Log-normal: Linear', 'Log-normal: Quadratic', 'Log-normal: Cubic', 'Logistic: Linear', 'Logistic: Quadratic',
+#' 'Logistic: Cubic', 'Hierarchical OLS: Linear', 'Hierarchical OLS: Quadratic', 'Hierarchical OLS: Cubic',
+#' 'Hierarchical Log-normal: Linear', 'Hierarchical Log-normal: Quadratic', 'Hierarchical Log-normal: Cubic',
+#' 'Hierarchical Logistic: Linear', 'Hierarchical Logistic: Quadratic', and 'Hierarchical Logistic: Cubic'. The first 8 selections
+#' are for Bayesian estimation of outcomes and the remaining options were developed to assess regression trend lines from ordinary
+#' least squares (OLS), log-normal, and logistic models and also for hierarchical model versions starting with 'h' (e.g., 'ol' to
+#' 'hol'). Additional models analogous to 'Generalized Linear Models' can also be graphed on the logit scale using 'OLS' options.
+#' For example, plot a logistic model on the logit scale when ctype='ol' (i.e., view straight trend lines).
+#' Or if you prefer viewing results on the probability scale, select ctype='logl' (i.e., curved lines). And consider using
+#' ctype= 'lnl', 'lnq', 'lnc' (and 'hlnl', 'hlnq', 'lgnc') for log-normal and Poisson models for lines using exponentiated values.
+#' It is important to note that the observed data may not be on the same scale and may not be visible in the graph. Default is NULL.
 #' @param parameter a character vector of length >= 1 or a 2 element list with the name(s) of parameter in MCMC chains to produce
 #' summary statistics. Use a 1 element vector to get posterior estimates of a single parameter. Use a 2 or more element vector
 #' to estimate the average joint effects of multiple parameters (e.g., average infection rate for interventions A and B when
@@ -55,9 +62,9 @@
 #' observed data frame. This is primarily used for multilevel or hierarchical models when y='check' or y='multi'
 #' that the hierarchies are based on (e.g., hospitals nested within health systems).
 #' @param add.data character vector of length == 1 to determine the type of observed data added to the plot
-#' when y='check' and ctype= 'ol', 'oq','oc', 'hol', 'hoq', 'hoc', 'hlol', 'hloq', 'hloc', 'did', 'logl', 'logq',
-#' 'logc', 'hlogl', 'hlogq', or 'hlogc'. Select 'a', 'u', 'al', 'ul', 'dg', 'n' for these options: 'All', 'Unit',
-#' 'All: Lines', 'Unit: Lines','DID: Groups', 'none'. Default is 'n' for none.
+#' when y='check' and ctype= 'ol', 'oq','oc', 'hol', 'hoq', 'hoc', 'hlol', 'hloq', 'hloc', 'logl', 'logq',
+#' 'logc', 'hlogl', 'hlogq', or 'hlogc'. Select 'a', 'u', 'al', 'ul', 'n' for these options: 'All', 'Unit',
+#' 'All: Lines', 'Unit: Lines', 'none'. Default is 'n' for none.
 #' @param main the main title of the plot.
 #' @param xlab a character vector label for the x-axis.
 #' @param ylab a character vector label for the y-axis.
@@ -2099,11 +2106,9 @@ plot.Bayes <- function(x, y=NULL, ctype="n", parameter=NULL, center="mode", mass
                                  PCol=NULL, Add.Lgd=NULL, Leg.Loc=NULL) {
     y = datFrm[complete.cases(datFrm), Outcome]
     x = datFrm[complete.cases(datFrm), xName, drop=FALSE][1]
-    if(Reg.Type == "did") {
-      if(!is.null(Group)) {
+    if(!is.null(Group)) {
       s = factor(datFrm[, Group])
       nSubj = length(unique(s)) # should be same as max(s)
-      }
     }
     #Make coda into as.matrix
     mcmcMat <- MCMC
@@ -2147,15 +2152,15 @@ plot.Bayes <- function(x, y=NULL, ctype="n", parameter=NULL, center="mode", mass
     #Combines object elements and variable means for polynomial models.
     ttfrm <- cbind(tlCoef[-1], txVarMeans)
     #This will change the mean value to the xComb for linear models
-    if (Reg.Type %in% c("ol", "oq", "oc", "logl", "logq", "logc") ) {
+    if (Reg.Type %in% c("ol", "oq", "oc", 'lnl', 'lnq', 'lnc', "logl", "logq", "logc") ) {
       ttfrm[1, 2] <- "xComb"
     }
     #This will change the mean value to the xComb^2 for quadratic models
-    if (Reg.Type %in% c("oq", "oc", "logq", "logc")) {
+    if (Reg.Type %in% c("oq", "oc", 'lnq', 'lnc', "logq", "logc")) {
       ttfrm[2, 2] <- "xComb^2"
     }
     #This will change the mean value to the xComb^3 for cubic models
-    if (Reg.Type %in% c("oc", "logc")) {
+    if (Reg.Type %in% c("oc", 'lnc', "logc")) {
       ttfrm[2, 3] <- "xComb^3"
     }
     #This multiplies each coefficient by the x-value and stores it in a vector
@@ -2192,67 +2197,6 @@ plot.Bayes <- function(x, y=NULL, ctype="n", parameter=NULL, center="mode", mass
     if (View.Lines == "ul") {
       line_type <-  "o"
     }
-    ##############################################################################
-    # DID functions
-    if (Reg.Type %in% "did" ) {
-      tab1 <- table(datFrm[, xName[1]], datFrm[, xName[2]])
-      xvalPost <- as.numeric(rownames(tab1))
-    }
-    PostVals <- vector()
-    if (Reg.Type %in% "did" ) {
-      if (nrow(tab1) >  ncol(tab1)) {  #Leaving this in case people put in Time and Intervention backwards
-        PostVals <- xvalPost[which(tab1[, 2] > 0 )]
-      }
-    }
-    #Creates zComb for DID intervention binary indicator
-    if (Reg.Type %in% "did" ) {
-      zComb0 <- rep(0, 301)
-      zComb1 <- ifelse(xComb < min(PostVals), 0, 1)
-    }
-    #This makes it for the DID lines (1 for an intervention, 1 for control)
-    #Combines object elements and variable means for polynomial models.
-    if (Reg.Type %in% "did" ) {
-      DIDfrm0 <- cbind(tlCoef[-1], txVarMeans)
-      DIDfrm1 <- cbind(tlCoef[-1], txVarMeans)
-    }
-    #This will change the mean value to the xComb for linear models
-    if (Reg.Type %in% "did" ) {
-      DIDfrm0[1, 2] <- "xComb"
-      DIDfrm1[1, 2] <- "xComb"
-      DIDfrm0[2, 2] <- "zComb0"
-      DIDfrm1[2, 2] <- "zComb1"
-      DIDfrm0[3, 2] <- "xComb*zComb0"
-      DIDfrm1[3, 2] <- "xComb*zComb1"
-    }
-    #This multiplies each coefficient by the x-value and stores it in a vector
-    if (Reg.Type %in% "did" ) {
-      DIDnew0 <- vector()
-      DIDnew1 <- vector()
-    }
-    #This creates the DID regression weights for the intervention and control groups
-    if (Reg.Type %in% "did" ) {
-      for (i in 1:nrow(DIDfrm0)) {
-        DIDnew0[i] <- paste(DIDfrm0[i, ], collapse = "*")
-        DIDnew1[i] <- paste(DIDfrm1[i, ], collapse = "*")
-      }
-    }
-    #This adds DID coefficients*x-value and put in intercept
-    if (Reg.Type %in% "did" ) {
-      DIDnew02 <- paste(c(tlCoef[1], DIDnew0), collapse = "+")
-      DIDnew12 <- paste(c(tlCoef[1], DIDnew1), collapse = "+")
-    }
-    #Aggregates data to put in as optional observed trend values
-    #Make smaller datasets for the intervention and control groups
-    if (Reg.Type %in% "did" ) {
-      datFrm0 <- datFrm[which( datFrm[, xName[2]] == min(datFrm[, xName[2]], na.rm=T)), c(Outcome, xName[1:2])]
-      datFrm1 <- datFrm[which( datFrm[, xName[2]] == max(datFrm[, xName[2]], na.rm=T)), c(Outcome, xName[1:2])]
-    }
-    #Make DID aggregated data observed points in the graph
-    if (Reg.Type %in% "did" ) {
-      agDID0  <- aggregate(datFrm0[, Outcome] ~ datFrm0[, xName[1]] + datFrm0[, xName[2]], FUN="mean")
-      agDID1a <- aggregate(datFrm1[, Outcome] ~ datFrm1[, xName[1]] + datFrm1[, xName[2]], FUN="mean")
-    }
-    ##############################################################################
     #X and Y labels
     if (!is.null(X.Lab)) {
       X.Lab <- X.Lab
@@ -2272,156 +2216,121 @@ plot.Bayes <- function(x, y=NULL, ctype="n", parameter=NULL, center="mode", mass
           type= "n", #col="black" ,
           xlim=X.Lim, ylim=Y.Lim,xlab=X.Lab , ylab=Y.Lab ,
           main= Main.Title, cex.lab=cex.lab, cex.main=cex.main, cex.axis=cex.axis )
+    ###################
+    ## Observed Data ##
+    ###################
     #With groups: All groups added at once for the overall term
-#    if (Reg.Type %in% c("ol", "oq", "oc") ) {
-#      if (View.Lines %in% c('a', 'al')) {
-#        if(!is.null(Group)) {
-#          for ( sIdx in 1:nSubj ) {
-#            thisSrows = (as.numeric(s)==sIdx)
-#            lines( x[thisSrows, ] , y[thisSrows] , type=line_type , pch=19, col= PCol, cex=cex, lwd=lwd)
-#          }
-#        }
-#      }
-#    }
+    if (Reg.Type %in% c("ol", "oq", "oc","logl","logq","logc","lnl","lnq","lnc") ) {
+      if (View.Lines %in% c('a','al')) {
+        if(!is.null(Group)) {
+          for ( sIdx in 1:nSubj ) {
+            thisSrows = (as.numeric(s)==sIdx)
+            lines( x[thisSrows, ] , y[thisSrows] , type=line_type , pch=19, col= PCol, cex=cex, lwd=lwd)
+          }
+        }
+      }
+    }
+    #Units only
+    #With groups: Specific unit's observed data
+    if (Reg.Type %in% c("ol", "oq", "oc","logl","logq","logc","lnl","lnq","lnc") ) {
+      if (View.Lines %in% c('u', 'ul')) {
+        if(!is.null(Group)) {
+            thisSrows = (as.numeric(s)== which(levels(s) == Group.Level) )
+            lines( x[thisSrows, ] , y[thisSrows] , type=line_type , pch=19, col= PCol, cex=cex, lwd=lwd)
+        }
+      }
+    }
     #No groups: All groups added at once for the overall term
-    if (Reg.Type %in% c("ol", "oq", "oc") ) {
+    if (Reg.Type %in% c("ol", "oq", "oc","logl","logq","logc","lnl","lnq","lnc") ) {
       if (View.Lines %in% c('a', 'al')) {
         if(is.null(Group)) {
           lines( unlist(x), y, type=line_type , pch=19, col= PCol, cex=cex, lwd=lwd)
         }
       }
     }
-    #Logistic regression probabilities
-#    if (Reg.Type %in% c("logl", "logq", "logc") ) {
-#      if (View.Lines %in% c('a', 'al')) {
-#        if(!is.null(Group)) {
-#          for ( sIdx in 1:nSubj ) {
-#            thisSrows = (as.numeric(s)==sIdx)
-#            lines( x[thisSrows, ] , y[thisSrows] , type=line_type , pch=19, col= PCol, cex=cex, lwd=lwd)
-#          }
-#        }
-#      }
-#    }
-    #Logistic regression probabilities: No groups
-    if (Reg.Type %in% c("logl", "logq", "logc") ) {
-      if (View.Lines %in% c('a', 'al')) {
-        if(is.null(Group)) {
-          lines( unlist(x), y, type=line_type , pch=19, col= PCol, cex=cex, lwd=lwd)
-        }
-      }
-    }
+    ####################
+    ## Posterior line ##
+    ####################
     # Superimpose a smattering of believable regression lines:
     #For each line (e.g., 30), it cycles the 301 X-comb values to create 301 Ys for plot
     #This plots out random regression lines
     if (Reg.Type %in% c("ol", "oq", "oc") ) {
       for ( i in 1:length(floor(seq(1, nrow(mcmcMat), length = Num.Lines))) ) {
-        lines( xComb , eval(parse(text= ttnew2)) , col= Line.Color )
+        lines( xComb , eval(parse(text= ttnew2)) , col= Line.Color, lwd= lwd  )
+      }
+    }
+    #Log-normal regression probabilities
+    if (Reg.Type %in% c("lnl", "lnq", "lnc") ) {
+      for ( i in 1:length(floor(seq(1, nrow(mcmcMat), length = Num.Lines))) ) {
+        lines( xComb , exp(eval(parse(text= ttnew2))) , col= Line.Color, lwd= lwd )
       }
     }
     #Logistic regression probabilities
     if (Reg.Type %in% c("logl", "logq", "logc") ) {
       for ( i in 1:length(floor(seq(1, nrow(mcmcMat), length = Num.Lines))) ) {
-        lines( xComb , (1/(1+ exp(-( (eval(parse(text= ttnew2))) )))) , col= Line.Color )
+        lines( xComb , (1/(1+ exp(-( (eval(parse(text= ttnew2))) )))) , col= Line.Color, lwd= lwd)
       }
     }
-    #DID posterior lines
-    if (Reg.Type %in% "did" ) {
-      for ( i in 1:length(floor(seq(1, nrow(mcmcMat), length = Num.Lines))) ) {
-        lines( xComb , eval(parse(text= DIDnew12)) , col= Line.Color[2] )
-        lines( xComb , eval(parse(text= DIDnew02)) , col= Line.Color[1] )
-        #SAVE: these 2 lines make are transparent, they' wi'll blend colors for groups, pre-intervention
-        #      lines( xComb , eval(parse(text= DIDnew12)) , col= adjustcolor( Line.Color[2], alpha.f = 0.4) )
-        #      lines( xComb , eval(parse(text= DIDnew02)) , col= adjustcolor( Line.Color[1], alpha.f = 0.4) )
-      }
-    }
-
     #Determine which observed datFrm lines to view
     if (View.Lines %in% c("u", "ul")) {
       if(!is.null(Group)) {
         #For specific groups
         for ( sIdx in 1:nSubj ) {
-          thisSrows <- (as.numeric(s) == as.numeric(s[s == Group.Level]))
+          thisSrows = (as.numeric(s)== which(levels(s) == Group.Level) )
           lines( x[thisSrows, ] , y[thisSrows] , type= line_type, pch=19, col= PCol, cex=cex, lwd=lwd )
         }
       }
     }
-
-    #DID observed data
-    if (View.Lines == "dg") {
-      #For specific groups
-      for ( sIdx in 1:nSubj ) {
-        thisSrows <- (as.numeric(s) == as.numeric(s[s == Group.Level]))
-        lines(agDID1a[,1], agDID1a[,3], type="o" , pch=19, col= tail(PCol, 1), cex=cex, lwd=lwd)
-        lines(agDID0[, 1], agDID0[, 3], type="o" , pch=19, col= head(PCol, 1), cex=cex, lwd=lwd)
-      }
-    }
-
     #Legend color
     if (View.Lines== "n") {
       pcol_vector <- c(Line.Color)
     }
-    if (View.Lines== "u") {
+    if (View.Lines %in% c("u", "ul")) {
       pcol_vector <- c(PCol, Line.Color)
     }
     if (View.Lines %in% c("a", "al")) {
-      pcol_vector <- c(PCol, Line.Color)
-    }
-    if (View.Lines == "dg") {
       pcol_vector <- c(PCol, Line.Color)
     }
     #Legend text
     if (Reg.Type %in% c("ol", "oq", "oc", "logl", "logq", "logc") ) {
       if (View.Lines== "n") {
-        #if (nchar(Group.Level) > 0 ){
-        #  legend_text <- if (!is.null(legend)) legend else c(paste0("Posterior Estimate ", abbreviate(Group, 8), ": ",
-        #                                                            abbreviate(Group.Level, 8)))
-        #} else {
-        #  legend_text <- if (!is.null(legend)) legend else c(paste0("Posterior Estimate: ", abbreviate(Group, 8)))
-        #}
-          legend_text <- if (!is.null(legend)) legend else c(paste0("Posterior Estimate: ", xName[1]))
+          legend_text <- if (!is.null(legend)) legend else "Posterior Estimate"
       }
     }
-#    if (View.Lines== "u") {
-#      legend_text <- if (!is.null(legend)) legend else c(paste0("Observed ", abbreviate(Group, 8), ": ",
-#                                                                abbreviate(Group.Level, 8)), "Posterior Estimate")
-#    }
-#    if (View.Lines== "a") {
-#      legend_text <- if (!is.null(legend)) legend else c(paste0("Observed ", abbreviate(Group, 8),": All"), "Posterior Estimate")
-#    }
+    if (View.Lines %in% c("u", "ul") ) {
+      legend_text <- if (!is.null(legend)) legend else c(paste0("Observed ", abbreviate(Group, 8), ": ",
+                                                                abbreviate(Group.Level, 8)), "Posterior Estimate")
+    }
     # for no groups
     if (View.Lines %in% c("a", "al")) {
-      legend_text <- if (!is.null(legend)) legend else c(paste0("Observed ", xName[1],": All"), "Posterior Estimate")
+      legend_text <- if (!is.null(legend)) legend else c("Observed: All", "Posterior Estimate")
     }
-
-    #DID
-    if (Reg.Type %in% "did" ) {
-      if (View.Lines== "dg") {
-        legend_text <- if (!is.null(legend)) legend else c("Observed: Control", "Observed: Intervention", "Posterior Estimate: Control", "Posterior Estimate: Intervention")
-      } else {
-        legend_text <- if (!is.null(legend)) legend else c("Posterior Estimate: Control", "Posterior Estimate: Intervention")
-      }
-    }
-
     #Legend points
     if (View.Lines== "n") {
       legend_points <- NULL
     }
-    if (View.Lines== "u") {
+    if (View.Lines %in% c("u", "ul")) {
       legend_points <- c(19, NA)
     }
     if (View.Lines %in% c("a", "al")) {
       legend_points <- c(19, NA)
     }
-    if (View.Lines== "dg") {
-      legend_points <- c(19,19, NA, NA)
-    }
-
     #Add legend
     if(!is.null(Leg.Loc) ) {
-      legend_type <- c(1)
-      legend(Leg.Loc, legend=legend_text, col=pcol_vector, lty=legend_type,
-             pch=legend_points, pt.bg=pcol_vector, cex = cex.legend, lwd=cex.legend,
-             bty="n",  inset=c(0, .05))
+      if (View.Lines %in% c("al","ul")) {
+      legend_type <- c(1,1)
+      }
+      if (View.Lines %in% c("a","u")) {
+        legend_type <- c(1, NA)
+      }
+      if (View.Lines %in% c("n")) {
+        legend_type <- 1
+      }
+      legend(Leg.Loc, legend=c(legend_text[2], legend_text[1]),
+             col= c(pcol_vector[2], pcol_vector[1]),
+             pch= c(legend_points[2], legend_points[1]),
+             lty= legend_type, pt.bg=pcol_vector, cex = cex.legend,
+             lwd=cex.legend, bty="n",  inset=c(0, .05))
     }
   }
 
@@ -3158,125 +3067,56 @@ if(y == "check") {
                                    cex.lab= cex.lab, cex= cex, cex.main=cex.main, cex.axis=cex.axis,
                                    cex.legend=cex.legend, X.Lim=xlim, Y.Lim=ylim,
                                    X.Min=vlim[1], X.Max=vlim[2], PCol=pcol, Leg.Loc=add.legend),
-         "OLS: Quadratic" = fncBayesOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
-                                                   Reg.Type= dbda_post_check_grp_distr(),
-                                                   Outcome= dbda_post_check_grp_Y(),
-                                                   Group= dbda_post_check_grp_X(),
-                                                   Group.Level= dbda_post_check_grp_level_X(),
-                                                   xName= dbda_post_check_part_pred_X(),
-                                                   parX= dbda_post_check_part_pred_pars(),
-                                                   View.Lines= dbda_post_check_part_pred_data(),
-                                                   Num.Lines= dbda_post_check_grp_number_lines(),
-                                                   Main.Title= dbda_post_check_grp_main_title(),
-                                                   X.Lab= dbda_post_check_grp_x_label(),
-                                                   Line.Color= dbda_post_check_grp_line_colors(),
-                                                   CEX.size= dbda_post_check_grp_label_multiplier(),
-                                                   X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
-                                                   Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
-                                                   X.Min= dbda_post_check_grp_min_value(),
-                                                   X.Max= dbda_post_check_grp_max_value(),
-                                                   PCol= dbda_post_check_point_colors(),
-                                                   Add.Lgd= dbda_post_check_add_legend(),
-                                                   Leg.Loc= dbda_post_check_legend_location()),
-             "OLS: Cubic" = fncBayesOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
-                                               Reg.Type= dbda_post_check_grp_distr(),
-                                               Outcome= dbda_post_check_grp_Y(),
-                                               Group= dbda_post_check_grp_X(),
-                                               Group.Level= dbda_post_check_grp_level_X(),
-                                               xName= dbda_post_check_part_pred_X(),
-                                               parX= dbda_post_check_part_pred_pars(),
-                                               View.Lines= dbda_post_check_part_pred_data(),
-                                               Num.Lines= dbda_post_check_grp_number_lines(),
-                                               Main.Title= dbda_post_check_grp_main_title(),
-                                               X.Lab= dbda_post_check_grp_x_label(),
-                                               Line.Color= dbda_post_check_grp_line_colors(),
-                                               CEX.size= dbda_post_check_grp_label_multiplier(),
-                                               X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
-                                               Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
-                                               X.Min= dbda_post_check_grp_min_value(),
-                                               X.Max= dbda_post_check_grp_max_value(),
-                                               PCol= dbda_post_check_point_colors(),
-                                               Add.Lgd= dbda_post_check_add_legend(),
-                                               Leg.Loc= dbda_post_check_legend_location()),
-             "Logistic: Linear" = fncBayesOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
-                                                     Reg.Type= dbda_post_check_grp_distr(),
-                                                     Outcome= dbda_post_check_grp_Y(),
-                                                     Group= dbda_post_check_grp_X(),
-                                                     Group.Level= dbda_post_check_grp_level_X(),
-                                                     xName= dbda_post_check_part_pred_X(),
-                                                     parX= dbda_post_check_part_pred_pars(),
-                                                     View.Lines= dbda_post_check_part_pred_data(),
-                                                     Num.Lines= dbda_post_check_grp_number_lines(),
-                                                     Main.Title= dbda_post_check_grp_main_title(),
-                                                     X.Lab= dbda_post_check_grp_x_label(),
-                                                     Line.Color= dbda_post_check_grp_line_colors(),
-                                                     CEX.size= dbda_post_check_grp_label_multiplier(),
-                                                     X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
-                                                     Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
-                                                     X.Min= dbda_post_check_grp_min_value(),
-                                                     X.Max= dbda_post_check_grp_max_value(),
-                                                     PCol= dbda_post_check_point_colors(),
-                                                     Add.Lgd= dbda_post_check_add_legend(),
-                                                     Leg.Loc= dbda_post_check_legend_location()),
-             "Logistic: Quadratic" = fncBayesOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
-                                                        Reg.Type= dbda_post_check_grp_distr(),
-                                                        Outcome= dbda_post_check_grp_Y(),
-                                                        Group= dbda_post_check_grp_X(),
-                                                        Group.Level= dbda_post_check_grp_level_X(),
-                                                        xName= dbda_post_check_part_pred_X(),
-                                                        parX= dbda_post_check_part_pred_pars(),
-                                                        View.Lines= dbda_post_check_part_pred_data(),
-                                                        Num.Lines= dbda_post_check_grp_number_lines(),
-                                                        Main.Title= dbda_post_check_grp_main_title(),
-                                                        X.Lab= dbda_post_check_grp_x_label(),
-                                                        Line.Color= dbda_post_check_grp_line_colors(),
-                                                        CEX.size= dbda_post_check_grp_label_multiplier(),
-                                                        X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
-                                                        Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
-                                                        X.Min= dbda_post_check_grp_min_value(),
-                                                        X.Max= dbda_post_check_grp_max_value(),
-                                                        PCol= dbda_post_check_point_colors(),
-                                                        Add.Lgd= dbda_post_check_add_legend(),
-                                                        Leg.Loc= dbda_post_check_legend_location()),
-             "Logistic: Cubic" = fncBayesOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
-                                                    Reg.Type= dbda_post_check_grp_distr(),
-                                                    Outcome= dbda_post_check_grp_Y(),
-                                                    Group= dbda_post_check_grp_X(),
-                                                    Group.Level= dbda_post_check_grp_level_X(),
-                                                    xName= dbda_post_check_part_pred_X(),
-                                                    parX= dbda_post_check_part_pred_pars(),
-                                                    View.Lines= dbda_post_check_part_pred_data(),
-                                                    Num.Lines= dbda_post_check_grp_number_lines(),
-                                                    Main.Title= dbda_post_check_grp_main_title(),
-                                                    X.Lab= dbda_post_check_grp_x_label(),
-                                                    Line.Color= dbda_post_check_grp_line_colors(),
-                                                    CEX.size= dbda_post_check_grp_label_multiplier(),
-                                                    X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
-                                                    Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
-                                                    X.Min= dbda_post_check_grp_min_value(),
-                                                    X.Max= dbda_post_check_grp_max_value(),
-                                                    PCol= dbda_post_check_point_colors(),
-                                                    Add.Lgd= dbda_post_check_add_legend(),
-                                                    Leg.Loc= dbda_post_check_legend_location()),
-             "OLS: DID" = fncBayesOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
-                                             Reg.Type= dbda_post_check_grp_distr(),
-                                             Outcome= dbda_post_check_grp_Y(),
-                                             Group= dbda_post_check_grp_X(),
-                                             Group.Level= dbda_post_check_grp_level_X(),
-                                             xName= dbda_post_check_part_pred_X(),
-                                             parX= dbda_post_check_part_pred_pars(),
-                                             View.Lines= dbda_post_check_part_pred_data(),
-                                             Num.Lines= dbda_post_check_grp_number_lines(),
-                                             Main.Title= dbda_post_check_grp_main_title(),
-                                             X.Lab= dbda_post_check_grp_x_label(),
-                                             Line.Color= dbda_post_check_grp_line_colors(),
-                                             CEX.size= dbda_post_check_grp_label_multiplier(),
-                                             X.Lim= (eval(parse(text= dbda_post_check_grp_x_axis_limits() )) ),
-                                             Y.Lim= (eval(parse(text= dbda_post_check_grp_y_axis_limits() )) ),
-                                             PCol= dbda_post_check_point_colors(),
-                                             Add.Lgd= dbda_post_check_add_legend(),
-                                             Leg.Loc= dbda_post_check_legend_location()),
-             "Hierarchical OLS: Linear" = fncBayesMultiOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
+         "oc" = fncBayesOlsPrtPred(MCMC=MCMC, datFrm=data, Reg.Type=ctype,
+                                   Outcome=dv , Group=group[[1]], Group.Level=group[[2]],
+                                   xName=iv, parX=parameter, View.Lines=add.data, Num.Lines=pline,
+                                   Main.Title=main, X.Lab=xlab, Line.Color=lcol,
+                                   cex.lab= cex.lab, cex= cex, cex.main=cex.main, cex.axis=cex.axis,
+                                   cex.legend=cex.legend, X.Lim=xlim, Y.Lim=ylim,
+                                   X.Min=vlim[1], X.Max=vlim[2], PCol=pcol, Leg.Loc=add.legend),
+         "lnl" = fncBayesOlsPrtPred(MCMC=MCMC, datFrm=data, Reg.Type=ctype,
+                                    Outcome=dv , Group=group[[1]], Group.Level=group[[2]],
+                                    xName=iv, parX=parameter, View.Lines=add.data, Num.Lines=pline,
+                                    Main.Title=main, X.Lab=xlab, Line.Color=lcol,
+                                    cex.lab= cex.lab, cex= cex, cex.main=cex.main, cex.axis=cex.axis,
+                                    cex.legend=cex.legend, X.Lim=xlim, Y.Lim=ylim,
+                                    X.Min=vlim[1], X.Max=vlim[2], PCol=pcol, Leg.Loc=add.legend),
+         "lnq" = fncBayesOlsPrtPred(MCMC=MCMC, datFrm=data, Reg.Type=ctype,
+                                    Outcome=dv , Group=group[[1]], Group.Level=group[[2]],
+                                    xName=iv, parX=parameter, View.Lines=add.data, Num.Lines=pline,
+                                    Main.Title=main, X.Lab=xlab, Line.Color=lcol,
+                                    cex.lab= cex.lab, cex= cex, cex.main=cex.main, cex.axis=cex.axis,
+                                    cex.legend=cex.legend, X.Lim=xlim, Y.Lim=ylim,
+                                    X.Min=vlim[1], X.Max=vlim[2], PCol=pcol, Leg.Loc=add.legend),
+         "lnc" = fncBayesOlsPrtPred(MCMC=MCMC, datFrm=data, Reg.Type=ctype,
+                                    Outcome=dv , Group=group[[1]], Group.Level=group[[2]],
+                                    xName=iv, parX=parameter, View.Lines=add.data, Num.Lines=pline,
+                                    Main.Title=main, X.Lab=xlab, Line.Color=lcol,
+                                    cex.lab= cex.lab, cex= cex, cex.main=cex.main, cex.axis=cex.axis,
+                                    cex.legend=cex.legend, X.Lim=xlim, Y.Lim=ylim,
+                                    X.Min=vlim[1], X.Max=vlim[2], PCol=pcol, Leg.Loc=add.legend),
+         "logl" = fncBayesOlsPrtPred(MCMC=MCMC, datFrm=data, Reg.Type=ctype,
+                                    Outcome=dv , Group=group[[1]], Group.Level=group[[2]],
+                                    xName=iv, parX=parameter, View.Lines=add.data, Num.Lines=pline,
+                                    Main.Title=main, X.Lab=xlab, Line.Color=lcol,
+                                    cex.lab= cex.lab, cex= cex, cex.main=cex.main, cex.axis=cex.axis,
+                                    cex.legend=cex.legend, X.Lim=xlim, Y.Lim=ylim,
+                                    X.Min=vlim[1], X.Max=vlim[2], PCol=pcol, Leg.Loc=add.legend),
+         "logq" = fncBayesOlsPrtPred(MCMC=MCMC, datFrm=data, Reg.Type=ctype,
+                                    Outcome=dv , Group=group[[1]], Group.Level=group[[2]],
+                                    xName=iv, parX=parameter, View.Lines=add.data, Num.Lines=pline,
+                                    Main.Title=main, X.Lab=xlab, Line.Color=lcol,
+                                    cex.lab= cex.lab, cex= cex, cex.main=cex.main, cex.axis=cex.axis,
+                                    cex.legend=cex.legend, X.Lim=xlim, Y.Lim=ylim,
+                                    X.Min=vlim[1], X.Max=vlim[2], PCol=pcol, Leg.Loc=add.legend),
+         "logc" = fncBayesOlsPrtPred(MCMC=MCMC, datFrm=data, Reg.Type=ctype,
+                                    Outcome=dv , Group=group[[1]], Group.Level=group[[2]],
+                                    xName=iv, parX=parameter, View.Lines=add.data, Num.Lines=pline,
+                                    Main.Title=main, X.Lab=xlab, Line.Color=lcol,
+                                    cex.lab= cex.lab, cex= cex, cex.main=cex.main, cex.axis=cex.axis,
+                                    cex.legend=cex.legend, X.Lim=xlim, Y.Lim=ylim,
+                                    X.Min=vlim[1], X.Max=vlim[2], PCol=pcol, Leg.Loc=add.legend),
+         "Hierarchical OLS: Linear" = fncBayesMultiOlsPrtPred(Coda.Object=DBDA_coda_object_df() , datFrm=df(),
                                                                   Reg.Type= dbda_post_check_grp_distr(),
                                                                   Outcome= dbda_post_check_grp_Y(),
                                                                   Group= dbda_post_check_grp_X(),

@@ -63,14 +63,21 @@ multilevel or hierarchical model summary, or target summary plots. Default is 'p
 \item{ctype}{character vector of length == 1 that indicates posterior predictive check type when y='check'.
 Posterior predictive checks allow us to see how well our estimates match the observed data. These checks are
 available for Bayesian estimation of outcomes and regression polynomial trend line using various distributions in the
-likelihood function. Select 'n', 'ln', 'sn', 'w', 'g', 't', 'taov', 'taov1', 'ol', 'oq','oc', 'hol', 'hoq', 'hoc',
-'hlol', 'hloq', 'hloc', 'did', 'logl', 'logq', 'logc', 'hlogl', 'hlogq', 'hlogc' for these respective options:
-'Normal', 'Log-normal', 'Skew-normal', 'Weibull', 'Gamma', 't', 't: ANOVA, side view', 't: ANOVA 1 group, side view', 'OLS: Linear',
-'OLS: Quadratic', 'OLS: Cubic', 'Hierarchical OLS: Linear', 'Hierarchical OLS: Quadratic', 'Hierarchical OLS: Cubic',
-'Hierarchical Log OLS: Linear', 'Hierarchical Log OLS: Quadratic', 'Hierarchical Log OLS: Cubic', 'OLS: DID',
-'Logistic: Linear', 'Logistic: Quadratic', 'Logistic: Cubic', 'Hierarchical Logistic: Linear',
-'Hierarchical Logistic: Quadratic', and 'Hierarchical Logistic: Cubic'. The first 8 selections are for Bayesian
-estimation of outcomes and the remaining options were developed to assess regression trend lines. Default is NULL.}
+likelihood function. Select 'n', 'ln', 'sn', 'w', 'g', 't', 'taov', 'taov1', 'ol', 'oq','oc', 'lnl', 'lnq', 'lnc',
+'logl', 'logq', 'logc', 'hol', 'hoq', 'hoc', 'hlnl', 'hlnq', 'hlnc', 'hlogl', 'hlogq', 'hlogc' for these respective options
+for Bayesian estimation: 'Normal', 'Log-normal', 'Skew-normal', 'Weibull', 'Gamma', 't', 't: ANOVA, side view',
+'t: ANOVA 1 group, side view'; and for regression trend lines: 'OLS: Linear', 'OLS: Quadratic', 'OLS: Cubic',
+'Log-normal: Linear', 'Log-normal: Quadratic', 'Log-normal: Cubic', 'Logistic: Linear', 'Logistic: Quadratic',
+'Logistic: Cubic', 'Hierarchical OLS: Linear', 'Hierarchical OLS: Quadratic', 'Hierarchical OLS: Cubic',
+'Hierarchical Log-normal: Linear', 'Hierarchical Log-normal: Quadratic', 'Hierarchical Log-normal: Cubic',
+'Hierarchical Logistic: Linear', 'Hierarchical Logistic: Quadratic', and 'Hierarchical Logistic: Cubic'. The first 8 selections
+are for Bayesian estimation of outcomes and the remaining options were developed to assess regression trend lines from ordinary
+least squares (OLS), log-normal, and logistic models and also for hierarchical model versions starting with 'h' (e.g., 'ol' to
+'hol'). Additional models analogous to 'Generalized Linear Models' can also be graphed on the logit scale using 'OLS' options.
+For example, plot a logistic model on the logit scale when ctype='ol' (i.e., view straight trend lines).
+Or if you prefer viewing results on the probability scale, select ctype='logl' (i.e., curved lines). And consider using
+ctype= 'lnl', 'lnq', 'lnc' (and 'hlnl', 'hlnq', 'lgnc') for log-normal and Poisson models for lines using exponentiated values.
+It is important to note that the observed data may not be on the same scale and may not be visible in the graph. Default is NULL.}
 
 \item{parameter}{a character vector of length >= 1 or a 2 element list with the name(s) of parameter in MCMC chains to produce
 summary statistics. Use a 1 element vector to get posterior estimates of a single parameter. Use a 2 or more element vector
@@ -115,9 +122,9 @@ observed data frame. This is primarily used for multilevel or hierarchical model
 that the hierarchies are based on (e.g., hospitals nested within health systems).}
 
 \item{add.data}{character vector of length == 1 to determine the type of observed data added to the plot
-when y='check' and ctype= 'ol', 'oq','oc', 'hol', 'hoq', 'hoc', 'hlol', 'hloq', 'hloc', 'did', 'logl', 'logq',
-'logc', 'hlogl', 'hlogq', or 'hlogc'. Select 'a', 'u', 'al', 'ul', 'dg', 'n' for these options: 'All', 'Unit',
-'All: Lines', 'Unit: Lines','DID: Groups', 'none'. Default is 'n' for none.}
+when y='check' and ctype= 'ol', 'oq','oc', 'hol', 'hoq', 'hoc', 'hlol', 'hloq', 'hloc', 'logl', 'logq',
+'logc', 'hlogl', 'hlogq', or 'hlogc'. Select 'a', 'u', 'al', 'ul', 'n' for these options: 'All', 'Unit',
+'All: Lines', 'Unit: Lines', 'none'. Default is 'n' for none.}
 
 \item{main}{the main title of the plot.}
 
