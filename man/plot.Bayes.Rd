@@ -7,7 +7,7 @@
 \method{plot}{Bayes}(
   x,
   y = NULL,
-  ctype = "n",
+  type = "n",
   parameter = NULL,
   center = "mode",
   mass = 0.95,
@@ -16,8 +16,8 @@
   data = NULL,
   dv = NULL,
   iv = NULL,
-  group = NULL,
   add.data = "n",
+  group = NULL,
   main = NULL,
   xlab = NULL,
   ylab = NULL,
@@ -48,6 +48,10 @@
   HDItext = 0.7,
   math = "n",
   es = "n",
+  expand = NULL,
+  subset = NULL,
+  level = NULL,
+  aorder = TRUE,
   round.c = 2,
   ...
 )
@@ -56,25 +60,25 @@
 \item{x}{Bayes object.}
 
 \item{y}{character vector for the type of plot to graph. Select 'post', 'dxa', 'dxd', 'dxg', 'dxt', 'check',
-'multi', or 'target' for posterior summary, diagnostics (4 'dx' plots produced: autocorrelation factor,
-density plots on chain convergence, Gelman-Rubin statistic, and traceplot), posterior predictive check,
-multilevel or hierarchical model summary, or target summary plots. Default is 'post'.}
+'multi' (specialized version of 'check'), or 'target' for posterior summary, diagnostics (4 'dx' plots produced:
+autocorrelation factor, density plots on chain convergence, Gelman-Rubin statistic, and traceplot), posterior predictive
+check, multilevel or hierarchical model summary (up to 3 levels), or target summary plots. Default is 'post'.}
 
-\item{ctype}{character vector of length == 1 that indicates posterior predictive check type when y='check'.
+\item{type}{character vector of length == 1 that indicates the likelihood function used in the model when y='check' or y='multi'.
 Posterior predictive checks allow us to see how well our estimates match the observed data. These checks are
 available for Bayesian estimation of outcomes and regression polynomial trend line using various distributions in the
 likelihood function. Select 'n', 'ln', 'sn', 'w', 'g', 't', 'taov', 'taov1', 'ol', 'oq','oc', 'lnl', 'lnq', 'lnc',
-'logl', 'logq', 'logc' for these respective options in Bayesian estimation: 'Normal', 'Log-normal', 'Skew-normal',
-'Weibull', 'Gamma', 't', 't: ANOVA, side view', 't: ANOVA 1 group, side view'; and for regression trend lines:
+'logl', 'logq', 'logc', 'bern', and 'bin' for these respective options in Bayesian estimation (multilevel): 'Normal', 'Log-normal',
+'Skew-normal', 'Weibull', 'Gamma', 't', 't: ANOVA, side view', 't: ANOVA 1 group, side view'; and for regression trend lines:
 'OLS: Linear', 'OLS: Quadratic', 'OLS: Cubic', 'Log-normal: Linear', 'Log-normal: Quadratic', 'Log-normal: Cubic',
-'Logistic: Linear', 'Logistic: Quadratic', and 'Logistic: Cubic', The first 8 selections are for Bayesian estimation
-of outcomes and the remaining 9 options were developed to assess regression trend lines from ordinary
-least squares (OLS), log-normal, and logistic models and also for hierarchical model versions. Additional models analogous
-to 'Generalized Linear Models' can also be graphed on the logit scale using 'OLS' options. For example, plot a logistic
-model on the logit scale when ctype='ol' (i.e., view straight trend lines). Or if you prefer viewing results on the
-probability scale, select ctype='logl' (i.e., curved lines). And consider using ctype= 'lnl', 'lnq', 'lnc' for log-normal
-and Poisson models for lines with exponentiated values. In general, it is important to note that the observed data may not
-be on the same scale as the parameter estimates and may not be visible in the graph. Default is NULL.}
+'Logistic: Linear', 'Logistic: Quadratic', and 'Logistic: Cubic', 'Bernoulli', and 'binomial'. The first 8 selections are for Bayesian
+estimation of outcomes, the next 9 options were developed to assess regression trend lines from ordinary least squares (OLS),
+log-normal, and logistic models and also for hierarchical model versions. And the remaining two ('bern' and 'bin') are for
+when y='multi'. Additional models analogous to 'Generalized Linear Models' can also be graphed on the logit scale using 'OLS'
+options. For example, plot a logistic model on the logit scale when type='ol' (i.e., view straight trend lines). Or if you prefer
+viewing results on the probability scale, select type='logl' (i.e., curved lines). And consider using type= 'lnl', 'lnq', 'lnc'
+for log-normal and Poisson models for lines with exponentiated values. In general, it is important to note that the observed data
+may not be on the same scale as the parameter estimates and may not be visible in the graph. Default is NULL.}
 
 \item{parameter}{a character vector of length >= 1 or a 2 element list with the name(s) of parameter in MCMC chains to produce
 summary statistics. Use a 1 element vector to get posterior estimates of a single parameter. Use a 2 or more element vector
@@ -87,9 +91,10 @@ center, spread, and additional distribution parameters in order of 1st, 2nd, and
 mean and sd for a normal distribution; mean log and sd log of a log-normal dist.; xi, omega, and alpha of a skew-normal dist.;
 shape, scale, and lambda of a Weibull dist.; shape and rate of a Gamma dist.; and mean, SD and nu/d.f. of a t-distribution.
 Or indicate regression parameters in order (e.g., intercept, B1, B2, etc.). When y='multi', use a multiple element character vector
-to list the parameter names of the hierarchy, in order of the nesting with the lowest level first (e.g., responses, person, organization).
-When y='multi', for parameters from multiple groups such as various hospitals, only enter the first unit of each parameter and the remaining
-units will get set up to graph all units. For example, parameter=c(\code{mu[1]}, \code{sigma[1]}) will plot data for \code{mu[8]} and \code{sigma[8]} as well.}
+to list the parameter names of the hierarchy, in order of the nesting with the lowest level first (e.g., exam, patient, hospital).
+When y='multi', for parameters from multiple groups such as various hospitals, only enter the first unit's prefix of each parameter
+and the remaining units will be set up for graphing all units. For example, parameter=c('theta', 'omega') will plot data for
+\code{theta[1]} to \code{theta[8]} and \code{omega[1]} to \code{omega[8]} as well.}
 
 \item{center}{character vector that selects the type of central tendency to use when reporting parameter values.
 Choices include: 'mean', 'median', and 'mode'. Default is 'mode'.}
@@ -112,15 +117,16 @@ the null hypothesis value of 0.50. We can accept the null hypothesis if the enti
 when y='check' or y='multi'. Default is NULL.}
 
 \item{iv}{character vector of length >= 1 for the independent variable name(s) in the observed data frame
-when y='check' or y='multi'. When y='taov', enter the name of the test group variable.  Default is NULL.}
+when y='check' or y='multi'. When y='multi', enter the lower to higher level clustering or group names (e.g, for
+health data, iv=c("patient", "hospital"). When type='taov', enter the name of the test group variable.  Default is NULL.}
+
+\item{add.data}{character vector of length == 1 to determine the type of observed data added to the plot
+when y='check' and type= 'ol', 'oq','oc', 'lnl', 'lnq', 'lnc', 'logl', 'logq', or 'logc'. Select 'a', 'u', 'al', 'ul',
+'n' for these observed data options: 'All', 'Unit', 'All: Lines', 'Unit: Lines', 'none'. Default is 'n' for none.}
 
 \item{group}{character list of length == 2 for 1) the grouping variable name and 2) specific group(s) in the
 observed data frame. This is primarily used for multilevel or hierarchical models when y='check' or y='multi'
 that the hierarchies are based on (e.g., hospitals nested within health systems).}
-
-\item{add.data}{character vector of length == 1 to determine the type of observed data added to the plot
-when y='check' and ctype= 'ol', 'oq','oc', 'lnl', 'lnq', 'lnc', 'logl', 'logq', or 'logc'. Select 'a', 'u', 'al', 'ul',
-'n' for these observed data options: 'All', 'Unit', 'All: Lines', 'Unit: Lines', 'none'. Default is 'n' for none.}
 
 \item{main}{the main title of the plot.}
 
@@ -175,7 +181,7 @@ x-axis when y='check'. This is intended for the graphs with predictive checks on
 lines when y='check'. Default is 20.}
 
 \item{pct}{a numeric integer vector of length == 1 for the percentage of the posterior predictive check heavy tail lines
-to be drawn when ctype= 'taov' or 'taov1'. Valid values are 0 < pct < 100. Default is 95 (e.g., 95\%).}
+to be drawn when type= 'taov' or 'taov1'. Valid values are 0 < pct < 100. Default is 95 (e.g., 95\%).}
 
 \item{add.legend}{add a legend by selecting the location as "bottomright", "bottom", "bottomleft",
 "left", "topleft", "top", "topright", "right", "center". No legend if nothing selected.}
@@ -206,11 +212,31 @@ estimate the difference between the hospital's outcomes. Use parameter=list(c('h
 combined hospitals Y and Z. Additionally, compute statistics like the coefficient of variation when math='divide'
 and parameter= list('Standard_Deviation', 'Mean'). Default is 'n' for no math function.}
 
-\item{es}{one element vector that indicates which type likelihood distribution is relevant in calculating Jacob Cohen's
-effect sizes between 2 parameters when y='post'. Options are 'beta' and 'n' for the beta distribution for binary outcomes
-and none (i.e., no distribution, hence no effect size calculated). For example, to get the posterior distribution summary
-for the difference between the intervention and control groups on 30-day readmissions or not, use es='beta' when y='post',
+\item{es}{one element vector that indicates which type likelihood distribution is relevant in calculating Jacob Cohen's effect
+sizes between 2 parameters when y='post'. Options are 'beta' and 'n' for the beta (or Bernoulli or binomial) distribution for
+binary outcomes and none (i.e., no distribution, hence no effect size calculated). For example, to get the posterior distribution
+summary for the difference between the intervention and control groups on 30-day readmissions or not, use es='beta' when y='post',
 math='subtract', and parameter=list('intMean', 'ctlMean'). Default is 'n' which indicates not to calculate the effect size.}
+
+\item{expand}{a character vector of length == 1 indicating the variable name to expand aggregated data into non-aggregated
+data frames when y='multi'. This variable is the denominator that can be used to calculate a rate in the formula
+numerator/denominator. For example, when the 'numerator' column is 4 and the 'denominator' column is 10, then this single row
+of data is expanded to 10 rows with four values of 1 and six values of 0 when expand='denominator'. Default is NULL.}
+
+\item{subset}{a single or multiple element character or numeric vector of group names that are a subset of the observations to use in the
+grouping when y='multi'. The default is NULL, thereby using all observations. Specify, for example, enter c('NY', 'Toronto', 'LA', 'Vancouver')
+to view a graph with only these cities. Default is NULL.
+use just those observations.}
+
+\item{level}{a numeric integer of length == 1, either 1, 2, or 3 that indicates the level of the hierarchical/multilevel
+model when y='multi' and the type of graph to plot. For example, a multilevel model that estimates the proportion of successful
+exams by patients is considered level=2. And the successful exam rates by various hospitals is level=3. The graph when y='multi'
+can be produced when level=1 for non-hierarchical models if there are estimates for groups. For example, estimating the patient
+infection rate of hospitals without a hierarchical structure in the model. Default is NULL. Default is NULL.}
+
+\item{aorder}{a logical indicator on whether the ordering of the group levels are in alphabetical order or not. If aorder=TRUE,
+results are displayed in an increasing alphabetical order based on level name. If aorder=FALSE, an increasing numeric order
+based on group values is performed. Default is TRUE.}
 
 \item{round.c}{an integer indicating the number of decimal places when rounding numbers such as for y.axis.
 Default is 2.}
