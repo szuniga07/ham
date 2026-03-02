@@ -2225,7 +2225,7 @@ plot.Bayes <- function(x, y=NULL, type="n", parameter=NULL, center="mode", mass=
     }
     if ( cenTend=="median" ){
       text( med , cenTendHt ,
-            bquote(median==.(signif(med,3))) , adj=c(.5,0) , cex=cex , col=cvCol )
+            bquote(median==.(signif(med,3))) , adj=c(.5,0) , cex=cex  )
     }
     if ( cenTend=="mean" ){
       text( mn , cenTendHt ,
