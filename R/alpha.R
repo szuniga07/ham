@@ -30,6 +30,8 @@ alpha <- function(items, data) {
   if (!class(data)[1] %in% c("data.frame","matrix")) stop("Error: Expecting a data frame.")
   if( length(items) ==1) stop("Error: You have only 1 item in your scale.")
   if( length(items) ==2) warning("Consider adding more items to your scale. Scale statistics if item deleted are not calculated.")
+  #Just use the data with the items needed
+  data <- data[, items]
 
   talpha <- function(items=NULL, data=NULL) {
     #Select correct column numbers
