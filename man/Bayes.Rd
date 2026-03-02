@@ -24,9 +24,12 @@ Bayes(
 \arguments{
 \item{x}{list object of MCMC chains (e.g, mcmc.list).}
 
-\item{posterior}{logical value that indicates whether to provide a summary of a posterior estimate. Default is FALSE.}
+\item{posterior}{logical value that indicates whether to provide a summary of a posterior estimate. This produces results
+for one parameter. This may conflict with 'multi' and 'target' settings. For example, when multi=TRUE, the abbreviated
+parameter name 'theta' for \code{theta[1]} to \code{theta[8]} will prevent it from running. Default is FALSE.}
 
-\item{parameter}{single or multiple element character vector name of parameter in MCMC chains to produce summary statistics. Default is NULL.}
+\item{parameter}{single or multiple element character vector name of parameter in MCMC chains to produce summary statistics.
+Default is NULL.}
 
 \item{mass}{numeric vector the specifies the credible mass used in the Highest Density Interval (HDI). Default is 0.95.}
 

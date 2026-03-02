@@ -5,8 +5,11 @@
 #' MCMC parameters. MCMC converted to data frame and summary values are also returned as a data frame.
 #'
 #' @param x list object of MCMC chains (e.g, mcmc.list).
-#' @param posterior logical value that indicates whether to provide a summary of a posterior estimate. Default is FALSE.
-#' @param parameter single or multiple element character vector name of parameter in MCMC chains to produce summary statistics. Default is NULL.
+#' @param posterior logical value that indicates whether to provide a summary of a posterior estimate. This produces results
+#' for one parameter. This may conflict with 'multi' and 'target' settings. For example, when multi=TRUE, the abbreviated
+#' parameter name 'theta' for `theta[1]` to `theta[8]` will prevent it from running. Default is FALSE.
+#' @param parameter single or multiple element character vector name of parameter in MCMC chains to produce summary statistics.
+#' Default is NULL.
 #' @param mass numeric vector the specifies the credible mass used in the Highest Density Interval (HDI). Default is 0.95.
 #' @param compare numeric vector with one comparison value to determine how much of the distribution is above or below
 #' the comparison value. Default is NULL.
@@ -57,13 +60,13 @@ Bayes <- function(x, posterior=FALSE,parameter=NULL, mass=.95, compare=NULL,
   #Looking for a list
   if (any(class(x) %in% c("list", "mcmc.list")) == FALSE) {stop("Error: Expecting list class object." )}
   #Looking for 1 parameter name
-  if(!is.null(parameter)) {
-    if(posterior ==TRUE ) {
-      if(length(parameter) != 1 ) {
-      stop("Error: Expecting parameter length equal to 1.")
-    }
-    }
-  }
+#  if(!is.null(parameter)) {
+#    if(posterior ==TRUE ) {
+#      if(length(parameter) != 1 ) {
+#      stop("Error: Expecting parameter length equal to 1.")
+#    }
+#    }
+#  }
   #Looking for 1 credible mass value within 0 and 1
   if(length(mass) > 1 ) {
     stop("Error: Expecting only 1 mass value.")
@@ -117,7 +120,7 @@ MCMC <- fncMCMC(x)
 # Reset object names #
 ######################
 if(posterior == TRUE) {
-paramSampleVec <- MCMC[, parameter]
+  paramSampleVec <- MCMC[, parameter[1]]
 }
 compVal <- compare
 ROPE <- rope
