@@ -494,7 +494,7 @@ plot.Bayes <- function(x, y=NULL, type="n", parameter=NULL, center="mode", mass=
       if (View.Level == 3) {
         for (i in 1:LO2R) {
           points( Group3.Obs[[plot_row_numbers[i]]], rep( (1:LO2R)[i], length(Group3.Obs[[plot_row_numbers[i]]])), pch=3,
-                  col=Pcol[2], lwd=lwd)
+                  col=Pcol[2], cex=cex)
         }
       }
     }
@@ -504,9 +504,9 @@ plot.Bayes <- function(x, y=NULL, type="n", parameter=NULL, center="mode", mass=
             c((1:length(plot_row_numbers))[i], (1:length(plot_row_numbers))[i]),
             lwd=lwd, col=Lcol)
       #Points for observed rates and Bayesian estimates
-      points(hdidf[plot_row_numbers, Average][i ], i, pch=24, col=Pcol[1], lwd=lwd, bg=Pcol[1], cex=cex)
+      points(hdidf[plot_row_numbers, Average][i ], i, pch=24, col=Pcol[1], bg=Pcol[1], cex=cex)
       if(Level >= 2) {
-        points(hdidf[plot_row_numbers, "Obs.Rate"][i ], (1:length(plot_row_numbers))[i], pch=2, col=Pcol[1], lwd=lwd, bg=Pcol[1], cex=cex)
+        points(hdidf[plot_row_numbers, "Obs.Rate"][i ], (1:length(plot_row_numbers))[i], pch=2, col=Pcol[1], bg=Pcol[1], cex=cex)
       }
     }
     #Mean line
@@ -972,7 +972,7 @@ plot.Bayes <- function(x, y=NULL, type="n", parameter=NULL, center="mode", mass=
       #Add points
       if (!is.null(Point.Loc)) {
         for (i in 1:length(Point.Loc)) {
-          points(x=Point.Loc[i], y=0, pch=3, lwd=3, cex=cex, col=PCol)
+          points(x=Point.Loc[i], y=0, pch=3, cex=cex, col=PCol)
         }
       }
       #Add legend
