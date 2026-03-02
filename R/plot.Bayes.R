@@ -489,6 +489,15 @@ plot.Bayes <- function(x, y=NULL, type="n", parameter=NULL, center="mode", mass=
          xlab= X.Lab,
          axes=F,  cex.lab=cex.lab, xlim=c(XLim1, XLim2))
     title(main_ttl, cex.main= cex.main)
+    #Add points for level-3 category, each group per category, looks better
+    if(Level== 3) {
+      if (View.Level == 3) {
+        for (i in 1:LO2R) {
+          points( Group3.Obs[[plot_row_numbers[i]]], rep( (1:LO2R)[i], length(Group3.Obs[[plot_row_numbers[i]]])), pch=3,
+                  col=Pcol[2], lwd=lwd)
+        }
+      }
+    }
     #Merge 2 tables so I can get points in correct order
     for (i in 1:(length(plot_row_numbers)) ) {
       lines(c(hdidf[plot_row_numbers, Lower][i], hdidf[plot_row_numbers, Upper][i]),
@@ -498,15 +507,6 @@ plot.Bayes <- function(x, y=NULL, type="n", parameter=NULL, center="mode", mass=
       points(hdidf[plot_row_numbers, Average][i ], i, pch=24, col=Pcol[1], lwd=lwd, bg=Pcol[1], cex=cex)
       if(Level >= 2) {
         points(hdidf[plot_row_numbers, "Obs.Rate"][i ], (1:length(plot_row_numbers))[i], pch=2, col=Pcol[1], lwd=lwd, bg=Pcol[1], cex=cex)
-      }
-    }
-    #Add points for the level-3 category for each group per category
-    if(Level== 3) {
-      if (View.Level == 3) {
-        for (i in 1:LO2R) {
-          points( Group3.Obs[[plot_row_numbers[i]]], rep( (1:LO2R)[i], length(Group3.Obs[[plot_row_numbers[i]]])), pch=3,
-                  col=Pcol[2], lwd=lwd)
-        }
       }
     }
     #Mean line
