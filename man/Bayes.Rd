@@ -6,17 +6,27 @@
 \usage{
 Bayes(
   x,
+  posterior = FALSE,
   parameter = NULL,
   mass = 0.95,
   compare = NULL,
   rope = NULL,
-  newdata = FALSE
+  newdata = FALSE,
+  multi = FALSE,
+  type = NULL,
+  center = "Mode",
+  data = NULL,
+  dv = NULL,
+  iv = NULL,
+  expand = NULL
 )
 }
 \arguments{
 \item{x}{list object of MCMC chains (e.g, mcmc.list).}
 
-\item{parameter}{single character vector name of parameter in MCMC chains to produce summary statistics. Default is NULL.}
+\item{posterior}{logical value that indicates whether to provide a summary of a posterior estimate. Default is FALSE.}
+
+\item{parameter}{single or multiple element character vector name of parameter in MCMC chains to produce summary statistics. Default is NULL.}
 
 \item{mass}{numeric vector the specifies the credible mass used in the Highest Density Interval (HDI). Default is 0.95.}
 
@@ -33,6 +43,30 @@ the null hypothesis value of 0.50. We can accept the null hypothesis if the enti
 \item{newdata}{optional logical vector that indicates if you want the new MCMC data returned. When newdata=TRUE,
 it will return the list object of MCMC chains, converted into a data frame. This new data can
 be used for analysis or plots. The default is newdata=FALSE.}
+
+\item{multi}{logical vector for a multilevel/hierarchical summary that can be used in a plot too. It provides a multilevel
+or hierarchical model summary (up to 3 levels). Default is FALSE.}
+
+\item{type}{character vector of length == 1 that indicates the likelihood function used in the model when multi=TRUE.
+Select 'n', 'ln', 'sn', 'w', 'g', 't', 'bern', and 'bin' for these respective options in Bayesian estimation (multilevel):
+'Normal', 'Log-normal', 'Skew-normal', 'Weibull', 'Gamma', 't', 'Bernoulli', or 'binomial'. Default is NULL.}
+
+\item{center}{character vector that selects the type of central tendency to use when reporting parameter values.
+Choices include: 'mean', 'median', and 'mode'. Default is 'mode'.}
+
+\item{data}{object name for the observed data when multi=TRUE. Default is NULL.}
+
+\item{dv}{character vector of length == 1 for the dependent variable name in the observed data frame
+when multi=TRUE. Default is NULL.}
+
+\item{iv}{character vector of length >= 1 for the independent variable name(s) in the observed data frame
+when y='check' or y='multi'. When y='multi', enter the lower to higher level clustering or group names (e.g, for
+health data, iv=c("patient", "hospital"). When type='taov', enter the name of the test group variable.  Default is NULL.}
+
+\item{expand}{a character vector of length == 1 indicating the variable name to expand aggregated data into non-aggregated
+data frames when  multi=TRUE. This variable is the denominator that can be used to calculate a rate in the formula
+numerator/denominator. For example, when the 'numerator' column is 4 and the 'denominator' column is 10, then this single row
+of data is expanded to 10 rows with four values of 1 and six values of 0 when expand='denominator'. Default is NULL.}
 }
 \value{
 data frame of summary statistics for MCMC parameter's distribution and/or MCMC data frame.

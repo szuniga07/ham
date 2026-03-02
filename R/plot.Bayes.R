@@ -5,7 +5,7 @@
 #' values before and after an intervention to see if a change in the control process happened. Values are
 #' returned in a data frame.
 #'
-#' @param x Bayes object.
+#' @param x Bayes class object.
 #' @param y character vector for the type of plot to graph. Select 'post', 'dxa', 'dxd', 'dxg', 'dxt', 'check',
 #' 'multi' (specialized version of 'check'), or 'target' for posterior summary, diagnostics (4 'dx' plots produced:
 #' autocorrelation factor, density plots on chain convergence, Gelman-Rubin statistic, and traceplot), posterior predictive
@@ -123,22 +123,19 @@
 #' binary outcomes and none (i.e., no distribution, hence no effect size calculated). For example, to get the posterior distribution
 #' summary for the difference between the intervention and control groups on 30-day readmissions or not, use es='beta' when y='post',
 #' math='subtract', and parameter=list('intMean', 'ctlMean'). Default is 'n' which indicates not to calculate the effect size.
-#' @param expand a character vector of length == 1 indicating the variable name to expand aggregated data into non-aggregated
-#' data frames when y='multi'. This variable is the denominator that can be used to calculate a rate in the formula
-#' numerator/denominator. For example, when the 'numerator' column is 4 and the 'denominator' column is 10, then this single row
-#' of data is expanded to 10 rows with four values of 1 and six values of 0 when expand='denominator'. Default is NULL.
 #' @param subset a single or multiple element character or numeric vector of group names that are a subset of the observations to use in the
 #' grouping when y='multi'. The default is NULL, thereby using all observations. Specify, for example, enter c('NY', 'Toronto', 'LA', 'Vancouver')
 #' to view a graph with only these cities. Default is NULL.
 #' use just those observations.
 #' @param level a numeric integer of length == 1, either 1, 2, or 3 that indicates the level of the hierarchical/multilevel
-#' model when y='multi' and the type of graph to plot. For example, a multilevel model that estimates the proportion of successful
-#' exams by patients is considered level=2. And the successful exam rates by various hospitals is level=3. The graph when y='multi'
+#' model when y='multi' and the type of graph to plot. For example, a multilevel model that estimates the proportion of
+#' successful exams by patients is considered level=2. And the successful exam rates by various hospitals is level=3.
+#' Graphs can be created separately for both level=2 and level=3 when there is a three-level model. The graph when y='multi'
 #' can be produced when level=1 for non-hierarchical models if there are estimates for groups. For example, estimating the patient
-#' infection rate of hospitals without a hierarchical structure in the model. Default is NULL. Default is NULL.
+#' infection rate of hospitals without a hierarchical structure in the model. Default is NULL.
 #' @param aorder a logical indicator on whether the ordering of the group levels are in alphabetical order or not. If aorder=TRUE,
-#' results are displayed in an increasing alphabetical order based on level name. If aorder=FALSE, an increasing numeric order
-#' based on group values is performed. Default is TRUE.
+#' results are displayed in an increasing alphabetical order based on level name (e.g., 'LA' before 'NY'). If aorder=FALSE, an
+#' increasing numeric order based on group parameter values is performed (e.g., 0.65 before 0.70). Default is TRUE.
 #' @param round.c an integer indicating the number of decimal places when rounding numbers such as for y.axis.
 #' Default is 2.
 #' @param ... additional arguments.
@@ -162,7 +159,7 @@ plot.Bayes <- function(x, y=NULL, type="n", parameter=NULL, center="mode", mass=
                        main=NULL, xlab=NULL, ylab=NULL, xlim=NULL, ylim=NULL, vlim=NULL, curve=FALSE, lwd=NULL, breaks=15,
                        bcol=NULL, lcol=NULL, pcol=NULL, xpt=NULL, tgt=NULL, tgtcol="gray", tpline=NULL, tpcol=NULL,
                        pline=20, pct=95, add.legend=NULL, legend=NULL, cex=1, cex.lab=NULL, cex.axis=NULL, cex.main=NULL,
-                       cex.text=NULL, cex.legend=NULL, HDItext=0.7, math="n", es="n", expand=NULL,
+                       cex.text=NULL, cex.legend=NULL, HDItext=0.7, math="n", es="n",
                        subset=NULL, level=NULL, aorder=TRUE, round.c=2, ...) {
   if (any(class(x) == "Bayes") == FALSE) {stop("Error: Expecting Bayes class object." )}
   #Looking for 1 parameter name
@@ -213,12 +210,14 @@ plot.Bayes <- function(x, y=NULL, type="n", parameter=NULL, center="mode", mass=
 
 #Assign new objects
   MCMC <- x$MCMC
+  multi_smry <- x$Multilevel
   cenTend <- center
   compVal <- compare
   ROPE <- rope
   credMass <- mass
   showCurve <- curve
   HDItextPlace <- HDItext
+  level <- as.character(level) #not working as numeric level
   #bar colors
   if(is.null(bcol)) {
     bcol <- "gray"
@@ -309,505 +308,85 @@ plot.Bayes <- function(x, y=NULL, type="n", parameter=NULL, center="mode", mass=
   ################################################################################
   #                           Bayesian Analysis                                  #
   ################################################################################
-
   ################################################################################
-  #                  1. Expand aggregated data into  full data                   #
+  #                     Modified effective sample size                           #
   ################################################################################
-  #This function expands y ~ x1 + X2 BINARY aggregated data in multi-row data
-  #X1= lower level hierarchy (e.g., patients), X2= higher level hierarchy (e.g., States)
-  #Z= Outcome, N= Total count of denominator (e.g., Z/N= rate)
-  fncExpAgr <- function(DF, X1, X2=NULL, Z, N, Level) {
-    #Add variable that tracks number of 0s
-    t_exp_df <- DF
-    t_exp_df$Yzero <- t_exp_df[, N] - t_exp_df[, Z]
-    #Total rows
-    tot_rows <- nrow(DF)
-    #For loop to get the vectors of 0s and 1s
-    z_ls <- vector(mode = "list", length = tot_rows)
-    #Level 1 or 2 models
-    if (Level <= 2) {
-      for (i in 1:tot_rows) {
-        z_ls[[i]] <- data.frame(Z=c(rep(0, t_exp_df[i, "Yzero"]), rep(1, t_exp_df[i, Z])),
-                                X1=rep(t_exp_df[i, X1], t_exp_df[i, N]))
-      }
-    }
-    #Level 3 models
-    if (Level == 3) {
-      for (i in 1:tot_rows) {
-        z_ls[[i]] <- data.frame(Z=c(rep(0, t_exp_df[i, "Yzero"]), rep(1, t_exp_df[i, Z])),
-                                X1=rep(t_exp_df[i, X1], t_exp_df[i, N]),
-                                X2=rep(t_exp_df[i, X2], t_exp_df[i, N]))
-      }
-    }
-    #Turn list into data frame
-    ExpDF <- do.call(rbind.data.frame, z_ls)
-    #Give column names
-    if (Level <= 2) {
-      colnames(ExpDF) <- c(Z, X1)
-    }
-    if (Level == 3) {
-      colnames(ExpDF) <- c(Z, X1, X2)
-    }
-    return("ExpDF"=ExpDF)
-  }
-
-  ################################################################################
-  # 2. Function to get the binary (non)hierarchical estimation posterior summary #
-  ################################################################################
-  #Uses DBDA function below, summarizePost()
-  #MCmatrix= MCMC matrix after: mcmcMat <- as.matrix(codaSamples, chains=TRUE)
-  #mydf: Original data frame (i.e., not the data list used in JAGS)
-  #Level= A 1, 2, or 3 level indicator for the type of model
-  #Outcome= Model outcome
-  #Group2 & Group3= level 2 and 3 group names
-  fncHdiBinSmry <- function(MCmatrix, expand=NULL, datFrm, Outcome, Group2, Group3=NULL,
-                            Theta=NULL, Omega2=NULL, Omega3=NULL, Average=NULL,
-                            Distribution=NULL, Cred.Mass=0.95 ) {
-    ###################################################################
-    #Get the level of the model
-    Level <- length(c(Theta, Omega2, Omega3))
-
-    ## These next 30 lines will exclude irrelevant parameters ##
-    keep_theta_cols <- NULL
-    keep_omega2_cols <- NULL
-    keep_omega3_cols <- NULL
-    #Level-1, non-hierarchical model
-    if(Level== 1) {
-      keep_theta_cols <- grep(paste0(Theta, "\\["), colnames(MCmatrix))
-    }
-    #Level-2, hierarchical model
-    if(Level== 2) {
-      keep_theta_cols <- grep(paste0(Theta, "\\["), colnames(MCmatrix))
-    }
-    if(Level== 2) {
-      keep_omega2_cols <- grep(paste0(Omega2, "\\["), colnames(MCmatrix))
-    }
-    #Level-3, hierarchical model
-    if(Level== 3) {
-      keep_theta_cols <- grep(paste0(Theta, "\\["), colnames(MCmatrix))
-    }
-    if(Level== 3) {
-      #    keep_omega3_cols <- grep(paste0(Omega3, "\\["), colnames(MCmatrix))
-      keep_omega3_cols <- grep(Omega3, colnames(MCmatrix))
-    }
-    if(Level== 3) {
-      keep_omega2_cols <- setdiff(grep(paste0(Omega2, "\\["), colnames(MCmatrix)), keep_omega3_cols)
-    }
-    #These are just the columns I need
-    keep_these_cols <- c(which(colnames(MCmatrix) == "CHAIN"), keep_theta_cols, keep_omega2_cols, keep_omega3_cols)
-    #Revise MCMC matrix to just the columns I need
-    MCmatrix <- MCmatrix[, keep_these_cols]
-    ###################################################################
-    #Get order of participants in rows of aggregated data
-    if (!is.null(expand)) {
-      group2_aggr_factor <- factor(datFrm[, Group2], levels=c(datFrm[, Group2]))
-    } else {
-      group2_aggr_factor <- levels(factor(datFrm[, Group2], levels=names(table(sort(datFrm[, Group2]))) ))
-    }
-    # Use the aggregated data if needed
-    if (!is.null(expand)) {
-      datFrm <- fncExpAgr(DF=datFrm, X1=Group2, X2=Group3, Z=Outcome, N=expand, Level=Level)
-    } else {
-      datFrm <- datFrm
-    }
-    #Make a factor from aggregated data so that it follows the same order
-    if (!is.null(expand)) {
-      datFrm[, Group2] <- factor(datFrm[, Group2], levels=group2_aggr_factor)
-    } else {
-      datFrm[, Group2] <- factor(datFrm[, Group2], levels=group2_aggr_factor)
-    }
-    #Get the type of estimate
-    if (is.null(Average)) {
-      average_type <- "Mode"
-    } else {
-      average_type <- Average
-    }
-    #Number of level-2 groups
-    numGroups <- length(table(datFrm[, Group2]))
-    #Number of level-3 categories
-    if(Level== 3) {
-      numCats <- length(table(datFrm[, Group3]))
-    }
-    #Get the level-2 group names
-    Group2.Names <- sort(unique(datFrm[, Group2]))
-    #Get the level-3 group names
-    if(Level== 3) {  #Get group-3 rates
-      Group3.Names <- sort(unique(datFrm[, Group3]))
-    } else {
-      Group3.Names <- NULL
-    }
-    #Get the column numbers with the Theta and Omega in it
-    #Level-1, non-hierarchical model
-    if(Level== 1) {
-      theta_cols <- grep(paste0(Theta, "\\["), colnames(MCmatrix))
-    }
-    #Level-2, hierarchical model
-    if(Level== 2) {
-      theta_cols <- grep(paste0(Theta, "\\["), colnames(MCmatrix))
-    }
-    if(Level== 2) {
-      omega2_cols <- grep(paste0(Omega2, "\\["), colnames(MCmatrix))
-    }
-    #Level-3, hierarchical model
-    if(Level== 3) {
-      theta_cols <- grep(paste0(Theta, "\\["), colnames(MCmatrix))
-    }
-    if(Level== 3) {
-      omega3_cols <- grep(Omega3, colnames(MCmatrix))
-    }
-    if(Level== 3) {
-      omega2_cols <- setdiff(grep(paste0(Omega2, "\\["), colnames(MCmatrix)), omega3_cols)
-    }
-
-    #Get the column numbers with the Theta and Omega in it
-    mat_cols <- 1:length(colnames(MCmatrix))      #Get range of matrix columns
-    #Level-1, non-hierarchical model
-    if(Level== 1) {
-      pName <- colnames(MCmatrix)
-    }
-    #Level-2, hierarchical model
-    if(Level== 2) {
-      pName <- colnames(MCmatrix)[c(1, theta_cols, omega2_cols, setdiff(mat_cols, c(1, theta_cols, omega2_cols) ))]
-    }
-    #Level-3, hierarchical model
-    if(Level== 3) {
-      pName <- colnames(MCmatrix)[c(1, theta_cols, omega2_cols, omega3_cols, setdiff(mat_cols, c(1, theta_cols, omega2_cols, omega3_cols)))]
-    }
-
-    ## Create posterior chain summary ##
-    # pName <- colnames(MCmatrix)   #Parameter names
-    postDF <- list()
-    #  for (i in 1:length(pName[-1]))  {
-    for (i in 1:length(pName[which(pName != "CHAIN")]))  {
-      #    postDF[[i]] <- summarizePost( MCmatrix[, pName[i] ] , compVal=NULL , ROPE=NULL )
-      postDF[[i]] <- summarizePost( MCmatrix[, pName[which(pName != "CHAIN")[i]] ] , compVal=NULL , ROPE=NULL, credMass=Cred.Mass )
-    }
-    #Turn summary into data frame
-    postDF <- data.frame(do.call( "rbind", postDF))
-    #  rownames(postDF) <- pName[-1]
-    rownames(postDF) <- pName[which(pName != "CHAIN")]
-    ## Get number of parameters to create Group 2 variable
-    m_param_tot <- length(colnames(MCmatrix)) - 1 #Total parameters from MCmatrix
-    #Level-2, hierarchical model
-    if(Level== 2) {
-      param2_so_far <- length(c(theta_cols, omega2_cols))
-      other_param2 <- m_param_tot - param2_so_far
-      num_rep_Group2 <- other_param2 + 1
-    }
-    #Level-3, hierarchical model
-    if(Level== 3) {
-      param3_so_far <- length(c(theta_cols, omega2_cols, omega3_cols))
-      other_param3 <- (m_param_tot - param3_so_far) / (numCats + 1)
-      num_rep_Group3 <- other_param3
-    }
-    #Enter Group/Cat into summary
-    #Level-1, non-hierarchical model
-    if(Level== 1) {
-      row_name <- c(names(table(datFrm[, Group2])) )
-    }
-    #Level-2, hierarchical model
-    if(Level== 2) {
-      row_name <- c(names(table(datFrm[, Group2])), rep("Overall", num_rep_Group2) )
-    }
-    #Level-3, hierarchical model. try() used if "omega" is only param passed into JAGS function
-    if(Level== 3) {
-      row_name <- c(names(table(datFrm[, Group2])),
-                    rep(names(table(datFrm[, Group3])), 1), "Overall",
-                    try(rep(names(table(datFrm[, Group3])), num_rep_Group3)), try(rep("Overall", num_rep_Group3)) )
-    }
-    #Make a variable for the group 2 and 3 names
-    postDF[, Group2] <- row_name
-
-    #Enter Group/Cat counts
-    #Level-1, non-hierarchical model
-    if(Level== 1) {
-      postDF[, Outcome] <- c(table(datFrm[, Outcome], datFrm[, Group2])[2,])
-    }
-    #Level-2, hierarchical model
-    if(Level== 2) {
-      postDF[, Outcome] <- c(table(datFrm[, Outcome], datFrm[, Group2])[2,],
-                             rep(0, nrow(postDF) - length(table(datFrm[, Group2])) ))
-    }
-    #Level-3, hierarchical model
-    if(Level== 3) {
-      postDF[, Outcome] <- c(table(datFrm[, Outcome], datFrm[, Group2])[2,],
-                             table(datFrm[, Outcome], datFrm[, Group3])[2,],
-                             rep(0, nrow(postDF) -
-                                   (length(table(datFrm[, Group2])) + length(table(datFrm[, Group3]))) ))
-    }
-    #Enter Group/Cat Ns
-    #Level-1, non-hierarchical model
-    if(Level== 1) {
-      postDF[, "N"] <- c(colSums(table(datFrm[, Outcome], datFrm[, Group2])))
-    }
-    #Level-2, hierarchical model
-    if(Level== 2) {
-      postDF[, "N"] <- c( colSums(table(datFrm[, Outcome], datFrm[, Group2])),
-                          rep(0, nrow(postDF) - length(table(datFrm[, Group2])) ))
-    }
-    #Level-3, hierarchical model
-    if(Level== 3) {
-      postDF[, "N"] <- c( colSums(table(datFrm[, Outcome], datFrm[, Group2])),
-                          colSums(table(datFrm[, Outcome], datFrm[, Group3])),
-                          rep(0, nrow(postDF) -
-                                (length(table(datFrm[, Group2])) + length(table(datFrm[, Group3]))) ))
-    }
-    #Enter Group/Cat sums
-    #Level-1, non-hierarchical model
-    if(Level== 1) {
-      cont_sum_ls1 <- by(datFrm[, Outcome], datFrm[, Group2], FUN=sum, na.rm = TRUE)
-      class(cont_sum_ls1) <- "list"
-      #cont_sum_ls1 <- factor(datFrm[, Group2], levels=group2_aggr_factor)
-      postDF[, "Sum"] <- unlist(cont_sum_ls1)
-    }
-    #Level-2, hierarchical model
-    if(Level== 2) {
-      cont_sum_ls1 <- by(datFrm[, Outcome], datFrm[, Group2], FUN=sum, na.rm = TRUE)
-      class(cont_sum_ls1) <- "list"
-      postDF[, "Sum"] <- c( unlist(cont_sum_ls1),
-                            rep(0, nrow(postDF) - length(table(datFrm[, Group2])) ))
-    }
-    #Level-3, hierarchical model
-    if(Level== 3) {
-      cont_sum_ls1 <- by(datFrm[, Outcome], datFrm[, Group2], FUN=sum, na.rm = TRUE)
-      class(cont_sum_ls1) <- "list"
-      cont_sum_ls2 <- by(datFrm[, Outcome], datFrm[, Group3], FUN=sum, na.rm = TRUE)
-      class(cont_sum_ls2) <- "list"
-      postDF[, "Sum"] <- c( unlist(cont_sum_ls1), unlist(cont_sum_ls2) ,
-                            rep(0, nrow(postDF) -
-                                  (length(table(datFrm[, Group2])) + length(table(datFrm[, Group3]))) ))
-    }
-
-    #Observed rate
-    #if (Distribution == "Beta") {
-    if (Distribution %in% c("bern", "bin")) {
-      postDF$Obs.Rate <- postDF[, Outcome] / postDF[, "N"]
-    } else {
-      postDF$Obs.Rate <- postDF[, "Sum"] / postDF[, "N"]
-    }
-
-    #Get the row numbers with the Theta and Omega in it
-    #Level-1, non-hierarchical model
-    if(Level== 1) {
-      theta_rows <- grep(paste0(Theta, "\\["), rownames(postDF))
-    }
-    #Level-2, hierarchical model
-    if(Level== 2) {
-      theta_rows <- grep(paste0(Theta, "\\["), rownames(postDF))
-    }
-    if(Level== 2) {
-      omega2_rows <- grep(paste0(Omega2, "\\["), rownames(postDF))
-    }
-    #Level-3, hierarchical model
-    if(Level== 3) {
-      theta_rows <- grep(paste0(Theta, "\\["), rownames(postDF))
-    }
-    if(Level== 3) {
-      omega2_rows <- grep(paste0(Omega2, "\\["), rownames(postDF))
-    }
-    if(Level== 3) {
-      omega3_rows <- grep(Omega3, rownames(postDF))
-    }
-    #First make length of theta, omega2 and omega3 rows
-    if(Level== 1) {
-      LTR <- length(theta_rows)
-    }
-    if(Level== 1) {
-      LO2R<- NULL
-    }
-    if(Level== 1) {
-      LO3R <- NULL
-    }
-    if(Level== 2) {
-      LTR <- length(theta_rows)
-    }
-    if(Level== 2) {
-      LO2R <- length(omega2_rows)
-    }
-    if(Level== 2) {
-      LO3R <- NULL
-    }
-    if(Level== 3) {
-      LTR <- length(theta_rows)
-    }
-    if(Level== 3) {
-      LO2R <- length(setdiff(omega2_rows, omega3_rows))
-    }
-    if(Level== 3) {
-      LO3R <- length(omega3_rows)
-    }
-    #Create an order by parameter
-    #Level-2, hierarchical model order of results
-    if(Level== 1) {
-      o6 <- c(order(postDF[, average_type][1:numGroups], decreasing = T))
-    }
-    #ISSUE: first 2 elements are kappas and skipped in the order below colnames(mcmcMatTT)
-    if(Level== 2) {
-      o6 <- c(order(postDF[theta_rows, average_type], decreasing = T),  #Theta
-              omega2_rows[order(postDF[omega2_rows, average_type], decreasing = T)], #Omega2
-              setdiff(1:nrow(postDF), c(theta_rows, omega2_rows)))  #All others
-    }
-    if(Level== 3) {
-      o6 <- c(order(postDF[, average_type][theta_rows], decreasing = T), #Theta and then Omega2
-              setdiff(omega2_rows, omega3_rows)[order(postDF[, average_type][setdiff(omega2_rows, omega3_rows)], decreasing = T)],
-              omega3_rows[ order(postDF[, average_type][omega3_rows], decreasing = T)], #Omega3
-              ((numGroups+numCats+LO3R ):nrow(postDF))[((numGroups+numCats+LO3R):nrow(postDF)) != omega3_rows] ) #All other
-    }
-    #Re-order the rows now
-    if(Level== 1) {
-      postDFb <- postDF[o6, ]
-    }
-    if(Level== 2) {
-      postDFb <- rbind(postDF[o6[1:LTR], ],
-                       postDF[o6[(LTR + 1):(LTR + LO2R )], ],
-                       postDF[ o6[( (LTR + LO2R) + 1):nrow(postDF)], ])
-    }
-    if(Level== 3) {  #In this order: theta, Omega2, omega3
-      postDFb <- rbind(postDF[o6[1:LTR], ],                                   #Thetas
-                       postDF[o6[(LTR + 1):(LTR + LO2R )], ],                 #omega2
-                       postDF[o6[(LTR + LO2R + 1):(LTR + LO2R + 1)], ],       #omega3
-                       postDF[ o6[( (LTR + LO2R + LO3R) + 1):nrow(postDF)], ])  #all others
-    }
-    ## Put postDF in reverse order so that it will plot correctly
-    if(Level== 1) {
-      postDFa <- postDF[rev(1:LTR), ]
-    }
-    if(Level== 2) {
-      postDFa <- rbind(postDF[rev(1:LTR), ],
-                       postDF[rev(omega2_rows), ],
-                       postDF[ rev(( (LTR + LO2R) + 1):nrow(postDF)), ])
-    }
-    if(Level== 3) {  #In this order: theta, Omega2, omega3
-      postDFa <- rbind(postDF[ rev(1:LTR), ],                                   #Thetas
-                       postDF[ rev((LTR + 1):(LTR + LO2R )), ],                 #omega2
-                       postDF[ omega3_rows, ],                                  #omega3
-                       postDF[ rev(setdiff(1:(nrow(postDF)), c(1:(LTR + LO2R), omega3_rows))), ])  #all others
-    }
-
-    ## Get the level-3 rates if doing a level-3 model for the plot points
-    #I Changed Area into a 3 level factor to get a better 3rd level
-    if(Level== 3) {
-      hspa <- aggregate(datFrm[, Outcome] ~ datFrm[, Group3] + datFrm[, Group2] , data=datFrm, FUN="sum")
-    }
-    if(Level== 3) {
-      hspb <- aggregate(datFrm[, Outcome] ~ datFrm[, Group3] + datFrm[, Group2] , data=datFrm, FUN="length")
-    }
-    #Merge
-    if(Level== 3) {
-      a1hsp <- cbind(hspa, hspb[, 3])
-    }
-    if(Level== 3) {
-      colnames(a1hsp)[4] <- "Nsamp"
-    }
-    if(Level== 3) {
-      colnames(a1hsp)[1:3] <- c(Group3, Group2, Outcome)
-    }
-    ##(Add 1 to month and) make it a factor so it begins at 1
-    if(Level== 3) {
-      a1hsp[, Group2] <- as.numeric(a1hsp[, Group2])
-    }
-    if(Level== 3) {
-      a1hsp[, Group3] <- as.numeric( as.factor(a1hsp[, Group3]) )  #Turning into factor to get numeric
-    }
-    #Make the rate
-    if(Level== 3) {
-      a1hsp$Rate <- a1hsp[, (ncol(a1hsp)-1)] / a1hsp[, ncol(a1hsp)]
-    }
-    #For loop to create object
-    if(Level== 3) {  #Get group-3 rates
-      Group3.Obs <- list()
-      for (i in 1:LO2R) {
-        Group3.Obs[[i]] <- a1hsp[a1hsp[, Group3] == i, "Rate"]
-      }
-    } else {
-      Group3.Obs <- NULL
-    }
-    #Reverse order to match Post1
-    if(Level== 3) {  #Get group-3 rates
-      Group3.Obs1 <- rev(Group3.Obs)
-    } else {
-      Group3.Obs1 <- NULL
-    }
-    #Get numerical order to match with Post2
-    if(Level== 3) {  #Get group-3 rates
-      g3_order <- as.numeric(gsub("[^0-9.-]", "", rownames(postDFb[ ((LTR + 1):(LTR + LO2R )), ]) ))
-    } else {
-      g3_order <- NULL
-    }
-    #Get level-3 estimates in numerical order
-    if(Level== 3) {  #Get group-3 rates
-      Group3.Obs2 <- Group3.Obs[g3_order]
-    } else {
-      Group3.Obs2 <- NULL
-    }
-    return(list("Post"=postDF,"Post1"=postDFa, "Post2"=postDFb, "Level"=Level, "Outcome"=Outcome,
-                "Group2.Names"=Group2.Names, "Group3.Names"=Group3.Names,
-                "Group2"=Group2, "Group3"=Group3,
-                "Theta"=Theta, "Omega2"=Omega2, "Omega3"=Omega3, "Average"=Average,
-                "Order"=o6, "LTR"=LTR, "LO2R"=LO2R, "LO3R"=LO3R,
-                "Lower"= intersect("HDIlow", colnames(postDF)),
-                "Upper"= intersect("HDIhigh",colnames(postDF)),
-                "ciconf_lev"= unique(postDF$HDImass), "g3_order"=g3_order,
-                "Group3.Obs1"=Group3.Obs1, "Group3.Obs2"=Group3.Obs2 ))
-  }
 
   ################################################################################
   #           3. Function to plot HDIs for hierarchical estimation               #
   ################################################################################
-  fncHdiBinP <- function(MCmatrix, Level, View.Order="Alphabetical", View.Level="No",  #View.Order= alpha/numerical, View.Level=Yes/No "View 3rd level?"
-                         GroupX=NULL, Lcol, Pcol, P3.col, tgt=NULL, tgt.col,
-                         Cbar, plyCol, labMulti=1, lineMulti=1,
-                         roundVal, XLim1, XLim2,Add.Lgd, Leg.Loc) {
+  #MCmatrix is the output object from fncHdiBinSmry()
+  fncHdiBinP <- function(multi_smry=multi_smry, View.Order=TRUE, View.Level=NULL,
+                         GroupX=NULL, Lcol=NULL, Pcol=NULL,
+                         tgt=NULL, tgt.col=NULL, plyCol=NULL, roundVal=NULL,
+                         XLim1=NULL, XLim2=NULL, legend=NULL, Leg.Loc=NULL,
+                         lwd=NULL, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
+                         cex.axis=cex.axis, cex.legend=cex.legend, X.Lab=NULL) {
+    #Convert View.Level back to a numeric value
+    View.Level <- as.numeric(level)
     # Assign objects from MCMC matrix objects
-    Group2 <- MCmatrix$Group2
-    Group3 <- MCmatrix$Group3
-    Outcome <- MCmatrix$Outcome
-    ciconf_lev <- MCmatrix$ciconf_lev
-    Average <- MCmatrix$Average
-    Theta <- MCmatrix$Theta
-    Omega2 <- MCmatrix$Omega2
-    Omega3 <- MCmatrix$Omega3
-    LTR <- MCmatrix$LTR
-    LO2R <- MCmatrix$LO2R
-    LO3R <- MCmatrix$LO3R
-    Lower <- MCmatrix$Lower
-    Upper <- MCmatrix$Upper
-    Group3.Obs1 <- MCmatrix$Group3.Obs1
-    Group3.Obs2 <- MCmatrix$Group3.Obs2
+    Group2 <- multi_smry$Group2
+    Group3 <- multi_smry$Group3
+    Outcome <- multi_smry$Outcome
+    ciconf_lev <- multi_smry$ciconf_lev
+    Average <- multi_smry$Average
+    Theta <- multi_smry$Theta
+    Omega2 <- multi_smry$Omega2
+    Omega3 <- multi_smry$Omega3
+    LTR <- multi_smry$LTR
+    LO2R <- multi_smry$LO2R
+    LO3R <- multi_smry$LO3R
+    Lower <- multi_smry$Lower
+    Upper <- multi_smry$Upper
+    Group3.Obs1 <- multi_smry$Group3.Obs1
+    Group3.Obs2 <- multi_smry$Group3.Obs2
+    Level <- multi_smry$Level
+
+    #X.Min and X.Max
+    if (!is.null(XLim1)) {
+      XLim1 <- XLim1
+    } else {
+      XLim1 <- NULL
+    }
+    if (!is.null(XLim2)) {
+      XLim2 <- XLim2
+    } else {
+      XLim2 <- NULL
+    }
 
     #Select the group levels that determine which rows go into the data frame
     if(Level== 1) {
-      if (View.Level == "No") {
+      if (View.Level <= 2) {
         row_numbers <- 1:LTR
       }
     }
     #Level-2, hierarchical model
     if(Level== 2) {
-      if (View.Level == "No") {
+      if (View.Level <= 2) {
         row_numbers <- 1:(LTR + LO2R)
       }
     }
     #Level-3, hierarchical model
     if(Level== 3) {
-      if (View.Level == "Yes") {
+      if (View.Level == 3) {
         row_numbers <- setdiff(1:(LTR + LO2R + LO3R), 1:LTR)
       } else {
         row_numbers <- setdiff(1:(LTR + LO2R + LO3R), (LTR + 1):(LTR + LO2R))
       }
     }
     #Create hdidf table of Bayesian estimates
-    if(View.Order == "Alphabetical") {                                  #Post1
-      hdidf <- MCmatrix$Post1[row_numbers , c(Group2, Average, Lower, Upper, "Obs.Rate")]
+    if(View.Order == TRUE) {                                  #Post1
+      hdidf <- multi_smry$Post1[row_numbers , c(Group2, Average, Lower, Upper, "Obs.Rate")]
     }
-    if(View.Order == "Numerical") {                                  #Post2
-      hdidf <- MCmatrix$Post2[row_numbers , c(Group2, Average, Lower, Upper, "Obs.Rate")]
+    if(View.Order == FALSE) {                                  #Post2
+      hdidf <- multi_smry$Post2[row_numbers , c(Group2, Average, Lower, Upper, "Obs.Rate")]
     }
     #Create adf table of observed values
-    if(View.Order == "Alphabetical") {                                  #Post1
-      adf <- MCmatrix$Post1[row_numbers , c(Group2, "Obs.Rate")]
+    if(View.Order == TRUE) {                                  #Post1
+      adf <- multi_smry$Post1[row_numbers , c(Group2, "Obs.Rate")]
     }
-    if(View.Order == "Numerical") {                                  #Post2
-      adf <- MCmatrix$Post2[row_numbers , c(Group2, "Obs.Rate")]
+    if(View.Order == FALSE) {                                  #Post2
+      adf <- multi_smry$Post2[row_numbers , c(Group2, "Obs.Rate")]
     }
     #Hierarchical average for the highest level (e.g., Omega)
     if(Level >= 2) {
@@ -816,10 +395,10 @@ plot.Bayes <- function(x, y=NULL, type="n", parameter=NULL, center="mode", mass=
       mainYmn <- NA
     }
     #Select which 3-level category data gets reported
-    if(View.Order == "Alphabetical") {                                  #Post1
+    if(View.Order == TRUE) {                                  #Post1
       Group3.Obs <- Group3.Obs1
     }
-    if(View.Order == "Numerical") {                                  #Post2
+    if(View.Order == FALSE) {                                  #Post2
       Group3.Obs <- Group3.Obs2
     }
     #Main X labels
@@ -830,15 +409,21 @@ plot.Bayes <- function(x, y=NULL, type="n", parameter=NULL, center="mode", mass=
     } else {
       X_Label <- paste0(Group2, " posterior estimates")
     }
+    #Make xlabel
+    if (!is.null(X.Lab)) {
+      X.Lab <- X.Lab
+    } else {
+      X.Lab <- X_Label
+    }
     #Main title
     #Level-3, hierarchical model
     if(Level== 3) {
-      if (View.Level == "Yes") {
+      if (View.Level == 3) {
         main_ttl <- paste0(ciconf_lev * 100, "% ", "Highest Density Intervals of ", Outcome, " by ", Group3)
       }
     }
     if(Level== 3) {
-      if (View.Level == "No") {
+      if (View.Level <= 2) {
         main_ttl <- paste0(ciconf_lev * 100, "% ", "Highest Density Intervals of ", Outcome, " by ", Group2)
       }
     }
@@ -846,35 +431,38 @@ plot.Bayes <- function(x, y=NULL, type="n", parameter=NULL, center="mode", mass=
       main_ttl <- paste0(ciconf_lev * 100, "% ", "Highest Density Intervals of ", Outcome, " by ", Group2)
     }
     #Legend
+    legend_text <- NA
     #Level-3, hierarchical model
     if(Level== 3) {
-      if (View.Level == "Yes") {
+      if (View.Level == 3) {
         legend_text <- c(paste0("Observed ", Group2), paste0("Observed ", Group3), "Hierarchical Estimate")
         legend_type <- c(3, 2, 24)
-        pcol_vector <- c(P3.col, Pcol, Pcol)
+        pcol_vector <- c(Pcol[2], Pcol[1], Pcol[1])
       }
     }
     if(Level== 3) {
-      if (View.Level == "No") {
+      if (View.Level <= 2) {
         legend_text <- c("Observed Rate", "Hierarchical Estimate")
         legend_type <- c(2, 24)
-        pcol_vector <- Pcol
+        pcol_vector <- Pcol[1]
       }
     }
     if(Level == 2) {
       legend_text <- c("Observed Rate", "Hierarchical Estimate")
       legend_type <- c(2, 24)
-      pcol_vector <- Pcol
+      pcol_vector <- Pcol[1]
     }
     if(Level == 1) {
       legend_text <- c("Estimate")
       legend_type <- c(24)
-      pcol_vector <- Pcol
+      pcol_vector <- Pcol[1]
     }
+    #Use legend text if specified
+    legend_text <- if (!is.null(legend)) legend else legend_text
 
     #Get names of level 1:3 or just overall level-3 groups
     if(Level== 3) {
-      if (View.Level == "Yes") {
+      if (View.Level == 3) {
         group_names <- hdidf[-nrow(hdidf), Group2]
       } else {
         group_names <- hdidf[1:LTR, Group2]
@@ -898,27 +486,26 @@ plot.Bayes <- function(x, y=NULL, type="n", parameter=NULL, center="mode", mass=
     ## Create plot
     rng <- seq(min(adf[, "Obs.Rate"], na.rm=TRUE)* 0.95, max(adf[, "Obs.Rate"], na.rm=TRUE)* 1.05, length.out=nrow(adf[plot_row_numbers,]))
     plot(rng, 1:length(rng), type="n", ylab="",
-         xlab= X_Label,
-         axes=F,  cex.lab=1*labMulti, xlim=c(XLim1, XLim2))
-    #axes=F,  cex.lab=1*labMulti)
-    title(main_ttl, cex.main = 1*labMulti)
+         xlab= X.Lab,
+         axes=F,  cex.lab=cex.lab, xlim=c(XLim1, XLim2))
+    title(main_ttl, cex.main= cex.main)
     #Merge 2 tables so I can get points in correct order
     for (i in 1:(length(plot_row_numbers)) ) {
       lines(c(hdidf[plot_row_numbers, Lower][i], hdidf[plot_row_numbers, Upper][i]),
             c((1:length(plot_row_numbers))[i], (1:length(plot_row_numbers))[i]),
-            lwd=1*lineMulti, col=Lcol)
+            lwd=lwd, col=Lcol)
       #Points for observed rates and Bayesian estimates
-      points(hdidf[plot_row_numbers, Average][i ], i, pch=24, col=Pcol, lwd=1, bg=Pcol, cex=1.75*labMulti)
+      points(hdidf[plot_row_numbers, Average][i ], i, pch=24, col=Pcol[1], lwd=lwd, bg=Pcol[1], cex=cex)
       if(Level >= 2) {
-        points(hdidf[plot_row_numbers, "Obs.Rate"][i ], (1:length(plot_row_numbers))[i], pch=2, col=Pcol, lwd=1, bg=Pcol, cex=1.75*labMulti)
+        points(hdidf[plot_row_numbers, "Obs.Rate"][i ], (1:length(plot_row_numbers))[i], pch=2, col=Pcol[1], lwd=lwd, bg=Pcol[1], cex=cex)
       }
     }
     #Add points for the level-3 category for each group per category
     if(Level== 3) {
-      if (View.Level == "Yes") {
+      if (View.Level == 3) {
         for (i in 1:LO2R) {
           points( Group3.Obs[[plot_row_numbers[i]]], rep( (1:LO2R)[i], length(Group3.Obs[[plot_row_numbers[i]]])), pch=3,
-                  col=P3.col, lwd=1)
+                  col=Pcol[2], lwd=lwd)
         }
       }
     }
@@ -926,21 +513,25 @@ plot.Bayes <- function(x, y=NULL, type="n", parameter=NULL, center="mode", mass=
     if(Level >= 2) {
       abline(v=mainYmn, lwd=lwd, col="grey", lty=3)
     }
-    axis(1)
-    axis(2, at=1:length(plot_row_numbers), labels= substr(hdidf[plot_row_numbers, Group2], 1, 10), las=1, cex.axis=1*labMulti )
-    axis(4, at=1:length(plot_row_numbers), labels= round(hdidf[plot_row_numbers, Average], roundVal), las=1, cex.axis= 1*labMulti*.75 )
+    axis(1, cex.axis=cex.axis)
+    axis(2, at=1:length(plot_row_numbers), labels= substr(hdidf[plot_row_numbers, Group2], 1, 10), las=1, cex.axis=cex.axis )
+    axis(4, at=1:length(plot_row_numbers), tick = F, line=-.6,
+         labels= round(hdidf[plot_row_numbers, Average], roundVal),
+         las=1, cex.axis= cex.axis )
     ## Add overall confidence bar ##
     #Create x and y data
     Cbar_x <- c(rep(hdidf[nrow(hdidf), Lower], length(plot_row_numbers)), rep(hdidf[nrow(hdidf), Upper], length(plot_row_numbers) ))
     Cbar_y <- c(1:length(plot_row_numbers), length(plot_row_numbers):1)
     #Create shading
-    if(Cbar=="Yes") {
+    if(Level >= 2) {
       polygon(Cbar_x, Cbar_y, col = adjustcolor(plyCol, alpha.f = 0.4), border= plyCol )
     }
     #Add legend
-    if(Add.Lgd =="Yes") {
-      legend(Leg.Loc, legend=legend_text, col=pcol_vector, lwd=lwd,
-             pch=legend_type, pt.bg=pcol_vector, cex = 2, bty="n", inset=c(0, .05))
+    if(!is.null(Leg.Loc) ) {
+      legend(Leg.Loc, legend=legend_text, lty=NA,
+             col=pcol_vector, lwd=lwd,
+             pch=legend_type, pt.bg=pcol_vector, cex = cex.legend,
+             bty="n", inset=c(0, .05))
     }
     #Target line
     abline(v=tgt, lwd=lwd, col=tgt.col, lty=1)
@@ -2884,6 +2475,29 @@ if(y == "check") {
                                     X.Min=vlim[1], X.Max=vlim[2], PCol=pcol, Leg.Loc=add.legend)
       )
     }
+## Multilevel summary ##
+    if(y == "multi") {
+    switch(level,
+           "1"= fncHdiBinP(multi_smry=multi_smry, View.Order=aorder, View.Level= "1",
+                         GroupX=subset, Lcol=lcol, Pcol=pcol,
+                         tgt=tgt, tgt.col=tgtcol, plyCol=bcol, roundVal=round.c,
+                         XLim1=xlim[1], XLim2=xlim[2], legend=legend, Leg.Loc=add.legend,
+                         lwd=lwd, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
+                         cex.axis=cex.axis, cex.legend=cex.legend, X.Lab=xlab),
+           "2"= fncHdiBinP(multi_smry=multi_smry, View.Order=aorder, View.Level="2",
+                         GroupX=subset, Lcol=lcol, Pcol=pcol,
+                         tgt=tgt, tgt.col=tgtcol, plyCol=bcol, roundVal=round.c,
+                         XLim1=xlim[1], XLim2=xlim[2], legend=legend, Leg.Loc=add.legend,
+                         lwd=lwd, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
+                         cex.axis=cex.axis, cex.legend=cex.legend, X.Lab=xlab),
+           "3"= fncHdiBinP(multi_smry=multi_smry, View.Order=aorder, View.Level="3",
+                         GroupX=subset, Lcol=lcol, Pcol=pcol,
+                         tgt=tgt, tgt.col=tgtcol, plyCol=bcol, roundVal=round.c,
+                         XLim1=xlim[1], XLim2=xlim[2], legend=legend, Leg.Loc=add.legend,
+                         lwd=lwd, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
+                         cex.axis=cex.axis, cex.legend=cex.legend, X.Lab=xlab)
+           )
+  }
 
 
 } #end of plot.bayes

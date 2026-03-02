@@ -48,7 +48,6 @@
   HDItext = 0.7,
   math = "n",
   es = "n",
-  expand = NULL,
   subset = NULL,
   level = NULL,
   aorder = TRUE,
@@ -57,7 +56,7 @@
 )
 }
 \arguments{
-\item{x}{Bayes object.}
+\item{x}{Bayes class object.}
 
 \item{y}{character vector for the type of plot to graph. Select 'post', 'dxa', 'dxd', 'dxg', 'dxt', 'check',
 'multi' (specialized version of 'check'), or 'target' for posterior summary, diagnostics (4 'dx' plots produced:
@@ -218,25 +217,21 @@ binary outcomes and none (i.e., no distribution, hence no effect size calculated
 summary for the difference between the intervention and control groups on 30-day readmissions or not, use es='beta' when y='post',
 math='subtract', and parameter=list('intMean', 'ctlMean'). Default is 'n' which indicates not to calculate the effect size.}
 
-\item{expand}{a character vector of length == 1 indicating the variable name to expand aggregated data into non-aggregated
-data frames when y='multi'. This variable is the denominator that can be used to calculate a rate in the formula
-numerator/denominator. For example, when the 'numerator' column is 4 and the 'denominator' column is 10, then this single row
-of data is expanded to 10 rows with four values of 1 and six values of 0 when expand='denominator'. Default is NULL.}
-
 \item{subset}{a single or multiple element character or numeric vector of group names that are a subset of the observations to use in the
 grouping when y='multi'. The default is NULL, thereby using all observations. Specify, for example, enter c('NY', 'Toronto', 'LA', 'Vancouver')
 to view a graph with only these cities. Default is NULL.
 use just those observations.}
 
 \item{level}{a numeric integer of length == 1, either 1, 2, or 3 that indicates the level of the hierarchical/multilevel
-model when y='multi' and the type of graph to plot. For example, a multilevel model that estimates the proportion of successful
-exams by patients is considered level=2. And the successful exam rates by various hospitals is level=3. The graph when y='multi'
+model when y='multi' and the type of graph to plot. For example, a multilevel model that estimates the proportion of
+successful exams by patients is considered level=2. And the successful exam rates by various hospitals is level=3.
+Graphs can be created separately for both level=2 and level=3 when there is a three-level model. The graph when y='multi'
 can be produced when level=1 for non-hierarchical models if there are estimates for groups. For example, estimating the patient
-infection rate of hospitals without a hierarchical structure in the model. Default is NULL. Default is NULL.}
+infection rate of hospitals without a hierarchical structure in the model. Default is NULL.}
 
 \item{aorder}{a logical indicator on whether the ordering of the group levels are in alphabetical order or not. If aorder=TRUE,
-results are displayed in an increasing alphabetical order based on level name. If aorder=FALSE, an increasing numeric order
-based on group values is performed. Default is TRUE.}
+results are displayed in an increasing alphabetical order based on level name (e.g., 'LA' before 'NY'). If aorder=FALSE, an
+increasing numeric order based on group parameter values is performed (e.g., 0.65 before 0.70). Default is TRUE.}
 
 \item{round.c}{an integer indicating the number of decimal places when rounding numbers such as for y.axis.
 Default is 2.}
