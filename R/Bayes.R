@@ -5,11 +5,14 @@
 #' MCMC parameters. MCMC converted to data frame and summary values are also returned as a data frame.
 #'
 #' @param x list object of MCMC chains (e.g, mcmc.list).
-#' @param posterior logical value that indicates whether to provide a summary of a posterior estimate. This produces results
-#' for one parameter. This may conflict with 'multi' and 'target' settings. For example, when multi=TRUE, the abbreviated
-#' parameter name 'theta' for `theta[1]` to `theta[8]` will prevent it from running. Default is FALSE.
+#' @param y character vector for the type of analysis or output to perform. Select 'post', 'multi', 'target', 'r2' or 'mcmc'  for a
+#' posterior summary, multilevel/hierarchical model summary (up to 3 levels), target summary, Gelman R-squared statistic, or
+#' list object of MCMC chains converted into a data frame.
+#' Default is 'mcmc'.
 #' @param parameter single or multiple element character vector name of parameter in MCMC chains to produce summary statistics.
-#' Default is NULL.
+#' When y='target', use the generally 2 to 3 parameters that represent the distribution parameters (e.g., parameter= c('mean', 'sd')).
+#' When y='r2', use the regression parameters in order, ending with the residual or level-1 variance (e.g., parameter= c('intercept',
+#' 'beta1', 'beta2', 'standard_deviation')). Default is NULL.
 #' @param mass numeric vector the specifies the credible mass used in the Highest Density Interval (HDI). Default is 0.95.
 #' @param compare numeric vector with one comparison value to determine how much of the distribution is above or below
 #' the comparison value. Default is NULL.
@@ -22,33 +25,32 @@
 #' @param newdata optional logical vector that indicates if you want the new MCMC data returned. When newdata=TRUE,
 #' it will return the list object of MCMC chains, converted into a data frame. This new data can
 #' be used for analysis or plots. The default is newdata=FALSE.
-#' @param multi logical vector for a multilevel/hierarchical summary that can be used in a plot too. It provides a multilevel
-#' or hierarchical model summary (up to 3 levels). Default is FALSE.
-#' @param type character vector of length == 1 that indicates the likelihood function used in the model when multi=TRUE.
+#' @param type character vector of length == 1 that indicates the likelihood function used in the model when y='multi' or y='target'.
 #' Select 'n', 'ln', 'sn', 'w', 'g', 't', 'bern', and 'bin' for these respective options in Bayesian estimation (multilevel):
 #' 'Normal', 'Log-normal', 'Skew-normal', 'Weibull', 'Gamma', 't', 'Bernoulli', or 'binomial'. Default is NULL.
-#' @param center character vector that selects the type of central tendency to use when reporting parameter values.
-#' Choices include: 'mean', 'median', and 'mode'. Default is 'mode'.
-#' @param data object name for the observed data when multi=TRUE. Default is NULL.
+#' @param center character vector that selects the type of central tendency to use when reporting parameter values when
+#' y='post', y='target', or y='r2'. Choices include: 'mean', 'median', and 'mode' when y='post' or 'mean' and 'median' when y='r2'.
+#' Default is 'mode' when y='post' or 'target' and 'median' when y='r2'.
+#' @param data object name for the observed data when y='multi' or y='r2'. Default is NULL.
 #' @param dv character vector of length == 1 for the dependent variable name in the observed data frame
-#' when multi=TRUE. Default is NULL.
+#' when y='multi'. Default is NULL.
 #' @param iv character vector of length >= 1 for the independent variable name(s) in the observed data frame
-#' when y='check' or y='multi'. When y='multi', enter the lower to higher level clustering or group names (e.g, for
-#' health data, iv=c("patient", "hospital"). When type='taov', enter the name of the test group variable.  Default is NULL.
+#' when y='multi' or y='r2'. When y='multi', enter the lower to higher level clustering or group names (e.g, for
+#' health data, iv=c("patient", "hospital"). When type='taov', enter the name of the test group variable. When y='r2',  Default is NULL.
 #' @param expand a character vector of length == 1 indicating the variable name to expand aggregated data into non-aggregated
-#' data frames when  multi=TRUE. This variable is the denominator that can be used to calculate a rate in the formula
+#' data frames when  y='multi'. This variable is the denominator that can be used to calculate a rate in the formula
 #' numerator/denominator. For example, when the 'numerator' column is 4 and the 'denominator' column is 10, then this single row
 #' of data is expanded to 10 rows with four values of 1 and six values of 0 when expand='denominator'. Default is NULL.
-#' @param target list of one or two named elements (p, y) with numeric values that represent quantile values (p) in the distribution to return
+#' @param targets list of one or two named elements (p, y) with numeric values that represent quantile values (p) in the distribution to return
 #' associated outcome values and/or specific outcome values (y) to retrieve associated probabilities. For example, a
 #' distribution of harmful hospital readmission rates has an estimated median value of 0.25. Staff are considering 2 types of targets,
 #' percentiles (p) of key interest and specific outcome rates (y). They want to know the readmission rate that is at
 #' the 40th percentile for a reduced readmission rate and the probability greater than a rate of 0.20. They get this information
-#' by entering target=list(p=0.40, y=0.20); calculating 1 - prob(y) from returned results gives them an idea about the effort
+#' by entering targets=list(p=0.40, y=0.20); calculating 1 - prob(y) from returned results gives them an idea about the effort
 #' needed to meet this target of a reduced readmission rate. Default is NULL. Select type= one of these options: 'n', 'ln',
 #' 'sn', 'w', 'g', 't', 'bern', 'bin'. Also select parameter= the appropriate center, spread, and possible 3rd shape distribution
 #' parameter (e.g., parameter=c('mean', 'sd')). And option to select center= 'mean', 'median', 'mode'.
-#'
+
 #' @return data frame of summary statistics for MCMC parameter's distribution and/or MCMC data frame.
 #' Statistics include highest density interval, effective sample size, proportion of distribution
 #' within and outside of a ROPE, distribution compared with a set value, and the parameter's mean,
@@ -63,19 +65,19 @@
 #' ## Hospital LOS and readmissions ##
 #' # X-bar chart statistics
 
-Bayes <- function(x, posterior=FALSE,parameter=NULL, mass=.95, compare=NULL,
-                    rope=NULL, newdata=FALSE, multi=FALSE, type=NULL, center="Mode",
-                  data=NULL, dv=NULL, iv=NULL, expand=NULL, target=NULL) {
+Bayes <- function(x, y="mcmc", parameter=NULL, mass=.95, compare=NULL,
+                    rope=NULL, newdata=FALSE, type=NULL, center="Mode",
+                  data=NULL, dv=NULL, iv=NULL, expand=NULL, targets=NULL) {
   #Looking for a list
   if (any(class(x) %in% c("list", "mcmc.list")) == FALSE) {stop("Error: Expecting list class object." )}
   #Looking for 1 parameter name
-#  if(!is.null(parameter)) {
-#    if(posterior ==TRUE ) {
-#      if(length(parameter) != 1 ) {
-#      stop("Error: Expecting parameter length equal to 1.")
-#    }
-#    }
-#  }
+  if(!is.null(parameter)) {
+  if(y == "post") {
+    if(length(parameter) != 1 ) {
+      stop("Error: Expecting parameter length equal to 1.")
+    }
+    }
+  }
   #Looking for 1 credible mass value within 0 and 1
   if(length(mass) > 1 ) {
     stop("Error: Expecting only 1 mass value.")
@@ -99,9 +101,9 @@ Bayes <- function(x, posterior=FALSE,parameter=NULL, mass=.95, compare=NULL,
   }
   }
   #Make sure any target value shows up with a name
-  if(!is.null(target) ) {
-    if( is.null(names(target) )) {
-      stop("Error: Expecting a named list for 'target'.")
+  if(y == "target") {
+    if( is.null(names(targets) )) {
+      stop("Error: Expecting a named list for 'targets'.")
     }
   }
 
@@ -136,7 +138,7 @@ MCMC <- fncMCMC(x)
 ######################
 # Reset object names #
 ######################
-if(posterior == TRUE) {
+if(y == "post") {
   paramSampleVec <- MCMC[, parameter[1]]
 }
 compVal <- compare
@@ -1076,8 +1078,8 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL,
     QdisGtY <- NA
   }
 
-  return(list("Est.Prop.GT.Y"= PdisGtY,
-              "Est.Quantile.Y"= QdisGtY,
+  return(list("Est.Quantile.P"= QdisGtY,
+              "Est.Prob.GT.Y"= PdisGtY,
               "Est.Mean.Beta"=mean_val_dist) )
 }
 
@@ -1421,18 +1423,61 @@ qskewn <- function (p, xi = 0, omega = 1, alpha = 0, tau = 0, dp = NULL,
   return(q.all)
 }
 
+################################################################################
+#              7c. Gelman R2 for models with metric only predictors            #
+################################################################################
+
+#Use the coda object and dataset. Works for normal and log-normal distributions.
+fncBayesOlsR2 <- function(Coda_Object, datFrm, xName=NULL, Intercept=NULL,
+                          Betas=NULL, Level1.Sigma=NULL, Average.type =NULL) {
+  #Make coda into as.matrix
+  mcmc_coda_object <- MCMC
+  mean.Intercept <-  mean(mcmc_coda_object[, which(colnames(mcmc_coda_object) == Intercept)])
+  median.Intercept <-  median(mcmc_coda_object[, which(colnames(mcmc_coda_object) == Intercept)])
+  #Make list to store fitted values (minus the intercept)
+  fitval.mean <- vector(mode="list", length= nrow(datFrm))
+  fitval.median <- vector(mode="list", length= nrow(datFrm))
+  #when there is only 1 X
+  #when there are multiple X
+  for (i in 1:nrow(datFrm)) {
+    for (j in 1:length(Betas)) {
+      if (Average.type=="mean") {
+        fitval.mean[[i]][j] <- mean(mcmc_coda_object[, which(colnames(mcmc_coda_object) %in% Betas[j])]*
+                                      datFrm[, which(colnames(datFrm) %in% xName[j])][i])
+      } else {
+        fitval.median[[i]][j] <- median(mcmc_coda_object[, which(colnames(mcmc_coda_object) %in% Betas[j])]*
+                                          datFrm[, which(colnames(datFrm) %in% xName[j])][i])
+      }
+    }
+  }
+  #Get the predicted values from the mean
+  if (Average.type=="mean") {
+    yPRED <- mapply(fitval.mean, FUN="sum", + mean.Intercept)
+  }
+  if (Average.type %in% c("median","mode")) {
+    yPRED <- mapply(fitval.median, FUN="sum", + median.Intercept)
+  }
+  #Get variance of the fit
+  varFit <- sd(yPRED)^2
+  #Get variance of the residuals
+  varRes <- mean(mcmc_coda_object[, Level1.Sigma]^2)
+  #Calculate R^2
+  R2 <- varFit/(varFit + varRes)
+  return(list("R2"=R2, "Variance.Pred.Y"=varFit, "Variance.Residuals"=varRes, "yPRED"=yPRED))
+} #End of function
+
 #################
 ## Run objects ##
 #################
 #posterior
-if(posterior == TRUE) {
+if(y == "post") {
   Posterior.Summary <- as.data.frame(as.list(summarizePost( paramSampleVec=paramSampleVec ,
                                                             compVal=compVal, ROPE=ROPE, credMass=credMass )))
 } else {
   Posterior.Summary <- NA
 }
 #Get multilevel summary
-if (multi==TRUE) {
+if(y == "multi") {
   multi_smry <- fncHdiBinSmry(MCmatrix=MCMC, expand=expand, datFrm=data,
                               Outcome=dv, Group2=iv[1], Group3=iv[2],
                               Theta=parameter[1], Omega2=parameter[2], Omega3=parameter[3],
@@ -1441,23 +1486,37 @@ if (multi==TRUE) {
   multi_smry <- NA
 }
 ## Targets ##
-if(!is.null(target) ) {
-  target_smry <- fncPropGtY(MCMC=MCMC, Distribution=type, yVal=target[[2]],
-                            qVal=target[[1]], Center=parameter[1],
+if(y == "target") {
+  target_smry <- fncPropGtY(MCMC=MCMC, Distribution=type, yVal=targets[[2]],
+                            qVal=targets[[1]], Center=parameter[1],
                             Spread=parameter[2], Skew=parameter[3],
                             CenTend=center )
 } else {
   target_smry <- NA
+}
+## R2 ##
+if(y == "r2") {
+  r2_smry <- fncBayesOlsR2(Coda_Object=MCMC, datFrm=data, xName=iv,
+              Intercept= parameter[1], Betas=parameter[-c(1, length(parameter))],
+              Level1.Sigma=parameter[length(parameter)], Average.type=center)
+} else {
+  r2_smry <- NA
 }
 
 #Final output
 if(newdata == FALSE) {
   MCMC <- NA
 }
+if (!is.null(parameter)) {
+  parameter <- parameter
+} else {
+  parameter <- NA
+}
 
 #Combine in list
 z <- list(Posterior.Summary=Posterior.Summary, MCMC=MCMC,
-          Multilevel=multi_smry, Target=target_smry)
+          Multilevel=multi_smry, Target=target_smry,
+          R2.Summary=r2_smry, parameter=parameter)
 # Assign ham classes
 class(z) <- c("Bayes","ham", "list")
 return(z)

@@ -6,31 +6,33 @@
 \usage{
 Bayes(
   x,
-  posterior = FALSE,
+  y = "mcmc",
   parameter = NULL,
   mass = 0.95,
   compare = NULL,
   rope = NULL,
   newdata = FALSE,
-  multi = FALSE,
   type = NULL,
   center = "Mode",
   data = NULL,
   dv = NULL,
   iv = NULL,
   expand = NULL,
-  target = NULL
+  targets = NULL
 )
 }
 \arguments{
 \item{x}{list object of MCMC chains (e.g, mcmc.list).}
 
-\item{posterior}{logical value that indicates whether to provide a summary of a posterior estimate. This produces results
-for one parameter. This may conflict with 'multi' and 'target' settings. For example, when multi=TRUE, the abbreviated
-parameter name 'theta' for \code{theta[1]} to \code{theta[8]} will prevent it from running. Default is FALSE.}
+\item{y}{character vector for the type of analysis or output to perform. Select 'post', 'multi', 'target', 'r2' or 'mcmc'  for a
+posterior summary, multilevel/hierarchical model summary (up to 3 levels), target summary, Gelman R-squared statistic, or
+list object of MCMC chains converted into a data frame.
+Default is 'mcmc'.}
 
 \item{parameter}{single or multiple element character vector name of parameter in MCMC chains to produce summary statistics.
-Default is NULL.}
+When y='target', use the generally 2 to 3 parameters that represent the distribution parameters (e.g., parameter= c('mean', 'sd')).
+When y='r2', use the regression parameters in order, ending with the residual or level-1 variance (e.g., parameter= c('intercept',
+'beta1', 'beta2', 'standard_deviation')). Default is NULL.}
 
 \item{mass}{numeric vector the specifies the credible mass used in the Highest Density Interval (HDI). Default is 0.95.}
 
@@ -48,36 +50,34 @@ the null hypothesis value of 0.50. We can accept the null hypothesis if the enti
 it will return the list object of MCMC chains, converted into a data frame. This new data can
 be used for analysis or plots. The default is newdata=FALSE.}
 
-\item{multi}{logical vector for a multilevel/hierarchical summary that can be used in a plot too. It provides a multilevel
-or hierarchical model summary (up to 3 levels). Default is FALSE.}
-
-\item{type}{character vector of length == 1 that indicates the likelihood function used in the model when multi=TRUE.
+\item{type}{character vector of length == 1 that indicates the likelihood function used in the model when y='multi' or y='target'.
 Select 'n', 'ln', 'sn', 'w', 'g', 't', 'bern', and 'bin' for these respective options in Bayesian estimation (multilevel):
 'Normal', 'Log-normal', 'Skew-normal', 'Weibull', 'Gamma', 't', 'Bernoulli', or 'binomial'. Default is NULL.}
 
-\item{center}{character vector that selects the type of central tendency to use when reporting parameter values.
-Choices include: 'mean', 'median', and 'mode'. Default is 'mode'.}
+\item{center}{character vector that selects the type of central tendency to use when reporting parameter values when
+y='post', y='target', or y='r2'. Choices include: 'mean', 'median', and 'mode' when y='post' or 'mean' and 'median' when y='r2'.
+Default is 'mode' when y='post' or 'target' and 'median' when y='r2'.}
 
-\item{data}{object name for the observed data when multi=TRUE. Default is NULL.}
+\item{data}{object name for the observed data when y='multi' or y='r2'. Default is NULL.}
 
 \item{dv}{character vector of length == 1 for the dependent variable name in the observed data frame
-when multi=TRUE. Default is NULL.}
+when y='multi'. Default is NULL.}
 
 \item{iv}{character vector of length >= 1 for the independent variable name(s) in the observed data frame
-when y='check' or y='multi'. When y='multi', enter the lower to higher level clustering or group names (e.g, for
-health data, iv=c("patient", "hospital"). When type='taov', enter the name of the test group variable.  Default is NULL.}
+when y='multi' or y='r2'. When y='multi', enter the lower to higher level clustering or group names (e.g, for
+health data, iv=c("patient", "hospital"). When type='taov', enter the name of the test group variable. When y='r2',  Default is NULL.}
 
 \item{expand}{a character vector of length == 1 indicating the variable name to expand aggregated data into non-aggregated
-data frames when  multi=TRUE. This variable is the denominator that can be used to calculate a rate in the formula
+data frames when  y='multi'. This variable is the denominator that can be used to calculate a rate in the formula
 numerator/denominator. For example, when the 'numerator' column is 4 and the 'denominator' column is 10, then this single row
 of data is expanded to 10 rows with four values of 1 and six values of 0 when expand='denominator'. Default is NULL.}
 
-\item{target}{list of one or two named elements (p, y) with numeric values that represent quantile values (p) in the distribution to return
+\item{targets}{list of one or two named elements (p, y) with numeric values that represent quantile values (p) in the distribution to return
 associated outcome values and/or specific outcome values (y) to retrieve associated probabilities. For example, a
 distribution of harmful hospital readmission rates has an estimated median value of 0.25. Staff are considering 2 types of targets,
 percentiles (p) of key interest and specific outcome rates (y). They want to know the readmission rate that is at
 the 40th percentile for a reduced readmission rate and the probability greater than a rate of 0.20. They get this information
-by entering target=list(p=0.40, y=0.20); calculating 1 - prob(y) from returned results gives them an idea about the effort
+by entering targets=list(p=0.40, y=0.20); calculating 1 - prob(y) from returned results gives them an idea about the effort
 needed to meet this target of a reduced readmission rate. Default is NULL. Select type= one of these options: 'n', 'ln',
 'sn', 'w', 'g', 't', 'bern', 'bin'. Also select parameter= the appropriate center, spread, and possible 3rd shape distribution
 parameter (e.g., parameter=c('mean', 'sd')). And option to select center= 'mean', 'median', 'mode'.}
