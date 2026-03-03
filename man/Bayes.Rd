@@ -18,7 +18,8 @@ Bayes(
   data = NULL,
   dv = NULL,
   iv = NULL,
-  expand = NULL
+  expand = NULL,
+  target = NULL
 )
 }
 \arguments{
@@ -70,6 +71,16 @@ health data, iv=c("patient", "hospital"). When type='taov', enter the name of th
 data frames when  multi=TRUE. This variable is the denominator that can be used to calculate a rate in the formula
 numerator/denominator. For example, when the 'numerator' column is 4 and the 'denominator' column is 10, then this single row
 of data is expanded to 10 rows with four values of 1 and six values of 0 when expand='denominator'. Default is NULL.}
+
+\item{target}{list of one or two named elements (p, y) with numeric values that represent quantile values (p) in the distribution to return
+associated outcome values and/or specific outcome values (y) to retrieve associated probabilities. For example, a
+distribution of harmful hospital readmission rates has an estimated median value of 0.25. Staff are considering 2 types of targets,
+percentiles (p) of key interest and specific outcome rates (y). They want to know the readmission rate that is at
+the 40th percentile for a reduced readmission rate and the probability greater than a rate of 0.20. They get this information
+by entering target=list(p=0.40, y=0.20); calculating 1 - prob(y) from returned results gives them an idea about the effort
+needed to meet this target of a reduced readmission rate. Default is NULL. Select type= one of these options: 'n', 'ln',
+'sn', 'w', 'g', 't', 'bern', 'bin'. Also select parameter= the appropriate center, spread, and possible 3rd shape distribution
+parameter (e.g., parameter=c('mean', 'sd')). And option to select center= 'mean', 'median', 'mode'.}
 }
 \value{
 data frame of summary statistics for MCMC parameter's distribution and/or MCMC data frame.

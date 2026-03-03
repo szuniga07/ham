@@ -39,6 +39,15 @@
 #' data frames when  multi=TRUE. This variable is the denominator that can be used to calculate a rate in the formula
 #' numerator/denominator. For example, when the 'numerator' column is 4 and the 'denominator' column is 10, then this single row
 #' of data is expanded to 10 rows with four values of 1 and six values of 0 when expand='denominator'. Default is NULL.
+#' @param target list of one or two named elements (p, y) with numeric values that represent quantile values (p) in the distribution to return
+#' associated outcome values and/or specific outcome values (y) to retrieve associated probabilities. For example, a
+#' distribution of harmful hospital readmission rates has an estimated median value of 0.25. Staff are considering 2 types of targets,
+#' percentiles (p) of key interest and specific outcome rates (y). They want to know the readmission rate that is at
+#' the 40th percentile for a reduced readmission rate and the probability greater than a rate of 0.20. They get this information
+#' by entering target=list(p=0.40, y=0.20); calculating 1 - prob(y) from returned results gives them an idea about the effort
+#' needed to meet this target of a reduced readmission rate. Default is NULL. Select type= one of these options: 'n', 'ln',
+#' 'sn', 'w', 'g', 't', 'bern', 'bin'. Also select parameter= the appropriate center, spread, and possible 3rd shape distribution
+#' parameter (e.g., parameter=c('mean', 'sd')). And option to select center= 'mean', 'median', 'mode'.
 #'
 #' @return data frame of summary statistics for MCMC parameter's distribution and/or MCMC data frame.
 #' Statistics include highest density interval, effective sample size, proportion of distribution
@@ -56,7 +65,7 @@
 
 Bayes <- function(x, posterior=FALSE,parameter=NULL, mass=.95, compare=NULL,
                     rope=NULL, newdata=FALSE, multi=FALSE, type=NULL, center="Mode",
-                  data=NULL, dv=NULL, iv=NULL, expand=NULL) {
+                  data=NULL, dv=NULL, iv=NULL, expand=NULL, target=NULL) {
   #Looking for a list
   if (any(class(x) %in% c("list", "mcmc.list")) == FALSE) {stop("Error: Expecting list class object." )}
   #Looking for 1 parameter name
@@ -89,6 +98,14 @@ Bayes <- function(x, posterior=FALSE,parameter=NULL, mass=.95, compare=NULL,
     stop("Error: Expecting 2 rope values.")
   }
   }
+  #Make sure any target value shows up with a name
+  if(!is.null(target) ) {
+    if( is.null(names(target) )) {
+      stop("Error: Expecting a named list for 'target'.")
+    }
+  }
+
+
 
 ################################################################################
 #                 Function to convert coda to data frame                       #
@@ -666,10 +683,22 @@ fncHdiBinSmry <- function(MCmatrix, expand=NULL, datFrm, Outcome, Group2, Group3
 #           6. Get proportions above/below specific values                     #
 ################################################################################
 #This function calculates the proportion above specific values.
-fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NULL,
+fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL,
                         Center=NULL, Spread=NULL, Skew=NULL, CenTend=NULL ) {
   #Convert into a matrix
-  MC.Matrix <- as.matrix(Coda.Object, chains=TRUE)
+  MC.Matrix <- MCMC
+
+  #Make first letter capitalized
+  firstchar <- function(x) {
+    substr(x, 1, 1) <- toupper(substr(x, 1, 1))
+    x
+  }
+  #Creat central tendency variable
+  if(!is.null(CenTend)) {
+    CenTend <- firstchar(CenTend)
+  } else {
+    CenTend <- "Mode"
+  }
 
   #Shape and rate parameters using the mode values of omega and kappa
   a_shape <- MC.Matrix[, Center] * (MC.Matrix[, Spread] - 2) + 1
@@ -679,27 +708,18 @@ fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NUL
   ## Mean for Beta ##
   ###################
   #if(!is.null(yVal)) {
-  if(Distribution == "Beta") {
+  if(Distribution %in% c("bern", "bin")) {
     mean_val <- a_shape/MC.Matrix[, Spread]
   }
   #  }
 
-  #  if(!is.null(yVal)) {
-  if(Distribution == "Beta") {
+  if(Distribution %in% c("bern", "bin")) {
     mean_val_dist <- summarizePost(mean_val)[c(c("Mode","Median",
                                                  "Mean")[which(c("Mode","Median","Mean")== CenTend)],"HDIlow","HDIhigh")]
   }
-  # }
   else {
     mean_val_dist <- NA
   }
-
-  #Make NA if not from a beta distribution
-  #  if (Distribution == "Beta") {
-  #    mean_val_dist <- mean_val_dist
-  #  } else {
-  #    mean_val_dist <- NA
-  #  }
 
   #######################
   ## Beta distribution ##
@@ -708,7 +728,7 @@ fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NUL
   # Proportion greater than Y
   PbetaGtY <- list()
   if(!is.null(yVal)) {
-    if(Distribution == "Beta") {
+    if(Distribution %in% c("bern", "bin")) {
       for (i in 1:length(yVal)) {
         PbetaGtY[[i]] <- summarizePost( 1- pbeta(yVal[i], a_shape,
                                                  b_shape) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
@@ -719,7 +739,7 @@ fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NUL
   # Quantiles of Y
   QbetaGtY <- list()
   if(!is.null(qVal)) {
-    if(Distribution == "Beta") {
+    if(Distribution %in% c("bern", "bin")) {
       for (i in 1:length(qVal)) {
         QbetaGtY[[i]] <- summarizePost( qbeta(qVal[i], a_shape,
                                               b_shape) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
@@ -730,7 +750,7 @@ fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NUL
   #Effect size for 2 values, in "yVal"
   betaEffSize2Y <- list()
   if(length(yVal) == 2) {
-    if(Distribution == "Beta") {
+    if(Distribution %in% c("bern", "bin")) {
       es1 <- (asin(sign(1- pbeta(yVal[1], a_shape, b_shape) ) * sqrt(abs(1- pbeta(yVal[1], a_shape, b_shape) ))))*2
       es2 <- (asin(sign(1- pbeta(yVal[2], a_shape, b_shape)  ) * sqrt(abs(1- pbeta(yVal[2], a_shape, b_shape) ))))*2
       #Get the posterior summary on effect size between the 2 Y-values
@@ -764,7 +784,7 @@ fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NUL
   # Proportion greater than Y
   PlogGtY <- list()
   if(!is.null(yVal)) {
-    if(Distribution == "Log-normal") {
+    if(Distribution == "ln") {
       for (i in 1:length(yVal)) {
         PlogGtY[[i]] <- summarizePost( plnorm(q=yVal[i], meanlog= MC.Matrix[, Center],
                                               sdlog= MC.Matrix[, Spread], lower.tail=FALSE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
@@ -775,7 +795,7 @@ fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NUL
   # Quantiles of Y
   QlogGtY <- list()
   if(!is.null(qVal)) {
-    if(Distribution == "Log-normal") {
+    if(Distribution == "ln") {
       for (i in 1:length(qVal)) {
         QlogGtY[[i]] <- summarizePost( qlnorm(p=qVal[i], meanlog= MC.Matrix[, Center],
                                               sdlog= MC.Matrix[, Spread]) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
@@ -804,7 +824,7 @@ fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NUL
   # Proportion greater than Y
   PnormGtY <- list()
   if(!is.null(yVal)) {
-    if(Distribution == "Normal") {
+    if(Distribution == "n") {
       for (i in 1:length(yVal)) {
         PnormGtY[[i]] <- summarizePost( pnorm(q=yVal[i], mean= MC.Matrix[, Center],
                                               sd= MC.Matrix[, Spread], lower.tail=FALSE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
@@ -815,7 +835,7 @@ fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NUL
   # Quantiles of Y
   QnormGtY <- list()
   if(!is.null(qVal)) {
-    if(Distribution == "Normal") {
+    if(Distribution == "n") {
       for (i in 1:length(qVal)) {
         QnormGtY[[i]] <- summarizePost( qnorm(p=qVal[i], mean= MC.Matrix[, Center],
                                               sd= MC.Matrix[, Spread]) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
@@ -844,7 +864,7 @@ fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NUL
   # Proportion greater than Y
   PsnormGtY <- list()
   if(!is.null(yVal)) {
-    if(Distribution == "Skew-normal") {
+    if(Distribution == "sn") {
       for (i in 1:length(yVal)) {         #I need to subtract 1-psn to get the right prop > 1
         PsnormGtY[[i]] <- summarizePost( 1 - pskewn(x=yVal[i], xi= MC.Matrix[, Center], omega= MC.Matrix[, Spread],
                                                     alpha= MC.Matrix[, Skew], lower.tail=FALSE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
@@ -856,7 +876,7 @@ fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NUL
   # Needs mapply for qskewn() b/c it creates an impossible error for "omega" <= 0.
   QsnormGtY <- list()
   if(!is.null(qVal)) {
-    if(Distribution == "Skew-normal") {
+    if(Distribution == "sn") {
       for (i in 1:length(qVal)) {
         #          QsnormGtY[[i]] <- summarizePost(mapply(qsn, p=qVal[i], xi=MC.Matrix[, Center], omega=MC.Matrix[, Spread],
         QsnormGtY[[i]] <- summarizePost(mapply(qskewn, p=qVal[i], xi=MC.Matrix[, Center], omega=MC.Matrix[, Spread],
@@ -927,7 +947,7 @@ fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NUL
   # Proportion greater than Y
   PWeibGtY <- list()
   if(!is.null(yVal)) {
-    if(Distribution == "Weibull") {
+    if(Distribution == "w") {
       for (i in 1:length(yVal)) {
         PWeibGtY[[i]] <- summarizePost( pweibull(q=yVal[i], shape= MC.Matrix[, Center],
                                                  scale= MC.Matrix[, Spread], lower.tail=FALSE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
@@ -938,7 +958,7 @@ fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NUL
   # Quantiles of Y
   QWeibGtY <- list()
   if(!is.null(qVal)) {
-    if(Distribution == "Weibull") {
+    if(Distribution == "w") {
       for (i in 1:length(qVal)) {
         QWeibGtY[[i]] <- summarizePost( qweibull(p=qVal[i], shape= MC.Matrix[, Center],
                                                  scale= MC.Matrix[, Spread]) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
@@ -967,7 +987,7 @@ fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NUL
   # Proportion greater than Y
   PGammaGtY <- list()
   if(!is.null(yVal)) {
-    if(Distribution == "Gamma") {
+    if(Distribution == "g") {
       for (i in 1:length(yVal)) {
         PGammaGtY[[i]] <- summarizePost( pgamma(q=yVal[i], shape= MC.Matrix[, Center],
                                                 rate= MC.Matrix[, Spread], lower.tail=FALSE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
@@ -978,7 +998,7 @@ fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NUL
   # Quantiles of Y
   QGammaGtY <- list()
   if(!is.null(qVal)) {
-    if(Distribution == "Gamma") {
+    if(Distribution == "g") {
       for (i in 1:length(qVal)) {
         QGammaGtY[[i]] <- summarizePost( qgamma(p=qVal[i], shape= MC.Matrix[, Center],
                                                 rate= MC.Matrix[, Spread]) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
@@ -1004,25 +1024,25 @@ fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NUL
   ## Create final distribution values ##
   ######################################
   ## 1. Probability ##
-  if (Distribution == "Beta") {
+  if (Distribution %in% c("bern", "bin")) {
     PdisGtY <- PbetaGtY
   }
-  if (Distribution == "Log-normal") {
+  if (Distribution == "ln") {
     PdisGtY <- PlogGtY
   }
-  if (Distribution == "Normal") {
+  if (Distribution == "n") {
     PdisGtY <- PnormGtY
   }
-  if (Distribution == "Skew-normal") {
+  if (Distribution == "sn") {
     PdisGtY <- PsnormGtY
   }
   if (Distribution == "t") {
     PdisGtY <- PtGtY
   }
-  if (Distribution == "Weibull") {
+  if (Distribution == "w") {
     PdisGtY <- PWeibGtY
   }
-  if (Distribution == "Gamma") {
+  if (Distribution == "g") {
     PdisGtY <- PGammaGtY
   }
   #Make NA if the above weren't selected
@@ -1030,69 +1050,37 @@ fncPropGtY <- function( Coda.Object=NULL, Distribution=NULL, yVal=NULL, qVal=NUL
     PdisGtY <- NA
   }
   ## 2. Quantile ##
-  if (Distribution == "Beta") {
+  if (Distribution %in% c("bern", "bin")) {
     QdisGtY <- QbetaGtY
   }
-  if (Distribution == "Log-normal") {
+  if (Distribution == "ln") {
     QdisGtY <- QlogGtY
   }
-  if (Distribution == "Normal") {
+  if (Distribution == "n") {
     QdisGtY <- QnormGtY
   }
-  if (Distribution == "Skew-normal") {
+  if (Distribution == "sn") {
     QdisGtY <- QsnormGtY
   }
   if (Distribution == "t") {
     QdisGtY <- QtGtY
   }
-  if (Distribution == "Weibull") {
+  if (Distribution == "w") {
     QdisGtY <- QWeibGtY
   }
-  if (Distribution == "Gamma") {
+  if (Distribution == "g") {
     QdisGtY <- QGammaGtY
   }
   #Make NA if the above weren't selected
   if (is.null(QdisGtY)) {
     QdisGtY <- NA
   }
-  ## 3. Effect size ##
-  if (Distribution == "Beta") {
-    disEsY <- betaEffSize2Y
-  }
-  ##################################################
-  ## Gets effect sizes for non-Beta distributions ##
-  ##################################################
-  nonBetaEffSize2Y <- vector()
-  if(length(yVal) == 2) {
-    if(Distribution != "Beta") {
-      oes1 <- (asin(sign( PdisGtY[[1]][1] ) * sqrt(abs(PdisGtY[[1]][1] ))))*2
-      oes2 <- (asin(sign( PdisGtY[[2]][1]) * sqrt(abs( PdisGtY[[2]][1]))))*2
-      #Get the posterior summary on effect size between the 2 Y-values
-      nonBetaEffSize2Y <- abs(oes1 - oes2)
-    }
-  }
-  #Effect size
-  if (length(nonBetaEffSize2Y)== 0 ) {
-    nonBetaEffSize2Y <- NA
-  } else {
-    nonBetaEffSize2Y <- nonBetaEffSize2Y
-  }
-
-  #This is temp code for log-normal that makes it NA for now
-  if (Distribution != "Beta") {
-    disEsY <- nonBetaEffSize2Y
-  }
-
-  #Make NA if the above weren't selected
-  if (is.null(disEsY)) {
-    disEsY <- NA
-  }
 
   return(list("Est.Prop.GT.Y"= PdisGtY,
-              "Est.Effect.Size.2Y"= disEsY,
               "Est.Quantile.Y"= QdisGtY,
               "Est.Mean.Beta"=mean_val_dist) )
 }
+
 
 ################################################################################
 #                            4a. Skew-normal density                           #
@@ -1452,6 +1440,16 @@ if (multi==TRUE) {
 } else {
   multi_smry <- NA
 }
+## Targets ##
+if(!is.null(target) ) {
+  target_smry <- fncPropGtY(MCMC=MCMC, Distribution=type, yVal=target[[2]],
+                            qVal=target[[1]], Center=parameter[1],
+                            Spread=parameter[2], Skew=parameter[3],
+                            CenTend=center )
+} else {
+  target_smry <- NA
+}
+
 #Final output
 if(newdata == FALSE) {
   MCMC <- NA
@@ -1459,7 +1457,7 @@ if(newdata == FALSE) {
 
 #Combine in list
 z <- list(Posterior.Summary=Posterior.Summary, MCMC=MCMC,
-          Multilevel=multi_smry)
+          Multilevel=multi_smry, Target=target_smry)
 # Assign ham classes
 class(z) <- c("Bayes","ham", "list")
 return(z)
