@@ -1,9 +1,10 @@
 #' Bayesian plots for various analyses
 #'
-#' Graph X-bar charts, p-charts, and u-charts. This includes
-#' producing means center lines, 3-sigma upper and lower control limits. Users can also calculate
-#' values before and after an intervention to see if a change in the control process happened. Values are
-#' returned in a data frame.
+#' Graph Bayesian diagnostic traceplots, density plots on convergence, autocorrelation factor, and calculate
+#' Monte Carlo Standard Errors. And plot summaries of posterior distributions, posterior predictive checks,
+#' summaries on hierarchical or multilevel models (up to 3 levels), and summary graphs of values associated
+#' with specific percentiles and vice-versa that can be used to help set targets. Plots are developed from
+#' Bayes class objects that converted multiple chains into data frames.
 #'
 #' @param x Bayes class object.
 #' @param y character vector for the type of plot to graph. Select 'post', 'dxa', 'dxd', 'dxg', 'dxt', 'check',
@@ -140,15 +141,13 @@
 #' Default is 2.
 #' @param ... additional arguments.
 #'
-#' @return plot of Shewhart control charts: X-bar charts, p-charts, and u-charts with 3-sigma control limits.
+#' @return plots assessing model quality, posterior distributions, posterior predictive checks, hierarchical
+#' or multilevel model summaries, and target summaries.
 #' @importFrom graphics lines plot abline points text arrows hist layout matplot mtext plot.new
 #' @importFrom utils head tail
 #' @importFrom methods is
 #' @importFrom stats lm acf cor dgamma dlnorm dnorm dt dweibull pbeta pgamma plnorm pnorm pweibull qbeta qgamma qlnorm qweibull runif qchisq df
 #' @export
-#' @references
-#' Kruschke, J. (2014). Doing Bayesian Data Analysis: A Tutorial with R, JAGS, and
-#' Stan, Second Edition. New York: Academic Press. ISBN: 9780124058880
 #'
 #' @examples
 #' ## Hospital LOS and readmissions ##

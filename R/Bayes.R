@@ -1,8 +1,12 @@
 #' Summarize Bayesian Markov Chain Monte Carlo (MCMC) object
 #'
 #' Convert a list of Bayesian analysis chains (e.g., coda package mcmc.list objects) into a data frame
-#' for analysis and creating plots. Calculates a set of descriptive statistics that summarize
-#' MCMC parameters. MCMC converted to data frame and summary values are also returned as a data frame.
+#' for analysis and creating plots. For example, models from JAGS or Stan that were converted into
+#' coda class objects can be used to create the data frames. Calculates a set of descriptive statistics
+#' that summarize MCMC parameters. And values can be calculated for use in descriptive graphs such as
+#' values associated with specific percentiles and vice-versa to help set targets, summaries on
+#' hierarchical or multilevel models (up to 3 levels), and the R2 for Bayesian regression models with
+#' metric level predictors.
 #'
 #' @param x list object of MCMC chains (e.g, mcmc.list).
 #' @param y character vector for the type of analysis or output to perform. Select 'post', 'multi', 'target', 'r2' or 'mcmc'  for a
@@ -54,13 +58,21 @@
 #' @return data frame of summary statistics for MCMC parameter's distribution and/or MCMC data frame.
 #' Statistics include highest density interval, effective sample size, proportion of distribution
 #' within and outside of a ROPE, distribution compared with a set value, and the parameter's mean,
-#' median, and mode. And a MCMC data frame.
+#' median, and mode. And distribution summaries for multilevel models, target summaries, and
+#' regression model R2.
 #' @importFrom stats sd ar density median residuals var
 #' @export
 #' @references
+#' Azzalini, A. (2014). The Skew-Normal and Related Families. Cornwall: Cambridge
+#' University Press. ISBN: 9781139248891
+#'
+#' Gelman, A., Goodrich, B., Gabry, J., & Vehtari, A. (2019). R-squared for Bayesian
+#' Regression Models. The American Statistician, 73, 3, 307–309.
+#' https://doi.org/10.1080/00031305.2018.1549100
+#'
 #' Kruschke, J. (2014). Doing Bayesian Data Analysis: A Tutorial with R, JAGS, and
 #' Stan, Second Edition. New York: Academic Press. ISBN: 9780124058880
-
+#'
 #' @examples
 #' ## Hospital LOS and readmissions ##
 #' # X-bar chart statistics
