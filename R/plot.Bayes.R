@@ -25,7 +25,9 @@
 #' options. For example, plot a logistic model on the logit scale when type='ol' (i.e., view straight trend lines). Or if you prefer
 #' viewing results on the probability scale, select type='logl' (i.e., curved lines). And consider using type= 'lnl', 'lnq', 'lnc'
 #' for log-normal and Poisson models for lines with exponentiated values. In general, it is important to note that the observed data
-#' may not be on the same scale as the parameter estimates and may not be visible in the graph. Default is NULL.
+#' may not be on the same scale as the parameter estimates and may not be visible in the graph. When graphing target summary plots that
+#' use posterior predictive checks rather than the standard posterior summary graph, enter y='target' and other arguments similar to
+#' y='check'. However, type='sn' is not available but type= 'n', 'ln', 'w', 'g', or 't' are available. Default is NULL.
 #' @param parameter a character vector of length >= 1 or a 2 element list with the name(s) of parameter in MCMC chains to produce
 #' summary statistics. Use a 1 element vector to get posterior estimates of a single parameter. Use a 2 or more element vector
 #' to estimate the average joint effects of multiple parameters (e.g., average infection rate for interventions A and B when
@@ -573,308 +575,6 @@ plot.Bayes <- function(x, y=NULL, type="n", parameter=NULL, center="mode", mass=
     names(out) <- names(x)
     return(out)
   }
-  #probability
-  pskewn <- function (x, xi = 0, omega = 1, alpha = 0, tau = 0, dp = NULL,
-                      engine="T.Owen", ...)
-  {
-    T.Owen <- function (h, a, jmax = 50, cut.point = 8)
-    {
-      T.int <- function(h, a, jmax, cut.point) {
-        fui <- function(h, i) (h^(2 * i))/((2^i) * gamma(i +
-                                                           1))
-        seriesL <- seriesH <- NULL
-        i <- 0:jmax
-        low <- (h <= cut.point)
-        hL <- h[low]
-        hH <- h[!low]
-        L <- length(hL)
-        if (L > 0) {
-          b <- outer(hL, i, fui)
-          cumb <- apply(b, 1, cumsum)
-          b1 <- exp(-0.5 * hL^2) * t(cumb)
-          matr <- matrix(1, jmax + 1, L) - t(b1)
-          jk <- rep(c(1, -1), jmax)[1:(jmax + 1)]/(2 * i +
-                                                     1)
-          matr <- t(matr * jk) %*% a^(2 * i + 1)
-          seriesL <- (atan(a) - as.vector(matr))/(2 * pi)
-        }
-        if (length(hH) > 0)
-          seriesH <- atan(a) * exp(-0.5 * (hH^2) * a/atan(a)) *
-          (1 + 0.00868 * (hH * a)^4)/(2 * pi)
-        series <- c(seriesL, seriesH)
-        id <- c((1:length(h))[low], (1:length(h))[!low])
-        series[id] <- series
-        series
-      }
-      if (!is.vector(a) | length(a) > 1)
-        stop("'a' must be a vector of length 1")
-      if (!is.vector(h))
-        stop("'h' must be a vector")
-      aa <- abs(a)
-      ah <- abs(h)
-      if (is.na(aa))
-        stop("parameter 'a' is NA")
-      if (aa == Inf)
-        return(sign(a) * 0.5 * pnorm(-ah))
-      if (aa == 0)
-        return(rep(0, length(h)))
-      na <- is.na(h)
-      inf <- (ah == Inf)
-      ah <- replace(ah, (na | inf), 0)
-      if (aa <= 1)
-        owen <- T.int(ah, aa, jmax, cut.point)
-      else owen <- (0.5 * pnorm(ah) + pnorm(aa * ah) * (0.5 -
-                                                          pnorm(ah)) - T.int(aa * ah, (1/aa), jmax, cut.point))
-      owen <- replace(owen, na, NA)
-      owen <- replace(owen, inf, 0)
-      return(owen * sign(a))
-    }
-
-    #pskewn code
-    if (!is.null(dp)) {
-      if (!missing(alpha))
-        stop("You cannot set both 'dp' and component parameters")
-      xi <- dp[1]
-      omega <- dp[2]
-      alpha <- dp[3]
-      tau <- if (length(dp) > 3)
-        dp[4]
-      else 0
-    }
-    z <- (x - xi)/omega
-    prob <- rep(NA, length(z))
-    plain <- is.finite(z) & (omega > 0)
-    if (any(!plain)) {
-      prob <- replace(prob, z == -Inf, 0)
-      prob <- replace(prob, z == Inf, 1)
-      prob <- replace(prob, is.na(z) | (omega <= 0), NA)
-    }
-    if (sum(plain) == 0)
-      return(prob)
-    na <- length(alpha)
-    za <- matrix(cbind(z, alpha), ncol = 2)[plain, , drop = FALSE]
-    z <- za[, 1]
-    nz <- length(z)
-    if (missing(engine))
-      engine <- if (na == 1 & nz > 3 & all(z * za[, 2] > -5) &
-                    (tau == 0))
-        "T.Owen"
-#    else "biv.nt.prob" #removing biv.nt.prob from mnormt
-    if (engine == "T.Owen") {
-      if (tau != 0 | na > 1)
-        stop("engine='T.Owen' not compatible with other arguments")
-      p <- pnorm(z) - 2 * T.Owen(z, alpha, ...)
-    }
-#    else {
-#      p <- numeric(nz)
-#      alpha <- za[, 2]
-#      delta <- delta.etc(alpha)
-#      p.tau <- pnorm(tau)
-#      for (k in seq_len(nz)) {
-#        if (abs(z[k]) == Inf)
-#          p[k] <- (sign(z[k]) + 1)/2
-#        else {
-#          if (abs(alpha[k]) == Inf) {
-#            p[k] <- if (alpha[k] > 0)
-#              (pnorm(pmax(z[k], -tau)) - pnorm(-tau))/p.tau
-#            else {
-#              1 - (pnorm(tau) - pnorm(pmin(z[k], tau)))/p.tau
-#            }
-#          }
-##          else { #removing mnormt
-##            R <- matrix(c(1, -delta[k], -delta[k], 1),
-##                        2, 2)
-##            p[k] <- mnormt::biv.nt.prob(0, rep(-Inf, 2),
-##                                        c(z[k], tau), c(0, 0), R)/p.tau
-##          }
-#        }
-#      }
-#    }
-    p <- pmin(1, pmax(0, as.numeric(p)))
-    names(prob) <- names(x)
-    replace(prob, plain, p)
-  }
-  #quantile
-  qskewn <- function (p, xi = 0, omega = 1, alpha = 0, tau = 0, dp = NULL,
-                      tol = 0.00000001, solver = "NR", ...)
-  {
-    sn.cumulants <- function (xi = 0, omega = 1, alpha = 0, tau = 0, dp = NULL,
-                              n = 4)
-    {
-      #zeta
-      zeta <- function (k, x)
-      {
-        if (k < 0 | k > 5 | k != round(k))
-          return(NULL)
-        na <- is.na(x)
-        x <- replace(x, na, 0)
-        x2 <- x^2
-        z <- switch(k + 1, pnorm(x, log.p = TRUE) + log(2), ifelse(x >
-                    (-50), exp(dnorm(x, log = TRUE) - pnorm(x, log.p = TRUE)),
-                     -x/(1 - 1/(x2 + 2) + 1/((x2 + 2) * (x2 + 4)) - 5/((x2 +
-                      2) * (x2 + 4) * (x2 + 6)) + 9/((x2 + 2) * (x2 +
-                       4) * (x2 + 6) * (x2 + 8)) - 129/((x2 + 2) * (x2 +
-                        4) * (x2 + 6) * (x2 + 8) * (x2 + 10)))), (-zeta(1,
-                         x) * (x + zeta(1, x))), (-zeta(2, x) * (x + zeta(1,
-                          x)) - zeta(1, x) * (1 + zeta(2, x))), (-zeta(3, x) *
-                             (x + 2 * zeta(1, x)) - 2 * zeta(2, x) * (1 + zeta(2,
-                               x))), (-zeta(4, x) * (x + 2 * zeta(1, x)) - zeta(3,
-                                x) * (3 + 4 * zeta(2, x)) - 2 * zeta(2, x) * zeta(3,
-                                 x)), NULL)
-        neg.inf <- (x == -Inf)
-        if (any(neg.inf))
-          z <- switch(k + 1, z, replace(z, neg.inf, Inf), replace(z,
-                       neg.inf, -1), replace(z, neg.inf, 0), replace(z,
-                        neg.inf, 0), replace(z, neg.inf, 0), NULL)
-        if (k > 1)
-          z <- replace(z, x == Inf, 0)
-        replace(z, na, NA)
-      }
-      cumulants.half.norm <- function(n = 4) {
-        n <- max(n, 2)
-        n <- as.integer(2 * ceiling(n/2))
-        half.n <- as.integer(n/2)
-        m <- 0:(half.n - 1)
-        a <- sqrt(2/pi)/(gamma(m + 1) * 2^m * (2 * m + 1))
-        signs <- rep(c(1, -1), half.n)[seq_len(half.n)]
-        a <- as.vector(rbind(signs * a, rep(0, half.n)))
-        coeff <- rep(a[1], n)
-        for (k in 2:n) {
-          ind <- seq_len(k - 1)
-          coeff[k] <- a[k] - sum(ind * coeff[ind] * a[rev(ind)]/k)
-        }
-        kappa <- coeff * gamma(seq_len(n) + 1)
-        kappa[2] <- 1 + kappa[2]
-        return(kappa)
-      }
-      if (!is.null(dp)) {
-        if (!missing(alpha))
-          stop("You cannot set both 'dp' and the component parameters")
-        dp <- c(dp, 0)[1:4]
-        dp <- matrix(dp, 1, ncol = length(dp))
-      }
-      else dp <- cbind(xi, omega, alpha, tau)
-      delta <- ifelse(abs(dp[, 3]) < Inf, dp[, 3]/sqrt(1 + dp[,
-                                                              3]^2), sign(dp[, 3]))
-      tau <- dp[, 4]
-      if (all(tau == 0)) {
-        kv <- cumulants.half.norm(n)
-        if (length(kv) > n)
-          kv <- kv[-(n + 1)]
-        kv[2] <- kv[2] - 1
-        kappa <- outer(delta, 1:n, "^") * matrix(rep(kv, nrow(dp)),
-                                                 ncol = n, byrow = TRUE)
-      }
-      else {
-        if (n > 4) {
-          warning("n>4 not allowed with ESN distribution")
-          n <- min(n, 4)
-        }
-        kappa <- matrix(0, nrow = length(delta), ncol = 0)
-        for (k in 1:n) kappa <- cbind(kappa, zeta(k, tau) *
-                                        delta^k)
-      }
-      kappa[, 2] <- kappa[, 2] + 1
-      kappa <- kappa * outer(dp[, 2], (1:n), "^")
-      kappa[, 1] <- kappa[, 1] + dp[, 1]
-      kappa[, , drop = TRUE]
-    }
-    #qskewn code starts below
-    if (!is.null(dp)) {
-      if (!missing(alpha))
-        stop("You cannot set both 'dp' and component parameters")
-      xi <- dp[1]
-      omega <- dp[2]
-      alpha <- dp[3]
-      tau <- if (length(dp) > 3)
-        dp[4]
-      else 0
-    }
-    if (omega <= 0)
-      stop("argument 'omega' (or dp[2]) must be positive")
-    max.q <- sqrt(qchisq(p, 1)) + tau
-    min.q <- -sqrt(qchisq(1 - p, 1)) + tau
-    if (tau == 0) {
-      if (alpha == Inf)
-        return(xi + omega * max.q)
-      if (alpha == -Inf)
-        return(xi + omega * min.q)
-    }
-    na <- is.na(p) | (p < 0) | (p > 1)
-    zero <- (p == 0)
-    one <- (p == 1)
-    ok <- !(na | zero | one)
-    q.all <- numeric(length(p))
-    names(q.all) <- names(p)
-    q.all <- replace(q.all, na, NA)
-    q.all <- replace(q.all, zero, -Inf)
-    q.all <- replace(q.all, one, Inf)
-    if (sum(ok) == 0)
-      return(q.all)
-    p <- p[ok]
-    dp0 <- c(0, 1, alpha, tau)
-    if (solver == "NR") {
-      dp0 <- c(0, 1, alpha, tau)
-      cum <- sn.cumulants(dp = dp0, n = 4)
-      g1 <- cum[3]/cum[2]^(3/2)
-      g2 <- cum[4]/cum[2]^2
-      x <- qnorm(p)
-      x <- (x + (x^2 - 1) * g1/6 + x * (x^2 - 3) * g2/24 -
-              x * (2 * x^2 - 5) * g1^2/36)
-      x <- cum[1] + sqrt(cum[2]) * x
-      px <- pskewn(x, dp = dp0, ...)
-      max.err <- 1
-      while (max.err > tol) {
-        x1 <- x - (px - p)/dskewn(x, dp = dp0)
-        x <- x1
-        px <- pskewn(x, dp = dp0, ...)
-        max.err <- max(abs(px - p))
-        if (is.na(max.err))
-          stop("failed convergence, try with solver=\"RFB\"")
-      }
-      q <- as.numeric(xi + omega * x)
-    }
-    else {
-      if (solver == "RFB") {
-        abs.alpha <- abs(alpha)
-        if (alpha < 0)
-          p <- (1 - p)
-        x <- xa <- xb <- xc <- fa <- fb <- fc <- rep(NA,
-                                                     length(p))
-        nc <- rep(TRUE, length(p))
-        fc[!nc] <- 0
-        xa[nc] <- qnorm(p[nc])
-        xb[nc] <- sqrt(qchisq(p[nc], 1)) + abs(tau)
-        fa[nc] <- pskewn(xa[nc], 0, 1, abs.alpha, tau, ...) -
-          p[nc]
-        fb[nc] <- pskewn(xb[nc], 0, 1, abs.alpha, tau, ...) -
-          p[nc]
-        regula.falsi <- FALSE
-        while (sum(nc) > 0) {
-          xc[nc] <- if (regula.falsi)
-            xb[nc] - fb[nc] * (xb[nc] - xa[nc])/(fb[nc] -
-                                                   fa[nc])
-          else (xb[nc] + xa[nc])/2
-          fc[nc] <- pskewn(xc[nc], 0, 1, abs.alpha, tau,
-                        ...) - p[nc]
-          pos <- (fc[nc] > 0)
-          xa[nc][!pos] <- xc[nc][!pos]
-          fa[nc][!pos] <- fc[nc][!pos]
-          xb[nc][pos] <- xc[nc][pos]
-          fb[nc][pos] <- fc[nc][pos]
-          x[nc] <- xc[nc]
-          nc[(abs(fc) < tol)] <- FALSE
-          regula.falsi <- !regula.falsi
-        }
-        Sign <- function(x) sign(x) + as.numeric(x == 0)
-        q <- as.numeric(xi + omega * Sign(alpha) * x)
-      }
-      else stop("unknown solver")
-    }
-    q.all[ok] <- q
-    names(q.all) <- names(q)
-    return(q.all)
-  }
 
   ################################################################################
   #                  4. Posterior Predictive Check for groups                    #
@@ -885,12 +585,10 @@ plot.Bayes <- function(x, y=NULL, type="n", parameter=NULL, center="mode", mass=
                                   Main.Title=NULL, X.Lab=NULL, Y.Lab=NULL, #new
                                   Bar.Color=NULL, lwd=NULL, #new
                                   Line.Color=NULL, Hist.Breaks=NULL,
-                                  #CEX.size=NULL,
                                   cex.lab=NULL, cex= 1, cex.main=NULL, cex.axis=NULL, #new
                                   X.Lim=NULL, Y.Lim=NULL,
                                   Min.Val=NULL, Max.Val=NULL, Round.Digits=NULL,
                                   Point.Loc= NULL, PCol=NULL,
-                                  #Add.Lgd= NULL, #drop arg...replace with loc
                                   Leg.Loc= NULL, legend= NULL, cex.legend= NULL ) { #new
     #Make coda into as.matrix
     MC.Chain <- MCMC
@@ -985,6 +683,137 @@ plot.Bayes <- function(x, y=NULL, type="n", parameter=NULL, center="mode", mass=
       }
     }
   } #End of function
+
+  ################################################################################
+  #                  4a. Posterior Predictive Check for Targets                  #
+  ################################################################################
+  #Use the coda object and dataset. Works for normal and log-normal distributions.
+  fncGrpPostPredCheckTarget <- function(MCMC, datFrm, Outcome,
+                                  Group=NULL, Group.Level=NULL, Bar.Color=NULL,Hist.Breaks=NULL,
+                                  Mean.Var, SD.Var, MCnu=NULL, Distribution, Num.Lines=NULL,
+                                  Main.Title=NULL, X.Lab=NULL, Y.Lab=NULL, #new
+                                  lwd=NULL, #new
+                                  Line.Color=NULL,
+                                  cex.lab=NULL, cex= 1, cex.main=NULL, cex.axis=NULL, #new
+                                  X.Lim=NULL, Y.Lim=NULL,
+                                  Min.Val=NULL, Max.Val=NULL, Round.Digits=NULL,
+                                  Point.Loc= NULL, PCol=NULL,
+                                  Leg.Loc= NULL, legend= NULL, cex.legend= NULL ) { #new
+    #Make coda into as.matrix
+    MC.Chain <- MCMC
+    chainLength <- NROW(MC.Chain)  #Chain length
+    #Get min and max value for key parameter
+    if(is.null(Min.Val)) {
+      Min.Val <- min(MC.Chain[, Mean.Var])
+    }
+    if(is.null(Max.Val)) {
+      Max.Val <- max(MC.Chain[, Mean.Var])
+    }
+    #Get a number of pseudo-random chains
+    pltIdx <- floor(seq(1, chainLength, length= Num.Lines))
+    #Get spread in outcome variable values
+    xComb <- seq( Min.Val , Max.Val , length=501 )
+    #Make X limit values, I can set my minimum value
+    if (is.null(X.Lim)) {
+      X.Lim <- c(Min.Val, round(Max.Val, digits=Round.Digits))
+    }
+    ## Graph ##
+    #Get density info
+    dnsinfo <- range(hist( datFrm[, Outcome], plot=FALSE)$density)
+    #Histogram
+      hist( datFrm[, Outcome], xlab= X.Lab, ylab=Y.Lab,
+            main= Main.Title, breaks=Hist.Breaks, col= Bar.Color, border="white",
+            prob=TRUE, cex.lab=cex.lab, cex=cex, cex.main=cex.main,
+            xlim=X.Lim, ylim=Y.Lim, axes=FALSE)
+    axis(1, cex.axis=cex.axis)  #Put values in labels
+    #This adds in minimum value in case it isn't in range (e.g., show negatve range of normal distribution)
+    axis(1, at=X.Lim[1], cex.axis=cex.axis)
+    axis(2, cex.axis=cex.axis)  #Put values in density
+    # box()   #Dropping this for now because it looks better without
+    #Add in posterior estimate lines
+    for ( chnIdx in pltIdx ) {
+      #Normal Distribution
+      if (Distribution == "n") {
+        lines( xComb ,
+               dnorm( xComb, MC.Chain[chnIdx, Mean.Var], MC.Chain[chnIdx, SD.Var] ),
+               col= Line.Color, lwd=lwd )
+      }
+      #Log-Normal Distribution
+      if (Distribution == "ln") {
+        lines( xComb ,
+               dlnorm( xComb, MC.Chain[chnIdx, Mean.Var], MC.Chain[chnIdx, SD.Var] ),
+               col= Line.Color , lwd=lwd)
+      }
+      #Skew-Normal Distribution
+      if (Distribution == "sn") {
+        lines( xComb ,
+               dskewn( xComb, xi=MC.Chain[chnIdx, Mean.Var], omega=MC.Chain[chnIdx, SD.Var],
+                       alpha=MC.Chain[chnIdx, MCnu]), col= Line.Color, lwd=lwd )
+      }
+      #Weibull Distribution
+      if (Distribution == "w") {
+        lines( xComb ,
+               dweibull( xComb, shape=MC.Chain[chnIdx, Mean.Var], scale=MC.Chain[chnIdx, SD.Var] ),
+               col= Line.Color, lwd=lwd )
+      }
+      #Gamma Distribution
+      if (Distribution == "g") {
+        lines( xComb ,
+               dgamma( xComb, shape=MC.Chain[chnIdx, Mean.Var], rate=MC.Chain[chnIdx, SD.Var] ),
+               col= Line.Color, lwd=lwd )
+      }
+      #t Distribution
+      if (Distribution == "t") {
+        lines( xComb ,
+               dt( xComb, df= MC.Chain[chnIdx, MCnu], ncp= MC.Chain[chnIdx, Mean.Var] ),
+               col= Line.Color, lwd=lwd )
+      }
+      #Add points
+      if (!is.null(Point.Loc)) {
+        for (i in 1:length(Point.Loc)) {
+          points(x=Point.Loc[i], y=0, pch=3, cex=cex, col=PCol)
+        }
+      }
+      #Add legend
+      if(!is.null(Leg.Loc) ) {
+        legend_text <- if (!is.null(legend)) legend else c(paste0("Observed ", abbreviate(Group.Level, 8)), "Posterior Estimate")
+        legend_type <- c(1, 1)
+        pcol_vector <- c(Bar.Color, Line.Color)
+        legend(x=Leg.Loc, legend=legend_text, col=pcol_vector, lty=legend_type,
+               pt.bg=pcol_vector, cex = cex.legend, bty="n", inset=c(0, .05),
+               lwd=cex.legend)
+      }
+    }
+    #target code
+    #Value for total number of targets
+    num_tgt_p <- length(grep("p", names(unlist(x$targets))))
+    num_tgt_y <- length(grep("y", names(unlist(x$targets))))
+    num_tgt <- sum(num_tgt_p,num_tgt_y)
+    #Make y coordinates
+    y_coord <- seq(dnsinfo[1], dnsinfo[2], length.out=(num_tgt + 2))[-1]
+    #Add target lines and text
+    if(any(!is.na(x$Target$Est.Quantile.P)) == TRUE) {
+      #Add lines to for where targets are at for P
+      for(i in 1:num_tgt_p) {
+        abline(v= x$Target$Est.Quantile.P[[i]][1], col=tgtcol, lwd=lwd, lty=3)
+        text(x$Target$Est.Quantile.P[[i]][1], y_coord[i],
+             paste0(round(x$Target$Est.Quantile.P[[i]][1], round.c), " (", x$targets$p[[i]], ")"),
+             col=tgtcol, cex=cex.text )
+      }
+      #Add in text for distribution associated with Y
+      if(any(!is.na(x$Target$Est.Prob.GT.Y)) == TRUE) {
+        for(i in 1:num_tgt_y) {
+          text( x$targets$y[[i]] , y_coord[i+num_tgt_p] ,
+                bquote( .(round(100*(1-x$Target$Est.Prob.GT.Y[[i]][[1]]), 1)) * "% < " *
+                          .(signif(x$targets$y[[i]], 3)) * " < " *
+                          .(round(100*x$Target$Est.Prob.GT.Y[[i]][[1]], 1)) * "%" ) ,
+                adj=c((1-x$Target$Est.Prob.GT.Y[[i]][[1]]), 0), cex=cex.text , col=tgtcol)
+        }
+      }
+    }
+
+  } #End of function
+
 
   ################################################################################
   #             5. Posterior predictive check for ANOVA                          #
@@ -1970,7 +1799,8 @@ if(y == "check") {
            )
     }
   if(y == "target") {
-    #x-axis label
+    if(is.null(parameter)) {
+      #x-axis label
     if(!is.null(xlab)) {
       xlab <- xlab
     } else {
@@ -2013,8 +1843,63 @@ if(y == "check") {
       }
     }
   }
+  }
 
-
+  ## Posterior Predictive Checks for targets ##
+  if(y == "target") {
+    if(!is.null(parameter)) {
+    switch(type,
+           "n" = fncGrpPostPredCheckTarget(MCMC=MCMC, datFrm=data, Outcome=dv, Group=group[[1]],
+                                     Group.Level=group[[2]], Mean.Var=parameter[1], SD.Var=parameter[2],
+                                     MCnu=NULL, Distribution=type, Num.Lines=pline,
+                                     Main.Title=main, X.Lab=xlab, Bar.Color=bcol,
+                                     Line.Color=lcol, Hist.Breaks=breaks, X.Lim=xlim, Y.Lim=ylim,  Min.Val=vlim[1],
+                                     Max.Val=vlim[2], Round.Digits=round.c, Point.Loc= xpt, PCol=pcol,
+                                     Leg.Loc= add.legend, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
+                                     cex.axis=cex.axis, legend=legend, cex.legend=cex.legend, lwd=lwd, Y.Lab=ylab ),
+           "ln" = fncGrpPostPredCheckTarget(MCMC=MCMC, datFrm=data, Outcome=dv, Group=group[[1]],
+                                      Group.Level=group[[2]], Mean.Var=parameter[1], SD.Var=parameter[2],
+                                      MCnu=NULL, Distribution=type, Num.Lines=pline,
+                                      Main.Title=main, X.Lab=xlab, Bar.Color=bcol,
+                                      Line.Color=lcol, Hist.Breaks=breaks, X.Lim=xlim, Y.Lim=ylim,  Min.Val=vlim[1],
+                                      Max.Val=vlim[2], Round.Digits=round.c, Point.Loc= xpt, PCol=pcol,
+                                      Leg.Loc= add.legend, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
+                                      cex.axis=cex.axis, legend=legend, cex.legend=cex.legend, lwd=lwd, Y.Lab=ylab ),
+#           "sn" = fncGrpPostPredCheckTarget(MCMC=MCMC, datFrm=data, Outcome=dv, Group=group[[1]],
+#                                      Group.Level=group[[2]], Mean.Var=parameter[1], SD.Var=parameter[2],
+#                                      MCnu=parameter[3], Distribution=type, Num.Lines=pline,
+#                                      Main.Title=main, X.Lab=xlab, Bar.Color=bcol,
+#                                      Line.Color=lcol, Hist.Breaks=breaks, X.Lim=xlim, Y.Lim=ylim,  Min.Val=vlim[1],
+#                                      Max.Val=vlim[2], Round.Digits=round.c, Point.Loc= xpt, PCol=pcol,
+#                                      Leg.Loc= add.legend, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
+#                                      cex.axis=cex.axis, legend=legend, cex.legend=cex.legend, lwd=lwd, Y.Lab=ylab ),
+           "w" = fncGrpPostPredCheckTarget(MCMC=MCMC, datFrm=data, Outcome=dv, Group=group[[1]],
+                                     Group.Level=group[[2]], Mean.Var=parameter[1], SD.Var=parameter[2],
+                                     MCnu=parameter[3], Distribution=type, Num.Lines=pline,
+                                     Main.Title=main, X.Lab=xlab, Bar.Color=bcol,
+                                     Line.Color=lcol, Hist.Breaks=breaks, X.Lim=xlim, Y.Lim=ylim,  Min.Val=vlim[1],
+                                     Max.Val=vlim[2], Round.Digits=round.c, Point.Loc= xpt, PCol=pcol,
+                                     Leg.Loc= add.legend, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
+                                     cex.axis=cex.axis, legend=legend, cex.legend=cex.legend, lwd=lwd, Y.Lab=ylab ),
+           "g" = fncGrpPostPredCheckTarget(MCMC=MCMC, datFrm=data, Outcome=dv, Group=group[[1]],
+                                     Group.Level=group[[2]], Mean.Var=parameter[1], SD.Var=parameter[2],
+                                     MCnu=NULL, Distribution=type, Num.Lines=pline,
+                                     Main.Title=main, X.Lab=xlab, Bar.Color=bcol,
+                                     Line.Color=lcol, Hist.Breaks=breaks, X.Lim=xlim, Y.Lim=ylim,  Min.Val=vlim[1],
+                                     Max.Val=vlim[2], Round.Digits=round.c, Point.Loc= xpt, PCol=pcol,
+                                     Leg.Loc= add.legend, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
+                                     cex.axis=cex.axis, legend=legend, cex.legend=cex.legend, lwd=lwd, Y.Lab=ylab ),
+           "t" = fncGrpPostPredCheckTarget(MCMC=MCMC, datFrm=data, Outcome=dv, Group=group[[1]],
+                                     Group.Level=group[[2]], Mean.Var=parameter[1], SD.Var=parameter[2],
+                                     MCnu=parameter[3], Distribution=type, Num.Lines=pline,
+                                     Main.Title=main, X.Lab=xlab, Bar.Color=bcol,
+                                     Line.Color=lcol, Hist.Breaks=breaks, X.Lim=xlim, Y.Lim=ylim,  Min.Val=vlim[1],
+                                     Max.Val=vlim[2], Round.Digits=round.c, Point.Loc= xpt, PCol=pcol,
+                                     Leg.Loc= add.legend, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
+                                     cex.axis=cex.axis, legend=legend, cex.legend=cex.legend, lwd=lwd, Y.Lab=ylab )
+    )
+  }
+}
 
 } #end of plot.bayes
 

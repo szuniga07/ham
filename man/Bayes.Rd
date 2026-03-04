@@ -51,8 +51,8 @@ it will return the list object of MCMC chains, converted into a data frame. This
 be used for analysis or plots. The default is newdata=FALSE.}
 
 \item{type}{character vector of length == 1 that indicates the likelihood function used in the model when y='multi' or y='target'.
-Select 'n', 'ln', 'sn', 'w', 'g', 't', 'bern', and 'bin' for these respective options in Bayesian estimation (multilevel):
-'Normal', 'Log-normal', 'Skew-normal', 'Weibull', 'Gamma', 't', 'Bernoulli', or 'binomial'. Default is NULL.}
+Select 'n', 'ln', 'w', 'g', 't', 'bern', and 'bin' for these respective options in Bayesian estimation (multilevel):
+'Normal', 'Log-normal', 'Weibull', 'Gamma', 't', 'Bernoulli', or 'binomial'. Default is NULL.}
 
 \item{center}{character vector that selects the type of central tendency to use when reporting parameter values when
 y='post', y='target', or y='r2'. Choices include: 'mean', 'median', and 'mode' when y='post' or 'mean' and 'median' when y='r2'.
@@ -79,7 +79,7 @@ percentiles (p) of key interest and specific outcome rates (y). They want to kno
 the 40th percentile for a reduced readmission rate and the probability greater than a rate of 0.20. They get this information
 by entering targets=list(p=0.40, y=0.20); calculating 1 - prob(y) from returned results gives them an idea about the effort
 needed to meet this target of a reduced readmission rate. Default is NULL. Select type= one of these options: 'n', 'ln',
-'sn', 'w', 'g', 't', 'bern', 'bin'. Also select parameter= the appropriate center, spread, and possible 3rd shape distribution
+'w', 'g', 't', 'bern', 'bin'. Also select parameter= the appropriate center, spread, and possible 3rd shape distribution
 parameter (e.g., parameter=c('mean', 'sd')). And option to select center= 'mean', 'median', 'mode'.}
 }
 \value{
@@ -103,9 +103,6 @@ metric level predictors.
 # X-bar chart statistics
 }
 \references{
-Azzalini, A. (2014). The Skew-Normal and Related Families. Cornwall: Cambridge
-University Press. ISBN: 9781139248891
-
 Gelman, A., Goodrich, B., Gabry, J., & Vehtari, A. (2019). R-squared for Bayesian
 Regression Models. The American Statistician, 73, 3, 307–309.
 https://doi.org/10.1080/00031305.2018.1549100

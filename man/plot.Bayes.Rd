@@ -77,7 +77,9 @@ when y='multi'. Additional models analogous to 'Generalized Linear Models' can a
 options. For example, plot a logistic model on the logit scale when type='ol' (i.e., view straight trend lines). Or if you prefer
 viewing results on the probability scale, select type='logl' (i.e., curved lines). And consider using type= 'lnl', 'lnq', 'lnc'
 for log-normal and Poisson models for lines with exponentiated values. In general, it is important to note that the observed data
-may not be on the same scale as the parameter estimates and may not be visible in the graph. Default is NULL.}
+may not be on the same scale as the parameter estimates and may not be visible in the graph. When graphing target summary plots that
+use posterior predictive checks rather than the standard posterior summary graph, enter y='target' and other arguments similar to
+y='check'. However, type='sn' is not available but type= 'n', 'ln', 'w', 'g', or 't' are available. Default is NULL.}
 
 \item{parameter}{a character vector of length >= 1 or a 2 element list with the name(s) of parameter in MCMC chains to produce
 summary statistics. Use a 1 element vector to get posterior estimates of a single parameter. Use a 2 or more element vector

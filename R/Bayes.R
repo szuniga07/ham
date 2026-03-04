@@ -30,8 +30,8 @@
 #' it will return the list object of MCMC chains, converted into a data frame. This new data can
 #' be used for analysis or plots. The default is newdata=FALSE.
 #' @param type character vector of length == 1 that indicates the likelihood function used in the model when y='multi' or y='target'.
-#' Select 'n', 'ln', 'sn', 'w', 'g', 't', 'bern', and 'bin' for these respective options in Bayesian estimation (multilevel):
-#' 'Normal', 'Log-normal', 'Skew-normal', 'Weibull', 'Gamma', 't', 'Bernoulli', or 'binomial'. Default is NULL.
+#' Select 'n', 'ln', 'w', 'g', 't', 'bern', and 'bin' for these respective options in Bayesian estimation (multilevel):
+#' 'Normal', 'Log-normal', 'Weibull', 'Gamma', 't', 'Bernoulli', or 'binomial'. Default is NULL.
 #' @param center character vector that selects the type of central tendency to use when reporting parameter values when
 #' y='post', y='target', or y='r2'. Choices include: 'mean', 'median', and 'mode' when y='post' or 'mean' and 'median' when y='r2'.
 #' Default is 'mode' when y='post' or 'target' and 'median' when y='r2'.
@@ -52,7 +52,7 @@
 #' the 40th percentile for a reduced readmission rate and the probability greater than a rate of 0.20. They get this information
 #' by entering targets=list(p=0.40, y=0.20); calculating 1 - prob(y) from returned results gives them an idea about the effort
 #' needed to meet this target of a reduced readmission rate. Default is NULL. Select type= one of these options: 'n', 'ln',
-#' 'sn', 'w', 'g', 't', 'bern', 'bin'. Also select parameter= the appropriate center, spread, and possible 3rd shape distribution
+#' 'w', 'g', 't', 'bern', 'bin'. Also select parameter= the appropriate center, spread, and possible 3rd shape distribution
 #' parameter (e.g., parameter=c('mean', 'sd')). And option to select center= 'mean', 'median', 'mode'.
 
 #' @return data frame of summary statistics for MCMC parameter's distribution and/or MCMC data frame.
@@ -63,9 +63,6 @@
 #' @importFrom stats sd ar density median residuals var
 #' @export
 #' @references
-#' Azzalini, A. (2014). The Skew-Normal and Related Families. Cornwall: Cambridge
-#' University Press. ISBN: 9781139248891
-#'
 #' Gelman, A., Goodrich, B., Gabry, J., & Vehtari, A. (2019). R-squared for Bayesian
 #' Regression Models. The American Statistician, 73, 3, 307–309.
 #' https://doi.org/10.1080/00031305.2018.1549100
@@ -118,8 +115,6 @@ Bayes <- function(x, y="mcmc", parameter=NULL, mass=.95, compare=NULL,
       stop("Error: Expecting a named list for 'targets'.")
     }
   }
-
-
 
 ################################################################################
 #                 Function to convert coda to data frame                       #
@@ -878,26 +873,26 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL,
   # Proportion greater than Y
   PsnormGtY <- list()
   if(!is.null(yVal)) {
-    if(Distribution == "sn") {
-      for (i in 1:length(yVal)) {         #I need to subtract 1-psn to get the right prop > 1
-        PsnormGtY[[i]] <- summarizePost( 1 - pskewn(x=yVal[i], xi= MC.Matrix[, Center], omega= MC.Matrix[, Spread],
-                                                    alpha= MC.Matrix[, Skew], lower.tail=FALSE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
-        names(PsnormGtY)[i] <- paste0("Y_", yVal[i])
-      }
-    }
+#    if(Distribution == "sn") {
+#      for (i in 1:length(yVal)) {         #I need to subtract 1-psn to get the right prop > 1
+#        PsnormGtY[[i]] <- summarizePost( 1 - pskewn(x=yVal[i], xi= MC.Matrix[, Center], omega= MC.Matrix[, Spread],
+#                                                    alpha= MC.Matrix[, Skew], lower.tail=FALSE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+#        names(PsnormGtY)[i] <- paste0("Y_", yVal[i])
+#      }
+#    }
   }
   # Quantiles of Y.
   # Needs mapply for qskewn() b/c it creates an impossible error for "omega" <= 0.
   QsnormGtY <- list()
   if(!is.null(qVal)) {
-    if(Distribution == "sn") {
-      for (i in 1:length(qVal)) {
-        #          QsnormGtY[[i]] <- summarizePost(mapply(qsn, p=qVal[i], xi=MC.Matrix[, Center], omega=MC.Matrix[, Spread],
-        QsnormGtY[[i]] <- summarizePost(mapply(qskewn, p=qVal[i], xi=MC.Matrix[, Center], omega=MC.Matrix[, Spread],
-                                               alpha=MC.Matrix[, Skew]))[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
-        names(QsnormGtY)[i] <- paste0("Percentile_", qVal[i])
-      }
-    }
+#    if(Distribution == "sn") {
+#      for (i in 1:length(qVal)) {
+#        #          QsnormGtY[[i]] <- summarizePost(mapply(qsn, p=qVal[i], xi=MC.Matrix[, Center], omega=MC.Matrix[, Spread],
+#        QsnormGtY[[i]] <- summarizePost(mapply(qskewn, p=qVal[i], xi=MC.Matrix[, Center], omega=MC.Matrix[, Spread],
+#                                               alpha=MC.Matrix[, Skew]))[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+#        names(QsnormGtY)[i] <- paste0("Percentile_", qVal[i])
+#      }
+#    }
   }
 
   #Return NAs for NULL objects
@@ -1096,344 +1091,6 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL,
 }
 
 
-################################################################################
-#                            4a. Skew-normal density                           #
-################################################################################
-#density
-dskewn <- function (x, xi = 0, omega = 1, alpha = 0, tau = 0, dp = NULL,
-                    log = FALSE)
-{
-  if (!is.null(dp)) {
-    if (!missing(alpha))
-      stop("You cannot set both 'dp' and component parameters")
-    xi <- dp[1]
-    omega <- dp[2]
-    alpha <- dp[3]
-    tau <- if (length(dp) > 3)
-      dp[4]
-    else 0
-  }
-  za <- cbind((x - xi)/omega, alpha)
-  z <- za[, 1]
-  alpha <- za[, 2]
-  logN <- (-log(sqrt(2 * pi)) - logb(omega) - z^2/2)
-  logS <- numeric(length(z))
-  ok <- (abs(alpha) < Inf)
-  logS[ok] <- pnorm(tau * sqrt(1 + alpha[ok]^2) + (alpha *
-                                                     z)[ok], log.p = TRUE)
-  logS[!ok] <- log(as.numeric((sign(alpha) * z)[!ok] + tau >
-                                0))
-  logPDF <- as.numeric(logN + logS - pnorm(tau, log.p = TRUE))
-  logPDF <- replace(logPDF, abs(x) == Inf, -Inf)
-  logPDF <- replace(logPDF, omega <= 0, NaN)
-  out <- if (log)
-    logPDF
-  else exp(logPDF)
-  names(out) <- names(x)
-  return(out)
-}
-#probability
-pskewn <- function (x, xi = 0, omega = 1, alpha = 0, tau = 0, dp = NULL,
-                    engine="T.Owen", ...)
-{
-  T.Owen <- function (h, a, jmax = 50, cut.point = 8)
-  {
-    T.int <- function(h, a, jmax, cut.point) {
-      fui <- function(h, i) (h^(2 * i))/((2^i) * gamma(i +
-                                                         1))
-      seriesL <- seriesH <- NULL
-      i <- 0:jmax
-      low <- (h <= cut.point)
-      hL <- h[low]
-      hH <- h[!low]
-      L <- length(hL)
-      if (L > 0) {
-        b <- outer(hL, i, fui)
-        cumb <- apply(b, 1, cumsum)
-        b1 <- exp(-0.5 * hL^2) * t(cumb)
-        matr <- matrix(1, jmax + 1, L) - t(b1)
-        jk <- rep(c(1, -1), jmax)[1:(jmax + 1)]/(2 * i +
-                                                   1)
-        matr <- t(matr * jk) %*% a^(2 * i + 1)
-        seriesL <- (atan(a) - as.vector(matr))/(2 * pi)
-      }
-      if (length(hH) > 0)
-        seriesH <- atan(a) * exp(-0.5 * (hH^2) * a/atan(a)) *
-        (1 + 0.00868 * (hH * a)^4)/(2 * pi)
-      series <- c(seriesL, seriesH)
-      id <- c((1:length(h))[low], (1:length(h))[!low])
-      series[id] <- series
-      series
-    }
-    if (!is.vector(a) | length(a) > 1)
-      stop("'a' must be a vector of length 1")
-    if (!is.vector(h))
-      stop("'h' must be a vector")
-    aa <- abs(a)
-    ah <- abs(h)
-    if (is.na(aa))
-      stop("parameter 'a' is NA")
-    if (aa == Inf)
-      return(sign(a) * 0.5 * pnorm(-ah))
-    if (aa == 0)
-      return(rep(0, length(h)))
-    na <- is.na(h)
-    inf <- (ah == Inf)
-    ah <- replace(ah, (na | inf), 0)
-    if (aa <= 1)
-      owen <- T.int(ah, aa, jmax, cut.point)
-    else owen <- (0.5 * pnorm(ah) + pnorm(aa * ah) * (0.5 -
-                                                        pnorm(ah)) - T.int(aa * ah, (1/aa), jmax, cut.point))
-    owen <- replace(owen, na, NA)
-    owen <- replace(owen, inf, 0)
-    return(owen * sign(a))
-  }
-
-  #pskewn code
-  if (!is.null(dp)) {
-    if (!missing(alpha))
-      stop("You cannot set both 'dp' and component parameters")
-    xi <- dp[1]
-    omega <- dp[2]
-    alpha <- dp[3]
-    tau <- if (length(dp) > 3)
-      dp[4]
-    else 0
-  }
-  z <- (x - xi)/omega
-  prob <- rep(NA, length(z))
-  plain <- is.finite(z) & (omega > 0)
-  if (any(!plain)) {
-    prob <- replace(prob, z == -Inf, 0)
-    prob <- replace(prob, z == Inf, 1)
-    prob <- replace(prob, is.na(z) | (omega <= 0), NA)
-  }
-  if (sum(plain) == 0)
-    return(prob)
-  na <- length(alpha)
-  za <- matrix(cbind(z, alpha), ncol = 2)[plain, , drop = FALSE]
-  z <- za[, 1]
-  nz <- length(z)
-  if (missing(engine))
-    engine <- if (na == 1 & nz > 3 & all(z * za[, 2] > -5) &
-                  (tau == 0))
-      "T.Owen"
-  #    else "biv.nt.prob" #removing biv.nt.prob from mnormt
-  if (engine == "T.Owen") {
-    if (tau != 0 | na > 1)
-      stop("engine='T.Owen' not compatible with other arguments")
-    p <- pnorm(z) - 2 * T.Owen(z, alpha, ...)
-  }
-  #    else {
-  #      p <- numeric(nz)
-  #      alpha <- za[, 2]
-  #      delta <- delta.etc(alpha)
-  #      p.tau <- pnorm(tau)
-  #      for (k in seq_len(nz)) {
-  #        if (abs(z[k]) == Inf)
-  #          p[k] <- (sign(z[k]) + 1)/2
-  #        else {
-  #          if (abs(alpha[k]) == Inf) {
-  #            p[k] <- if (alpha[k] > 0)
-  #              (pnorm(pmax(z[k], -tau)) - pnorm(-tau))/p.tau
-  #            else {
-  #              1 - (pnorm(tau) - pnorm(pmin(z[k], tau)))/p.tau
-  #            }
-  #          }
-  ##          else { #removing mnormt
-  ##            R <- matrix(c(1, -delta[k], -delta[k], 1),
-  ##                        2, 2)
-  ##            p[k] <- mnormt::biv.nt.prob(0, rep(-Inf, 2),
-  ##                                        c(z[k], tau), c(0, 0), R)/p.tau
-  ##          }
-  #        }
-  #      }
-  #    }
-  p <- pmin(1, pmax(0, as.numeric(p)))
-  names(prob) <- names(x)
-  replace(prob, plain, p)
-}
-#quantile
-qskewn <- function (p, xi = 0, omega = 1, alpha = 0, tau = 0, dp = NULL,
-                    tol = 0.00000001, solver = "NR", ...)
-{
-  sn.cumulants <- function (xi = 0, omega = 1, alpha = 0, tau = 0, dp = NULL,
-                            n = 4)
-  {
-    #zeta
-    zeta <- function (k, x)
-    {
-      if (k < 0 | k > 5 | k != round(k))
-        return(NULL)
-      na <- is.na(x)
-      x <- replace(x, na, 0)
-      x2 <- x^2
-      z <- switch(k + 1, pnorm(x, log.p = TRUE) + log(2), ifelse(x >
-                                                                   (-50), exp(dnorm(x, log = TRUE) - pnorm(x, log.p = TRUE)),
-                                                                 -x/(1 - 1/(x2 + 2) + 1/((x2 + 2) * (x2 + 4)) - 5/((x2 +
-                                                                                                                      2) * (x2 + 4) * (x2 + 6)) + 9/((x2 + 2) * (x2 +
-                                                                                                                                                                   4) * (x2 + 6) * (x2 + 8)) - 129/((x2 + 2) * (x2 +
-                                                                                                                                                                                                                  4) * (x2 + 6) * (x2 + 8) * (x2 + 10)))), (-zeta(1,
-                                                                                                                                                                                                                                                                  x) * (x + zeta(1, x))), (-zeta(2, x) * (x + zeta(1,
-                                                                                                                                                                                                                                                                                                                   x)) - zeta(1, x) * (1 + zeta(2, x))), (-zeta(3, x) *
-                                                                                                                                                                                                                                                                                                                                                            (x + 2 * zeta(1, x)) - 2 * zeta(2, x) * (1 + zeta(2,
-                                                                                                                                                                                                                                                                                                                                                                                                              x))), (-zeta(4, x) * (x + 2 * zeta(1, x)) - zeta(3,
-                                                                                                                                                                                                                                                                                                                                                                                                                                                               x) * (3 + 4 * zeta(2, x)) - 2 * zeta(2, x) * zeta(3,
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 x)), NULL)
-      neg.inf <- (x == -Inf)
-      if (any(neg.inf))
-        z <- switch(k + 1, z, replace(z, neg.inf, Inf), replace(z,
-                                                                neg.inf, -1), replace(z, neg.inf, 0), replace(z,
-                                                                                                              neg.inf, 0), replace(z, neg.inf, 0), NULL)
-      if (k > 1)
-        z <- replace(z, x == Inf, 0)
-      replace(z, na, NA)
-    }
-    cumulants.half.norm <- function(n = 4) {
-      n <- max(n, 2)
-      n <- as.integer(2 * ceiling(n/2))
-      half.n <- as.integer(n/2)
-      m <- 0:(half.n - 1)
-      a <- sqrt(2/pi)/(gamma(m + 1) * 2^m * (2 * m + 1))
-      signs <- rep(c(1, -1), half.n)[seq_len(half.n)]
-      a <- as.vector(rbind(signs * a, rep(0, half.n)))
-      coeff <- rep(a[1], n)
-      for (k in 2:n) {
-        ind <- seq_len(k - 1)
-        coeff[k] <- a[k] - sum(ind * coeff[ind] * a[rev(ind)]/k)
-      }
-      kappa <- coeff * gamma(seq_len(n) + 1)
-      kappa[2] <- 1 + kappa[2]
-      return(kappa)
-    }
-    if (!is.null(dp)) {
-      if (!missing(alpha))
-        stop("You cannot set both 'dp' and the component parameters")
-      dp <- c(dp, 0)[1:4]
-      dp <- matrix(dp, 1, ncol = length(dp))
-    }
-    else dp <- cbind(xi, omega, alpha, tau)
-    delta <- ifelse(abs(dp[, 3]) < Inf, dp[, 3]/sqrt(1 + dp[,
-                                                            3]^2), sign(dp[, 3]))
-    tau <- dp[, 4]
-    if (all(tau == 0)) {
-      kv <- cumulants.half.norm(n)
-      if (length(kv) > n)
-        kv <- kv[-(n + 1)]
-      kv[2] <- kv[2] - 1
-      kappa <- outer(delta, 1:n, "^") * matrix(rep(kv, nrow(dp)),
-                                               ncol = n, byrow = TRUE)
-    }
-    else {
-      if (n > 4) {
-        warning("n>4 not allowed with ESN distribution")
-        n <- min(n, 4)
-      }
-      kappa <- matrix(0, nrow = length(delta), ncol = 0)
-      for (k in 1:n) kappa <- cbind(kappa, zeta(k, tau) *
-                                      delta^k)
-    }
-    kappa[, 2] <- kappa[, 2] + 1
-    kappa <- kappa * outer(dp[, 2], (1:n), "^")
-    kappa[, 1] <- kappa[, 1] + dp[, 1]
-    kappa[, , drop = TRUE]
-  }
-  #qskewn code starts below
-  if (!is.null(dp)) {
-    if (!missing(alpha))
-      stop("You cannot set both 'dp' and component parameters")
-    xi <- dp[1]
-    omega <- dp[2]
-    alpha <- dp[3]
-    tau <- if (length(dp) > 3)
-      dp[4]
-    else 0
-  }
-  if (omega <= 0)
-    stop("argument 'omega' (or dp[2]) must be positive")
-  max.q <- sqrt(qchisq(p, 1)) + tau
-  min.q <- -sqrt(qchisq(1 - p, 1)) + tau
-  if (tau == 0) {
-    if (alpha == Inf)
-      return(xi + omega * max.q)
-    if (alpha == -Inf)
-      return(xi + omega * min.q)
-  }
-  na <- is.na(p) | (p < 0) | (p > 1)
-  zero <- (p == 0)
-  one <- (p == 1)
-  ok <- !(na | zero | one)
-  q.all <- numeric(length(p))
-  names(q.all) <- names(p)
-  q.all <- replace(q.all, na, NA)
-  q.all <- replace(q.all, zero, -Inf)
-  q.all <- replace(q.all, one, Inf)
-  if (sum(ok) == 0)
-    return(q.all)
-  p <- p[ok]
-  dp0 <- c(0, 1, alpha, tau)
-  if (solver == "NR") {
-    dp0 <- c(0, 1, alpha, tau)
-    cum <- sn.cumulants(dp = dp0, n = 4)
-    g1 <- cum[3]/cum[2]^(3/2)
-    g2 <- cum[4]/cum[2]^2
-    x <- qnorm(p)
-    x <- (x + (x^2 - 1) * g1/6 + x * (x^2 - 3) * g2/24 -
-            x * (2 * x^2 - 5) * g1^2/36)
-    x <- cum[1] + sqrt(cum[2]) * x
-    px <- pskewn(x, dp = dp0, ...)
-    max.err <- 1
-    while (max.err > tol) {
-      x1 <- x - (px - p)/dskewn(x, dp = dp0)
-      x <- x1
-      px <- pskewn(x, dp = dp0, ...)
-      max.err <- max(abs(px - p))
-      if (is.na(max.err))
-        stop("failed convergence, try with solver=\"RFB\"")
-    }
-    q <- as.numeric(xi + omega * x)
-  }
-  else {
-    if (solver == "RFB") {
-      abs.alpha <- abs(alpha)
-      if (alpha < 0)
-        p <- (1 - p)
-      x <- xa <- xb <- xc <- fa <- fb <- fc <- rep(NA,
-                                                   length(p))
-      nc <- rep(TRUE, length(p))
-      fc[!nc] <- 0
-      xa[nc] <- qnorm(p[nc])
-      xb[nc] <- sqrt(qchisq(p[nc], 1)) + abs(tau)
-      fa[nc] <- pskewn(xa[nc], 0, 1, abs.alpha, tau, ...) -
-        p[nc]
-      fb[nc] <- pskewn(xb[nc], 0, 1, abs.alpha, tau, ...) -
-        p[nc]
-      regula.falsi <- FALSE
-      while (sum(nc) > 0) {
-        xc[nc] <- if (regula.falsi)
-          xb[nc] - fb[nc] * (xb[nc] - xa[nc])/(fb[nc] -
-                                                 fa[nc])
-        else (xb[nc] + xa[nc])/2
-        fc[nc] <- pskewn(xc[nc], 0, 1, abs.alpha, tau,
-                         ...) - p[nc]
-        pos <- (fc[nc] > 0)
-        xa[nc][!pos] <- xc[nc][!pos]
-        fa[nc][!pos] <- fc[nc][!pos]
-        xb[nc][pos] <- xc[nc][pos]
-        fb[nc][pos] <- fc[nc][pos]
-        x[nc] <- xc[nc]
-        nc[(abs(fc) < tol)] <- FALSE
-        regula.falsi <- !regula.falsi
-      }
-      Sign <- function(x) sign(x) + as.numeric(x == 0)
-      q <- as.numeric(xi + omega * Sign(alpha) * x)
-    }
-    else stop("unknown solver")
-  }
-  q.all[ok] <- q
-  names(q.all) <- names(q)
-  return(q.all)
-}
 
 ################################################################################
 #              7c. Gelman R2 for models with metric only predictors            #
