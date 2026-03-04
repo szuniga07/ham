@@ -1487,8 +1487,8 @@ if(y == "multi") {
 }
 ## Targets ##
 if(y == "target") {
-  target_smry <- fncPropGtY(MCMC=MCMC, Distribution=type, yVal=targets[[2]],
-                            qVal=targets[[1]], Center=parameter[1],
+  target_smry <- fncPropGtY(MCMC=MCMC, Distribution=type, yVal=targets[["y"]],
+                            qVal=targets[["p"]], Center=parameter[1],
                             Spread=parameter[2], Skew=parameter[3],
                             CenTend=center )
 } else {
@@ -1512,10 +1512,17 @@ if (!is.null(parameter)) {
 } else {
   parameter <- NA
 }
+#Add in targets if there
+if (!is.null(targets)) {
+  targets <- targets
+} else {
+  targets <- NA
+}
+
 
 #Combine in list
-z <- list(Posterior.Summary=Posterior.Summary, MCMC=MCMC,
-          Multilevel=multi_smry, Target=target_smry,
+z <- list(Posterior.Summary=Posterior.Summary, MCMC=MCMC, Multilevel=multi_smry,
+          Target=target_smry, targets=targets,
           R2.Summary=r2_smry, parameter=parameter)
 # Assign ham classes
 class(z) <- c("Bayes","ham", "list")
