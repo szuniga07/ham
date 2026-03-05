@@ -1,10 +1,10 @@
 #' Bayesian plots for various analyses
 #'
-#' Graph Bayesian diagnostic traceplots, density plots on convergence, autocorrelation factor, and calculate
-#' Monte Carlo Standard Errors. And plot summaries of posterior distributions, posterior predictive checks,
-#' summaries on hierarchical or multilevel models (up to 3 levels), and summary graphs of values associated
-#' with specific percentiles and vice-versa that can be used to help set targets. Plots are developed from
-#' Bayes class objects that converted multiple chains into data frames.
+#' Graph Bayesian diagnostic traceplots, density plots on convergence, autocorrelation factor, calculate
+#' Monte Carlo Standard Errors, and effective sample sizes. And plot summaries of posterior distributions, posterior
+#' predictive checks, summaries on hierarchical or multilevel models (up to 3 levels), and summary graphs of values
+#' associated with specific percentiles (and vice-versa) that can be used to help set targets. Plots are developed
+#' from Bayes class objects that converted multiple chains into data frames.
 #'
 #' @param x Bayes class object.
 #' @param y character vector for the type of plot to graph. Select 'post', 'dxa', 'dxd', 'dxg', 'dxt', 'check',
@@ -13,7 +13,7 @@
 #' check, multilevel or hierarchical model summary (up to 3 levels), or target summary plots. Default is 'post'.
 #' @param type character vector of length == 1 that indicates the likelihood function used in the model when y='check' or y='multi'.
 #' Posterior predictive checks allow us to see how well our estimates match the observed data. These checks are
-#' available for Bayesian estimation of outcomes and regression polynomial trend line using various distributions in the
+#' available for Bayesian estimation of outcomes and regression trend lines (with polynomial terms) using various distributions in the
 #' likelihood function. Select 'n', 'ln', 'sn', 'w', 'g', 't', 'taov', 'taov1', 'ol', 'oq','oc', 'lnl', 'lnq', 'lnc',
 #' 'logl', 'logq', 'logc', 'bern', and 'bin' for these respective options in Bayesian estimation (multilevel): 'Normal', 'Log-normal',
 #' 'Skew-normal', 'Weibull', 'Gamma', 't', 't: ANOVA, side view', 't: ANOVA 1 group, side view'; and for regression trend lines:
@@ -24,45 +24,49 @@
 #' when y='multi'. Additional models analogous to 'Generalized Linear Models' can also be graphed on the logit scale using 'OLS'
 #' options. For example, plot a logistic model on the logit scale when type='ol' (i.e., view straight trend lines). Or if you prefer
 #' viewing results on the probability scale, select type='logl' (i.e., curved lines). And consider using type= 'lnl', 'lnq', 'lnc'
-#' for log-normal and Poisson models for lines with exponentiated values. In general, it is important to note that the observed data
-#' may not be on the same scale as the parameter estimates and may not be visible in the graph. When graphing target summary plots that
-#' use posterior predictive checks rather than the standard posterior summary graph, enter y='target' and other arguments similar to
-#' y='check'. However, type='sn' is not available but type= 'n', 'ln', 'w', 'g', or 't' are available. Default is NULL.
+#' for log-normal and Poisson models with lines based on exponentiated values. In general, it is important to note that the observed data
+#' may not be on the same scale as the parameter estimates and may not be automatically visible in the graph (i.e., x and y-axis
+#' limits may help). When graphing target summary plots that use posterior predictive checks rather than the standard posterior
+#' summary graph, enter y='target' and other arguments relevant to y='check'. However, type='sn' is not available but type='n',
+#' 'ln', 'w', 'g', or 't' are available. Default is NULL.
 #' @param parameter a character vector of length >= 1 or a 2 element list with the name(s) of parameter in MCMC chains to produce
 #' summary statistics. Use a 1 element vector to get posterior estimates of a single parameter. Use a 2 or more element vector
 #' to estimate the average joint effects of multiple parameters (e.g., average infection rate for interventions A and B when
 #' parameter= c('IntA', 'IntB')). Use a 2 element list to perform mathematical calculations of multiple parameters (see 'math' below).
 #' For example, use parameter=list('hospital_A', 'hospital_Z') if you want to estimate the difference between the hospital's outcomes.
 #' Use parameter= list(c('hospital_A','hospital_B'), ('hospital_Y','hospital_Z')) to estimate how different the combined hospitals A
-#' and B values are from the combined Hospital Y and Z values. When y='check', use either a multiple element character vector that represents
-#' center, spread, and additional distribution parameters in order of 1st, 2nd, and 3rd distribution parameters. For example,
-#' mean and sd for a normal distribution; mean log and sd log of a log-normal dist.; xi, omega, and alpha of a skew-normal dist.;
-#' shape, scale, and lambda of a Weibull dist.; shape and rate of a Gamma dist.; and mean, SD and nu/d.f. of a t-distribution.
-#' Or indicate regression parameters in order (e.g., intercept, B1, B2, etc.). When y='multi', use a multiple element character vector
-#' to list the parameter names of the hierarchy, in order of the nesting with the lowest level first (e.g., exam, patient, hospital).
-#' When y='multi', for parameters from multiple groups such as various hospitals, only enter the first unit's prefix of each parameter
-#' and the remaining units will be set up for graphing all units. For example, parameter=c('theta', 'omega') will plot data for
-#' `theta[1]` to `theta[8]` and `omega[1]` to `omega[8]` as well.
+#' and B values are from the combined Hospital Y and Z values. When y='check', use either a multiple element character vector that
+#' represents center, spread, and additional distribution parameters in order of 1st, 2nd, and 3rd distribution parameters. For example,
+#' mean and sd for a normal distribution; mean log and sd log of a log-normal dist.; xi, omega, and alpha of a skew-normal distribution;
+#' shape, scale, and lambda of a Weibull distribution; shape and rate of a Gamma distribution; and mean, SD and nu (i.e., degrees
+#' of freedom) of a t-distribution. Or indicate regression parameters in order (e.g., intercept, Beta 1, Beta 2, etc.). When y='multi',
+#' use a multiple element character vector to list the parameter names of the hierarchy, in order of the nesting with the lowest level
+#' first (e.g., exams nested in patients nested in hospital). When y='multi', for parameters from multiple groups such as various
+#' hospitals, only enter the first unit's prefix of each parameter and the remaining groups will be set up for graphing. For example,
+#' parameter=c('theta', 'omega') will plot data for `theta[1]` to `theta[8]` and `omega[1]` to `omega[8]` for all 8 hospitals as well.
 #' @param center character vector that selects the type of central tendency to use when reporting parameter values.
 #' Choices include: 'mean', 'median', and 'mode'. Default is 'mode'.
-#' @param mass numeric vector the specifies the credible mass used in the Highest Density Interval (HDI). Default is 0.95.
+#' @param mass numeric vector that specifies the credible mass used in the Highest Density Interval (HDI). Default is 0.95.
 #' @param compare numeric vector with one comparison value to determine how much of the distribution is above or below
 #' the comparison value. Default is NULL.
 #' @param rope numeric vector with two values that define the Region of Practical Equivalence (ROPE).
 #' Test hypotheses by setting low and high values to determine if the Highest Density Interval (HDI)
-#' is within or without the ROPE. Parameter value declared not credible if the entire ROPE lies
+#' is within or outside of the ROPE. Parameter values are declared not credible if the entire ROPE lies
 #' outside the HDI of the parameter’s posterior (i.e., we reject the null hypothesis). For example,
 #' the ROPE of a coin is set to 0.45 to 0.55 but the posterior 95% HDI is 0.61 - 0.69 so we reject
-#' the null hypothesis value of 0.50. We can accept the null hypothesis if the entire 95% HDI falls with the ROPE. Default is NULL.
-#' @param data object name for the observed data when y='check' or y='multi'.
+#' the null hypothesis value of the rate of a head is 0.50. We can accept the null hypothesis if the
+#' entire 95% HDI falls with the ROPE. Default is NULL.
+#' @param data object name for the observed data when y='check', y='multi' or y='target'.
 #' @param dv character vector of length == 1 for the dependent variable name in the observed data frame
-#' when y='check' or y='multi'. Default is NULL.
+#' when y='check', y='multi' or y='target'. Default is NULL.
 #' @param iv character vector of length >= 1 for the independent variable name(s) in the observed data frame
 #' when y='check' or y='multi'. When y='multi', enter the lower to higher level clustering or group names (e.g, for
-#' health data, iv=c("patient", "hospital"). When type='taov', enter the name of the test group variable.  Default is NULL.
-#' @param add.data character vector of length == 1 to determine the type of observed data added to the plot
-#' when y='check' and type= 'ol', 'oq','oc', 'lnl', 'lnq', 'lnc', 'logl', 'logq', or 'logc'. Select 'a', 'u', 'al', 'ul',
-#' 'n' for these observed data options: 'All', 'Unit', 'All: Lines', 'Unit: Lines', 'none'. Default is 'n' for none.
+#' health data, iv=c("patient", "hospital"). When type='taov', enter the name of the test group variable (e.g., 'intervention').
+#' Default is NULL.
+#' @param add.data character vector of length == 1 to determine the type of observed data added to the plot (to show model fit
+#' to data) when y='check' and type= 'ol', 'oq','oc', 'lnl', 'lnq', 'lnc', 'logl', 'logq', or 'logc'. Select 'a', 'u', 'al', 'ul',
+#' 'n' for these observed data options: 'All', 'Unit', 'All: Lines', 'Unit: Lines' (unit specific lines are linked),
+#' 'none'. Default is 'n' for none or no observed data shown.
 #' @param group character list of length == 2 for 1) the grouping variable name and 2) specific group(s) in the
 #' observed data frame. This is primarily used for multilevel or hierarchical models when y='check' or y='multi'
 #' that the hierarchies are based on (e.g., hospitals nested within health systems).
@@ -74,17 +78,17 @@
 #' @param vlim two element vector to specify limits for minimum and maximum values used to extrapolate posterior
 #' lines along the x-axis. For example, when drawing a log-normal distribution, we may want to have our
 #' posterior lines fit within a narrower range while having our graph's x-axis limits extend past those lines.
-#' If so, our value limits (vlim) help us keep our posterior predictive check lines within desired limits.
+#' If so, the value limits (vlim) help us keep our posterior predictive check lines within desired limits.
 #' Default is NULL.
 #' @param curve select a curve to display instead of a histogram when y='post'. Default is FALSE.
 #' @param lwd select the line width.
 #' @param breaks number of breaks in a histogram. Default is 15.
 #' @param bcol a single or multiple element character vector to specify the bar or band color(s).
-#' When Bayesian estimates and observed values are present, the first colors are Bayesian estimates
+#' When Bayesian estimates and observed values are present, the first colors are for Bayesian estimates
 #' while the last colors are observed values. Defaults to, if nothing selected, 'gray'.
 #' @param lcol a single or multiple element character vector to specify the line color(s).
 #' When Bayesian estimates and observed values are present, the first colors are Bayesian estimates
-#' while the last colors are observed values. When multiple lines are needed, single use lines
+#' while the last colors are observed values. When multiple lines are needed, single item lines
 #' precede multiple use lines. For example, a single comparison value line will be assigned the first lcol
 #' while both rope lines will be given the same color of the second lcol when y='post'. Defaults to 'gray'
 #' if nothing selected.
@@ -94,7 +98,8 @@
 #' @param xpt a numeric vector of single or multiple values that indicate placement of points (+) on the
 #' x-axis when y='check'. This is intended for the graphs with predictive checks on Bayesian estimation
 #' (i.e., not trend lines). Default is NULL.
-#' @param tgt specify 1 or more values on the y-axis of where to add one or more horizontal target lines. Default is NULL.
+#' @param tgt specify 1 or more values on the x- or y-axis of where to add one or more target lines when applicable.
+#' Default is NULL.
 #' @param tgtcol select one or multiple colors for one or multiple target lines. Default is 'gray'.
 #' @param tpline add one or more time point vertical lines using x-axis values. Default is NULL (i.e., no lines).
 #' @param tpcol specify a color for the time point line, tpline. Default is NULL.
@@ -103,44 +108,42 @@
 #' @param pct a numeric integer vector of length == 1 for the percentage of the posterior predictive check heavy tail lines
 #' to be drawn when type= 'taov' or 'taov1'. Valid values are 0 < pct < 100. Default is 95 (e.g., 95%).
 #' @param add.legend add a legend by selecting the location as "bottomright", "bottom", "bottomleft",
-#' "left", "topleft", "top", "topright", "right", "center". No legend if nothing selected.
-#' @param legend a character vector of length >= 1 to appear when y='check' or y='multi'. Legends to represent
-#' hierarchical estimates and observed values.
+#' "left", "topleft", "top", "topright", "right", "center". Default is no legend produced if nothing is selected.
+#' @param legend a character vector of length >= 1 to appear when y='check', y='multi', and sometimes y='target'.
+#' Legends to represent hierarchical estimates and observed values.
 #' @param cex A numerical value giving the amount by which plotting text and symbols should be magnified relative to the default of 1.
 #' @param cex.axis The magnification to be used for axis annotation relative to the current setting of cex.
 #' @param cex.lab The magnification to be used for x and y labels relative to the current setting of cex.
 #' @param cex.main The magnification to be used for main titles relative to the current setting of cex.
-#' @param cex.text The magnification to be used for the iname text added into the plot relative to the current setting of 1.
+#' @param cex.text The magnification to be used for the text added into the plot relative to the current setting of 1.
 #' @param cex.legend The magnification to be used for the legend added into the plot relative to the current setting of 1.
-#' @param HDItext numeric vector of length == 1 that can be a negative or positive value. Identifies placement of HDI text near credible interval
-#' when y='post'. Values are relative to the x-axis values. Default is 0.7.
-#' @param math mathematics function performed between multiple parameters when y='post'. Available functions are: 'add', 'subtract', 'multiply',
-#' 'divide', or 'n' for none (i,e., no functions). Indicate parameters with parameter argument.
+#' @param HDItext numeric vector of length == 1 that can be a negative or positive value. Identifies placement of HDI text near
+#' credible interval when y='post'. Values are relative to the x-axis values. Default is 0.7.
+#' @param math mathematics function performed between multiple parameters when y='post'. Available functions are: 'add',
+#' 'subtract', 'multiply', 'divide', or 'n' for none (i,e., no functions). Indicate parameters with parameter argument.
 #' For example, when math='subtract', use parameter=list('hospital_A', 'hospital_Z') if you want to
 #' estimate the difference between the hospital's outcomes. Use parameter=list(c('hospital_A','hospital_B'),
 #' ('hospital_Y','hospital_Z')) to estimate how different the combined hospitals A and B values are from the
 #' combined hospitals Y and Z. Additionally, compute statistics like the coefficient of variation when math='divide'
 #' and parameter= list('Standard_Deviation', 'Mean'). Default is 'n' for no math function.
-#' @param es one element vector that indicates which type likelihood distribution is relevant in calculating Jacob Cohen's effect
+#' @param es one element vector that indicates which type of likelihood distribution is relevant in calculating Jacob Cohen's effect
 #' sizes between 2 parameters when y='post'. Options are 'beta' and 'n' for the beta (or Bernoulli or binomial) distribution for
 #' binary outcomes and none (i.e., no distribution, hence no effect size calculated). For example, to get the posterior distribution
 #' summary for the difference between the intervention and control groups on 30-day readmissions or not, use es='beta' when y='post',
 #' math='subtract', and parameter=list('intMean', 'ctlMean'). Default is 'n' which indicates not to calculate the effect size.
 #' @param subset a single or multiple element character or numeric vector of group names that are a subset of the observations to use in the
-#' grouping when y='multi'. The default is NULL, thereby using all observations. Specify, for example, enter c('NY', 'Toronto', 'LA', 'Vancouver')
-#' to view a graph with only these cities. Default is NULL.
-#' use just those observations.
+#' grouping when y='multi'. The default is NULL, thereby using all observations. Specify, for example, enter c('NY', 'Toronto', 'LA',
+#' 'Vancouver') to view a graph with only these cities. Default is NULL.
 #' @param level a numeric integer of length == 1, either 1, 2, or 3 that indicates the level of the hierarchical/multilevel
 #' model when y='multi' and the type of graph to plot. For example, a multilevel model that estimates the proportion of
-#' successful exams by patients is considered level=2. And the successful exam rates by various hospitals is level=3.
+#' successful exams by patients is considered level=2. And the successful exam rates by patients from various hospitals is level=3.
 #' Graphs can be created separately for both level=2 and level=3 when there is a three-level model. The graph when y='multi'
 #' can be produced when level=1 for non-hierarchical models if there are estimates for groups. For example, estimating the patient
 #' infection rate of hospitals without a hierarchical structure in the model. Default is NULL.
-#' @param aorder a logical indicator on whether the ordering of the group levels are in alphabetical order or not. If aorder=TRUE,
-#' results are displayed in an increasing alphabetical order based on level name (e.g., 'LA' before 'NY'). If aorder=FALSE, an
-#' increasing numeric order based on group parameter values is performed (e.g., 0.65 before 0.70). Default is TRUE.
-#' @param round.c an integer indicating the number of decimal places when rounding numbers such as for y.axis.
-#' Default is 2.
+#' @param aorder a logical indicator on whether the ordering of the group levels are in alphabetical order or not when y='multi'.
+#' If aorder=TRUE, results are displayed in an increasing alphabetical order based on level name (e.g., 'LA' before 'NY').
+#' If aorder=FALSE, an increasing numeric order based on group parameter values is performed (e.g., 0.65 before 0.70). Default is TRUE.
+#' @param round.c an integer indicating the number of decimal places when rounding numbers y='multi' and y='target'. Default is 2.
 #' @param ... additional arguments.
 #'
 #' @return plots assessing model quality, posterior distributions, posterior predictive checks, hierarchical

@@ -8,54 +8,55 @@
 #' hierarchical or multilevel models (up to 3 levels), and the R2 for Bayesian regression models with
 #' metric level predictors.
 #'
-#' @param x list object of MCMC chains (e.g, mcmc.list).
-#' @param y character vector for the type of analysis or output to perform. Select 'post', 'multi', 'target', 'r2' or 'mcmc'  for a
+#' @param x list object of multiple MCMC chains (e.g, coda mcmc.list).
+#' @param y character vector for the type of analysis or output to perform. Select 'post', 'multi', 'target', 'r2' or 'mcmc' for a
 #' posterior summary, multilevel/hierarchical model summary (up to 3 levels), target summary, Gelman R-squared statistic, or
-#' list object of MCMC chains converted into a data frame.
-#' Default is 'mcmc'.
-#' @param parameter single or multiple element character vector name of parameter in MCMC chains to produce summary statistics.
+#' list object of MCMC chains converted into a data frame. Default is 'mcmc'.
+#' @param parameter single or multiple element character vector name of parameter(s) in MCMC chains to produce summary statistics.
 #' When y='target', use the generally 2 to 3 parameters that represent the distribution parameters (e.g., parameter= c('mean', 'sd')).
 #' When y='r2', use the regression parameters in order, ending with the residual or level-1 variance (e.g., parameter= c('intercept',
 #' 'beta1', 'beta2', 'standard_deviation')). Default is NULL.
-#' @param mass numeric vector the specifies the credible mass used in the Highest Density Interval (HDI). Default is 0.95.
+#' @param mass numeric vector that specifies the credible mass used in the Highest Density Interval (HDI). Default is 0.95.
 #' @param compare numeric vector with one comparison value to determine how much of the distribution is above or below
 #' the comparison value. Default is NULL.
 #' @param rope numeric vector with two values that define the Region of Practical Equivalence (ROPE).
 #' Test hypotheses by setting low and high values to determine if the Highest Density Interval (HDI)
-#' is within or without the ROPE. Parameter value declared not credible if the entire ROPE lies
+#' is within or outside of the ROPE. Parameter value declared not credible if the entire ROPE lies
 #' outside the HDI of the parameter’s posterior (i.e., we reject the null hypothesis). For example,
 #' the ROPE of a coin is set to 0.45 to 0.55 but the posterior 95% HDI is 0.61 - 0.69 so we reject
 #' the null hypothesis value of 0.50. We can accept the null hypothesis if the entire 95% HDI falls with the ROPE. Default is NULL.
 #' @param newdata optional logical vector that indicates if you want the new MCMC data returned. When newdata=TRUE,
-#' it will return the list object of MCMC chains, converted into a data frame. This new data can
-#' be used for analysis or plots. The default is newdata=FALSE.
+#' it will return the list object of MCMC chains, converted into a data frame. This new data can be used for
+#' analysis or plots. The default is newdata=FALSE.
 #' @param type character vector of length == 1 that indicates the likelihood function used in the model when y='multi' or y='target'.
 #' Select 'n', 'ln', 'w', 'g', 't', 'bern', and 'bin' for these respective options in Bayesian estimation (multilevel):
 #' 'Normal', 'Log-normal', 'Weibull', 'Gamma', 't', 'Bernoulli', or 'binomial'. Default is NULL.
 #' @param center character vector that selects the type of central tendency to use when reporting parameter values when
-#' y='post', y='target', or y='r2'. Choices include: 'mean', 'median', and 'mode' when y='post' or 'mean' and 'median' when y='r2'.
-#' Default is 'mode' when y='post' or 'target' and 'median' when y='r2'.
+#' y='post', y='target', or y='r2'. Choices include: 'mean', 'median', and 'mode' when y='post' or 'mean' and
+#' 'median' when y='r2'. Default is 'mode' when y='post' or 'target' and 'median' when y='r2'.
 #' @param data object name for the observed data when y='multi' or y='r2'. Default is NULL.
 #' @param dv character vector of length == 1 for the dependent variable name in the observed data frame
 #' when y='multi'. Default is NULL.
 #' @param iv character vector of length >= 1 for the independent variable name(s) in the observed data frame
 #' when y='multi' or y='r2'. When y='multi', enter the lower to higher level clustering or group names (e.g, for
-#' health data, iv=c("patient", "hospital"). When type='taov', enter the name of the test group variable. When y='r2',  Default is NULL.
+#' health data, iv=c("patient", "hospital"). When type='taov', enter the name of the test group variable. When y='r2',
+#' enter the observed data variable names for the hierarchical or multilevel groups. Default is NULL.
 #' @param expand a character vector of length == 1 indicating the variable name to expand aggregated data into non-aggregated
 #' data frames when  y='multi'. This variable is the denominator that can be used to calculate a rate in the formula
-#' numerator/denominator. For example, when the 'numerator' column is 4 and the 'denominator' column is 10, then this single row
-#' of data is expanded to 10 rows with four values of 1 and six values of 0 when expand='denominator'. Default is NULL.
-#' @param targets list of one or two named elements (p, y) with numeric values that represent quantile values (p) in the distribution to return
-#' associated outcome values and/or specific outcome values (y) to retrieve associated probabilities. For example, a
+#' numerator/denominator. For example, when the 'numerator' column equals 4 and the 'denominator' column equals 10, then this
+#' single row of data is expanded to 10 rows with four values of 1 and six values of 0 when expand='denominator'. Default is NULL.
+#' @param targets list of one or two named elements (p, y) with numeric values that represent quantile values (p) in the distribution
+#' to return associated outcome values and/or specific outcome values (y) to retrieve associated probabilities. For example, a
 #' distribution of harmful hospital readmission rates has an estimated median value of 0.25. Staff are considering 2 types of targets,
 #' percentiles (p) of key interest and specific outcome rates (y). They want to know the readmission rate that is at
-#' the 40th percentile for a reduced readmission rate and the probability greater than a rate of 0.20. They get this information
-#' by entering targets=list(p=0.40, y=0.20); calculating 1 - prob(y) from returned results gives them an idea about the effort
-#' needed to meet this target of a reduced readmission rate. Default is NULL. Select type= one of these options: 'n', 'ln',
-#' 'w', 'g', 't', 'bern', 'bin'. Also select parameter= the appropriate center, spread, and possible 3rd shape distribution
-#' parameter (e.g., parameter=c('mean', 'sd')). And option to select center= 'mean', 'median', 'mode'.
+#' the 40th percentile for a reduced readmission rate (below what is 'average' at the 50th percentile) and the probability greater
+#' than a readmission rate of 0.20. They get this information by entering targets=list(p=0.40, y=0.20); calculating 1 - prob(y)
+#' from returned results gives them an idea about the effort needed to meet this target of a reduced readmission rate.
+#' Select type= one of these options: 'n', 'ln', 'w', 'g', 't', 'bern', 'bin'. Also select parameter= the appropriate center, spread,
+#' and possible 3rd shape distribution parameter (e.g., parameter=c('mean', 'sd')). And option to select center= 'mean',
+#' 'median', 'mode'. Default is NULL.
 
-#' @return data frame of summary statistics for MCMC parameter's distribution and/or MCMC data frame.
+#' @return data frame of summary statistics for the MCMC parameter's distribution and/or MCMC data frame.
 #' Statistics include highest density interval, effective sample size, proportion of distribution
 #' within and outside of a ROPE, distribution compared with a set value, and the parameter's mean,
 #' median, and mode. And distribution summaries for multilevel models, target summaries, and
