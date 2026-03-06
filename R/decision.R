@@ -1,4 +1,4 @@
-#' Statistics for regression model classification and a decision curve analysis
+#' Statistics for Decision Curve Analysis and regression model classification
 #'
 #' Calculate statistics such as sensitivity, specificity, positive and negative predictive values, and
 #' net benefit and interventions saved from a decision curve analysis.
@@ -32,6 +32,8 @@
 #' print(d1$DCA)
 
 decision <- function(x, threshold) {
+
+  if (any(class(x) == "assess") == FALSE) {stop("Error: Expecting assess class object." )}
 
   #Model fit
   model_fit <- x$model
@@ -454,7 +456,7 @@ threshQ <- fncThreshQntl(Fit=model_fit, Y=outcome_name, Threshold=threshyhat,
 #Combine in list
 z <- list(Model.Summary=model_smry, AUC=AUC_output,
           DCA=threshQ, Classification=class_output,
-          type=reg_type)
+          type=reg_type, outcome=outcome_name)
 # Assign ham classes
 class(z) <- c("decision", "ham", "list")
 return(z)

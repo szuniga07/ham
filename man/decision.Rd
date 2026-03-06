@@ -2,7 +2,7 @@
 % Please edit documentation in R/decision.R
 \name{decision}
 \alias{decision}
-\title{Statistics for regression model classification and a decision curve analysis}
+\title{Statistics for Decision Curve Analysis and regression model classification}
 \usage{
 decision(x, threshold)
 }
