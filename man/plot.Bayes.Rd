@@ -257,3 +257,11 @@ from Bayes class objects that converted multiple chains into data frames.
 \examples{
 ## Hospital LOS and readmissions ##
 }
+\references{
+Gelman, A., Goodrich, B., Gabry, J., & Vehtari, A. (2019). R-squared for Bayesian
+Regression Models. The American Statistician, 73, 3, 307–309.
+https://doi.org/10.1080/00031305.2018.1549100
+
+Kruschke, J. (2014). Doing Bayesian Data Analysis: A Tutorial with R, JAGS, and
+Stan, Second Edition. New York: Academic Press. ISBN: 9780124058880
+}
