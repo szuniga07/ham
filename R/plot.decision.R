@@ -14,19 +14,17 @@
 #' @param xlab a character vector label for the x-axis.
 #' @param ylab a character vector label for the y-axis.
 #' @param xlim specify plot's x-axis limits with a 2 element numeric vector.
-#' @param ylim specify plot's y-axis limits with a 2 element numeric vector.
+#' @param ylim specify plot's y-axis limits with a 2 element numeric vector. When y='is', the y-axis
+#' labels are in integers (e.g., 1 to 100) but the actual scale is in decimals (0.0 to 1.0), please
+#' note when making y-axis limits.
 #' @param lwd select the line width.
 #' @param bcol a multiple element character vector of length == 2  to specify the bar, band, or block colors that
 #' is the shading of the true and false classification regions of the plot (e.g., true-positive and false-negative).
-#' The first color represents 'true' and the second color is for 'negative'. Default is null, if none selected, the
-#' colors are c('green', 'red') and 'blue' for the threshold line.
+#' When y='cl', the first color represents 'true' and the second color is for 'negative'. Default is null, if none
+#' selected, the colors are c('green', 'red').
 #' @param lcol a single or multiple element character vector to specify the line color(s).
 #' When y='nb', select up to 3 colors in this order for model, 'all treated', and 'none treated' line colors.
-#' When y='is', select 1 color for the single line. And when y='cl', select 1 color to represent the Bayesian estimates and observed values are present, the first colors are Bayesian estimates
-#' while the last colors are observed values. When multiple lines are needed, single item lines
-#' precede multiple use lines. For example, a single comparison value line will be assigned the first lcol
-#' while both rope lines will be given the same color of the second lcol when y='post'. Defaults to 'gray'
-#' if nothing selected.
+#' When y='is', select 1 color for the single line. And when y='cl', select 1 color to represent the selected threshold.
 #' @param add.legend add a legend by selecting the location as "bottomright", "bottom", "bottomleft",
 #' "left", "topleft", "top", "topright", "right", "center". Default is no legend produced if nothing is selected.
 #' @param legend a character vector of length >= 1 to appear when y='check', y='multi', and sometimes y='target'.
@@ -37,10 +35,11 @@
 #' @param cex.main The magnification to be used for main titles relative to the current setting of cex.
 #' @param cex.text The magnification to be used for the iname text added into the plot relative to the current setting of 1.
 #' @param cex.legend The magnification to be used for the legend added into the plot relative to the current setting of 1.
+#' @param round.c an integer indicating the number of decimal places when rounding numbers y='multi' and y='target'. Default is 2.
 #' @param ... additional arguments.
 #'
 #' @return plot of Shewhart control charts: X-bar charts, p-charts, and u-charts with 3-sigma control limits.
-#' @importFrom graphics lines plot abline points text arrows par
+#' @importFrom graphics lines plot abline points text arrows
 #' @importFrom methods is
 #' @importFrom stats lm
 #' @export
@@ -53,7 +52,7 @@
 
 plot.decision <- function(x, y=NULL, main=NULL, xlab=NULL, ylab=NULL, xlim=NULL, ylim=NULL, lwd=NULL,
                        bcol=NULL, lcol=NULL, add.legend=NULL, legend=NULL, cex=1, cex.lab=NULL, cex.axis=NULL, cex.main=NULL,
-                       cex.text=NULL, cex.legend=NULL, ...) {
+                       cex.text=NULL, cex.legend=NULL, round.c=2, ...) {
 
   if (any(class(x) == "decision") == FALSE) {stop("Error: Expecting control class object." )}
 
@@ -69,14 +68,87 @@ plot.decision <- function(x, y=NULL, main=NULL, xlab=NULL, ylab=NULL, xlim=NULL,
   } else {
     bcol <- c("green", "red")
   }
+  #######
+  # CEX #
+  #######
+  #Make CEX for legend
+  if(!is.null(cex.legend)) {
+    cex.legend <- cex.legend
+  } else {
+    cex.legend <- 1
+  }
+  #cex.axis
+  if(!is.null(cex.axis)) {
+    cex.axis <- cex.axis
+  } else {
+    cex.axis <- 1
+  }
+  #cex.lab
+  if(!is.null(cex.lab)) {
+    cex.lab <- cex.lab
+  } else {
+    cex.lab <- 1
+  }
+  #cex.main
+  if(!is.null(cex.main)) {
+    cex.main <- cex.main
+  } else {
+    cex.main <- 1
+  }
+  #cex.text
+  if(!is.null(cex.text)) {
+    cex.text <- cex.text
+  } else {
+    cex.text <- 1
+  }
+  #cex
+  if(!is.null(cex)) {
+    cex <- cex
+  } else {
+    cex <- 1
+  }
 
 ##############
 ## Graphing ##
 ##############
-fncYhatClassPlt <- function(ClassDF, AUC, Brks=NULL, RegType, aspectRatio=NULL,
-                            TBar=NULL, FBar=NULL, ThreshCol=NULL)  {
+  # Labels #
+  if(y == "cl") {
+    #Create AUC
+    AUC <-  x$AUC
+  if(!is.null(main)) {
+    main <- main
+  } else {
+    main <- paste0("Classification: ", "AUC= ", round(AUC, round.c), ", ", "Sensitivity= ", round(x$Classification$propAbovMY1, round.c), ", ", "Specifity= ", round(x$Classification$specifity, round.c), ".")
+  }
+    }
+
+fncYhatClassPlt <- function(x, Brks=NULL, RegType=NULL, xlab=NULL, ylab=NULL,
+                            aspectRatio=NULL, TBar=NULL, FBar=NULL, xlim=NULL, ylim=NULL,
+                            ThreshCol=NULL, add.legend=NULL, legend=NULL, main=NULL,
+                            cex.lab= cex.lab, cex= cex, cex.main=cex.main,
+                            cex.axis=cex.axis, cex.legend=cex.legend,
+                            lwd=lwd, round.c=round.c)  {
+  ClassDF <- x$Classification
+  AUC <-  round(x$AUC, round.c)
+  thresh_lev <-  round(x$Classification$threshLev, round.c)
   xlimMin <- ClassDF$senspcXmin
   xlimMax <- ClassDF$senspcXmax
+  if(!is.null(xlab)) {
+    xlab <- xlab
+  } else {
+    xlab <- paste0("Top graph: When outcome= 1 or TRUE. ", "Bottom graph: When outcome= 0 or FALSE. ", "True predictions in ", TBar, ", false predictions in ", FBar, ".")
+  }
+  if(!is.null(ylab)) {
+    ylab <- ylab
+  } else {
+    ylab <- paste0("Threshold= ", ClassDF$threshLev, " as ", ThreshCol, " line")
+
+  }
+  if(!is.null(legend)) {
+    legend <- legend
+  } else {
+    legend <- c("True predictions", "False predictions")
+  }
   #Sensitivity and 1-specificity
   Sens.Value <- switch(RegType,
                        "ols"   = round(ClassDF$propAbovMY1, 3),
@@ -147,10 +219,14 @@ fncYhatClassPlt <- function(ClassDF, AUC, Brks=NULL, RegType, aspectRatio=NULL,
   max_den <- max(den2$y)
   den2$y <- den2$y - max_den
   ## Create graph ##
-  plot(c(den1$x, den2$x), c(den1$y, den2$y), type="n")
-  lines(den1$x, den1$y)
-  lines(den2$x, den2$y)
+  plot(c(den1$x, den2$x), c(den1$y, den2$y), type="n", axes=FALSE,
+       main=main, xlab=xlab, ylab=ylab, xlim=xlim, ylim=ylim,
+       cex.lab= cex.lab, cex= cex, cex.main=cex.main)
+  lines(den1$x, den1$y, lwd=lwd)
+  lines(den2$x, den2$y, lwd=lwd)
   abline(h=0)
+  axis(1, cex.axis=cex.axis)
+  box()
 
   # 4. Fill the first half (below threshold)
   #   a. Identify x-values below the median
@@ -160,8 +236,8 @@ fncYhatClassPlt <- function(ClassDF, AUC, Brks=NULL, RegType, aspectRatio=NULL,
   y.left1 <- den1$y[den1$x <= ClassDF$threshLev]
   y.left2 <- den2$y[den2$x > ClassDF$threshLev]
   #   c. Create the polygon points: add the median x, 0 to close the shape
-  polygon(c(x.left1, ClassDF$threshLev), c(y.left1, 0), col = "tomato", border = NA)
-  polygon(c(x.left2, ClassDF$threshLev), c(y.left2, 0- max_den), col = "tomato", border = NA)
+  polygon(c(x.left1, ClassDF$threshLev), c(y.left1, 0), col = FBar, border = FBar)
+  polygon(c(x.left2, ClassDF$threshLev), c(y.left2, 0- max_den), col = FBar, border = FBar)
   # 5. Fill the right side (above the threshold)
   #   a. Identify x-values above the threshold
   x.right1 <- den1$x[den1$x >= ClassDF$threshLev]
@@ -170,40 +246,100 @@ fncYhatClassPlt <- function(ClassDF, AUC, Brks=NULL, RegType, aspectRatio=NULL,
   y.right1 <- den1$y[den1$x >= ClassDF$threshLev]
   y.right2 <- den2$y[den2$x < ClassDF$threshLev]
   #   c. Create the polygon space
-  polygon(c(x.right1, ClassDF$threshLev), c(y.right1, 0), col = "springgreen", border = NA)
-  polygon(c(x.right2, ClassDF$threshLev), c(y.right2, 0- max_den), col = "springgreen", border = NA)
+  polygon(c(x.right1, ClassDF$threshLev), c(y.right1, 0), col = TBar, border = TBar)
+  polygon(c(x.right2, ClassDF$threshLev), c(y.right2, 0- max_den), col = TBar, border = TBar)
   # 6. Redraw the density line over the filled areas for clarity
-  lines(den1, lwd = 2)
-  lines(den2, lwd = 2)
+  lines(den1)
+  lines(den2)
   # 7. Add a vertical line at the median for the threshold
-  abline(v = ClassDF$threshLev, col = "darkgray", lty = 2, lwd = 2)
+  abline(v = ClassDF$threshLev, col = ThreshCol, lty = 2, lwd = lwd)
   # 8. Add a legend
-  legend("topright", c("Below Median", "Above Median"), fill = c("tomato", "springgreen"),
-         border = NA, bty="n", inset=c(0, .05))
+  #Add legend
+  if(!is.null(add.legend) ) {
+  legend(add.legend, legend=legend, fill = c(FBar, TBar),
+         border = NA, bty="n", inset=c(0, .05), cex=cex.legend, lwd=lwd)
+    }
 }
-
 #####################################
 ## Function to plot decision curve ##
 #####################################
-fncDcsnCrvPlt <- function(ThreshQntl, CType, xlim1=NULL, xlim2=NULL, ylim1=NULL, ylim2=NULL,
-                          Legend.Loc=NULL, LCol=NULL, LSize=NULL) {
+if(y == "nb") {
+if(!is.null(main)) {
+  main <- main
+} else {
+  main <- "Decision curve analysis of net benefit by threshold levels"
+}
+if(!is.null(xlab)) {
+  xlab <- xlab
+} else {
+  xlab <- "Threshold: Probability"
+}
+if(!is.null(ylab)) {
+  ylab <- ylab
+} else {
+  ylab <- "Net Benefit"
+}
+  if(!is.null(legend)) {
+    legend <- legend
+  } else {
+    legend <- c("Model", "All treated", "None treated")
+  }
+  #Give default ylims if doing a net benefit
+  if (!is.null(ylim)) {
+    ylim <- ylim
+  } else {
+    ylim <- c(-0.02, max(x$DCA$Net.Benefit)*1.05 )
+  }
+}
+
+if(y == "is") {
+  if(!is.null(main)) {
+    main <- main
+  } else {
+    main <- "Decision curve analysis of interventions saved by threshold levels"
+  }
+  if(!is.null(xlab)) {
+    xlab <- xlab
+  } else {
+    xlab <- "Threshold: Probability"
+  }
+  if(!is.null(ylab)) {
+    ylab <- ylab
+  } else {
+    ylab <- "Net Benefit"
+  }
+  if(!is.null(legend)) {
+    legend <- legend
+  } else {
+    legend <- c("Model", "All treated", "None treated")
+  }
+  #Give default ylims if doing a net benefit
+  if (!is.null(ylim)) {
+    ylim <- ylim
+  } else {
+    ylim <- NULL
+  }
+}
+
+fncDcsnCrvPlt <- function(ThreshQntl, CType, xlim=NULL, ylim=NULL, main=NULL,
+                          Legend.Loc=NULL, LCol=NULL, LSize=NULL, xlab=NULL, ylab=NULL,
+                          cex=1, ...) {
   if(CType == "nb") {
-    plot(ThreshQntl$Threshold.Level, ThreshQntl$Net.Benefit,type="n", xlim=c(xlim1,xlim2), ylim=c(ylim1,ylim2),
-         main="Decision curve plot of net benefit by threshold levels", xlab="Threshold", ylab="Net Benefit",
-         cex.main=2, cex.lab=2)
-    lines(ThreshQntl$Threshold.Level, ThreshQntl$Net.Benefit,cex=2, lwd=LSize, lty=1, col=LCol[1])
-    lines(ThreshQntl$Threshold.Level, ThreshQntl$All.Treated,cex=2, lwd=LSize, lty=2, col=LCol[2])
+    plot(ThreshQntl$Threshold.Level, ThreshQntl$Net.Benefit,type="n", xlim=xlim, ylim=ylim,
+         main=main, xlab=xlab, ylab=ylab, cex.main=cex.main, cex.lab=cex.lab)
+    lines(ThreshQntl$Threshold.Level, ThreshQntl$Net.Benefit, cex=cex, lwd=lwd, lty=1, col=LCol[1])
+    lines(ThreshQntl$Threshold.Level, ThreshQntl$All.Treated, cex=cex, lwd=lwd, lty=2, col=LCol[2])
     abline(h=0, col=LCol[3], lwd=LSize)
-    legend(x=Legend.Loc, legend=c("Model", "All treated", "None treated"),
-           col=LCol, lty=c(1,2,1),
-           lwd=1, cex=1, bty="n", inset=c(0, .05))
+    if(!is.null(Legend.Loc) ) {
+    legend(x=Legend.Loc, legend=legend, col=LCol, lty=c(1,2,1), lwd=lwd, cex=cex.legend,
+           bty="n", inset=c(0, .05))
+    }
   }
   if(CType == "is") {
-    par(mar= c(5.1, 4.6, 4.1, 1.6))
     plot(ThreshQntl$Threshold.Level, ThreshQntl$Interventions.Saved,
-         lwd=LSize, type="l", col=LCol[1], axes=F, xlim=c(xlim1,xlim2), ylim=c(ylim1,ylim2),
-         main="Decision curve plot of interventions avoided by threshold levels", xlab="Threshold",
-         cex.main=2, cex.lab=2,
+         lwd=LSize, type="l", col=LCol[1], axes=F, xlim=xlim, ylim=ylim,
+         main=main, xlab="Threshold",
+         cex.main=cex.main, cex.lab=cex.lab,
          ylab="Interventions avoided per 100 persons")
     axis(1)
     axis(2, at= seq(0,1, .1), labels= seq(0,1, .1)*100)
@@ -218,22 +354,25 @@ fncDcsnCrvPlt <- function(ThreshQntl, CType, xlim1=NULL, xlim2=NULL, ylim1=NULL,
 # Decision curve analysis #
 # net benefit
 if(y=="nb") {
-  fncDcsnCrvPlt(ThreshQntl=x$DCA, CType="nb", Legend.Loc="topleft", LCol= lcol)
+  fncDcsnCrvPlt(ThreshQntl=x$DCA, CType="nb",  LCol= lcol, main=main,
+                xlim=xlim, ylim=ylim,
+                xlab=xlab, ylab=ylab, LSize=lwd, Legend.Loc=add.legend)
 }
 # interventions saved
 if(y=="is") {
-  fncDcsnCrvPlt(ThreshQntl=x$DCA, CType="is", Legend.Loc="topleft", LCol= lcol)
+  fncDcsnCrvPlt(ThreshQntl=x$DCA, CType="is",  LCol= lcol, main=main,
+                xlim=xlim, ylim=ylim,
+                xlab=xlab, ylab=ylab, LSize=lwd, Legend.Loc=add.legend)
 }
 
 # Classification sensitivity and specificity
 if(y=="cl") {
-fncYhatClassPlt(ClassDF=x$Classification, AUC=x$AUC, RegType= x$type,
-                TBar=bcol[1], FBar=bcol[2], ThreshCol=lcol[1])
+fncYhatClassPlt(x=x, RegType= x$type, main=main, TBar=bcol[1], FBar=bcol[2],
+                ThreshCol=lcol[1], cex.lab= cex.lab, cex= cex, cex.main=cex.main,
+                cex.axis=cex.axis, legend=legend, cex.legend=cex.legend,
+                lwd=lwd, xlab=xlab, ylab=ylab, xlim=xlim, ylim=ylim)
 }
 
 }
-
-
-
 
 

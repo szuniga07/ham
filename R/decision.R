@@ -430,7 +430,13 @@ fncThreshQntl <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegType
       Interventions.Saved[i] <- YClass[[i]]$N.specifity/total_N[i] - YClass[[i]]$N.fls_Neg/total_N[i] *  (1 - Threshold.Level[i]) / Threshold.Level[i]
     }
   )
-  return(list("total_N"=total_N, "Threshold.Level"=Threshold.Level, "Threshold.Percentiles"=Threshold.Percentiles,
+  #Give percentiles to each level
+  names(total_N) <- Threshold.Percentiles
+  names(Threshold.Level) <- Threshold.Percentiles
+  names(Net.Benefit) <- Threshold.Percentiles
+  names(All.Treated) <- Threshold.Percentiles
+  names(Interventions.Saved) <- Threshold.Percentiles
+  return(list("total_N"=total_N, "Threshold.Level"=Threshold.Level,
               "Net.Benefit"=Net.Benefit, "All.Treated"=All.Treated, "Interventions.Saved"=Interventions.Saved))
 }
 

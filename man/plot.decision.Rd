@@ -23,6 +23,7 @@
   cex.main = NULL,
   cex.text = NULL,
   cex.legend = NULL,
+  round.c = 2,
   ...
 )
 }
@@ -42,22 +43,20 @@ results for specific quantiles found between the 1st and 99th percentiles. Defau
 
 \item{xlim}{specify plot's x-axis limits with a 2 element numeric vector.}
 
-\item{ylim}{specify plot's y-axis limits with a 2 element numeric vector.}
+\item{ylim}{specify plot's y-axis limits with a 2 element numeric vector. When y='is', the y-axis
+labels are in integers (e.g., 1 to 100) but the actual scale is in decimals (0.0 to 1.0), please
+note when making y-axis limits.}
 
 \item{lwd}{select the line width.}
 
 \item{bcol}{a multiple element character vector of length == 2  to specify the bar, band, or block colors that
 is the shading of the true and false classification regions of the plot (e.g., true-positive and false-negative).
-The first color represents 'true' and the second color is for 'negative'. Default is null, if none selected, the
-colors are c('green', 'red') and 'blue' for the threshold line.}
+When y='cl', the first color represents 'true' and the second color is for 'negative'. Default is null, if none
+selected, the colors are c('green', 'red').}
 
 \item{lcol}{a single or multiple element character vector to specify the line color(s).
 When y='nb', select up to 3 colors in this order for model, 'all treated', and 'none treated' line colors.
-When y='is', select 1 color for the single line. And when y='cl', select 1 color to represent the Bayesian estimates and observed values are present, the first colors are Bayesian estimates
-while the last colors are observed values. When multiple lines are needed, single item lines
-precede multiple use lines. For example, a single comparison value line will be assigned the first lcol
-while both rope lines will be given the same color of the second lcol when y='post'. Defaults to 'gray'
-if nothing selected.}
+When y='is', select 1 color for the single line. And when y='cl', select 1 color to represent the selected threshold.}
 
 \item{add.legend}{add a legend by selecting the location as "bottomright", "bottom", "bottomleft",
 "left", "topleft", "top", "topright", "right", "center". Default is no legend produced if nothing is selected.}
@@ -76,6 +75,8 @@ Legends to represent hierarchical estimates and observed values.}
 \item{cex.text}{The magnification to be used for the iname text added into the plot relative to the current setting of 1.}
 
 \item{cex.legend}{The magnification to be used for the legend added into the plot relative to the current setting of 1.}
+
+\item{round.c}{an integer indicating the number of decimal places when rounding numbers y='multi' and y='target'. Default is 2.}
 
 \item{...}{additional arguments.}
 }
