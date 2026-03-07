@@ -11,7 +11,7 @@
 #'
 #' @return summary of model classification based on the selected threshold/cutoff, area under the curve
 #' (AUC)/c-statistic, predicted outcomes (transformed if applicable), decision curve analysis
-#' values at various quantiles, and sensitivity and specificity related statistics for the regression
+#' values at various percentiles, and sensitivity and specificity related statistics for the regression
 #' model at the specified threshold.
 #' @importFrom stats sd terms
 #' @export
@@ -22,9 +22,9 @@
 #' @examples
 #' ## Predicting car engine shape type, v or straight  ##
 #' # run the model
-#' car_m1 <- assess(formula=vs ~ hp + wt, data=mtcars, regression="logistic")
+#' car_m1 <- assess(formula=vs ~ hp + am, data=mtcars, regression="logistic")
 #' # create a decision object, enter the model name and a threshold on the logit scale
-#' d1 <- decision(x=car_m1, threshold= -.18)
+#' d1 <- decision(x=car_m1, threshold= -0.767)
 #' # View model classification related statistics
 #' print(d1$Model.Summary$Classification)
 #'
@@ -79,7 +79,7 @@ fncTrnsfYhatSmry <- function(YhatRslt, RegType) {
   names(Transformed.Yhat) <- prob_vals
   #Transform range of lowest and highest values
   Transformed.Full.Range <- range(YhatRslt)
-  return(list("Transformed.Yhat"=Transformed.Yhat, "Transformed.Full.Range"= Transformed.Full.Range))
+  return(list("Yhat"=Transformed.Yhat, "Range"= Transformed.Full.Range))
 }
 ##############
 ## Get data ##
@@ -353,7 +353,7 @@ fncClassDfSmry <- function(ClassDF, RegType) {
 ## Create a decision curve analysis plot ##
 ###########################################
 fncThreshQntl <- function(Fit, Y, Threshold, Censor=NULL, PredTime=NULL, RegType, DF, OffSetName=NULL) {
-  Threshold <- Threshold[["Transformed.Yhat"]]
+  Threshold <- Threshold[["Yhat"]]
   #Get sensitivity and specificity for IQR of predicted values, offset is NULL for 1st version
   yClass.01 <-  try(fncYhatClassDf(Fit=Fit, Y=Y, Threshold=Threshold[1], Censor=Censor, PredTime=PredTime,
                                    RegType=RegType, DF=DF, OffSetName=OffSetName))
@@ -462,6 +462,7 @@ threshQ <- fncThreshQntl(Fit=model_fit, Y=outcome_name, Threshold=threshyhat,
 #Combine in list
 z <- list(Model.Summary=model_smry, AUC=AUC_output,
           DCA=threshQ, Classification=class_output,
+          Yhat.Range=threshyhat,
           type=reg_type, outcome=outcome_name)
 # Assign ham classes
 class(z) <- c("decision", "ham", "list")

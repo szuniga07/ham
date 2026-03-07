@@ -9,7 +9,7 @@
 #' @param y type of plot to display. Select either 'nb', 'is', or 'cl' for a decision curve
 #' analysis 'net benefit' and 'interventions saved', or a model classification (e.g., sensitivity
 #' and specificity) according to a selected threshold. Net benefit and interventions saved display
-#' results for specific quantiles found between the 1st and 99th percentiles. Default is 'nb'.
+#' results for specific percentiles found between the 1st and 99th percentiles. Default is 'nb'.
 #' @param main the main title of the plot.
 #' @param xlab a character vector label for the x-axis.
 #' @param ylab a character vector label for the y-axis.
@@ -19,21 +19,19 @@
 #' note when making y-axis limits.
 #' @param lwd select the line width.
 #' @param bcol a multiple element character vector of length == 2  to specify the bar, band, or block colors that
-#' is the shading of the true and false classification regions of the plot (e.g., true-positive and false-negative).
+#' are the shading of the true and false classification regions of the plot (e.g., true-positive and false-negative).
 #' When y='cl', the first color represents 'true' and the second color is for 'negative'. Default is null, if none
 #' selected, the colors are c('green', 'red').
 #' @param lcol a single or multiple element character vector to specify the line color(s).
-#' When y='nb', select up to 3 colors in this order for model, 'all treated', and 'none treated' line colors.
-#' When y='is', select 1 color for the single line. And when y='cl', select 1 color to represent the selected threshold.
+#' When y='nb', select up to 3 colors in this order for model, 'net benefit', 'all treated', and 'none treated' line colors.
+#' When y='is', select 1 color for the interventions saved line. And when y='cl', select 1 color to represent the selected threshold.
 #' @param add.legend add a legend by selecting the location as "bottomright", "bottom", "bottomleft",
 #' "left", "topleft", "top", "topright", "right", "center". Default is no legend produced if nothing is selected.
-#' @param legend a character vector of length >= 1 to appear when y='check', y='multi', and sometimes y='target'.
-#' Legends to represent hierarchical estimates and observed values.
+#' @param legend a character vector of length >= 2 to appear when y='nb' and y='cl' with legend description.
 #' @param cex A numerical value giving the amount by which plotting text and symbols should be magnified relative to the default of 1.
 #' @param cex.axis The magnification to be used for axis annotation relative to the current setting of cex.
 #' @param cex.lab The magnification to be used for x and y labels relative to the current setting of cex.
 #' @param cex.main The magnification to be used for main titles relative to the current setting of cex.
-#' @param cex.text The magnification to be used for the iname text added into the plot relative to the current setting of 1.
 #' @param cex.legend The magnification to be used for the legend added into the plot relative to the current setting of 1.
 #' @param round.c an integer indicating the number of decimal places when rounding numbers y='multi' and y='target'. Default is 2.
 #' @param ... additional arguments.
@@ -52,7 +50,7 @@
 
 plot.decision <- function(x, y=NULL, main=NULL, xlab=NULL, ylab=NULL, xlim=NULL, ylim=NULL, lwd=NULL,
                        bcol=NULL, lcol=NULL, add.legend=NULL, legend=NULL, cex=1, cex.lab=NULL, cex.axis=NULL, cex.main=NULL,
-                       cex.text=NULL, cex.legend=NULL, round.c=2, ...) {
+                       cex.legend=NULL, round.c=2, ...) {
 
   if (any(class(x) == "decision") == FALSE) {stop("Error: Expecting control class object." )}
 
@@ -95,12 +93,6 @@ plot.decision <- function(x, y=NULL, main=NULL, xlab=NULL, ylab=NULL, xlim=NULL,
   } else {
     cex.main <- 1
   }
-  #cex.text
-  if(!is.null(cex.text)) {
-    cex.text <- cex.text
-  } else {
-    cex.text <- 1
-  }
   #cex
   if(!is.null(cex)) {
     cex <- cex
@@ -136,7 +128,7 @@ fncYhatClassPlt <- function(x, Brks=NULL, RegType=NULL, xlab=NULL, ylab=NULL,
   if(!is.null(xlab)) {
     xlab <- xlab
   } else {
-    xlab <- paste0("Top graph: When outcome= 1 or TRUE. ", "Bottom graph: When outcome= 0 or FALSE. ", "True predictions in ", TBar, ", false predictions in ", FBar, ".")
+    xlab <- paste0("Top: When outcome= 1. ", "Bottom: When outcome= 0. ", "True predictions in ", TBar, ", false predictions in ", FBar, ".")
   }
   if(!is.null(ylab)) {
     ylab <- ylab
@@ -256,7 +248,7 @@ fncYhatClassPlt <- function(x, Brks=NULL, RegType=NULL, xlab=NULL, ylab=NULL,
   # 8. Add a legend
   #Add legend
   if(!is.null(add.legend) ) {
-  legend(add.legend, legend=legend, fill = c(FBar, TBar),
+  legend(add.legend, legend=legend, fill = c(TBar, FBar ), lty=NA,
          border = NA, bty="n", inset=c(0, .05), cex=cex.legend, lwd=lwd)
     }
 }
@@ -306,18 +298,7 @@ if(y == "is") {
   if(!is.null(ylab)) {
     ylab <- ylab
   } else {
-    ylab <- "Net Benefit"
-  }
-  if(!is.null(legend)) {
-    legend <- legend
-  } else {
-    legend <- c("Model", "All treated", "None treated")
-  }
-  #Give default ylims if doing a net benefit
-  if (!is.null(ylim)) {
-    ylim <- ylim
-  } else {
-    ylim <- NULL
+    ylab <- "Interventions avoided per 100 persons"
   }
 }
 
@@ -338,9 +319,7 @@ fncDcsnCrvPlt <- function(ThreshQntl, CType, xlim=NULL, ylim=NULL, main=NULL,
   if(CType == "is") {
     plot(ThreshQntl$Threshold.Level, ThreshQntl$Interventions.Saved,
          lwd=LSize, type="l", col=LCol[1], axes=F, xlim=xlim, ylim=ylim,
-         main=main, xlab="Threshold",
-         cex.main=cex.main, cex.lab=cex.lab,
-         ylab="Interventions avoided per 100 persons")
+         main=main, xlab=xlab, ylab=ylab, cex.main=cex.main, cex.lab=cex.lab)
     axis(1)
     axis(2, at= seq(0,1, .1), labels= seq(0,1, .1)*100)
     box()
@@ -369,7 +348,7 @@ if(y=="is") {
 if(y=="cl") {
 fncYhatClassPlt(x=x, RegType= x$type, main=main, TBar=bcol[1], FBar=bcol[2],
                 ThreshCol=lcol[1], cex.lab= cex.lab, cex= cex, cex.main=cex.main,
-                cex.axis=cex.axis, legend=legend, cex.legend=cex.legend,
+                cex.axis=cex.axis, add.legend=add.legend, legend=legend, cex.legend=cex.legend,
                 lwd=lwd, xlab=xlab, ylab=ylab, xlim=xlim, ylim=ylim)
 }
 

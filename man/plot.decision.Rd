@@ -21,7 +21,6 @@
   cex.lab = NULL,
   cex.axis = NULL,
   cex.main = NULL,
-  cex.text = NULL,
   cex.legend = NULL,
   round.c = 2,
   ...
@@ -33,7 +32,7 @@
 \item{y}{type of plot to display. Select either 'nb', 'is', or 'cl' for a decision curve
 analysis 'net benefit' and 'interventions saved', or a model classification (e.g., sensitivity
 and specificity) according to a selected threshold. Net benefit and interventions saved display
-results for specific quantiles found between the 1st and 99th percentiles. Default is 'nb'.}
+results for specific percentiles found between the 1st and 99th percentiles. Default is 'nb'.}
 
 \item{main}{the main title of the plot.}
 
@@ -50,19 +49,18 @@ note when making y-axis limits.}
 \item{lwd}{select the line width.}
 
 \item{bcol}{a multiple element character vector of length == 2  to specify the bar, band, or block colors that
-is the shading of the true and false classification regions of the plot (e.g., true-positive and false-negative).
+are the shading of the true and false classification regions of the plot (e.g., true-positive and false-negative).
 When y='cl', the first color represents 'true' and the second color is for 'negative'. Default is null, if none
 selected, the colors are c('green', 'red').}
 
 \item{lcol}{a single or multiple element character vector to specify the line color(s).
-When y='nb', select up to 3 colors in this order for model, 'all treated', and 'none treated' line colors.
-When y='is', select 1 color for the single line. And when y='cl', select 1 color to represent the selected threshold.}
+When y='nb', select up to 3 colors in this order for model, 'net benefit', 'all treated', and 'none treated' line colors.
+When y='is', select 1 color for the interventions saved line. And when y='cl', select 1 color to represent the selected threshold.}
 
 \item{add.legend}{add a legend by selecting the location as "bottomright", "bottom", "bottomleft",
 "left", "topleft", "top", "topright", "right", "center". Default is no legend produced if nothing is selected.}
 
-\item{legend}{a character vector of length >= 1 to appear when y='check', y='multi', and sometimes y='target'.
-Legends to represent hierarchical estimates and observed values.}
+\item{legend}{a character vector of length >= 2 to appear when y='nb' and y='cl' with legend description.}
 
 \item{cex}{A numerical value giving the amount by which plotting text and symbols should be magnified relative to the default of 1.}
 
@@ -71,8 +69,6 @@ Legends to represent hierarchical estimates and observed values.}
 \item{cex.axis}{The magnification to be used for axis annotation relative to the current setting of cex.}
 
 \item{cex.main}{The magnification to be used for main titles relative to the current setting of cex.}
-
-\item{cex.text}{The magnification to be used for the iname text added into the plot relative to the current setting of 1.}
 
 \item{cex.legend}{The magnification to be used for the legend added into the plot relative to the current setting of 1.}
 
