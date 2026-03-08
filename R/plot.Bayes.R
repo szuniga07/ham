@@ -281,12 +281,29 @@ plot.Bayes <- function(x, y=NULL, type="n", parameter=NULL, center="mode", mass=
     cex.text <- 1
   }
   #Make vlim if there is observed data
-  if(y %in% c("target", "check")) {
+  if(!is.null(vlim)) {
+    vlim <- vlim
+  } else {
+    if(y %in% c("target", "check")) {
+    if(type %in% c("ln", "sn", "w", "g", "t")) {
     if(!is.null(data)) {
       vlim <- range(data[, dv], na.rm=TRUE)
     }
+    }
+    }
   }
-
+  #regression trend lines
+  if(!is.null(vlim)) {
+    vlim <- vlim
+  } else {
+  if(y %in% c("check")) {
+    if(type %in% c("ol", "oq", "oc", "lnl", "lnq", "lnc", "logl", "logq", "logc")) {
+      if(!is.null(data)) {
+        vlim <- range(data[, iv], na.rm=TRUE)
+      }
+    }
+  }
+  }
   #Chain statistics
   if(y %in% c('dxa', 'dxd', 'dxg', 'dxt')) {
   n_rows <- dim(MCMC[, parameter, drop=FALSE])[1]
