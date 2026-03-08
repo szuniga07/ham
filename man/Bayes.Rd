@@ -22,7 +22,7 @@ Bayes(
 )
 }
 \arguments{
-\item{x}{list object of multiple MCMC chains (e.g, coda mcmc.list).}
+\item{x}{list object of multiple MCMC chains (e.g., matrix class list elements or coda mcmc.list).}
 
 \item{y}{character vector for the type of analysis or output to perform. Select 'post', 'multi', 'target', 'r2' or 'mcmc' for a
 posterior summary, multilevel/hierarchical model summary (up to 3 levels), target summary, Gelman R-squared statistic, or

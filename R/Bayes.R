@@ -8,7 +8,7 @@
 #' hierarchical or multilevel models (up to 3 levels), and the R2 for Bayesian regression models with
 #' metric level predictors.
 #'
-#' @param x list object of multiple MCMC chains (e.g, coda mcmc.list).
+#' @param x list object of multiple MCMC chains (e.g., matrix class list elements or coda mcmc.list).
 #' @param y character vector for the type of analysis or output to perform. Select 'post', 'multi', 'target', 'r2' or 'mcmc' for a
 #' posterior summary, multilevel/hierarchical model summary (up to 3 levels), target summary, Gelman R-squared statistic, or
 #' list object of MCMC chains converted into a data frame. Default is 'mcmc'.
@@ -123,18 +123,37 @@ Bayes <- function(x, y="mcmc", parameter=NULL, mass=.95, compare=NULL,
 
 fncMCMC <- function(x) {
   #Get the column names, number of chains, rows, and columns per chain
-  df_nms <- colnames(as.matrix(x[[1]]))
-  n_chains <- length(x)
-  n_rows <- dim(x[[1]])[1]
-  n_cols <- dim(x[[1]])[2]
-  #Convert coda object to data.frame
-  mcmc <- data.frame(do.call(rbind, x)) #drop data.frame if matrix/array needed
-  #Create CHAIN variable
-  mcmc$CHAIN <- rep(1:n_chains, each=n_rows)
-  #Re-order so CHAIN is in the 1st spot
-  mcmc <- mcmc[, c((n_cols+1), 1:n_cols)]
-  #Put original column names back in
-  colnames(mcmc)[-1] <- df_nms
+  #list of data frames
+  if(any(class(x[[1]])== "mcmc") == FALSE) {
+    df_nms <- colnames(x[[1]])
+    n_chains <- length(x)
+    n_rows <- dim(x[[1]])[1]
+    n_cols <- dim(x[[1]])[2]
+    #Convert coda object to data.frame
+    mcmc <- data.frame(do.call(rbind, x)) #drop data.frame if matrix/array needed
+    #Create CHAIN variable
+    mcmc$CHAIN <- rep(1:n_chains, each=n_rows)
+    #Re-order so CHAIN is in the 1st spot
+    mcmc <- mcmc[, c((n_cols+1), 1:n_cols)]
+    #Put original column names back in
+    colnames(mcmc)[-1] <- df_nms
+  }
+  #coda objects
+    if(any(class(x[[1]])== "mcmc") == TRUE) {
+      df_nms <- colnames(as.matrix(x[[1]]))
+      n_chains <- length(x)
+      n_rows <- dim(x[[1]])[1]
+      n_cols <- dim(x[[1]])[2]
+      #Convert coda object to data.frame
+      mcmc <- data.frame(do.call(rbind, x)) #drop data.frame if matrix/array needed
+      #Create CHAIN variable
+      mcmc$CHAIN <- rep(1:n_chains, each=n_rows)
+      #Re-order so CHAIN is in the 1st spot
+      mcmc <- mcmc[, c((n_cols+1), 1:n_cols)]
+      #Put original column names back in
+      colnames(mcmc)[-1] <- df_nms
+    }
+
   return(mcmc)
 }
 

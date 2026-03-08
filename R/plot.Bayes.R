@@ -280,6 +280,12 @@ plot.Bayes <- function(x, y=NULL, type="n", parameter=NULL, center="mode", mass=
   } else {
     cex.text <- 1
   }
+  #Make vlim if there is observed data
+  if(y %in% c("target", "check")) {
+    if(!is.null(data)) {
+      vlim <- range(data[, dv], na.rm=TRUE)
+    }
+  }
 
   #Chain statistics
   if(y %in% c('dxa', 'dxd', 'dxg', 'dxt')) {
@@ -315,13 +321,6 @@ plot.Bayes <- function(x, y=NULL, type="n", parameter=NULL, center="mode", mass=
 
 ################################################################################
 
-
-  ################################################################################
-  #                           Bayesian Analysis                                  #
-  ################################################################################
-  ################################################################################
-  #                     Modified effective sample size                           #
-  ################################################################################
 
   ################################################################################
   #           3. Function to plot HDIs for hierarchical estimation               #
