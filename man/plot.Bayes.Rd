@@ -157,7 +157,8 @@ Default is NULL.}
 
 \item{bcol}{a single or multiple element character vector to specify the bar or band color(s).
 When Bayesian estimates and observed values are present, the first colors are for Bayesian estimates
-while the last colors are observed values. Defaults to, if nothing selected, 'gray'.}
+while the last colors are observed values. Defaults to, if nothing selected, 'gray', except when y = 'multi'
+and then no overall HDI is graphed until a color is selected.}
 
 \item{lcol}{a single or multiple element character vector to specify the line color(s).
 When Bayesian estimates and observed values are present, the first colors are Bayesian estimates

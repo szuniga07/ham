@@ -537,7 +537,7 @@ fncHdiBinSmry <- function(MCmatrix, expand=NULL, datFrm, Outcome, Group2, Group3
 
   #Observed rate
   #if (Distribution == "Beta") {
-  if (Distribution %in% c("bern", "bin")) {
+  if (Distribution %in% c("bin")) {
     postDF$Obs.Rate <- postDF[, Outcome] / postDF[, "N"]
   } else {
     postDF$Obs.Rate <- postDF[, "Sum"] / postDF[, "N"]

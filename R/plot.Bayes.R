@@ -85,7 +85,8 @@
 #' @param breaks number of breaks in a histogram. Default is 15.
 #' @param bcol a single or multiple element character vector to specify the bar or band color(s).
 #' When Bayesian estimates and observed values are present, the first colors are for Bayesian estimates
-#' while the last colors are observed values. Defaults to, if nothing selected, 'gray'.
+#' while the last colors are observed values. Defaults to, if nothing selected, 'gray', except when y = 'multi'
+#' and then no overall HDI is graphed until a color is selected.
 #' @param lcol a single or multiple element character vector to specify the line color(s).
 #' When Bayesian estimates and observed values are present, the first colors are Bayesian estimates
 #' while the last colors are observed values. When multiple lines are needed, single item lines
@@ -231,9 +232,11 @@ plot.Bayes <- function(x, y=NULL, type="n", parameter=NULL, center="mode", mass=
   level <- as.character(level) #not working as numeric level
   #bar colors
   if(is.null(bcol)) {
+    if(y != "multi") {
     bcol <- "gray"
   } else {
     bcol <- bcol
+  }
   }
   #point colors
   if(is.null(pcol)) {
@@ -551,7 +554,9 @@ plot.Bayes <- function(x, y=NULL, type="n", parameter=NULL, center="mode", mass=
     Cbar_y <- c(1:length(plot_row_numbers), length(plot_row_numbers):1)
     #Create shading
     if(Level >= 2) {
+      if(!is.null(plyCol)) {
       polygon(Cbar_x, Cbar_y, col = adjustcolor(plyCol, alpha.f = 0.4), border= plyCol )
+      }
     }
     #Add legend
     if(!is.null(Leg.Loc) ) {
