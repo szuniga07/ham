@@ -26,8 +26,8 @@
 #' the ROPE of a coin is set to 0.45 to 0.55 but the posterior 95% HDI is 0.61 - 0.69 so we reject
 #' the null hypothesis value of 0.50. We can accept the null hypothesis if the entire 95% HDI falls with the ROPE. Default is NULL.
 #' @param newdata optional logical vector that indicates if you want the new MCMC data returned. When newdata=TRUE,
-#' it will return the list object of MCMC chains, converted into a data frame. This new data can be used for
-#' analysis or plots. The default is newdata=FALSE.
+#' it will return the list object of MCMC chains, converted into a data frame. This data is used for
+#' analysis and all plots. Please select newdata=TRUE to produce any graphs. The default is newdata=FALSE.
 #' @param type character vector of length == 1 that indicates the likelihood function used in the model when y='multi' or y='target'.
 #' Select 'n', 'ln', 'w', 'g', 't', 'bern', and 'bin' for these respective options in Bayesian estimation (multilevel):
 #' 'Normal', 'Log-normal', 'Weibull', 'Gamma', 't', 'Bernoulli', or 'binomial'. Default is NULL.

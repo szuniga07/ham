@@ -219,6 +219,57 @@ plot.Bayes <- function(x, y=NULL, type="n", parameter=NULL, center="mode", mass=
   if(pct <= 0 & pct >= 100) {
     stop("Error: Expecting pct within this range: 0 < pct < 100.")
     }
+# Stops to ensure the minimum arguments selected for various 'y' options #
+  if(y %in% c("post", 'dxa', 'dxd', 'dxg', 'dxt', 'check', 'multi','target')) {
+    if (any(is.na(x$MCMC)) ==TRUE) {
+      stop("Error: Expecting that the Bayes object's MCMC is not NA for the y argument option you selected. Try running Bayes() with newdata=TRUE.")
+    }
+  }
+  if(y== "post") {
+    if (any(sapply(list(x, parameter), is.null))) {
+      stop("Error: Expecting that the 'x' and 'parameter' arguments are not NULL when y='post'. Please include those missing argument entries.")
+    }
+  }
+  if(y %in% c('dxa', 'dxd', 'dxg', 'dxt')) {
+    if (any(sapply(list(x, parameter), is.null))) {
+      stop("Error: Expecting that the 'x' and 'parameter' arguments are not NULL when y= 'dxa', 'dxd', 'dxg', or 'dxt'. Please include those missing argument entries.")
+    }
+  }
+  if(y== "check") {
+    if(is.null(type) ) {
+        stop("Error: Expecting that the 'type' argument is not NULL when y='check'. Please include the missing argument entries.")
+    }
+  }
+  if(y== "check") {
+    if(type %in% c('n', 'ln', 'sn', 'w', 'g', 't')) {
+      if (any(sapply(list(x, parameter, data, dv), is.null))) {
+      stop("Error: Expecting that the 'x', 'parameter', 'data', and 'dv' arguments are not NULL when y='check' and type= 'n', 'ln', 'sn', 'w', 'g', or 't'. Please include those missing argument entries.")
+    }
+  }
+  }
+  #t analysis of variance
+  if(y== "check") {
+    if(type == "taov") {
+      if (any(sapply(list(data, dv, iv, parameter), is.null))) {
+        stop("Error: Expecting that the 'x', 'parameter', 'data', 'dv', and 'iv' arguments are not NULL when y='check' and type= 'taov'. Please include those missing argument entries.")
+      }
+    }
+  }
+  if(y== "check") {
+    if(type == "taov1") {
+      if (any(sapply(list(data, dv, parameter), is.null))) {
+        stop("Error: Expecting that the 'x', 'parameter', 'data', and 'dv' arguments are not NULL when y='check' and type= 'taov1'. Please include those missing argument entries.")
+      }
+    }
+  }
+  if(y== "check") {
+    if(type %in% c('ol', 'oq','oc', 'lnl', 'lnq', 'lnc', 'logl', 'logq', 'logc')) {
+      if (any(sapply(list(data, dv, iv, parameter), is.null))) {
+        stop("Error: Expecting that the 'x', 'parameter', 'data', 'dv', and iv arguments are not NULL when y='check' and type= 'ol', 'oq','oc', 'lnl', 'lnq', 'lnc', 'logl', 'logq', or 'logc'. Please include those missing argument entries.")
+      }
+    }
+  }
+
 
 #Assign new objects
   MCMC <- x$MCMC
@@ -283,19 +334,8 @@ plot.Bayes <- function(x, y=NULL, type="n", parameter=NULL, center="mode", mass=
   } else {
     cex.text <- 1
   }
-  #Make vlim if there is observed data
-  if(!is.null(vlim)) {
-    vlim <- vlim
-  } else {
-    if(y %in% c("target", "check")) {
-    if(type %in% c("ln", "sn", "w", "g", "t")) {
-    if(!is.null(data)) {
-      vlim <- range(data[, dv], na.rm=TRUE)
-    }
-    }
-    }
-  }
   #regression trend lines
+  ## Set various conditions for vlim
   if(!is.null(vlim)) {
     vlim <- vlim
   } else {
@@ -305,8 +345,21 @@ plot.Bayes <- function(x, y=NULL, type="n", parameter=NULL, center="mode", mass=
         vlim <- range(data[, iv], na.rm=TRUE)
       }
     }
+    if(type %in% c("n","ln", "sn", "w", "g", "t")) {
+      if(!is.null(data)) {
+        vlim <- range(data[, dv], na.rm=TRUE)
+      }
+    }
   }
+    if(y %in% c("target")) {
+      if(type %in% c("n","ln", "sn", "w", "g", "t")) {
+        if(!is.null(data)) {
+          vlim <- range(data[, dv], na.rm=TRUE)
+        }
+      }
+    }
   }
+
   #Chain statistics
   if(y %in% c('dxa', 'dxd', 'dxg', 'dxt')) {
   n_rows <- dim(MCMC[, parameter, drop=FALSE])[1]
