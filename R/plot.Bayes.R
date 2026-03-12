@@ -163,20 +163,74 @@
 #' Stan, Second Edition. New York: Academic Press. ISBN: 9780124058880
 #'
 #' @examples
+#' # Posterior estimates of length of stay #
+#' # Set up the Bayes object first, convert the chains
+#' blos1 <- Bayes(losmcmc, newdata=TRUE)
+#'
+#' #' # Examine Bayesian model diagnostics for estimated length of stay (LOS) #
+#' # Review traceplots, density plots, autocorrelation factor, and Gelman-Rubin statistic
+#' plot(blos1, y="dxt", parameter="muOfY")
+#' plot(blos1, y="dxd", parameter="muOfY")
+#' plot(blos1, y="dxa", parameter="muOfY")
+#' plot(blos1, y="dxg", parameter="muOfY")
+#'
+#' # And we can calculate statistics that combine multiple parameters (e.g., calculate
+#' # the mean difference between intervention and control groups). Here we get the
+#' # coefficient of variation by dividing the standard deviation by the mean. We use
+#' # the 'math' argument and arrange our parameters in the proper order.
+#' # We only need the first 4 arguments but we'll add a little more.
+#' plot(x=blos1, y="post", parameter=list("sigmaOfY", "muOfY" ),math="divide",
+#' bcol="cyan", HDItext=.3, main= "Coefficient of Variation")
+#'
+#' # Posterior Predictive Checks on how well our model fits the data #
+#' # Estimating center and spread for hospital length of stay
+#' # Generally, we only need the first 6 arguments but we'll modify the plot.
+#' # A model with a gamma likelihood would fit better but this is ok for now.
+#' plot(x=blos1, y="check", type="n", data=hosprog, dv="los",
+#' parameter=c("muOfY", "sigmaOfY"), breaks=30, cex.axis=1.3, lwd=3, xlab=NULL,
+#' pline=20, vlim=c(-2, 20), xlim=c(-2, 20), add.legend="topright",
+#' main="Length of Stay", cex.main=1.5, xpt=5, pcol="red", lcol="orange",
+#' cex.legend=1, bcol="cyan")
+#'
+#' # Estimating the regression trend line
+#' # Now lets look at the trend of conc on CO2 uptake from the CO2 data.
+#' # Using a quadratic model with conc^2 would help and an option in ham.
+#' # First, create the Bayes object
+#' bco2 <- Bayes(x=co2mcmc, y='mcmc', newdata=TRUE )
+#' # We generally only need the first 7 arguments below.
+#' plot(x=bco2, y="check", type="ol", data=CO2, dv="uptake", iv="conc",
+#' parameter=c("b0","b1"), add.data="al", cex.axis=1.3, lwd=1.5, pline=50,
+#' vlim=c(50, 1100), xlim=c(0, 1100), ylim=c(0, 50), cex=2, cex.lab=2,
+#' pcol="magenta", cex.main=2,cex.legend=1.2,  add.legend="topleft",
+#' lcol="steelblue")              #vlim lets me extrapolate a little
+#'
+#' # Hierarchical or Multilevel Model Summary #
+#' # We generally only need the first 3 arguments below. But we'll subset
+#' # on 8 of 12 plants in the level 2 model (observations nested in plants)
+#' # and modify other settings.
+#' plot(x=co2multi, y="multi", level=2, aorder=FALSE,
+#' subset= c("Qn2","Qn3","Qc3","Qc2","Mn3","Mn2","Mc2","Mc3"),
+#' lcol="blue", pcol= c("red", "skyblue"), round.c=1, bcol="yellow",
+#' xlim=c(-.1, 1), legend=NULL, add.legend="topright", lwd=3, cex.lab=1.2,
+#' cex= 2, cex.main=1.5, cex.axis=.75, cex.legend=1.5, X.Lab=NULL)
+#' # And now the level 3 plot (observation in plants in Treatment by type groups)
+#' plot(x=co2multi, y="multi", level=3, aorder=FALSE, lcol="blue", pcol= c("green", "pink"),
+#' round.c=1, bcol="lavender", xlim=c(-.1, 1), legend=NULL, add.legend="right", lwd=3,
+#' cex.lab =1.2, cex= 2, cex.main=1.5, cex.axis=.75, cex.legend=1.5, X.Lab=NULL)
+#'
 #' # Targets for length of stay (LOS) #
 #' # Our administrators ask how far are we from our goals, they ask about targets
 #' # in increments of 5 points of probability or specific days. We answer both.
 #' btarget1 <- Bayes(x=losmcmc, y="target", type="n", parameter=c("muOfY","sigmaOfY"),
 #' newdata=TRUE, target=list(p=c(.35,.4,.45, .5, .55),  y=c(3,4))) # 'newdata' for plots
-#' #Target graph using the standard option, overlaying estimate of mode parameter
+#' # Target graph using the standard option, overlaying estimate of mode parameter
 #' plot(x=btarget1, y="target", type="n", lcol="purple", tgtcol="blue", xlim=c(3.5, 5))
-#' #Target graph using a posterior predictive check, more intuitive
+#' # Target graph using a posterior predictive check, more intuitive
 #' plot(x=btarget1, y="target", type="n", data=hosprog, dv="los", breaks=30,
-#' cex.axis=1.3, lwd=3, pline=20, vlim=c(-1, 15), xlim=c(-1, 12),
+#' cex.axis=1.3, lwd=3, pline=20, vlim=c(-1, 12), xlim=c(-1, 10),
 #' parameter=c("muOfY","sigmaOfY"), add.legend="topright", main="Length of Stay",
-#' cex.main=1.5, xpt=5, pcol="green", lcol="cyan", tgtcol="blue", bcol="orange",
-#' cex.legend=1, cex.text = 2)
-
+#' cex.main=1.5, xpt=5, pcol="black", lcol="cyan", tgtcol="blue", bcol="orange",
+#' cex.legend=1.5, cex.text = 2)
 
 plot.Bayes <- function(x, y=NULL, type="n", parameter=NULL, center="mode", mass=0.95, compare=NULL, rope=NULL,
                        data=NULL, dv=NULL, iv=NULL, add.data="n", group=NULL,
@@ -394,7 +448,7 @@ if(y== "target") {
   #Chain statistics
   if(y != "multi") {
     #  if(y %in% c('dxa', 'dxd', 'dxg', 'dxt')) {
-    n_rows <- dim(MCMC[, parameter, drop=FALSE])[1]
+    n_rows <- dim(MCMC[, parameter[[1]], drop=FALSE])[1]
     n_chains <- max(MCMC[, "CHAIN"])
     n_rowchn <- n_rows/n_chains
     DBDAplColors = c("skyblue","black","royalblue","steelblue")
