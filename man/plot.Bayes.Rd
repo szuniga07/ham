@@ -256,7 +256,19 @@ associated with specific percentiles (and vice-versa) that can be used to help s
 from Bayes class objects that converted multiple chains into data frames.
 }
 \examples{
-## Hospital LOS and readmissions ##
+# Targets for length of stay (LOS) #
+# Our administrators ask how far are we from our goals, they ask about targets
+# in increments of 5 points of probability or specific days. We answer both.
+btarget1 <- Bayes(x=losmcmc, y="target", type="n", parameter=c("muOfY","sigmaOfY"),
+newdata=TRUE, target=list(p=c(.35,.4,.45, .5, .55),  y=c(3,4))) # 'newdata' for plots
+#Target graph using the standard option, overlaying estimate of mode parameter
+plot(x=btarget1, y="target", type="n", lcol="purple", tgtcol="blue", xlim=c(3.5, 5))
+#Target graph using a posterior predictive check, more intuitive
+plot(x=btarget1, y="target", type="n", data=hosprog, dv="los", breaks=30,
+cex.axis=1.3, lwd=3, pline=20, vlim=c(-1, 15), xlim=c(-1, 15),
+parameter=c("muOfY","sigmaOfY"), add.legend="topright", main="Length of Stay",
+cex.main=1.5, xpt=5, pcol="green", lcol="cyan", tgtcol="blue", bcol="orange",
+cex.legend=1, cex.text = 2)
 }
 \references{
 Gelman, A., Goodrich, B., Gabry, J., & Vehtari, A. (2019). R-squared for Bayesian
