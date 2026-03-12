@@ -27,7 +27,7 @@
 #' for log-normal and Poisson models with lines based on exponentiated values. In general, it is important to note that the observed data
 #' may not be on the same scale as the parameter estimates and may not be automatically visible in the graph (i.e., x and y-axis
 #' limits may help). When graphing target summary plots that use posterior predictive checks rather than the standard posterior
-#' summary graph, enter y='target' and other arguments relevant to y='check'. However, type= 'bern', 'beta', 'sn' is not available but
+#' summary graph, enter y='target' and other arguments relevant to y='check'. However, type= 'bern', 'bin', 'sn' is not available but
 #' type='n', 'ln', 'w', 'g', or 't' are available. Default is NULL.
 #' @param parameter a character vector of length >= 1 or a 2 element list with the name(s) of parameter in MCMC chains to produce
 #' summary statistics. Use a 1 element vector to get posterior estimates of a single parameter. Use a 2 or more element vector
@@ -128,9 +128,9 @@
 #' combined hospitals Y and Z. Additionally, compute statistics like the coefficient of variation when math='divide'
 #' and parameter= list('Standard_Deviation', 'Mean'). Default is 'n' for no math function.
 #' @param es one element vector that indicates which type of likelihood distribution is relevant in calculating Jacob Cohen's effect
-#' sizes between 2 parameters when y='post'. Options are 'beta' and 'n' for the beta (or Bernoulli or binomial) distribution for
+#' sizes between 2 parameters when y='post'. Options are 'bern', 'bin', and 'n' for the Bernoulli or binomial distributions for
 #' binary outcomes and none (i.e., no distribution, hence no effect size calculated). For example, to get the posterior distribution
-#' summary for the difference between the intervention and control groups on 30-day readmissions or not, use es='beta' when y='post',
+#' summary for the difference between the intervention and control groups on 30-day readmissions or not, use es='bern' or 'bin' when y='post',
 #' math='subtract', and parameter=list('intMean', 'ctlMean'). Default is 'n' which indicates not to calculate the effect size.
 #' @param subset a single or multiple element character or numeric vector of group names that are a subset of the observations to use in the
 #' grouping when y='multi'. The default is NULL, thereby using all observations. Specify, for example, enter c('NY', 'Toronto', 'LA',
@@ -257,8 +257,8 @@ plot.Bayes <- function(x, y=NULL, type="n", parameter=NULL, center="mode", mass=
   }
   # ensure no other distributions for effect sizes are used right now
   if(es != "n") {
-    if(es != "beta") {
-      stop("Error: Expecting 'beta' distribution for es argument or 'n'.")
+    if(!es %in% c("bern","bin")) {
+      stop("Error: Expecting 'bern' or 'bin' distribution for es argument or 'n'.")
     }
   }
   # ensure parameter only has 1 item for diagnostics
@@ -455,7 +455,7 @@ if(y== "target") {
 }
 
   ####################
-  # Effect size Beta #
+  # Effect size Beta # #for c("bern", "bin")
   ####################
   fncESBeta <-  function(yVal1, yVal2) {
     as1 <- (asin(sign( yVal1)  * sqrt(abs( yVal1 ))))*2
@@ -472,7 +472,7 @@ if(y== "target") {
     paramSampleVec <- switch(math,
                              "n" =   rowMeans(as.matrix(MCMC[, parameter, drop=FALSE])),
                              "add" =  rowMeans(as.matrix(MCMC[, parameter[[1]], drop=FALSE ])) + rowMeans(as.matrix(MCMC[, parameter[[2]], drop=FALSE ])),
-                             "subtract" = if(es== "beta") fncESBeta(rowMeans(as.matrix(MCMC[, parameter[[1]], drop=FALSE ])), rowMeans(as.matrix(MCMC[, parameter[[2]], drop=FALSE ]))) else
+                             "subtract" = if(es %in% c("bern", "bin")) fncESBeta(rowMeans(as.matrix(MCMC[, parameter[[1]], drop=FALSE ])), rowMeans(as.matrix(MCMC[, parameter[[2]], drop=FALSE ]))) else
                                rowMeans(as.matrix(MCMC[, parameter[[1]], drop=FALSE ])) - rowMeans(as.matrix(MCMC[, parameter[[2]], drop=FALSE ])),
                              "multiply" = rowMeans(as.matrix(MCMC[, parameter[[1]], drop=FALSE ])) * rowMeans(as.matrix(MCMC[, parameter[[2]], drop=FALSE ])),
                              "divide" = rowMeans(as.matrix(MCMC[, parameter[[1]], drop=FALSE ])) / rowMeans(as.matrix(MCMC[, parameter[[2]], drop=FALSE ]))
@@ -500,7 +500,12 @@ if(y== "target") {
     Group3 <- multi_smry$Group3
     Outcome <- multi_smry$Outcome
     ciconf_lev <- multi_smry$ciconf_lev
-    Average <- multi_smry$Average
+    #Make first letter capitalized
+    firstchar <- function(x) {
+      substr(x, 1, 1) <- toupper(substr(x, 1, 1))
+      x
+    }
+    Average <- firstchar(multi_smry$Average)
     Theta <- multi_smry$Theta
     Omega2 <- multi_smry$Omega2
     Omega3 <- multi_smry$Omega3
@@ -1150,7 +1155,7 @@ if(y== "target") {
     ##########
     ## Beta ##
     ##########
-    if(Distribution == "beta") {
+    if(Distribution %in% c("bern", "bin")) {
       as1 <- (asin(sign( rowMeans(MC.Matrix[, yVal1, drop=FALSE]) ) * sqrt(abs( rowMeans(MC.Matrix[, yVal1, drop=FALSE]) ))))*2
       as2 <- (asin(sign( rowMeans(MC.Matrix[, yVal2, drop=FALSE]) ) * sqrt(abs( rowMeans(MC.Matrix[, yVal2, drop=FALSE]) ))))*2
       Effect.Size.Output <- abs(as1 - as2 )

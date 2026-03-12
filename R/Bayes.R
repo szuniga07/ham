@@ -385,7 +385,17 @@ fncHdiBinSmry <- function(MCmatrix, expand=NULL, datFrm, Outcome, Group2, Group3
   ###################################################################
   #Get the level of the model
   Level <- length(c(Theta, Omega2, Omega3))
-
+  #Make first letter capitalized
+  firstchar <- function(x) {
+    substr(x, 1, 1) <- toupper(substr(x, 1, 1))
+    x
+  }
+  #Creat central tendency variable
+  if(!is.null(Average_type)) {
+    average_type <- firstchar(Average_type)
+  } else {
+    average_type <- "Mode"
+  }
   ## These next 30 lines will exclude irrelevant parameters ##
   keep_theta_cols <- NULL
   keep_omega2_cols <- NULL
@@ -436,11 +446,11 @@ fncHdiBinSmry <- function(MCmatrix, expand=NULL, datFrm, Outcome, Group2, Group3
     datFrm[, Group2] <- factor(datFrm[, Group2], levels=group2_aggr_factor)
   }
   #Get the type of estimate
-  if (is.null(Average_type)) {
-    average_type <- "Mode"
-  } else {
-    average_type <- Average_type
-  }
+#  if (is.null(Average_type)) {
+#    average_type <- "Mode"
+#  } else {
+#    average_type <- Average_type
+#  }
   #Number of level-2 groups
   numGroups <- length(table(datFrm[, Group2]))
   #Number of level-3 categories
