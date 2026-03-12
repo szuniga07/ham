@@ -46,7 +46,19 @@
 #' Society for Medical Decision Making, 26, 6, 565-574. https://doi.org/10.1177/0272989X06295361
 #'
 #' @examples
-#' ## Hospital LOS and readmissions ##
+#' ## Predicting car engine shape type, v or straight  ##
+#' # run the model
+#' car_m1 <- assess(formula=vs ~ hp + am, data=mtcars, regression="logistic")
+#' # create a decision object, enter the model name and a threshold on the logit scale
+#' d1 <- decision(x=car_m1, threshold= -0.767)
+#' #Plot the classification results
+#' plot(x=d1, y= "cl")
+#'
+#' #Plot the net benefit
+#' plot(x=d1, y= "nb")
+#'
+#' #Plot the interventions saved
+#' plot(x=d1, y= "is")
 
 plot.decision <- function(x, y=NULL, main=NULL, xlab=NULL, ylab=NULL, xlim=NULL, ylim=NULL, lwd=NULL,
                        bcol=NULL, lcol=NULL, add.legend=NULL, legend=NULL, cex=1, cex.lab=NULL, cex.axis=NULL, cex.main=NULL,

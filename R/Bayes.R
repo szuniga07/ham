@@ -72,8 +72,35 @@
 #' Stan, Second Edition. New York: Academic Press. ISBN: 9780124058880
 #'
 #' @examples
-#' ## Hospital LOS and readmissions ##
-#' # X-bar chart statistics
+#' # Posterior estimates of length of stay (LOS) #
+#' # What is the 'average' LOS and are we beyond our goal of it being <= 3 days?
+#' blos1 <- Bayes(losmcmc, y="post", parameter="muOfY", newdata=TRUE,
+#' compare=4.5, rope=c(1,3))   #Where are we in relation to 4.5 days?
+#' print(blos1$Posterior.Summary) #looks like LOS is substantially higher than 3 days
+#'
+#' # Multilevel or hierarchical model summaries #
+#' # Could below does not run, no 'mcmc_sample' object
+#' # bmulti0 <- Bayes(x=mcmc_sample, parameter=c("theta", "omega","omegaO"),
+#' # y="multi", type="bern", data=mydf, dv="upbin", iv= c("Plant", "Group"))
+#'
+#' # Targets for length of stay (LOS) #
+#' # Our administrators ask how far are we from our goals, they ask about targets
+#' # in increments of 5 points of probability or specific days. We answer both.
+#' btarget1 <- Bayes(x=losmcmc, y="target", type="n", parameter=c("muOfY","sigmaOfY"),
+#' newdata=TRUE, target=list(p=c(.35,.4,.45, .5, .55),  y=c(3,4))) # 'newdata' for plots
+#' print(btarget1$Target$Est.Quantile.P)  # 5-point increments
+#' print(btarget1$Target$Est.Prob.GT.Y)   # specific day values, 4 days is plausible
+#'
+#' # Gelamn's R^2 #
+#' # the regression model using Base R data, CO2: update ~ conc
+#' bR2 <- Bayes(x=co2mcmc, y='r2', data=CO2, iv="uptake",
+#' parameter=c("b0", "b1", "sigma"), newdata=TRUE)
+#' # bR2 returns various information
+#' print(bR2$R2.Summary$R2)                   # R^2
+#' print(bR2$R2.Summary$Variance.Pred.Y)      # Variance of predicted outcome
+#' print(bR2$R2.Summary$Variance.Residuals)   # Variance of residuals
+#' print(head(bR2$R2.Summary$yPRED))          # Predicted outcomes
+
 
 Bayes <- function(x, y="mcmc", parameter=NULL, mass=.95, compare=NULL,
                     rope=NULL, newdata=FALSE, type=NULL, center="Mode",
@@ -88,6 +115,35 @@ Bayes <- function(x, y="mcmc", parameter=NULL, mass=.95, compare=NULL,
     }
     }
   }
+  ## Bare minimum requirement for main options ##
+  if(y== "post") {
+    if (any(sapply(list(x, parameter), is.null))) {
+      stop("Error: Expecting that the 'x' and 'parameter' arguments are not NULL when y='post'. Please include those missing argument entries.")
+    }
+  }
+  if(y== "multi") {
+    if (any(sapply(list(x, parameter, type, data, dv, iv), is.null))) {
+      stop("Error: Expecting that the 'x', 'parameter', 'data', 'dv', and 'iv' arguments are not NULL when y='multi'. Please include those missing argument entries.")
+    }
+  }
+  if(y== "multi") {
+    if(type == "bin") {
+    if (any(sapply(list(x, parameter, data, dv, iv, expand), is.null))) {
+        stop("Error: Expecting that the 'x', 'parameter', 'data', 'dv', 'iv', and 'expand' arguments are not NULL when y='multi'. Please include those missing argument entries.")
+    }
+  }
+  }
+  if(y== "target") {
+    if (any(sapply(list(x, type, parameter), is.null))) {
+      stop("Error: Expecting that the 'x', 'type', 'parameter', and 'target' arguments are not NULL when y='target'. Please include those missing argument entries.")
+    }
+  }
+  if(y== "r2") {
+    if (any(sapply(list(x, data, iv, parameter), is.null))) {
+      stop("Error: Expecting that the 'x', 'data', 'iv', and 'parameter' arguments are not NULL when y='target'. Please include those missing argument entries.")
+    }
+  }
+
   #Looking for 1 credible mass value within 0 and 1
   if(length(mass) > 1 ) {
     stop("Error: Expecting only 1 mass value.")
@@ -115,6 +171,12 @@ Bayes <- function(x, y="mcmc", parameter=NULL, mass=.95, compare=NULL,
     if( is.null(names(targets) )) {
       stop("Error: Expecting a named list for 'targets'.")
     }
+  }
+#Convert center to median when y="r2"
+  if(y == "r2") {
+    center <- "median"
+  }  else {
+    center <- "mode"
   }
 
 ################################################################################

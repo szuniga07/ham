@@ -27,8 +27,8 @@
 #' for log-normal and Poisson models with lines based on exponentiated values. In general, it is important to note that the observed data
 #' may not be on the same scale as the parameter estimates and may not be automatically visible in the graph (i.e., x and y-axis
 #' limits may help). When graphing target summary plots that use posterior predictive checks rather than the standard posterior
-#' summary graph, enter y='target' and other arguments relevant to y='check'. However, type='sn' is not available but type='n',
-#' 'ln', 'w', 'g', or 't' are available. Default is NULL.
+#' summary graph, enter y='target' and other arguments relevant to y='check'. However, type= 'bern', 'beta', 'sn' is not available but
+#' type='n', 'ln', 'w', 'g', or 't' are available. Default is NULL.
 #' @param parameter a character vector of length >= 1 or a 2 element list with the name(s) of parameter in MCMC chains to produce
 #' summary statistics. Use a 1 element vector to get posterior estimates of a single parameter. Use a 2 or more element vector
 #' to estimate the average joint effects of multiple parameters (e.g., average infection rate for interventions A and B when
@@ -220,7 +220,8 @@ plot.Bayes <- function(x, y=NULL, type="n", parameter=NULL, center="mode", mass=
     stop("Error: Expecting pct within this range: 0 < pct < 100.")
     }
 # Stops to ensure the minimum arguments selected for various 'y' options #
-  if(y %in% c("post", 'dxa', 'dxd', 'dxg', 'dxt', 'check', 'multi','target')) {
+# multi does pre-processing and mcmc not needed
+  if(y %in% c("post", 'dxa', 'dxd', 'dxg', 'dxt', 'check', 'target')) {
     if (any(is.na(x$MCMC)) ==TRUE) {
       stop("Error: Expecting that the Bayes object's MCMC is not NA for the y argument option you selected. Try running Bayes() with newdata=TRUE.")
     }
@@ -265,12 +266,30 @@ plot.Bayes <- function(x, y=NULL, type="n", parameter=NULL, center="mode", mass=
   if(y== "check") {
     if(type %in% c('ol', 'oq','oc', 'lnl', 'lnq', 'lnc', 'logl', 'logq', 'logc')) {
       if (any(sapply(list(data, dv, iv, parameter), is.null))) {
-        stop("Error: Expecting that the 'x', 'parameter', 'data', 'dv', and iv arguments are not NULL when y='check' and type= 'ol', 'oq','oc', 'lnl', 'lnq', 'lnc', 'logl', 'logq', or 'logc'. Please include those missing argument entries.")
+        stop("Error: Expecting that the 'x', 'parameter', 'data', 'dv', and 'iv' arguments are not NULL when y='check' and type= 'ol', 'oq','oc', 'lnl', 'lnq', 'lnc', 'logl', 'logq', or 'logc'. Please include those missing argument entries.")
       }
     }
   }
-
-
+  if(y== "multi") {
+      if (any(sapply(list(x, level), is.null))) {
+        stop("Error: Expecting that the 'x' and 'level' arguments are not NULL when y='multi'. Please include those missing argument entries.")
+      }
+  }
+  if(y== "target") {
+    if(!is.null(parameter)) {
+    if (any(sapply(list(x, data, dv), is.null))) {
+      stop("Error: Expecting that the 'x', 'data', and 'dv' arguments are not NULL when y='target'. Please include those missing argument entries.")
+    }
+  }
+}
+#Basic target option
+if(y== "target") {
+  if(is.null(parameter)) {
+    if (is.null(x)) {
+      stop("Error: Expecting that the 'x' argument is not NULL when y='target'. Please include the missing argument entry.")
+    }
+}
+}
 #Assign new objects
   MCMC <- x$MCMC
   multi_smry <- x$Multilevel
@@ -361,12 +380,13 @@ plot.Bayes <- function(x, y=NULL, type="n", parameter=NULL, center="mode", mass=
   }
 
   #Chain statistics
-  if(y %in% c('dxa', 'dxd', 'dxg', 'dxt')) {
-  n_rows <- dim(MCMC[, parameter, drop=FALSE])[1]
-  n_chains <- max(MCMC[, "CHAIN"])
-  n_rowchn <- n_rows/n_chains
-  DBDAplColors = c("skyblue","black","royalblue","steelblue")
-  }
+  if(y != "multi") {
+    #  if(y %in% c('dxa', 'dxd', 'dxg', 'dxt')) {
+    n_rows <- dim(MCMC[, parameter, drop=FALSE])[1]
+    n_chains <- max(MCMC[, "CHAIN"])
+    n_rowchn <- n_rows/n_chains
+    DBDAplColors = c("skyblue","black","royalblue","steelblue")
+}
 
   ####################
   # Effect size Beta #
@@ -382,14 +402,16 @@ plot.Bayes <- function(x, y=NULL, type="n", parameter=NULL, center="mode", mass=
   ########################
   ## Set math functions ##
   ########################
-  paramSampleVec <- switch(math,
-                           "n" =   rowMeans(as.matrix(MCMC[, parameter, drop=FALSE])),
-                           "add" =  rowMeans(as.matrix(MCMC[, parameter[[1]], drop=FALSE ])) + rowMeans(as.matrix(MCMC[, parameter[[2]], drop=FALSE ])),
-                           "subtract" = if(es== "beta") fncESBeta(rowMeans(as.matrix(MCMC[, parameter[[1]], drop=FALSE ])), rowMeans(as.matrix(MCMC[, parameter[[2]], drop=FALSE ]))) else
-                             rowMeans(as.matrix(MCMC[, parameter[[1]], drop=FALSE ])) - rowMeans(as.matrix(MCMC[, parameter[[2]], drop=FALSE ])),
-                           "multiply" = rowMeans(as.matrix(MCMC[, parameter[[1]], drop=FALSE ])) * rowMeans(as.matrix(MCMC[, parameter[[2]], drop=FALSE ])),
-                           "divide" = rowMeans(as.matrix(MCMC[, parameter[[1]], drop=FALSE ])) / rowMeans(as.matrix(MCMC[, parameter[[2]], drop=FALSE ]))
-  )
+  if(y != "multi") {
+    paramSampleVec <- switch(math,
+                             "n" =   rowMeans(as.matrix(MCMC[, parameter, drop=FALSE])),
+                             "add" =  rowMeans(as.matrix(MCMC[, parameter[[1]], drop=FALSE ])) + rowMeans(as.matrix(MCMC[, parameter[[2]], drop=FALSE ])),
+                             "subtract" = if(es== "beta") fncESBeta(rowMeans(as.matrix(MCMC[, parameter[[1]], drop=FALSE ])), rowMeans(as.matrix(MCMC[, parameter[[2]], drop=FALSE ]))) else
+                               rowMeans(as.matrix(MCMC[, parameter[[1]], drop=FALSE ])) - rowMeans(as.matrix(MCMC[, parameter[[2]], drop=FALSE ])),
+                             "multiply" = rowMeans(as.matrix(MCMC[, parameter[[1]], drop=FALSE ])) * rowMeans(as.matrix(MCMC[, parameter[[2]], drop=FALSE ])),
+                             "divide" = rowMeans(as.matrix(MCMC[, parameter[[1]], drop=FALSE ])) / rowMeans(as.matrix(MCMC[, parameter[[2]], drop=FALSE ]))
+    )
+  }
 
 
 ################################################################################

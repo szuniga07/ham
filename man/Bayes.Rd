@@ -100,8 +100,34 @@ hierarchical or multilevel models (up to 3 levels), and the R2 for Bayesian regr
 metric level predictors.
 }
 \examples{
-## Hospital LOS and readmissions ##
-# X-bar chart statistics
+# Posterior estimates of length of stay (LOS) #
+# What is the 'average' LOS and are we beyond our goal of it being <= 3 days?
+blos1 <- Bayes(losmcmc, y="post", parameter="muOfY", newdata=TRUE,
+compare=4.5, rope=c(1,3))   #Where are we in relation to 4.5 days?
+print(blos1$Posterior.Summary) #looks like LOS is substantially higher than 3 days
+
+# Multilevel or hierarchical model summaries #
+# Could below does not run, no 'mcmc_sample' object
+# bmulti0 <- Bayes(x=mcmc_sample, parameter=c("theta", "omega","omegaO"),
+# y="multi", type="bern", data=mydf, dv="upbin", iv= c("Plant", "Group"))
+
+# Targets for length of stay (LOS) #
+# Our administrators ask how far are we from our goals, they ask about targets
+# in increments of 5 points of probability or specific days. We answer both.
+btarget1 <- Bayes(x=losmcmc, y="target", type="n", parameter=c("muOfY","sigmaOfY"),
+newdata=TRUE, target=list(p=c(.35,.4,.45, .5, .55),  y=c(3,4))) # 'newdata' for plots
+print(btarget1$Target$Est.Quantile.P)  # 5-point increments
+print(btarget1$Target$Est.Prob.GT.Y)   # specific day values, 4 days is plausible
+
+# Gelamn's R^2 #
+# the regression model using Base R data, CO2: update ~ conc
+bR2 <- Bayes(x=co2mcmc, y='r2', data=CO2, iv="uptake",
+parameter=c("b0", "b1", "sigma"), newdata=TRUE)
+# bR2 returns various information
+print(bR2$R2.Summary$R2)                   # R^2
+print(bR2$R2.Summary$Variance.Pred.Y)      # Variance of predicted outcome
+print(bR2$R2.Summary$Variance.Residuals)   # Variance of residuals
+print(head(bR2$R2.Summary$yPRED))          # Predicted outcomes
 }
 \references{
 Gelman, A., Goodrich, B., Gabry, J., & Vehtari, A. (2019). R-squared for Bayesian

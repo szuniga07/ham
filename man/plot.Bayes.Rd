@@ -79,8 +79,8 @@ viewing results on the probability scale, select type='logl' (i.e., curved lines
 for log-normal and Poisson models with lines based on exponentiated values. In general, it is important to note that the observed data
 may not be on the same scale as the parameter estimates and may not be automatically visible in the graph (i.e., x and y-axis
 limits may help). When graphing target summary plots that use posterior predictive checks rather than the standard posterior
-summary graph, enter y='target' and other arguments relevant to y='check'. However, type='sn' is not available but type='n',
-'ln', 'w', 'g', or 't' are available. Default is NULL.}
+summary graph, enter y='target' and other arguments relevant to y='check'. However, type= 'bern', 'beta', 'sn' is not available but
+type='n', 'ln', 'w', 'g', or 't' are available. Default is NULL.}
 
 \item{parameter}{a character vector of length >= 1 or a 2 element list with the name(s) of parameter in MCMC chains to produce
 summary statistics. Use a 1 element vector to get posterior estimates of a single parameter. Use a 2 or more element vector

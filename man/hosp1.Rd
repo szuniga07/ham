@@ -5,7 +5,7 @@
 \alias{hosp1}
 \title{Patient hospital program/intervention data, intervention group only}
 \format{
-\subsection{\code{hosprog}}{
+\subsection{\code{hosp1}}{
 
 An artificial data frame with 352 rows and 10 columns, intervention patients only:
 \describe{
