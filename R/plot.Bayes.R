@@ -172,7 +172,7 @@
 #' plot(x=btarget1, y="target", type="n", lcol="purple", tgtcol="blue", xlim=c(3.5, 5))
 #' #Target graph using a posterior predictive check, more intuitive
 #' plot(x=btarget1, y="target", type="n", data=hosprog, dv="los", breaks=30,
-#' cex.axis=1.3, lwd=3, pline=20, vlim=c(-1, 15), xlim=c(-1, 15),
+#' cex.axis=1.3, lwd=3, pline=20, vlim=c(-1, 15), xlim=c(-1, 12),
 #' parameter=c("muOfY","sigmaOfY"), add.legend="topright", main="Length of Stay",
 #' cex.main=1.5, xpt=5, pcol="green", lcol="cyan", tgtcol="blue", bcol="orange",
 #' cex.legend=1, cex.text = 2)
