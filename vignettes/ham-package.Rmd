@@ -92,7 +92,9 @@ plot(x=your_group_object, y=type_of_plot)
 * y= "roll" is the 'rolling' average (e.g., rolling 12-month average).
 
 ```{r plotGroup1, fig.dim = c(6, 4.5)}
-plot(x=gr1, y="group", order="numeric", lwd=4, gcol= "blue", pcol="red", overall=TRUE, oband=TRUE, ocol="gray", tcol="green", tgt=4.5, cex=2, cex.axis=1, cex.lab=1.1, cex.text=2, cex.main=1.25, adj.alpha=.2)
+plot(x=gr1, y="group", order="numeric", lwd=4, gcol= "blue", pcol="red", overall=TRUE,
+     oband=TRUE, ocol="gray", tcol="green", tgt=4.5, cex=2, cex.axis=1, cex.lab=1.1,
+     cex.text=2, cex.main=1.25, adj.alpha=.2)
 ```
 
 It appears there is a significant difference between the groups and the intervention group is at a significantly lower level than the target set by hospital executives (vertical green line, tgt=4.5). 
@@ -114,7 +116,9 @@ print(gr1$Clustering)
 ### Graph the confidence interval trend results 
 
 ```{r plotGroup2, fig.dim = c(6, 4.5)}
-plot(x=gr1, y="time", lwd=4, gcol=c("red", "blue"), gband=TRUE, overall=TRUE, oband=TRUE, ocol="gray", tgt=4.5, tcol="green", tpline=5, tpcol="yellow", name=TRUE, cex.axis=1, cex.lab=1, cex.text=2, cex.main=1, adj.alpha=.3)
+plot(x=gr1, y="time", lwd=4, gcol=c("red", "blue"), gband=TRUE, overall=TRUE, oband=TRUE,
+     ocol="gray", tgt=4.5, tcol="green", tpline=5, tpcol="yellow", name=TRUE, cex.axis=1,
+     cex.lab=1, cex.text=2, cex.main=1, adj.alpha=.3)
 ```
 
 The intervention group's data makes up the blue line while the control is indicated with the red line. This looks interesting, the intervention and control group swap LOS ranks at the same time as the start of the intervention. This graph is made for descriptive purposes but may shed light on trends for intervention and control groups. It looks like something happened, we should continue exploring.
@@ -247,7 +251,8 @@ plot(dm1, "DID")
 
 ### View a partial prediction plot
 ```{r plotDID1, fig.dim = c(6, 4.5)}
-plot(x=dm1, y="DID", add.legend="topleft", xlim=c(-.05, 1.05), ylim=c(2, 9), main="DID: Length of Stay", col=c("cyan","magenta"), lwd=7, cex=2, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(.045), cex.text=1.5, coefs=TRUE, round.c=2, cfact=T, conf.int=TRUE, adj.alpha=0.2 )
+plot(x=dm1, y="DID", add.legend="topleft", xlim=c(-.05, 1.05), ylim=c(2, 9), main="DID: Length of Stay", col=c("cyan","magenta"), lwd=7, cex=2, cex.axis=2, cex.lab=1.5,
+     cex.main=3, arrow=TRUE, xshift=c(.045), cex.text=1.5, coefs=TRUE, round.c=2, cfact=T, conf.int=TRUE, adj.alpha=0.2 )
 ```
 
 We see above that there is a significant DID result over 3.5 fewer days length of stay. That is quite a high number. We can continue with the analysis to explain that result more but lets first examine the graph to help understand the results. 
@@ -305,7 +310,9 @@ There is a second key period of interest at month 9 which is specified with inte
 
 ### Graph ITS model 1 
 ```{r plotITS1, fig.dim = c(6, 4.5)}
-plot(im11, "ITS", add.legend="topright", xlim=c(-1, 14), ylim=c(2, 9), main="ITS: Intervention LOS", col="thistle", lwd=7, cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(.25, .25), cex.text=1.5, coefs=TRUE, round.c=2, cfact=T, conf.int=TRUE, adj.alpha=0.2, pos.text= list("ITS.Time"=3, "Intercept"=4), cex.legend=1.25, add.means=TRUE )
+plot(im11, "ITS", add.legend="topright", xlim=c(-1, 14), ylim=c(2, 9), main="ITS: Intervention LOS", col="thistle", lwd=7, cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3,
+     arrow=TRUE, xshift=c(.25, .25), cex.text=1.5, coefs=TRUE, round.c=2, cfact=T, conf.int=TRUE, adj.alpha=0.2, pos.text= list("ITS.Time"=3, "Intercept"=4),
+     cex.legend=1.25, add.means=TRUE )
 ```
 
 You've probably noticed only 1 trend line because we only have 1 group, the intervention group. In the 1 group models, our counterfactual lines appear to continue from the end of the baseline. However, we could continue the line from the the second period when there are 2 interruptions.
@@ -351,7 +358,11 @@ We will now graph the results based on our coefficients. We use many of the same
 
 ### View a partial prediction plot
 ```{r plotAssess, fig.dim = c(6, 4.5)}
-plot(im22, "ITS", add.legend="top", xlim=c(-.75, 13.1), ylim=c(2, 9), main="ITS: Length of Stay", col=c("springgreen","thistle"), lwd=7, cex=2, cex.axis=2, cex.lab=1.5,  cex.main=3, cex.legend=1.25, arrow=TRUE, xshift=c(0, .5), cex.text=1, coefs=TRUE, round.c=1, pos.text= list("txp5"=3, "post9"=4), tcol="dodgerblue", conf.int=TRUE, adj.alpha=0.3, add.means=TRUE)
+plot(im22, "ITS", add.legend="top", xlim=c(-.75, 13.1), ylim=c(2, 9), 
+     main="ITS: Length of Stay", col=c("springgreen","thistle"), lwd=7, cex=2, cex.axis=2,
+     cex.lab=1.5,  cex.main=3, cex.legend=1.25, arrow=TRUE, xshift=c(0, .5), cex.text=1,
+     coefs=TRUE, round.c=1, pos.text= list("txp5"=3, "post9"=4), tcol="dodgerblue",
+     conf.int=TRUE, adj.alpha=0.3, add.means=TRUE)
 ```
 
 The ITS model provides another layer of information. The graph is helpful at showing how the results changed. The control group appears to show a steady increase in LOS, perhaps this reflects a change in practice, patient population or some other issue that impacted results. However, the intervention group may have helped. It appears that their was an "immediate" change in the intercept. 
@@ -367,13 +378,38 @@ which is specified with interrupt= c(5, 9) and its ="two".
 
 ### ITS model 4
 ```{r its model 4}
-id22 <- assess(formula=death30 ~ ., data=hosprog, intervention = "program",
-               int.time="month", interrupt= c(5, 9), its="two")
+id22 <- assess(formula=death30 ~ ., data=hosprog, intervention = "program", int.time="month", interrupt= c(5, 9), its="two")
 ```
 
 ### View ITS model 4 results
 ```{r its model 4 results}
 summary(id22$ITS)
+```
+
+In the latest version of ham, we now have the option of an interrupted time series that tests as many interruptions as the data permits. This example demonstrates the US unemployment rate since 1929, highlighting key moments during that period. 
+
+### ITS model 5
+```{r its model 5}
+#Key interruption periods
+key_time <- c(5, 14, 17, 29, 42, 59, 69, 73, 80,92)
+im10 <- assess(formula=rate ~ ., data=unemployment, intervention = "usa",
+      int.time="year", its="one", interrupt= key_time, newdata=TRUE)
+
+```
+
+We see that many things increased or decreased unemployment rates. The biggest shift after the stock market crash in unemployment seems to be FDR's New Deal.
+
+### Graph ITS model 5 results
+```{r plotITS2, fig.dim = c(7.5, 5.25)}
+plot(im10, "ITS", add.means = TRUE, coefs=TRUE, conf.int=TRUE, 
+     adj.alpha= .2, lwd=1.75, col="slategray", tcol= "orange", main="US unemployment rate",
+     xlab="Years (1929-2024)", ylab= "Proportion of labor market", cex.main=2, 
+     cex.axis = 1.25, cex.lab = 1.25, cex=2, cex.text= .75, pos.text=list("ITS.Time"=4,
+"post42"=1,"txp42"=3,"txp92"=3), x.axis=unemployment$Year) 
+for(i in 1:length(key_time)) {
+  text(key_time[i], .22-(.01*i), cex=.85, labels = 
+         paste0(unemployment[ key_time[i], "Year"], ": ", unemployment[ key_time[i], "event"]))
+}
 ```
 
 <center>

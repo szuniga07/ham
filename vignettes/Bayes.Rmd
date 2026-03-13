@@ -1,0 +1,272 @@
+---
+title: "Bayes"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Bayes}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(ham)
+```
+
+```{r vlogo, echo=FALSE, out.width="30%", fig.align="center"}
+knitr::include_graphics("logo.png") 
+```
+
+# Bayesian
+
+Bayesian summaries and graphs are now available on ham. The Bayes and plot.Bayes functions will summarize and display Markov Chain Monte Carlo (MCMC) simulations that are stored as a list of matrix elements. For example, you may have saved 10,000 simulations as 4 chains that are stored in a list and may want to run standard simulation diagnostics like a traceplot. You can use ham's Bayes function to convert the 4 chains into a data frame that can be used to create a traceplot.
+
+MCMC chains created in the coda package (e.g., through JAGS or Stan) should also be easily converted with the Bayes function.
+
+The following sections will introduce the various commands in Bayes and plot.Bayes. We'll review it in terms of a common focus in health care, hospital length of stay (LOS).
+
+# 1. Introduction
+
+This vignette will introduce ham's features in the following functions.
+
+## Bayes()
+
+The 'y' argument allows us to ouput results with these options--
+* post: Creates a posterior summary for a parameter in the MCMC.
+* multi: Creates a posterior summary of a hierarchical model.
+* target: Calculates the proportion of the distribution above specific probabilities or values.
+* r2: Calculates Gelman's R^2 (see documentation).
+* mcmc: Returns the MCMC converted into a data frame which is required for all graphing options except when y= 'multi', Bayes() pre-processes the output so no new new data required. You can get your MCMC by specifying newdata=TRUE within Bayes().
+
+## plot.Bayes()
+
+There are similar plot options found in the 'y' argument.
+
+* post: Graphs a posterior distibution or curve for a parameter in the MCMC.
+
+* dxa: Graphs MCMC diagnostics for the autocorrelation factor.
+
+* dxd: Graphs MCMC diagnostics for density plots of convergence.
+
+* dxg: Graphs MCMC diagnostics for the Gelman-Rubin statistic.
+
+* dxt: Graphs MCMC diagnostics for traceplots.
+
+* check: Plots posterior predictive checks for distributions on estimations or trend lines of regressions.
+
+* multi: Graphs a posterior summary of a hierarchical model with 2 options of repeats measurements nested within individuals or individuals nested within organizations. For example, multiple blood tests for patients found within hospitals.
+
+* target: Plot the calculated the proportion of the distribution above specific probabilities or values using either the parameter estimate that represents the 'average' (i.e., graph from 'post') or the estimated distribution (i.e., graph from 'check').
+
+This vignette will go in order of the sections in plot.Bayes since almost everything with Bayes() overlaps. And it will conclude with 'r2'. Most plot.Bayes() arguments are optional so the examples will begin with a 'bare bones' option that will help produce plots quickly and follow with more detailed graphs. Not all arguments are available with each 'y' options but many are, especially the relevant ones.
+
+# 2. Diagnostics: 'dxa', 'dxd', 'dxg', 'dxt'
+
+This will first create a Bayes object from a list of MCMC simulations. And we'll modify it later but for now, this produces an object we can start reviewing.
+```{r Post0}
+blos1 <- Bayes(x=losmcmc, newdata=TRUE)
+```
+
+We'll start by reviewing our MCMC to assess how well the models ran. And this runs with the most basic code. Examine Bayesian model diagnostics for estimated length of stay (LOS).
+Review autocorrelation factor, density plots, Gelman-Rubin, and traceplots statistic.
+
+This uses the bare minimum code that will run, similar for each diagnostic plot.
+
+<br>
+
+Autocorrelation factor
+```{r plotdx1, fig.dim = c(6, 4.5)}
+plot(blos1, y="dxa", parameter="muOfY")
+```
+
+<br>
+
+Density plots
+```{r plotdx2, fig.dim = c(6, 4.5)}
+plot(blos1, y="dxd", parameter="muOfY")
+```
+
+<br>
+
+Gelman-Rubin statistic
+```{r plotdx3, fig.dim = c(6, 4.5)}
+plot(blos1, y="dxg", parameter="muOfY")
+```
+
+<br>
+
+Traceplot
+```{r plotdx4, fig.dim = c(6, 4.5)}
+plot(blos1, y="dxt", parameter="muOfY")
+```
+
+A review of the diagnostics suggest that the model ran well.
+<br>
+
+# 3. Posterior Summary: 'post' 
+
+Posterior estimates of length of stay. First set up the Bayes object first, convert the chains. We need, newdata=TRUE, to produce a graph later from our new MCMC data frame.
+
+This already uses the bare minimum code that will run and provide newdata to graph later. 
+
+```{r Post1}
+blos1 <- Bayes(x=losmcmc, y="post", parameter="muOfY", newdata=TRUE)
+print(blos1$Posterior.Summary)
+```
+
+We can get standard posterior info from above with the 'x' and 'parameter' arguments but it can be helpful to view these results in a graph.
+
+And we can calculate statistics that combine multiple parameters (e.g., calculate the mean difference between intervention and control groups). Here we get the coefficient of variation by dividing the standard deviation by the mean. We use the 'math' argument and arrange our parameters in the proper order. We only need the first 4 arguments but we'll add a little more.
+
+```{r plotPost1, fig.dim = c(6, 4.5)}
+plot(x=blos1, y="post", parameter=list("sigmaOfY", "muOfY" ),math="divide",
+bcol="cyan", HDItext=.3, main= "Coefficient of Variation")
+```
+
+
+# 4a. Posterior Predictive Check: 'check'
+
+On how well our model fits the data. Estimating center and spread for hospital length of stay
+Generally, we only need the first 6 arguments but we'll modify the plot. A model with a gamma likelihood would fit better but this is ok for now.
+
+```{r plotPPC1, fig.dim = c(6, 4.5)}
+plot(x=blos1, y="check", type="n", data=hosprog, dv="los",
+parameter=c("muOfY", "sigmaOfY"), breaks=30, cex.axis=1.3, lwd=3, xlab=NULL,
+pline=20, vlim=c(-2, 20), xlim=c(-2, 20), add.legend="topright",
+main="Length of Stay", cex.main=1.5, xpt=5, pcol="red", lcol="orange",
+cex.legend=1, bcol="cyan")
+```
+
+Here is the bare minimum code that will run when 'type' is one of these-- ('n', 'ln', 'sn', 'w', 'g', 't'): 
+plot(x=blos1, y="check", type="n", data=hosprog, dv="los", parameter=c("muOfY", "sigmaOfY"))
+
+<br>
+Here is an optional posterior predictive check when y='check' and type= 'taov'. This is used when you have a t distribution maximum likelihood with an ANOVA design (i.e., multiple groups) and you want a check for an estimated parameter (not the regression line). This side view is helpful in seeing the spread in values and how the heavy tails reach over those limits. You can also try this when doing a simple estimation with no multiple groups when y='check' and type= 'taov1', the '1' stands for 1 group only.
+
+```{r anovaPlot, echo=FALSE, out.width="60%", fig.align="center"}
+knitr::include_graphics("taov.png") 
+```
+
+<br>
+
+# 4b. Checking the regression trend line: 'check'
+
+Now lets look at the trend of conc on CO2 uptake from the CO2 data.
+Using a quadratic model with conc^2 would help and an option in ham.
+First, create the Bayes object
+
+```{r Check1}
+bco2 <- Bayes(x=co2mcmc, y='mcmc', newdata=TRUE )
+```
+
+<br>
+
+We generally only need the first 7 arguments below that will run when 'type' is one of these-- ('ol', 'oq','oc', 'lnl', 'lnq', 'lnc', 'logl', 'logq', 'logc'):
+
+```{r plotPPC2, fig.dim = c(6, 4.5)}
+plot(x=bco2, y="check", type="ol", data=CO2, dv="uptake", iv="conc",
+parameter=c("b0","b1"), add.data="al", cex.axis=1.3, lwd=1.5, pline=50,
+vlim=c(50, 1100), xlim=c(0, 1100), ylim=c(0, 50), cex=2, cex.lab=2,
+pcol="magenta", cex.main=2,cex.legend=1.2,  add.legend="topleft",
+lcol="steelblue")              #vlim lets me extrapolate a little
+```
+
+<br>
+
+
+# 5. Hierarchical or Multilevel Model Summary: 'multi' 
+
+We generally only need the first 3 arguments below. But we'll subset
+on 8 of 12 plants in the level 2 model (observations nested in plants)
+and modify other settings.
+
+The code below does not run, no 'mcmc_sample' object but here is a general format.
+bmulti0 <- Bayes(x=mcmc_sample, parameter=c("theta", "omega","omegaO"),
+y="multi", type="bern", data=mydf, dv="upbin", iv= c("Plant", "Group"))
+
+This code runs with an existing ham object. Here is the bare minimum code that will run:
+plot(x=co2multi, y="multi", level=2)
+
+```{r plotMulti1, fig.dim = c(6, 4.5)}
+plot(x=co2multi, y="multi", level=2, aorder=FALSE,
+subset= c("Qn2","Qn3","Qc3","Qc2","Mn3","Mn2","Mc2","Mc3"),
+lcol="blue", pcol= c("red", "skyblue"), round.c=1, bcol="yellow",
+xlim=c(-.1, 1), legend=NULL, add.legend="topright", lwd=3, cex.lab=1.2,
+cex= 2, cex.main=1.5, cex.axis=.75, cex.legend=1.5, X.Lab=NULL)
+```
+
+<br>
+
+And now the level 3 plot (observation in plants in Treatment by type groups).
+
+```{r plotMulti2, fig.dim = c(6, 4.5)}
+plot(x=co2multi, y="multi", level=3, aorder=FALSE, lcol="blue", pcol= c("green", "pink"),
+round.c=1, bcol="lavender", xlim=c(-.1, 1), legend=NULL, add.legend="right", lwd=3,
+cex.lab =1.2, cex= 2, cex.main=1.5, cex.axis=.75, cex.legend=1.5, X.Lab=NULL)
+```
+
+<br>
+
+# 6. Target setting: 'target'
+
+Our administrators ask how far are we from our goals, they ask about targets in increments of 5 points of probability or specific days. We answer both. 'newdata' for plots
+
+```{r Target1}
+btarget1 <- Bayes(x=losmcmc, y="target", type="n", parameter=c("muOfY","sigmaOfY"),
+newdata=TRUE, target=list(p=c(.35,.4,.45, .5, .55),  y=c(3,4))) 
+```
+
+Here is the bare minimum code that will run (if we want to print, newdata=TRUE is needed):
+btarget1 <- Bayes(x=losmcmc, y="target", type="n", parameter=c("muOfY","sigmaOfY"),
+target=list(p=c(.35,.4,.45, .5, .55),  y=c(3,4)))
+
+<br>
+
+Target graph using the standard option, overlaying the info over estimate of mode parameter.
+
+```{r plotTarget1, fig.dim = c(6, 4.5)}
+plot(x=btarget1, y="target", type="n", lcol="purple", tgtcol="blue", xlim=c(3.5, 5))
+```
+
+Here is the bare minimum code that will run:
+plot(x=btarget1, y="target", type="n")
+
+<br>
+
+Target graph using a posterior predictive check, more intuitive.
+
+```{r plotTarget2, fig.dim = c(7.5, 4.5)}
+plot(x=btarget1, y="target", type="n", data=hosprog, dv="los", breaks=30,
+cex.axis=1.3, lwd=2, pline=20, vlim=c(-1, 12), xlim=c(-1, 10),
+parameter=c("muOfY","sigmaOfY"), add.legend="right", main="Length of Stay",
+cex.main=1.5, xpt=5, pcol="black", lcol="cyan", tgtcol="blue", bcol="orange",
+cex.legend=1.25, cex.text = 1)
+```
+
+<br>
+
+# 7. Gelamn's R^2: 'r2' 
+
+The regression model using Base R data, CO2: update ~ conc. This is the bare minimum code needed to run.
+
+```{r R21}
+bR2 <- Bayes(x=co2mcmc, y='r2', data=CO2, iv="uptake", parameter=c("b0", "b1", "sigma"))
+# R^2
+print(bR2$R2.Summary$R2)
+# Variance of predicted outcome
+print(bR2$R2.Summary$Variance.Pred.Y)      
+# Variance of residuals
+print(bR2$R2.Summary$Variance.Residuals)
+# Predicted outcomes
+print(head(bR2$R2.Summary$yPRED))          
+```
+
+<br>
+
+The Bayes object bR2 returns various information. We see this R^2 is quite low so this is definitely not a great model but we can return here once we've built a better model.
+

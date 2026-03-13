@@ -79,7 +79,7 @@
 #' print(blos1$Posterior.Summary) #looks like LOS is substantially higher than 3 days
 #'
 #' # Multilevel or hierarchical model summaries #
-#' # Could below does not run, no 'mcmc_sample' object
+#' # Code below does not run, no 'mcmc_sample' object
 #' # bmulti0 <- Bayes(x=mcmc_sample, parameter=c("theta", "omega","omegaO"),
 #' # y="multi", type="bern", data=mydf, dv="upbin", iv= c("Plant", "Group"))
 #'
