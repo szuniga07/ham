@@ -18,6 +18,7 @@ Description: Conducts analyses for healthcare program evaluations or interventio
     file. For more details on the statistical methods, see 
     Allen & Yen (1979, ISBN:0-8185-0283-5), 
     Angrist & Pischke (2009, ISBN:9780691120355), 
+    Cohen (1988, ISBN:0-8058-0283-5),
     Gebski (2012) <doi:10.1017/S0950268812000179>,
     Gelman & Goodrich (2019) <doi:10.1080/00031305.2018.1549100>,
     Harrell (2016, ISBN:978-3-319-19424-0), 

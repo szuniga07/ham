@@ -141,7 +141,7 @@ plot(x=blos1, y="post", parameter="muOfY", compare=4.5, rope=c(4,5), lcol= c("bl
 bcol="goldenrod", HDItext=.3, main= "Summary of average LOS (muOfY)")
 ```
 
-And we can calculate statistics that combine multiple parameters (e.g., calculate the mean difference between intervention and control groups). Here we get the coefficient of variation by dividing the standard deviation by the mean. We use the 'math' argument and arrange our parameters in the proper order. We only need the first 4 arguments but we'll add a little more.
+And we can calculate statistics that combine multiple parameters (e.g., calculate the mean difference between intervention and control groups and get Cohen's effect size in how large the difference is for binary outcomes). Here we get the coefficient of variation by dividing the standard deviation by the mean. We use the 'math' argument and arrange our parameters in the proper order. We only need the first 4 arguments but we'll add a little more.
 
 ```{r plotPost1, fig.dim = c(6, 4.5)}
 plot(x=blos1, y="post", parameter=list("sigmaOfY", "muOfY" ),math="divide",
@@ -220,7 +220,7 @@ plot(x=co2multi, y="multi", level=2, aorder=FALSE,
 subset= c("Qn2","Qn3","Qc3","Qc2","Mn3","Mn2","Mc2","Mc3"),
 lcol="blue", pcol= c("red", "skyblue"), round.c=1, bcol="yellow",
 xlim=c(-.1, 1), legend=NULL, add.legend="topright", lwd=3, cex.lab=1.2,
-cex= 2, cex.main=1.5, cex.axis=.75, cex.legend=1.5, X.Lab=NULL)
+cex= 2, cex.main=1.25, cex.axis=.75, cex.legend=1.5, X.Lab=NULL)
 ```
 
 <br>
@@ -230,20 +230,26 @@ And now the level 3 plot (observation in plants in Treatment by type groups). Yo
 ```{r plotMulti2, fig.dim = c(6, 4.5)}
 plot(x=co2multi, y="multi", level=3, aorder=FALSE, lcol="blue", pcol= c("green", "pink"),
 round.c=1, bcol="lavender", xlim=c(-.1, 1), legend=NULL, add.legend="right", lwd=3,
-cex.lab =1.2, cex= 2, cex.main=1.5, cex.axis=.75, cex.legend=1.5, X.Lab=NULL)
+cex.lab =1.2, cex= 2, cex.main=1.25, cex.axis=.75, cex.legend=1.5, X.Lab=NULL)
 ```
 
 <br>
 
 # 6. Target setting: 'target'
 
-Our administrators ask how far are we from our goals, they ask about future targets in increments of 5 points of probability or specific days. We answer both. 'newdata' for plots. Below is the full set of results for each target.
+Our administrators ask how far are we from our goals, they ask about future targets in increments of 5 points of probability or specific days. We answer both.
+
+We first find the point in the distribution that represents the appropriate center or 'average'. A good reference point is the 50th percentile which has equal probability above and below that point (i.e., where chances are '50/50' or 'fair'). 
+
+Below is the full set of results for each target, use 'newdata=TRUE' for future plots.
 
 ```{r Target1}
 btarget1 <- Bayes(x=losmcmc, y="target", type="n", parameter=c("muOfY","sigmaOfY"),
 newdata=TRUE, target=list(p=c(.35,.4,.45, .5, .55),  y=c(3,4))) 
 print(btarget1$Target)
 ```
+
+We can now review the results to identify targets that represent increments of 5 points of probability. This potentially may requires another 5 points of effort to achieve, however moving around a rate in the middle is generally easier than moving to rates that are in the extremes (e.g., 0% infections). Using Jacob Cohen's effect sizes can help in that understanding.
 
 Here is the bare minimum code that will run (if we want to print, newdata=TRUE is needed):
 
@@ -252,7 +258,7 @@ target=list(p=c(.35,.4,.45, .5, .55),  y=c(3,4)))
 
 <br>
 
-Target graph using a posterior predictive check, more intuitive. T
+Target graph using a posterior predictive check, more intuitive. 
 
 ```{r plotTarget2, fig.dim = c(7.5, 4.5)}
 plot(x=btarget1, y="target", type="n", data=hosprog, dv="los", breaks=30,

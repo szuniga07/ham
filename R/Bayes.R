@@ -32,7 +32,7 @@
 #' Select 'n', 'ln', 'w', 'g', 't', 'bern', and 'bin' for these respective options in Bayesian estimation (multilevel):
 #' 'Normal', 'Log-normal', 'Weibull', 'Gamma', 't', 'Bernoulli', or 'binomial'. Default is NULL.
 #' @param center character vector that selects the type of central tendency to use when reporting parameter values when
-#' y='post', y='target', or y='r2'. Choices include: 'mean', 'median', and 'mode' when y='post' or 'mean' and
+#' y='post', y='target', or y='r2'. Choices include: 'mean', 'median', and 'mode' when y='post', or 'mean' and
 #' 'median' when y='r2'. Default is 'mode' when y='post' or 'target' and 'median' when y='r2'.
 #' @param data object name for the observed data when y='multi' or y='r2'. Default is NULL.
 #' @param dv character vector of length == 1 for the dependent variable name in the observed data frame
@@ -64,6 +64,9 @@
 #' @importFrom stats sd ar density median residuals var
 #' @export
 #' @references
+#' Cohen, J. (1988). Statistical Power Analysis for the Behavioral Sciences, Second Edition.
+#' Hillsdale, NJ: Lawrence Erlbaum Associates, Publishers. ISBN 0-8058-0283-5
+#'
 #' Gelman, A., Goodrich, B., Gabry, J., & Vehtari, A. (2019). R-squared for Bayesian
 #' Regression Models. The American Statistician, 73, 3, 307–309.
 #' https://doi.org/10.1080/00031305.2018.1549100
@@ -103,7 +106,7 @@
 
 
 Bayes <- function(x, y="mcmc", parameter=NULL, mass=.95, compare=NULL,
-                    rope=NULL, newdata=FALSE, type=NULL, center="Mode",
+                    rope=NULL, newdata=FALSE, type=NULL, center="mode",
                   data=NULL, dv=NULL, iv=NULL, expand=NULL, targets=NULL) {
   #Looking for a list
   if (any(class(x) %in% c("list", "mcmc.list")) == FALSE) {stop("Error: Expecting list class object." )}
@@ -174,9 +177,11 @@ Bayes <- function(x, y="mcmc", parameter=NULL, mass=.95, compare=NULL,
   }
 #Convert center to median when y="r2"
   if(y == "r2") {
-    center <- "median"
-  }  else {
-    center <- "mode"
+    if(center == "mode") {
+      center <- "median"
+    } else {
+      center <- center
+    }
   }
   #Create newdata when y="mcmc"
   if(y == "mcmc") {
@@ -1283,7 +1288,7 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL,
 
   return(list("Est.Quantile.P"= QdisGtY,
               "Est.Prob.GT.Y"= PdisGtY,
-              "Est.Mean.Beta"=mean_val_dist) )
+              "Est.Mean.Beta"=mean_val_dist ) )
 }
 
 
@@ -1294,7 +1299,7 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL,
 
 #Use the coda object and dataset. Works for normal and log-normal distributions.
 fncBayesOlsR2 <- function(Coda_Object, datFrm, xName=NULL, Intercept=NULL,
-                          Betas=NULL, Level1.Sigma=NULL, Average.type =NULL) {
+                          Betas=NULL, Level1.Sigma=NULL, Average.type =center) {
   #Make coda into as.matrix
   mcmc_coda_object <- MCMC
   mean.Intercept <-  mean(mcmc_coda_object[, which(colnames(mcmc_coda_object) == Intercept)])

@@ -13,7 +13,7 @@ Bayes(
   rope = NULL,
   newdata = FALSE,
   type = NULL,
-  center = "Mode",
+  center = "mode",
   data = NULL,
   dv = NULL,
   iv = NULL,
@@ -54,7 +54,7 @@ Select 'n', 'ln', 'w', 'g', 't', 'bern', and 'bin' for these respective options 
 'Normal', 'Log-normal', 'Weibull', 'Gamma', 't', 'Bernoulli', or 'binomial'. Default is NULL.}
 
 \item{center}{character vector that selects the type of central tendency to use when reporting parameter values when
-y='post', y='target', or y='r2'. Choices include: 'mean', 'median', and 'mode' when y='post' or 'mean' and
+y='post', y='target', or y='r2'. Choices include: 'mean', 'median', and 'mode' when y='post', or 'mean' and
 'median' when y='r2'. Default is 'mode' when y='post' or 'target' and 'median' when y='r2'.}
 
 \item{data}{object name for the observed data when y='multi' or y='r2'. Default is NULL.}
@@ -130,6 +130,9 @@ print(bR2$R2.Summary$Variance.Residuals)   # Variance of residuals
 print(head(bR2$R2.Summary$yPRED))          # Predicted outcomes
 }
 \references{
+Cohen, J. (1988). Statistical Power Analysis for the Behavioral Sciences, Second Edition.
+Hillsdale, NJ: Lawrence Erlbaum Associates, Publishers. ISBN 0-8058-0283-5
+
 Gelman, A., Goodrich, B., Gabry, J., & Vehtari, A. (2019). R-squared for Bayesian
 Regression Models. The American Statistician, 73, 3, 307–309.
 https://doi.org/10.1080/00031305.2018.1549100

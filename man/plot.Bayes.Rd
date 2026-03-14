@@ -327,6 +327,8 @@ cex.main=1.5, xpt=5, pcol="black", lcol="cyan", tgtcol="blue", bcol="orange",
 cex.legend=1.5, cex.text = 2)
 }
 \references{
+Cohen, J. (1988). Statistical Power Analysis for the Behavioral Sciences, Second Edition.
+Hillsdale, NJ: Lawrence Erlbaum Associates, Publishers. ISBN 0-8058-0283-5
 Gelman, A., Goodrich, B., Gabry, J., & Vehtari, A. (2019). R-squared for Bayesian
 Regression Models. The American Statistician, 73, 3, 307–309.
 https://doi.org/10.1080/00031305.2018.1549100

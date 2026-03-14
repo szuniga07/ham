@@ -29,7 +29,10 @@
 #' @param treatment optional treatment start period variable name selected for DID models.
 #' Select 1 value from 'int.time' to indicate the start of the intervention.
 #' @param interrupt optional interruption (or intervention) period(s) variable name selected for ITS
-#' models. Select 1 or 2 values from 'int.time' to indicate the start and/or key intervention periods.
+#' models. Select 1 or more values from 'int.time' to indicate the start and/or key intervention periods.
+#' There needs to be at least 2 time points per period, at least 3 is better. For example, interrupt= c(3, 5, 7)
+#' will suffice, especially if you want to isolate certain periods but interrupt= c(3, 6, 9) may provide more
+#' useful information.
 #' @param subset an expression defining a subset of the observations to use in the regression model. The default
 #' is NULL, thereby using all observations. Specify, for example, data$hospital == "NY" or c(1:100,200:300) respectively to
 #' use just those observations. This is helpful when doing a submodel for DID or ITS after identifying similar groups.
