@@ -26,9 +26,10 @@
 #' viewing results on the probability scale, select type='logl' (i.e., curved lines). And consider using type= 'lnl', 'lnq', 'lnc'
 #' for log-normal and Poisson models with lines based on exponentiated values. In general, it is important to note that the observed data
 #' may not be on the same scale as the parameter estimates and may not be automatically visible in the graph (i.e., x and y-axis
-#' limits may help). When graphing target summary plots that use posterior predictive checks rather than the standard posterior
-#' summary graph, enter y='target' and other arguments relevant to y='check'. However, type= 'bern', 'bin', 'sn' is not available but
-#' type='n', 'ln', 'w', 'g', or 't' are available. Default is NULL.
+#' limits may help). When graphing target summary plots that use posterior predictive checks rather than the basic posterior
+#' summary graph (plots target values over the parameter estimate of the center such as the mean), enter y='target' and other
+#' arguments relevant to y='check'. However, type= 'bern', 'bin', 'sn' are not available but type='n', 'ln', 'w', 'g', or 't' are
+#' available. Default is NULL.
 #' @param parameter a character vector of length >= 1 or a 2 element list with the name(s) of parameter in MCMC chains to produce
 #' summary statistics. Use a 1 element vector to get posterior estimates of a single parameter. Use a 2 or more element vector
 #' to estimate the average joint effects of multiple parameters (e.g., average infection rate for interventions A and B when
@@ -196,7 +197,7 @@
 #' # Now lets look at the trend of conc on CO2 uptake from the CO2 data.
 #' # Using a quadratic model with conc^2 would help and an option in ham.
 #' # First, create the Bayes object
-#' bco2 <- Bayes(x=co2mcmc, y='mcmc', newdata=TRUE )
+#' bco2 <- Bayes(x=co2mcmc, newdata=TRUE )
 #' # We generally only need the first 7 arguments below.
 #' plot(x=bco2, y="check", type="ol", data=CO2, dv="uptake", iv="conc",
 #' parameter=c("b0","b1"), add.data="al", cex.axis=1.3, lwd=1.5, pline=50,

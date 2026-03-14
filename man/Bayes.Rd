@@ -24,9 +24,9 @@ Bayes(
 \arguments{
 \item{x}{list object of multiple MCMC chains (e.g., matrix class list elements or coda mcmc.list).}
 
-\item{y}{character vector for the type of analysis or output to perform. Select 'post', 'multi', 'target', 'r2' or 'mcmc' for a
+\item{y}{character vector for the type of analysis or output to perform. Select 'post', 'multi', 'target', 'r2', or 'mcmc' for a
 posterior summary, multilevel/hierarchical model summary (up to 3 levels), target summary, Gelman R-squared statistic, or
-list object of MCMC chains converted into a data frame. Default is 'mcmc'.}
+list object of MCMC chains converted into a data frame. Default is generic 'mcmc'(no analysis, just MCMC creation).}
 
 \item{parameter}{single or multiple element character vector name of parameter(s) in MCMC chains to produce summary statistics.
 When y='target', use the generally 2 to 3 parameters that represent the distribution parameters (e.g., parameter= c('mean', 'sd')).
@@ -46,8 +46,8 @@ the ROPE of a coin is set to 0.45 to 0.55 but the posterior 95\% HDI is 0.61 - 0
 the null hypothesis value of 0.50. We can accept the null hypothesis if the entire 95\% HDI falls with the ROPE. Default is NULL.}
 
 \item{newdata}{optional logical vector that indicates if you want the new MCMC data returned. When newdata=TRUE,
-it will return the list object of MCMC chains, converted into a data frame. This data is used for
-analysis and all plots. Please select newdata=TRUE to produce any graphs. The default is newdata=FALSE.}
+it will return the list object of MCMC chains, converted into a data frame. This data is used for analysis and
+all plots. Please select newdata=TRUE to produce any graphs but not needed when y='multi'. The default is newdata=FALSE.}
 
 \item{type}{character vector of length == 1 that indicates the likelihood function used in the model when y='multi' or y='target'.
 Select 'n', 'ln', 'w', 'g', 't', 'bern', and 'bin' for these respective options in Bayesian estimation (multilevel):

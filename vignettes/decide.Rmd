@@ -1,0 +1,152 @@
+---
+title: "decide"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{decide}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(ham)
+```
+
+```{r vlogo, echo=FALSE, out.width="30%", fig.align="center"}
+knitr::include_graphics("logo.png") 
+```
+
+<br>
+
+<center>
+# Decsion Curve Analysis and Model Classification
+</center>
+
+<br>
+
+The following sections describe the options for model classification results, net benefit, and interventions avoided from a decision curve analysis (DCA) for binary outcome models (as of yet).
+
+<br>
+
+# 1. Introduction
+
+Examine sensitivity and specificity values from a threshold on predicted values.
+
+Set a prediction threshold and examine sensitivity and specificity (false-positives) below. Find the best cutoff level. AUC calculated using the trapezoidal rule at the cutoff level. The threshold that minimizes mis-classification is where the sum of the number of false-positive and false-negative results (error rate) is lowest.
+
+The appropriate threshold is based on the clinical context (e.g., we consider any risk over 20% as being too high to go without an intervention).
+
+A common option is to select a threshold equal to the prevalence rate (mean). A predicted score above prevalence indicates high risk, a value below prevalence indicates low risk.
+
+The threshold range can be set by using sensible upper and lower bounds on the maximum number of false positives one would tolerate to find one true positive. For example, if a detected cancer is worth 16 unnecessary surgical interventions, an appropriate risk threshold for surgery would be 1/(1 + 16) = 6%.
+
+Someone may not do more than 10 biopsies to find one high-grade cancer in patients with similar health and who think about the risks and benefits of biopsy vs. finding cancer in the same way. So if a patient's risk was above 10% I do a biopsy, otherwise not. The risk of 10% is odds of 1:9. Missing a high-grade cancer is 9 times worse than doing an unnecessary biopsy.
+
+For more information, please read the article "Decision Curve Analysis: A Novel Method for Evaluating Prediction Models" (Vickers & Elkin, 2006). 
+
+<br>
+
+# 1. Model classification 
+
+Get sensitivity, specificity, false-positive, false-negative, and positive and negative predictive values associated using your prediction threshold value. Includes Decision Curve Analysis.
+
+Positive Predictive Value: Proportion of all positive classifications that were true-positive.
+
+Negative Predictive Value: Proportion of all negative classifications that were true-negative.
+
+Create a decide object, enter the model name and a threshold on the logit scale. View model classification related statistics. Here we predict engine shape, straight or "v" from the mtcars dataset.
+
+```{r modClass1}
+car_m1 <- assess(formula=vs ~ hp + am, data=mtcars, regression="logistic")
+d1 <- decide(x=car_m1, threshold= -0.767)
+print(d1$Model.Summary$Classification)
+```
+
+View decision curve analysis results like 'net benefit' at various thresholds of key interest at these percentiles: 0.01, 0.05, 0.10, 0.25, 0.50, 0.75, 0.90, 0.95, 0.99.
+
+```{r modClass2}
+print(d1$DCA)
+```
+
+<br>
+
+A basic graph of the classification results when y= 'cl'. The green area represents true predictions.
+
+```{r plotClass1, fig.dim = c(6, 4.5)}
+plot(x=d1, y= "cl")
+```
+
+<br>
+
+We can modify the graph. Many plotting options available.
+
+```{r plotClass2, fig.dim = c(7, 4.5)}
+plot(x=d1, y= "cl", cex.lab=.75, bcol=c("cyan", "magenta"), add.legend="topleft", cex.legend=1.5)
+```
+
+<br>
+
+This model predicts very well. However, in healthcare we often have very high stakes decisions to make based on our model result. And we need methods to help make tough decisions. We now turn to a Decision Curve Analysis.
+
+<br>
+
+# 2. Decision Curve Analysis: Net Benefit
+
+<br>
+
+The Net Benefit is driven by true-positives, a higher value is better. The NB plot compares what provides a better strategy along various thresholds (only consider thresholds within the range of predicted values). Two valid comparison strategies are to 'treat all' or 'treat none'.
+
+For example, a net benefit of 0.0973 indicates that the difference between our true-positives and false-positives will be finding about 10 more true-positives than false-positives per 100 patients using a cutoff of FEV= 3.
+
+The 'All treated' line tends to intersect the 'None treated' line at the prevalence line for binary outcomes. No Benefit when all interventions withheld.
+
+Net Benefit = Frequency of True-Positives/N - False-Positives/N * (Pt/1-Pt) at a specific probability threshold (Pt).
+
+All Treated = (true-positive + false-negative)/N - (false positive + true-negative)/N * (Pt/1-Pt).
+
+Weighting: As Pt goes up, true- and false-positives goes down but the weight goes up. With a bigger weight, net benefit tends to get smaller because [false-positives * weight] is larger.
+
+The DCA results were presented earlier so we now turn to graphing 'net benefit' and interventions' saved.
+
+A basic net benefit graph of the classification results when y= 'nb'. 
+
+```{r plotNB1, fig.dim = c(6, 4.5)}
+plot(x=d1, y= "nb")
+```
+
+This adds a little more detail. We see across all of the key percentiles, this model outperforms a potentially costly approach of "treat all" or "treat none". 
+
+```{r plotNB2, fig.dim = c(6, 4.5)}
+plot(x=d1, y= "nb", add.legend="topright", lwd=3, lcol=c("green", "slategray", "red"))
+```
+
+<br>
+
+# 3. Decision Curve Analysis (DCA): Interventions Saved
+
+<br>
+
+As we expect, a model can inform us which patients to treat as well as which patients we can avoid treatment. This is especially helpful if treatments have permanent side effects such as taking biopsies or when working with less critical outcomes, we can save money by administering treatments that may be unnecessary for most patients.
+
+A model can reduce unnecessary interventions. For example, a risk threshold of 10% may reduce the number of unnecessary interventions by 40 per 100 without missing treatment for any patients with cancer.
+
+Interventions Avoided = Frequency of True-Negatives/N - False-Negatives/N * (1-Pt/Pt) at a specific probability threshold (Pt).
+
+Interventions avoided.
+
+```{r plotIS1, fig.dim = c(6, 4.5)}
+plot(x=d1, y= "is")
+```
+
+<br>
+
+This graph is more straightforward, we can easily see that as we set a higher threshold on the x-axis, we avoid more and more interventions that weren't needed. It is important note that the y-axis labels are integers that range from 1 to 100 but the actual values in the y-axis are in decimals.
+
+<br>
+

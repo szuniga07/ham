@@ -23,15 +23,15 @@
 #' ## Predicting car engine shape type, v or straight  ##
 #' # run the model
 #' car_m1 <- assess(formula=vs ~ hp + am, data=mtcars, regression="logistic")
-#' # create a decision object, enter the model name and a threshold on the logit scale
-#' d1 <- decision(x=car_m1, threshold= -0.767)
+#' # create a decide object, enter the model name and a threshold on the logit scale
+#' d1 <- decide(x=car_m1, threshold= -0.767)
 #' # View model classification related statistics
 #' print(d1$Model.Summary$Classification)
 #'
 #' # View decision curve analysis results like 'net benefit' at various thresholds
 #' print(d1$DCA)
 
-decision <- function(x, threshold) {
+decide <- function(x, threshold) {
 
   if (any(class(x) == "assess") == FALSE) {stop("Error: Expecting assess class object." )}
 
@@ -465,7 +465,7 @@ z <- list(Model.Summary=model_smry, AUC=AUC_output,
           Yhat.Range=threshyhat,
           type=reg_type, outcome=outcome_name)
 # Assign ham classes
-class(z) <- c("decision", "ham", "list")
+class(z) <- c("decide", "ham", "list")
 return(z)
 
 }

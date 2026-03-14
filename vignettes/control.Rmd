@@ -1,0 +1,117 @@
+---
+title: "control"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{control}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(ham)
+```
+
+```{r vlogo, echo=FALSE, out.width="30%", fig.align="center"}
+knitr::include_graphics("logo.png") 
+```
+
+
+<br>
+
+<center>
+# Shewhart Control Charts
+</center>
+
+<br>
+
+The following sections show options to create the classic Shewhart control charts:  X-bar charts, p-charts, and u-charts.
+
+<br>
+
+# 1. Introduction
+
+<br>
+
+Calculate statistics that can be used to produce X-bar charts, p-charts, and u-charts. This includes producing means for center lines, 3-sigma upper and lower control limits. Users can also calculate values before and after an intervention to see if a change in the control process happened. Values are returned in a data frame.
+
+<br>
+
+# 2. $\bar{X}$ charts
+
+<br>
+
+Hospital LOS. 
+
+```{r xbar1}
+spc_x <- control(x="los", time="month", data=hosprog, type="x", n.equal=TRUE)
+```
+
+<br>
+
+Basic X-bar chart.
+
+```{r chartX1, fig.dim = c(6, 4.5)}
+plot(spc_x)
+```
+
+<br>
+
+# 3. p-chart
+
+<br>
+
+Hospital readmissions. 
+
+p-chart, using only the numerator (i.e., y=NULL). Specify unequal sample sizes.
+
+```{r pchart1}
+spc_p <- control(x="rdm30", time="month", data=hosprog, type="p", n.equal=FALSE)
+```
+
+<br>
+
+p-chart, adding target and time point lines.
+
+```{r chartp1, fig.dim = c(6, 4.5)}
+plot(spc_p, tgt=c(0,.25), tgtcol="green", ylim=c(0,0.4), tpline=c(4,8),
+tpcol= c("yellow","black"))
+```
+
+<br>
+
+# 4. u-chart
+
+<br>
+
+u-chart for infection rates with an intervention.
+
+```{r uchart1}
+spc_u <- control(x="HAI", y="PatientDays", time="Month", data=infections,
+type="u", n.equal=FALSE, intervention=22)
+```
+
+<br>
+
+u-chart with trend lines, various graphing options, x.axis start at 2nd year
+and y.axis changed to show HAIs per 1,000 patient days.
+
+```{r chartU1, fig.dim = c(6, 4.5)}
+plot(spc_u, main="u-Chart: HAI per 1,000 Patient Days Pre/Post Intervention",
+col=c("green","dodgerblue"), trend=TRUE, trcol="red", x.axis=c((1:41+12)), round.c=1,
+y.axis=seq(min(spc_u$HAI)*1000, max(spc_u$HAI)*1000, length.out=nrow(spc_u)),
+xlab="Months (starting at year 2)", icol="gray", lwd=2, cex=2,
+cex.axis=1.1, cex.main=1.25, cex.text=1.25)
+```
+
+<br>
+
+One thing that is helpful in ham's chart options is the ordinary least squares trend line arrows in optional red above. It can show the trend line, especially helpful in out-of-control processes.
+
+<br>

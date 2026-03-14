@@ -1,11 +1,11 @@
-#' Decision Curve Analysis plots and regression mode classification graphs on sensitivity and specificity
+#' Decision Curve Analysis plots and regression model classification graphs on sensitivity and specificity
 #'
 #' Graph X-bar charts, p-charts, and u-charts. This includes
 #' producing means center lines, 3-sigma upper and lower control limits. Users can also calculate
 #' values before and after an intervention to see if a change in the control process happened. Values are
 #' returned in a data frame.
 #'
-#' @param x decision object.
+#' @param x decide object.
 #' @param y type of plot to display. Select either 'nb', 'is', or 'cl' for a decision curve
 #' analysis 'net benefit' and 'interventions saved', or a model classification (e.g., sensitivity
 #' and specificity) according to a selected threshold. Net benefit and interventions saved display
@@ -49,8 +49,8 @@
 #' ## Predicting car engine shape type, v or straight  ##
 #' # run the model
 #' car_m1 <- assess(formula=vs ~ hp + am, data=mtcars, regression="logistic")
-#' # create a decision object, enter the model name and a threshold on the logit scale
-#' d1 <- decision(x=car_m1, threshold= -0.767)
+#' # create a decide object, enter the model name and a threshold on the logit scale
+#' d1 <- decide(x=car_m1, threshold= -0.767)
 #' #Plot the classification results
 #' plot(x=d1, y= "cl")
 #'
@@ -60,11 +60,11 @@
 #' #Plot the interventions saved
 #' plot(x=d1, y= "is")
 
-plot.decision <- function(x, y=NULL, main=NULL, xlab=NULL, ylab=NULL, xlim=NULL, ylim=NULL, lwd=NULL,
+plot.decide <- function(x, y=NULL, main=NULL, xlab=NULL, ylab=NULL, xlim=NULL, ylim=NULL, lwd=NULL,
                        bcol=NULL, lcol=NULL, add.legend=NULL, legend=NULL, cex=1, cex.lab=NULL, cex.axis=NULL, cex.main=NULL,
                        cex.legend=NULL, round.c=2, ...) {
 
-  if (any(class(x) == "decision") == FALSE) {stop("Error: Expecting control class object." )}
+  if (any(class(x) == "decide") == FALSE) {stop("Error: Expecting decide class object." )}
 
   # set default values
   if(!is.null(lcol)) {

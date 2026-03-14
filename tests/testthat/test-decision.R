@@ -1,5 +1,5 @@
 car_m1 <- assess(formula=vs ~ hp + am, data=mtcars, regression="logistic")
-d1 <- decision(x=car_m1, threshold= -0.767)
+d1 <- decide(x=car_m1, threshold= -0.767)
 test_that("Logistic model AUC predicting engine shape and a classification threshold of logit= -0.18", {
   expect_equal(round(d1$AUC, 3), 0.881)
 })
