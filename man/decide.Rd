@@ -2,7 +2,7 @@
 % Please edit documentation in R/decide.R
 \name{decide}
 \alias{decide}
-\title{Statistics for Decision Curve Analysis and regression model classification}
+\title{Statistics for Decision Curve Analysis and logistic regression model classification}
 \usage{
 decide(x, threshold)
 }

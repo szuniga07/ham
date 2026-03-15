@@ -1,4 +1,4 @@
-#' Statistics for Decision Curve Analysis and regression model classification
+#' Statistics for Decision Curve Analysis and logistic regression model classification
 #'
 #' Calculate statistics such as sensitivity, specificity, positive and negative predictive values, and
 #' net benefit and interventions saved from a decision curve analysis.

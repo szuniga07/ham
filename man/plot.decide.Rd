@@ -77,13 +77,11 @@ When y='is', select 1 color for the interventions saved line. And when y='cl', s
 \item{...}{additional arguments.}
 }
 \value{
-plot of Shewhart control charts: X-bar charts, p-charts, and u-charts with 3-sigma control limits.
+plots of model classification, net benefit, and interventions saved.
 }
 \description{
-Graph X-bar charts, p-charts, and u-charts. This includes
-producing means center lines, 3-sigma upper and lower control limits. Users can also calculate
-values before and after an intervention to see if a change in the control process happened. Values are
-returned in a data frame.
+Graph decide class object's model classification results as well as Decision Curve analysis output for
+net benefit and interventions saved.
 }
 \examples{
 ## Predicting car engine shape type, v or straight  ##
