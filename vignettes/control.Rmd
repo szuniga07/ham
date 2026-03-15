@@ -47,10 +47,11 @@ Calculate statistics that can be used to produce X-bar charts, p-charts, and u-c
 
 <br>
 
-Hospital LOS. 
+Hospital LOS. View your output.
 
 ```{r xbar1}
 spc_x <- control(x="los", time="month", data=hosprog, type="x", n.equal=TRUE)
+print(spc_x)
 ```
 
 <br>
