@@ -871,11 +871,25 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL,
   # Quantiles of Y
   QbetaGtY <- list()
   if(!is.null(qVal)) {
+    if(length(qVal) > 1) {
     if(Distribution %in% c("bern", "bin")) {
       for (i in 1:length(qVal)) {
         QbetaGtY[[i]] <- summarizePost( qbeta(qVal[i], a_shape,
                                               b_shape) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+        QbetaGtY[[1 + length(qVal)]] <- summarizePost( abs(qbeta(qVal[length(qVal)], a_shape, b_shape) -
+                                                         qbeta(qVal[1], a_shape, b_shape))
+                                           )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
         names(QbetaGtY)[i] <- paste0("Percentile_", qVal[i])
+        names(QbetaGtY)[length(qVal) + 1] <- "High.Low.Interval"
+      }
+    }
+    } else {
+      if(Distribution %in% c("bern", "bin")) {
+        for (i in 1:length(qVal)) {
+          QbetaGtY[[i]] <- summarizePost( qbeta(qVal[i], a_shape,
+                                                b_shape) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+          names(QbetaGtY)[i] <- paste0("Percentile_", qVal[i])
+        }
       }
     }
   }
@@ -940,6 +954,19 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL,
   # Quantiles of Y
   QlogGtY <- list()
   if(!is.null(qVal)) {
+    if(length(qVal) > 1) {
+    if(Distribution == "ln") {
+      for (i in 1:length(qVal)) {
+        QlogGtY[[i]] <- summarizePost( qlnorm(p=qVal[i], meanlog= MC.Matrix[, Center],
+                                              sdlog= MC.Matrix[, Spread]) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+        QlogGtY[[1 + length(qVal)]] <- summarizePost( abs(qlnorm(p=qVal[length(qVal)], meanlog= MC.Matrix[, Center], sdlog= MC.Matrix[, Spread]) -
+                                                        qlnorm(p=qVal[1], meanlog= MC.Matrix[, Center], sdlog= MC.Matrix[, Spread]))
+                                              )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+        names(QlogGtY)[i] <- paste0("Percentile_", qVal[i])
+        names(QlogGtY)[length(qVal) + 1] <- "High.Low.Interval"
+      }
+    }
+    } else {
     if(Distribution == "ln") {
       for (i in 1:length(qVal)) {
         QlogGtY[[i]] <- summarizePost( qlnorm(p=qVal[i], meanlog= MC.Matrix[, Center],
@@ -948,6 +975,7 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL,
       }
     }
   }
+}
   #Return NAs for NULL objects
   #probability
   if (length(PlogGtY)==0 ) {
@@ -993,14 +1021,28 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL,
   # Quantiles of Y
   QnormGtY <- list()
   if(!is.null(qVal)) {
-    if(Distribution == "n") {
+    if(length(qVal) > 1) {
+      if(Distribution == "n") {
       for (i in 1:length(qVal)) {
         QnormGtY[[i]] <- summarizePost( qnorm(p=qVal[i], mean= MC.Matrix[, Center],
                                               sd= MC.Matrix[, Spread]) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+        QnormGtY[[1 + length(qVal)]] <- summarizePost( abs(qnorm(p=qVal[length(qVal)], mean= MC.Matrix[, Center], sd= MC.Matrix[, Spread]) -
+                                                             qnorm(p=qVal[1], mean= MC.Matrix[, Center], sd= MC.Matrix[, Spread]))
+        )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
         names(QnormGtY)[i] <- paste0("Percentile_", qVal[i])
+        names(QnormGtY)[length(qVal) + 1] <- "High.Low.Interval"
+      }
+      }
+    } else {
+      if(Distribution == "n") {
+        for (i in 1:length(qVal)) {
+          QnormGtY[[i]] <- summarizePost( qnorm(p=qVal[i], mean= MC.Matrix[, Center],
+                                                sd= MC.Matrix[, Spread]) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+          names(QnormGtY)[i] <- paste0("Percentile_", qVal[i])
+        }
       }
     }
-  }
+    }
   #Return NAs for NULL objects
   #probability
   if (length(PnormGtY)==0 ) {
@@ -1046,16 +1088,29 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL,
   # Quantiles of Y.
   # Needs mapply for qskewn() b/c it creates an impossible error for "omega" <= 0.
   QsnormGtY <- list()
-  if(!is.null(qVal)) {
+  if(!is.null(qVal)) { #
+#    if(length(qVal) > 1) {
 #    if(Distribution == "sn") {
 #      for (i in 1:length(qVal)) {
-#        #          QsnormGtY[[i]] <- summarizePost(mapply(qsn, p=qVal[i], xi=MC.Matrix[, Center], omega=MC.Matrix[, Spread],
+#        QsnormGtY[[i]] <- summarizePost(mapply(qskewn, p=qVal[i], xi=MC.Matrix[, Center], omega=MC.Matrix[, Spread],
+#                                               alpha=MC.Matrix[, Skew]))[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+#        QsnormGtY[[1 + length(qVal)]] <- summarizePost( abs(mapply(qskewn, p=qVal[length(qVal)], xi=MC.Matrix[, Center], omega=MC.Matrix[, Spread], alpha=MC.Matrix[, Skew]) -
+#                                                         mapply(qskewn, p=qVal[1], xi=MC.Matrix[, Center], omega=MC.Matrix[, Spread], alpha=MC.Matrix[, Skew]))
+#                                               )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+#        names(QsnormGtY)[i] <- paste0("Percentile_", qVal[i])
+#        names(QsnormGtY)[length(qVal) + 1] <- "High.Low.Interval"
+#      }
+#    }
+#    } else {
+#    if(Distribution == "sn") {
+#      for (i in 1:length(qVal)) {
 #        QsnormGtY[[i]] <- summarizePost(mapply(qskewn, p=qVal[i], xi=MC.Matrix[, Center], omega=MC.Matrix[, Spread],
 #                                               alpha=MC.Matrix[, Skew]))[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
 #        names(QsnormGtY)[i] <- paste0("Percentile_", qVal[i])
 #      }
 #    }
-  }
+#    }
+  } #
 
   #Return NAs for NULL objects
   #probability
@@ -1102,12 +1157,26 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL,
   # Quantiles of Y
   QtGtY <- list()
   if(!is.null(qVal)) {
+    if(length(qVal) > 1) {
+    if(Distribution == "t") {
+      for (i in 1:length(qVal)) {
+        QtGtY[[i]] <- summarizePost( qt(p=qVal[i], df= MC.Matrix[, Skew],
+                                        ncp= MC.Matrix[, Center]) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+        QtGtY[[1 + length(qVal)]] <- summarizePost( abs(qt(p=qVal[length(qVal)], df= MC.Matrix[, Skew], ncp= MC.Matrix[, Center]) -
+                                       qt(p=qVal[1], df= MC.Matrix[, Skew], ncp= MC.Matrix[, Center]))
+                                     )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+        names(QtGtY)[i] <- paste0("Percentile_", qVal[i])
+        names(QtGtY)[length(qVal) + 1] <- "High.Low.Interval"
+      }
+    }
+    } else {
     if(Distribution == "t") {
       for (i in 1:length(qVal)) {
         QtGtY[[i]] <- summarizePost( qt(p=qVal[i], df= MC.Matrix[, Skew],
                                         ncp= MC.Matrix[, Center]) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
         names(QtGtY)[i] <- paste0("Percentile_", qVal[i])
       }
+    }
     }
   }
   #Return NAs for NULL objects
@@ -1155,12 +1224,26 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL,
   # Quantiles of Y
   QWeibGtY <- list()
   if(!is.null(qVal)) {
+    if(length(qVal) > 1) {
+    if(Distribution == "w") {
+      for (i in 1:length(qVal)) {
+        QWeibGtY[[i]] <- summarizePost( qweibull(p=qVal[i], shape= MC.Matrix[, Center],
+                                                 scale= MC.Matrix[, Spread]) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+        QWeibGtY[[1 + length(qVal)]] <- summarizePost( abs(qweibull(p=qVal[length(qVal)], shape= MC.Matrix[, Center], scale= MC.Matrix[, Spread]) -
+                                                         qweibull(p=qVal[1], shape= MC.Matrix[, Center], scale= MC.Matrix[, Spread]))
+                                                       )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+        names(QWeibGtY)[i] <- paste0("Percentile_", qVal[i])
+        names(QWeibGtY)[length(qVal) + 1] <- "High.Low.Interval"
+      }
+    }
+    } else {
     if(Distribution == "w") {
       for (i in 1:length(qVal)) {
         QWeibGtY[[i]] <- summarizePost( qweibull(p=qVal[i], shape= MC.Matrix[, Center],
                                                  scale= MC.Matrix[, Spread]) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
         names(QWeibGtY)[i] <- paste0("Percentile_", qVal[i])
       }
+    }
     }
   }
   #Return NAs for NULL objects
@@ -1208,6 +1291,19 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL,
   # Quantiles of Y
   QGammaGtY <- list()
   if(!is.null(qVal)) {
+    if(length(qVal) > 1) {
+    if(Distribution == "g") {
+      for (i in 1:length(qVal)) {
+        QGammaGtY[[i]] <- summarizePost( qgamma(p=qVal[i], shape= MC.Matrix[, Center],
+                                                rate= MC.Matrix[, Spread]) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+        QGammaGtY[[1 + length(qVal)]] <- summarizePost( abs(qgamma(p=qVal[length(qVal)], shape= MC.Matrix[, Center], rate= MC.Matrix[, Spread]) -
+                                           qgamma(p=qVal[1], shape= MC.Matrix[, Center], rate= MC.Matrix[, Spread]))
+                                         )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+        names(QGammaGtY)[i] <- paste0("Percentile_", qVal[i])
+        names(QGammaGtY)[length(qVal) + 1] <- "High.Low.Interval"
+      }
+    }
+    } else {
     if(Distribution == "g") {
       for (i in 1:length(qVal)) {
         QGammaGtY[[i]] <- summarizePost( qgamma(p=qVal[i], shape= MC.Matrix[, Center],
@@ -1215,6 +1311,7 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL,
         names(QGammaGtY)[i] <- paste0("Percentile_", qVal[i])
       }
     }
+  }
   }
   #Return NAs for NULL objects
   #probability

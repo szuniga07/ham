@@ -133,7 +133,7 @@ time.
 ### Group level 95% confidence intervals with: 1) 3-month increments, and 2) 6-month rolling averages
 
 ``` r
-gr1 <- group(x="program", y="los", z="month", dataf=hosprog, dist="t", increment=3, rolling=6)
+gr1 <- group(x="program", y="los", z="month", data=hosprog, dist="t", increment=3, rolling=6)
 print(gr1$Group.CI)
 #> $adf_alpha
 #>   Group PointEst    Lower    Upper
@@ -814,55 +814,56 @@ interpret(id22)$its
 #> control group's pre-intervention slopes (intervention - control). 
 #> The coefficient is non-significant. 
 #> 
-#> post5 is 0.198 and the immediate shift in the control group 
-#> trend line after the 1st intervention start. The coefficient is 
+#> post5 is 0.198 and the immediate shift in the control group trend 
+#> line after this intervention time starts. The coefficient is 
 #> significant. 
 #> 
-#> txp5 is -0.026 and the difference between pre- and post-intervention 
-#> control group slopes (e.g., change in the pre-intervention 
-#> slope). The coefficient is non-significant. 
+#> txp5 is -0.026 and the difference between current and prior intervention 
+#> control group slopes (e.g., change in the pre-intervention slope). 
+#> The coefficient is non-significant. 
 #> 
 #> ixp5 is -0.302 and the difference between the intervention and 
 #> control groups (intervention - control) in the period immediately 
-#> after the intervention started (e.g., 1st year of intervention 1). 
+#> after this intervention started (e.g., 1st year of intervention 1). 
 #> The coefficient is significant. 
 #> 
 #> txip5 is 0.072 and non-significant. This is the difference in both 
-#> group's slope changes since pre-intervention (pre-slopes compared 
+#> group's slope changes since the prior intervention (pre-slopes compared 
 #> to post-slopes). For example, both have pre-intervention slopes 
 #> of 2, the control group's slope remained the same, therefore the 
 #> post 1st intervention slope is 0. And the intervention group's slope 
 #> increased by 2, then txip1 = 2 (= 2 - 0). 
 #> 
-#> post9 is 0.17 and the immediate shift in the control group 
-#> trend line after the 2nd intervention start. The coefficient is 
+#> post9 is 0.17 and the immediate shift in the control group trend 
+#> line after this intervention time starts. The coefficient is 
 #> non-significant. 
 #> 
-#> txp9 is -0.014 and the difference between 1st and 2nd intervention 
-#> control group slopes (e.g., change in the 1st intervention 
-#> slope). The coefficient is non-significant. 
+#> txp9 is -0.014 and the difference between current and prior intervention 
+#> control group slopes (e.g., change in the pre-intervention slope). 
+#> The coefficient is non-significant. 
 #> 
 #> ixp9 is -0.306 and the difference between the intervention and 
 #> control groups (intervention - control) in the period immediately 
-#> after the 2nd intervention started (e.g., 1st year of intervention 2). 
+#> after this intervention started (e.g., 1st year of intervention 1). 
 #> The coefficient is significant. 
 #> 
-#> txip9 is 0.02 and non-significant. This is the difference in both group's 
-#> slope changes since the 1st intervention (1st intervention slope compared 
-#> to the 2nd). For example, both have 1st intervention slopes of 2, the control 
-#> group's slope remained the same, therefore the 2nd intervention slope is 0. And 
-#> the intervention group's slope increased by 2, then txip2 = 2 (= 2 - 0). 
+#> txip9 is 0.02 and non-significant. This is the difference in both 
+#> group's slope changes since the prior intervention (pre-slopes compared 
+#> to post-slopes). For example, both have pre-intervention slopes 
+#> of 2, the control group's slope remained the same, therefore the 
+#> post 1st intervention slope is 0. And the intervention group's slope 
+#> increased by 2, then txip1 = 2 (= 2 - 0). 
 #> 
-#> Summary 1: For the 1st intervention period, the results show that the 
+#> Summary 1: For this intervention period 1, the results show that the 
 #> intervention group's non-significant shift in death30, 
-#> post 1st intervention was 0.022. The control group's non-significant 
-#> shift in death30, post 1st intervention was -0.036. The non-significant 
+#> post intervention was 0.022. The control group's non-significant 
+#> shift in death30, post intervention was -0.036. The non-significant 
 #> difference between both groups is 0.058. 
 #> 
-#> Summary 2: For the 2nd intervention period, the results show that the 
+#> Summary 2: For this intervention period 2, the results show that the 
 #> intervention group's non-significant shift in death30, 
-#> post 2nd intervention was 0.028. The control group's significant 
-#> shift in death30, post 2nd intervention was -0.05. The significant 
+#> post intervention was 0.028. The control group's significant 
+#> shift in death30, post intervention was -0.05. The significant 
 #> difference between both groups is 0.078. 
 #> 
 #> If there are additional variables in the model then the coefficients 
@@ -876,75 +877,221 @@ interpret(id22)$its
 </center>
 
 The following are corrections of errors and additions in the next
-version of ham.
+version of ham. Plot options were fixed and overlooked additions were
+made like x- and y-axis labels, etc.
 
-Errors corrected are for plot.assess only: 1) DID=“many” time 1 is no
-longer the intercept and 2) ITS=“two” intercept is now correct.
+### plot.group
 
-Additions are for plot.assess only: 1) added some graphing parameters
-and 2) added arrows and coefficient names to help visualize model
-coefficients.
+1.  “main” argument not working, now fixed.
+2.  In plot.group, leave an option to graph either as the start or stop
+    months for rolling months. Make stop as default
+3.  Add option for trend line of already aggregated data (i.e., basic
+    trend line) with “asis” = TRUE argument
+4.  Add xlab and ylab
 
-Examples of new plotting options are below.
+### plot.importance
+
+1.  Better plot set up so we can automatically see p-values on right
+    margin
+2.  cex.txt
+3.  cex.label
 
 <center>
 
-## plot.assess update
+## assess and plot.assess update
 
 </center>
 
-### Differences-in-Differences
+The most noticeable change was to add an option to allow as many
+interruptions as possible for Interrupted Time Series (ITS)
+
+### ITS unemployment example
 
 ``` r
-plot(dm1, "DID", add.legend="bottom", ylim=c(2, 8), main="DID: Two No Coefficients", col=c("dodgerblue","magenta"), lwd=7, cex=2, cex.axis=2, cex.lab=1.5,  cex.main=3, name=TRUE, )
+#Key interruption periods
+key_time <- c(5, 14, 17, 29, 42, 59, 69, 73, 80,92)
+im10 <- assess(formula=rate ~ ., data=unemployment, intervention = "usa",
+      int.time="year", its="one", interrupt= key_time, newdata=TRUE)
 ```
 
-<img src="man/figures/README-revDID0-1.png" width="100%" />
+### Graph ITS unemployment example
 
 ``` r
-plot(dm1, "DID", add.legend="bottom", xlim=c(-.1, 1.1), ylim=c(2, 8), main="DID: Two", col=c("dodgerblue","magenta"), lwd=7, cex=2, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(.02), cex.text=1.5, coefs=TRUE, round.c=2, cfact=T, conf.int=TRUE, adj.alpha=0.2 )
+plot(im10, "ITS", add.means = TRUE, coefs=TRUE, conf.int=TRUE, 
+     adj.alpha= .2, lwd=1.75, col="slategray", tcol= "orange", main="US unemployment rate",
+     xlab="Years (1929-2024)", ylab= "Proportion of labor market", cex.main=2, 
+     cex.axis = 1.25, cex.lab = 1.25, cex=2, cex.text= .75, pos.text=list("ITS.Time"=4,
+"post42"=1,"txp42"=3,"txp92"=3), x.axis=unemployment$Year) 
+for(i in 1:length(key_time)) {
+  text(key_time[i], .22-(.01*i), cex=.85, labels = 
+         paste0(unemployment[ key_time[i], "Year"], ": ", unemployment[ key_time[i], "event"]))
+}
 ```
 
-<img src="man/figures/README-revDID1-1.png" width="100%" />
+<img src="man/figures/README-plotITS2-1.png" width="100%" />
+
+<br>
+
+These and other changes include:
+
+### assess
+
+1.  Create stagger argument for staggered intervention starts for DID
+    and ITS
+2.  Create function to make multiple interruptions in ITS
+3.  Add object for the number of interruptions if it doesn’t already
+    exist.
+4.  Create stop() for when there are less than 2 time points between
+    periods (e.g., interrupt =c(3, 5, 7) works but not interrupt =c(3,
+    4, 5). Make suggestion to have at least 3 time points like interrupt
+    =c(3, 6, 9)
+5.  ITS.Effects are only available for up to 2 interruptions, need it
+    for as much as data permits
+6.  Subset data
+
+### plot.assess
+
+1.  Create function to make multiple interruptions in ITS
+2.  Add in counterfactual for ITS models
+3.  xlab and ylab
+4.  Added target line(s) and target colors
+5.  Added y.axis
+
+### itsEffect
+
+1.  Works for many interruptions
+
+### interpret and print.interpret
+
+1.  Changes for ITS sgmt and mgmt for many interpretations can be as
+    many as there are segments.
+
+<br>
+
+### alpha
+
+1.  Fixed missing data issue so that missing does crash the results. If
+    I did an alpha for items 1-5 but had missing data within items 6-10,
+    I would get NaNs because of my complete.cases argument. Now it will
+    only consider items 1-5 so it provides real results.
+
+<br>
+<center>
+
+# New functions
+
+</center>
+
+# Bayesian
+
+There are are options for a model summary and graphing. For example,
+below is a Posterior Predictive Check on how well our model fits the
+data. Estimating center and spread for hospital length of stay. A model
+with a gamma likelihood would fit better but this will do for
+demonstration purposes.
+
+Other Bayesian options include multilevel summaries and graphs,
+posterior distribution summaries, model diagnostics, Gelman R^2 formula,
+and target setting.
 
 ``` r
-plot(dm2, "DID", add.legend="topleft", xlim=c(-.5, 12), ylim=c(2, 8), main="DID: Many", col=c("purple","green"), lwd=7, cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(.25, .1), cex.text=1.5, coefs=TRUE, round.c=2, cfact=T, conf.int=TRUE, adj.alpha=0.2 )
+blos1 <- Bayes(x=losmcmc)
 ```
-
-<img src="man/figures/README-revDID2-1.png" width="100%" />
-
-### Interrupted Time Series
 
 ``` r
-plot(im11, "ITS", add.legend="topleft", xlim=c(-1, 14), ylim=c(2, 8), main="ITS study: SGST", col="thistle", lwd=7, cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(.25, .25), cex.text=1.5, coefs=TRUE, round.c=2, cfact=T, conf.int=TRUE, adj.alpha=0.2 )
+plot(x=blos1, y="post", parameter=list("sigmaOfY", "muOfY" ),math="divide",
+bcol="cyan", HDItext=.3, main= "Coefficient of Variation")
 ```
 
-<img src="man/figures/README-revITS1-1.png" width="100%" />
+<img src="man/figures/README-plotPost1-1.png" width="100%" />
+
+<br>
 
 ``` r
-plot(im12, "ITS", add.legend="topleft", xlim=c(-1, 14), ylim=c(2, 8), main="ITS study: SGMT", col="hotpink", lwd=7, cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(.25, .25), cex.text=1.5, coefs=TRUE, round.c=2, cfact=T, conf.int=TRUE, adj.alpha=0.2 )
+plot(x=blos1, y="check", type="n", data=hosprog, dv="los",
+parameter=c("muOfY", "sigmaOfY"), breaks=30, cex.axis=1.3, lwd=3, xlab=NULL,
+pline=20, vlim=c(-2, 20), xlim=c(-2, 20), add.legend="topright",
+main="Length of Stay", cex.main=1.5, xpt=5, pcol="red", lcol="orange",
+cex.legend=1, bcol="cyan")
 ```
 
-<img src="man/figures/README-revITS2-1.png" width="100%" />
+<img src="man/figures/README-plotPPC1-1.png" width="100%" />
+
+# Control Charts
+
+There are options for Shewhart X-bar charts, p-Charts, and u-Charts.
+This includes summary values and the charts. You can do a
+before-and-after comparison to see if there is a change too.
+
+u-chart for infection rates with an intervention.
 
 ``` r
-plot(im21, "ITS", add.legend="top", xlim=c(-1, 14), ylim=c(2, 8), main="ITS study: MGST", col=c("springgreen","salmon"), lwd=7, cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(.25, .25), cex.text=1.5, coefs=TRUE, round.c=2, pos.text= list("post5"=2), conf.int=TRUE, adj.alpha=0.2 )
+spc_u <- control(x="HAI", y="PatientDays", time="Month", data=infections,
+type="u", n.equal=FALSE, intervention=22)
 ```
 
-<img src="man/figures/README-revITS3-1.png" width="100%" />
+<br>
 
-Using all plot options
+u-chart with trend lines, various graphing options, x.axis start at 2nd
+year and y.axis changed to show HAIs per 1,000 patient days.
 
 ``` r
-plot(im22, "ITS", add.legend="top", xlim=c(-.75, 13.1), ylim=c(2, 8), main="ITS study: MGMT", col=c("dodgerblue","goldenrod"), lwd=7, cex=2, cex.axis=2, cex.lab=1.5,  cex.main=3, cex.legend=1.25, arrow=TRUE, xshift=c(0, .5), cex.text=1.25, name=F, coefs=TRUE, round.c=2, pos.text= list("txp5"=3, "post9"=4), tcol="springgreen", cfact=T, conf.int=TRUE, adj.alpha=0.3, add.means=TRUE)
+plot(spc_u, main="u-Chart: HAI per 1,000 Patient Days Pre/Post Intervention",
+col=c("green","dodgerblue"), trend=TRUE, trcol="red", x.axis=c((1:41+12)), round.c=1,
+y.axis=seq(min(spc_u$HAI)*1000, max(spc_u$HAI)*1000, length.out=nrow(spc_u)),
+xlab="Months (starting at year 2)", icol="gray", lwd=2, cex=2,
+cex.axis=1.1, cex.main=1.25, cex.text=1.25)
 ```
 
-<img src="man/figures/README-revITS4-1.png" width="100%" />
+<img src="man/figures/README-chartU1-1.png" width="100%" />
 
-### New Graph: Graph for group level confidence intervals over time. The trend results with averages based on 6 month rolling averages
+# Decision Curve Analysis and Model Classification
+
+View decision curve analysis results like ‘net benefit’ at various
+thresholds of key interest at these percentiles: 0.01, 0.05, 0.10, 0.25,
+0.50, 0.75, 0.90, 0.95, 0.99.
+
+We’ll first start of with the model classification graph from a logistic
+regression model.
 
 ``` r
-plot(x=gr1, y="roll", lwd=4, gcol=c("red", "blue"), gband=TRUE, overall=TRUE, oband=TRUE, ocol="gray", tcol="green", tgt=4, tpline=c(4,6), tpcol="yellow", name=TRUE, cex.axis=2, cex.lab=2, cex.text=3, cex.main=1.25, adj.alpha=.3)
+car_m1 <- assess(formula=vs ~ hp + am, data=mtcars, regression="logistic")
+d1 <- decide(x=car_m1, threshold= -0.767)
+print(d1$Model.Summary$Classification)
+#>     Sensitivity       Specifity False.Positives False.Negatives   Accuracy.Rate 
+#>      0.92857143      0.83333333      0.16666667      0.07142857      0.87500000 
+#>      Error.Rate 
+#>      0.12500000
 ```
 
-<img src="man/figures/README-plotGroup3-1.png" width="100%" />
+<br>
+
+and next the graph.
+
+``` r
+plot(x=d1, y= "cl", cex.lab=.75, bcol=c("cyan", "magenta"), add.legend="topleft", cex.legend=1.5)
+```
+
+<img src="man/figures/README-plotClass2-1.png" width="100%" />
+
+<br>
+
+Now we’ll show ‘Net Benefit’
+
+``` r
+plot(x=d1, y= "nb", add.legend="topright", lwd=3, lcol=c("green", "slategray", "red"))
+```
+
+<img src="man/figures/README-plotNB2-1.png" width="100%" />
+
+<br>
+
+and then ‘Interventions Saved’
+
+``` r
+plot(x=d1, y= "is")
+```
+
+<img src="man/figures/README-plotIS1-1.png" width="100%" />
+
+<br>

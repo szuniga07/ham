@@ -151,7 +151,7 @@ bcol="cyan", HDItext=.3, main= "Coefficient of Variation")
 
 # 4a. Posterior Predictive Check: 'check'
 
-On how well our model fits the data. Estimating center and spread for hospital length of stay. Generally, we only need the first 6 arguments below but we'll modify the plot. A model with a gamma likelihood would fit better but this will do for now.
+On how well our model fits the data. Estimating center and spread for hospital length of stay. Generally, we only need the first 6 arguments below but we'll modify the plot. A model with a gamma likelihood would fit better but this will do for demonstration purposes.
 
 ```{r plotPPC1, fig.dim = c(6, 4.5)}
 plot(x=blos1, y="check", type="n", data=hosprog, dv="los",
@@ -165,7 +165,7 @@ Here is the bare minimum code that will run when 'type' is one of these-- ('n', 
 plot(x=blos1, y="check", type="n", data=hosprog, dv="los", parameter=c("muOfY", "sigmaOfY"))
 
 <br>
-Here is an optional posterior predictive check when y='check' and type= 'taov'. This is used when you have a t distribution maximum likelihood with an ANOVA design (i.e., multiple groups) and you want a check for an estimated parameter (not the regression line). This side view is helpful in seeing the spread in values and how the heavy tails reach over those limits. You can also try this when doing a simple estimation with no multiple groups when y='check' and type= 'taov1', the '1' stands for 1 group only.
+Here is an optional posterior predictive check when y='check' and type= 'taov'. This is used when you have a t distribution maximum likelihood with an ANOVA design (i.e., multiple groups) and you want a check for an estimated parameter (not the regression line). This side view is helpful in seeing the spread in values and how the heavy tails reach over those limits. The argument pct can extend the heavy tails in this side view (e.g., pct=0.99). You can also try this when doing a simple estimation with no multiple groups when y='check' and type= 'taov1', the '1' stands for 1 group only.
 
 ```{r anovaPlot, echo=FALSE, out.width="60%", fig.align="center"}
 knitr::include_graphics("taov.png") 
