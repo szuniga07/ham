@@ -1,4 +1,4 @@
-citEntry(entry = "Manual",
+bibentry(bibtype = "Manual",
          title = "ham: Healthcare Analysis Methods",
          author = "Stephen A Zuniga",
          year = "2026",

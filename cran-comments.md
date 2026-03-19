@@ -4,22 +4,20 @@
 
 * This is a new release.
 
-# Version 1.1.0
+This is for version 1.2
 
-I fixed some minor bugs and added new functions, group() and plot.group().
+I fixed some minor bugs and added new functions control(), Bayes(), and decide() with plot options.
 
-## R CMD check results
-0 errors v | 0 warnings v | 0 notes v
-
-## devtools::check_win_devel()
-Status: 1 NOTE
 Possibly misspelled words in DESCRIPTION:
-  Hesketh (24:10)
-  Merlo (22:5)
-  Muthen (23:5)
-  Rabe (24:5)
-  Satorra (23:14)
-  Skrondal (24:20)
-  
-* The above names are statistical references and the people who wrote the publications. 
-* They are listed in DESCRIPTION and referenced in the new group file.  
+  Elkin (32:15)
+  Gebski (22:5)
+  Gelman (23:5)
+  Kruschke (26:5)
+  Shewhart (16:5)
+  Vickers (32:5)
+
+* The above names are for statistical references and the people who wrote the publications. 
+* They are listed in DESCRIPTION and referenced in the new function files.  
+
+
+
