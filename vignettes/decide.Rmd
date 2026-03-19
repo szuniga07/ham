@@ -38,7 +38,7 @@ The following sections describe the options for model classification results, ne
 
 Examine sensitivity and specificity values from a threshold on predicted values.
 
-Set a prediction threshold and examine sensitivity and specificity (false-positives) below. Find the best cutoff level. AUC calculated using the trapezoidal rule at the cutoff level. The threshold that minimizes mis-classification is where the sum of the number of false-positive and false-negative results (error rate) is lowest.
+Set a prediction threshold and examine sensitivity and specificity below. Find the best cutoff level. AUC calculated using the trapezoidal rule at the cutoff level. The threshold that minimizes misclassification is where the sum of the number of false-positive and false-negative results (error rate) is lowest.
 
 The appropriate threshold is based on the clinical context (e.g., we consider any risk over 20% as being too high to go without an intervention).
 
@@ -102,7 +102,7 @@ This model predicts very well. However, in healthcare we often have very high st
 
 The Net Benefit is driven by true-positives, a higher value is better. The NB plot compares what provides a better strategy along various thresholds (only consider thresholds within the range of predicted values). Two valid comparison strategies are to 'treat all' or 'treat none'.
 
-For example, a net benefit of 0.0973 indicates that the difference between our true-positives and false-positives will be finding about 10 more true-positives than false-positives per 100 patients using a cutoff of FEV= 3.
+For example, a net benefit of 0.0973 indicates that the difference between our true-positives and false-positives will be finding about 10 more true-positives than false-positives per 100 patients using a cutoff of FEV= 1.5.
 
 The 'All treated' line tends to intersect the 'None treated' line at the prevalence line for binary outcomes. No Benefit when all interventions withheld.
 
@@ -120,7 +120,7 @@ A basic net benefit graph of the classification results when y= 'nb'.
 plot(x=d1, y= "nb")
 ```
 
-This adds a little more detail. We see across all of the key percentiles, this model outperforms a potentially costly approach of "treat all" or "treat none". 
+Below adds a little more detail. We see across all of the key percentiles, this model outperforms a potentially costly approach of "treat all" or "treat none". 
 
 ```{r plotNB2, fig.dim = c(6, 4.5)}
 plot(x=d1, y= "nb", add.legend="topright", lwd=3, lcol=c("green", "slategray", "red"))
@@ -132,7 +132,7 @@ plot(x=d1, y= "nb", add.legend="topright", lwd=3, lcol=c("green", "slategray", "
 
 <br>
 
-As we expect, a model can inform us which patients to treat as well as which patients we can avoid treatment. This is especially helpful if treatments have permanent side effects such as taking biopsies or when working with less critical outcomes, we can save money by administering treatments that may be unnecessary for most patients.
+As we expect, a model can inform us on which patients to treat as well as which patients can avoid treatment. This is especially helpful if treatments have permanent side effects such as those from taking biopsies or when working with less critical outcomes, we can save money by avoiding treatments that may be unnecessary for most patients.
 
 A model can reduce unnecessary interventions. For example, a risk threshold of 10% may reduce the number of unnecessary interventions by 40 per 100 without missing treatment for any patients with cancer.
 

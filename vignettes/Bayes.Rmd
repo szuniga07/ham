@@ -30,7 +30,7 @@ knitr::include_graphics("logo.png")
 
 Bayesian summaries and graphs are now available on ham. The Bayes and plot.Bayes functions will summarize and display Markov Chain Monte Carlo (MCMC) simulations that are stored as a list of matrix elements. For example, you may have saved 10,000 simulations as 4 chains that are stored in a list and may want to run standard simulation diagnostics like a traceplot. You can use ham's Bayes function to convert the 4 chains into a data frame that can be used to create a traceplot.
 
-MCMC chains created in the coda package (e.g., through JAGS or Stan) should also be easily converted with the Bayes function.
+MCMC chains created in the coda package (e.g., through JAGS or Stan with a class of coda, matrix, array) can also be converted with the Bayes function.
 
 The following sections will introduce the various commands in Bayes and plot.Bayes. We'll review it in terms of a common focus in health care, hospital length of stay (LOS).
 
@@ -48,7 +48,7 @@ The 'y' argument allows us to ouput results with these options--
 
 * post: Creates a posterior summary for a parameter in the MCMC.
 
-* multi: Creates a posterior summary of a hierarchical model.
+* multi: Creates a posterior summary of a hierarchical model for plots.
 
 * target: Calculates the proportion of the distribution above specific probabilities or values.
 
@@ -72,9 +72,9 @@ There are similar plot options found in the 'y' argument.
 
 * check: Plots posterior predictive checks for distributions on estimations or trend lines of regressions.
 
-* multi: Graphs a posterior summary of a hierarchical model with 2 options of repeats measurements nested within individuals or individuals nested within organizations. For example, multiple blood tests for patients found within hospitals.
+* multi: Graphs a posterior summary of a hierarchical model with 2 options of repeated measurements nested within individuals or individuals nested within organizations. For example, multiple blood tests for patients found within hospitals.
 
-* target: Plot the calculated the proportion of the distribution above specific probabilities or values using either the parameter estimate that represents the 'average' (i.e., graph from 'post') or the estimated distribution (i.e., graph from 'check').
+* target: Plot the calculated proportion of the distribution above specific probabilities or values using either the parameter estimate that represents the 'average' (i.e., graph from 'post') or the estimated distribution (i.e., graph from 'check').
 
 This vignette will go in order of the sections in plot.Bayes since almost everything with Bayes() overlaps. And it will conclude with 'r2'. Most plot.Bayes() arguments are optional so the examples will begin with a 'bare bones' option that will help produce plots quickly and follow with more detailed graphs. Not all possible arguments are available with each 'y' option but many are, especially the relevant ones.
 
@@ -87,7 +87,7 @@ blos1 <- Bayes(x=losmcmc)
 ```
 
 We'll start by reviewing our MCMC to assess how well the models ran. And this runs with the most basic code. Examine Bayesian model diagnostics for estimated length of stay (LOS).
-Review autocorrelation factor, density plots, Gelman-Rubin, and traceplots statistic.
+Review autocorrelation factor, density plots, Gelman-Rubin statistic, and traceplots.
 
 This uses the bare minimum code that will run, similar for each diagnostic plot.
 
@@ -151,7 +151,7 @@ bcol="cyan", HDItext=.3, main= "Coefficient of Variation")
 
 # 4a. Posterior Predictive Check: 'check'
 
-On how well our model fits the data. Estimating center and spread for hospital length of stay. Generally, we only need the first 6 arguments but we'll modify the plot. A model with a gamma likelihood would fit better but this will do for now.
+On how well our model fits the data. Estimating center and spread for hospital length of stay. Generally, we only need the first 6 arguments below but we'll modify the plot. A model with a gamma likelihood would fit better but this will do for now.
 
 ```{r plotPPC1, fig.dim = c(6, 4.5)}
 plot(x=blos1, y="check", type="n", data=hosprog, dv="los",
@@ -225,7 +225,7 @@ cex= 2, cex.main=1.25, cex.axis=.75, cex.legend=1.5, X.Lab=NULL)
 
 <br>
 
-And now the level 3 plot (observation in plants in Treatment by type groups). You'll notice that in both the graphs, there is a wide HDI band, partially due to only having a few groups at each level, here just 4 groups. Having more groups can help narrow our degree of uncertainty by providing more information.
+And now the level 3 plot (observation in plants in Treatment by type groups). You'll notice that in both the graphs, there is a wide HDI band, partially due to only having a few groups at each level, here just 4 groups. Having more groups at the higher levels can help narrow our degree of uncertainty by providing more information.
 
 ```{r plotMulti2, fig.dim = c(6, 4.5)}
 plot(x=co2multi, y="multi", level=3, aorder=FALSE, lcol="blue", pcol= c("green", "pink"),
@@ -249,7 +249,7 @@ newdata=TRUE, target=list(p=c(.35,.4,.45, .5, .55),  y=c(3,4)))
 print(btarget1$Target)
 ```
 
-We can now review the results to identify targets that represent increments of 5 points of probability. This potentially may requires another 5 points of effort to achieve, however moving around a rate in the middle is generally easier than moving to rates that are in the extremes (e.g., 0% infections). Using Jacob Cohen's effect sizes can help in that understanding.
+We can now review the results to identify targets that represent increments of 5 points of probability. This potentially may requires another 5 points of effort to achieve, however moving around a rate in the middle is generally easier than moving to rates that are in the extremes (e.g., 0% infections). Using Jacob Cohen's effect sizes can help in that understanding. Notice "High.Low.Interval", represents the proportion under the curve of the highest and lowest value for y, here 4-3= 1 day. 
 
 Here is the bare minimum code that will run (if we want to print, newdata=TRUE is needed):
 

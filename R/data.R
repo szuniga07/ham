@@ -138,8 +138,8 @@
 #'   \item{ sigmaOfY }{Estimate of the square root of variance parameter.}
 #'   ...
 #' }
-#' @source losmcmc is a list of 4 MCMC simulations. It estimates the mean and standard deviation using the hosprog data frame from ham.
-#' An estimation was specified using a normal distribution maximum likelihood and normal and uniform distribution priors for
-#' the mean and sigma parameters.
+#' @source losmcmc is a list of 4 MCMC simulations. It estimates the mean and standard deviation using the artificial hosprog
+#' data frame from ham. An estimation was specified using a normal distribution maximum likelihood and normal and uniform
+#' distribution priors for the mean and sigma parameters.
 #'
 "losmcmc"

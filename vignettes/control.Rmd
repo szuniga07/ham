@@ -78,7 +78,7 @@ spc_p <- control(x="rdm30", time="month", data=hosprog, type="p", n.equal=FALSE)
 
 <br>
 
-p-chart, adding target and time point lines.
+p-chart, adding specification target and time point lines.
 
 ```{r chartp1, fig.dim = c(6, 4.5)}
 plot(spc_p, tgt=c(0,.25), tgtcol="green", ylim=c(0,0.4), tpline=c(4,8),
