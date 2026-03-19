@@ -6,6 +6,17 @@
 
 This is for version 1.2
 
+I am resubmitting, 1 of the 2 notes was removed. 
+
+The 2nd note is for "* checking CRAN incoming feasibility ... NOTE
+Maintainer: 'Stephen Zuniga <rms.shiny@gmail.com>'"
+
+I am the author and only maintainer. I checked and it seems this note reminds CRAN 
+maintainers to check that the submission comes actually from the maintainer and 
+not anybody else. This comes from me, there is nobody else. I checked my description 
+file and the author is correctly listed as me with the appropriate email address and 
+matches previous versions.
+
 I fixed some minor bugs and added new functions control(), Bayes(), and decide() with plot options.
 
 Possibly misspelled words in DESCRIPTION:
