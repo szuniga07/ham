@@ -18,7 +18,11 @@ assess(
   stagger = NULL,
   topcode = NULL,
   propensity = NULL,
-  newdata = FALSE
+  trim = NULL,
+  weights = NULL,
+  offset = NULL,
+  newdata = FALSE,
+  family = NULL
 )
 }
 \arguments{
@@ -29,9 +33,9 @@ will use all variables in the data.frame as is standard in formulas.}
 
 \item{data}{a data.frame in which to interpret the variables named in the formula.}
 
-\item{regression}{Select a regression method for standard regression models
-(i.e., neither DID nor ITS). Options are regression="ols" (ordinary least squares AKA linear)
-or regression="logistic". Default is regression="none" for no standard regression model.}
+\item{regression}{Select a regression method for standard regression models (i.e., neither
+DID nor ITS). Options are regression="ols" (ordinary least squares AKA linear), regression="logistic",
+or regression='Poisson'. Default is regression="none" for no standard regression model.}
 
 \item{did}{option for Differences-in-Differences (DID) regression. Select did="two" for
 models with only 2 time points (e.g., pre/post-test). Select did="many" for >= 3 time points
@@ -42,7 +46,8 @@ group (e.g., intervention only). Select its="two" for two groups (intervention a
 Default is did="none" for no ITS.}
 
 \item{intervention}{optional intervention variable name selected for DID, ITS, and propensity score
-models that indicate which cases are in the intervention or not.}
+models that indicate which cases are in the intervention or not when propensity is a character class
+(i.e., intervention can be NULL when propensity is a formula class for a non-DID or non-ITS model).}
 
 \item{int.time}{optional intervention time variable name selected for DID or ITS models. This
 indicates the duration of time relative to when the intervention started.}
@@ -76,13 +81,34 @@ Default is NULL.}
 \item{topcode}{optional value selected to top code Y (or left-hand side) of the formula. Analyses
 will be performed using the new top coded variable.}
 
-\item{propensity}{optional character vector of variable names to perform a propensity score model.
-This requires the 'intervention' option to be selected. All models will include 'pscore' (propensity
-score) in the analysis as a covariate adjustment using the propensity score.}
+\item{propensity}{optional character vector of variable names or formula class to perform a propensity
+score model. This requires the 'intervention' option to be selected only when using a character vector.
+All models will include 'pscore' (propensity score) in the analysis as a covariate adjustment using
+the propensity score unless one of the weights options 'ipw' (Inverse Probability Weights for the ATE,
+Average Treatment Effect, estimator), 'nipw' (Normalized Inverse Probability Weights by Hajek estimator),
+or 'att' (Average Treatment Effect on the Treated) is selected for the analysis.}
+
+\item{trim}{an optional two-element numeric vector that sets limits between 0 and 1 for the
+propensity score. If NULL, the default values of >= 0 and <= 1 are used (i.e., c(0,1)).}
+
+\item{weights}{an optional vector of weights or character vector of either 'ipw', 'nipw', or 'att' for
+Inverse Probability of Treatment Weighting Using the propensity score (see 'propensity' above) to
+be used in the fitting process. Should be NULL or a numeric vector. If non-NULL, weighting is used
+with weights; otherwise standard regression is used.}
+
+\item{offset}{this can be used to specify an a priori known component to be included in the linear
+predictor during fitting. This should be NULL or a numeric vector of length equal to the number of
+cases. One or more offset terms can be included in the formula instead or as well, and if more than
+one is specified their sum is used.}
 
 \item{newdata}{optional logical value that indicates if you want the new data returned. newdata=TRUE
 will return the data with any new columns created from the DID, ITS, propensity score, or top coding.
 The default is newdata=FALSE. No new data will be returned if none was created.}
+
+\item{family}{a description of the error distribution and link function to be used in the model.
+For glm this can be a character string naming a family function, a family function or the result
+of a call to a family function. For glm.fit only the third option is supported. See 'glm' function
+in Base R for more details. Currently available when regression= 'logistic' or 'Poisson'.}
 }
 \value{
 a list of results from selected regression models. Will return new data if selected.

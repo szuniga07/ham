@@ -13,9 +13,9 @@
 #' Y ~ Post.All + Int.Var + DID). If regression=ols or regression=logistic, 'Y ~ .'
 #' will use all variables in the data.frame as is standard in formulas.
 #' @param data a data.frame in which to interpret the variables named in the formula.
-#' @param regression Select a regression method for standard regression models
-#' (i.e., neither DID nor ITS). Options are regression="ols" (ordinary least squares AKA linear)
-#' or regression="logistic". Default is regression="none" for no standard regression model.
+#' @param regression Select a regression method for standard regression models (i.e., neither
+#' DID nor ITS). Options are regression="ols" (ordinary least squares AKA linear), regression="logistic",
+#' or regression='Poisson'. Default is regression="none" for no standard regression model.
 #' @param did option for Differences-in-Differences (DID) regression. Select did="two" for
 #' models with only 2 time points (e.g., pre/post-test). Select did="many" for >= 3 time points
 #' (e.g., monthly time points in 12 months of data). Default is did="none" for no DID.
@@ -23,7 +23,8 @@
 #' group (e.g., intervention only). Select its="two" for two groups (intervention and control).
 #' Default is did="none" for no ITS.
 #' @param intervention optional intervention variable name selected for DID, ITS, and propensity score
-#' models that indicate which cases are in the intervention or not.
+#' models that indicate which cases are in the intervention or not when propensity is a character class
+#' (i.e., intervention can be NULL when propensity is a formula class for a non-DID or non-ITS model).
 #' @param int.time optional intervention time variable name selected for DID or ITS models. This
 #' indicates the duration of time relative to when the intervention started.
 #' @param treatment optional treatment start period variable name selected for DID models.
@@ -50,13 +51,29 @@
 #' Default is NULL.
 #' @param topcode optional value selected to top code Y (or left-hand side) of the formula. Analyses
 #' will be performed using the new top coded variable.
-#' @param propensity optional character vector of variable names to perform a propensity score model.
-#' This requires the 'intervention' option to be selected. All models will include 'pscore' (propensity
-#' score) in the analysis as a covariate adjustment using the propensity score.
+#' @param propensity optional character vector of variable names or formula class to perform a propensity
+#' score model. This requires the 'intervention' option to be selected only when using a character vector.
+#' All models will include 'pscore' (propensity score) in the analysis as a covariate adjustment using
+#' the propensity score unless one of the weights options 'ipw' (Inverse Probability Weights for the ATE,
+#' Average Treatment Effect, estimator), 'nipw' (Normalized Inverse Probability Weights by Hajek estimator),
+#' or 'att' (Average Treatment Effect on the Treated) is selected for the analysis.
+#' @param trim an optional two-element numeric vector that sets limits between 0 and 1 for the
+#' propensity score. If NULL, the default values of >= 0 and <= 1 are used (i.e., c(0,1)).
+#' @param weights an optional vector of weights or character vector of either 'ipw', 'nipw', or 'att' for
+#' Inverse Probability of Treatment Weighting Using the propensity score (see 'propensity' above) to
+#' be used in the fitting process. Should be NULL or a numeric vector. If non-NULL, weighting is used
+#' with weights; otherwise standard regression is used.
+#' @param offset this can be used to specify an a priori known component to be included in the linear
+#' predictor during fitting. This should be NULL or a numeric vector of length equal to the number of
+#' cases. One or more offset terms can be included in the formula instead or as well, and if more than
+#' one is specified their sum is used.
 #' @param newdata optional logical value that indicates if you want the new data returned. newdata=TRUE
 #' will return the data with any new columns created from the DID, ITS, propensity score, or top coding.
 #' The default is newdata=FALSE. No new data will be returned if none was created.
-#'
+#' @param family a description of the error distribution and link function to be used in the model.
+#' For glm this can be a character string naming a family function, a family function or the result
+#' of a call to a family function. For glm.fit only the third option is supported. See 'glm' function
+#' in Base R for more details. Currently available when regression= 'logistic' or 'Poisson'.
 #'
 #' @return a list of results from selected regression models. Will return new data if selected.
 #' And returns relevant model information such as variable names, type of analysis, formula, study
@@ -108,8 +125,9 @@
 #'
 #' @importFrom stats as.formula binomial plogis predict update aggregate
 assess <- function(formula, data, regression= "none", did ="none", its ="none",
-                   intervention =NULL, int.time=NULL, treatment=NULL,interrupt=NULL, subset=NULL,
-                   stagger= NULL, topcode =NULL, propensity =NULL, newdata =FALSE) {
+                   intervention =NULL, int.time=NULL, treatment=NULL,interrupt=NULL,
+                   subset=NULL, stagger= NULL, topcode =NULL, propensity =NULL, trim=NULL,
+                   weights=NULL,offset=NULL, newdata =FALSE, family=NULL) {
   # Use various formulas for the different models
   primary_formula <- formula
   #Get formula variables
@@ -176,7 +194,7 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
 
   # Propensity score model #
   # Proper propensity score arguments
-  if(!is.null(propensity)) {
+  if (all(class(propensity) == "character") == TRUE) {
     if(is.null(intervention)) {
       stop("Error: 'intervention=NULL'. Need intervention name for propensity scores.")
     }
@@ -190,25 +208,71 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
     }
   }
 
-  # Creates propensity score model formula
-  if(!is.null(propensity)) {
+  if(!is.null(trim)) {
+    if(length(trim) != 2) {
+    stop("Error: Expecting trim argument to have exactly 2 elements.")
+    }
+  }
+
+  # Creates propensity score model formula based on variable names
+  if (all(class(propensity) == "character") == TRUE) {
     prop_mdl_fmla <- as.formula(paste(paste0(intervention , "~"),
                                       paste(propensity, collapse= "+")))
-  } else {
+  }
+  #Creates propensity score model formula when I enter the model formula directly
+  if (all(class(propensity) == "formula") == TRUE) {
+    prop_mdl_fmla <- propensity
+  }
+  #When propensity is NULL
+  if(is.null(propensity)) {
     prop_mdl_fmla <- NULL
   }
+  #Create an object for the intervention variable name
+  if(!is.null(propensity)) {
+    prop_mdl_y <- as.character(prop_mdl_fmla[[2]])
+  }
+
+  # Create propensity score model
   if(!is.null(propensity)) {
     propensity_model <- stats::glm(prop_mdl_fmla, family=binomial(link='logit'), data=data)
     pscore <- plogis(predict(propensity_model, newdata= data))
   }
+  #Trim propensity scores to thresholds
+  if(!is.null(trim)) {
+    trim <- sort(trim)
+    pscore[pscore <= trim[1]] <- trim[1]
+    pscore[pscore >= trim[2]] <- trim[2]
+  }
+
+  ##############################################
+  ## Inverse probability of treatment weights ##
+  ##############################################
+  # Create for weighted regression
   if(!is.null(propensity)) {
-    # Add variables to model formula
-    if(xyvar[2] != ".") {
-      primary_formula <- update(primary_formula, paste("~ . +", "pscore"))
-    } else {
-      primary_formula <- update(primary_formula, paste("~  +", "pscore"))
+  ipw <- rep(NA, nrow(data))
+  ipw[data[, prop_mdl_y] == 1 ] <- 1 / pscore[data[, prop_mdl_y] == 1 ]
+  ipw[data[, prop_mdl_y] == 0 ] <- 1 / (1 - pscore[data[, prop_mdl_y] == 0 ])
+  #Normalized IPW weights
+  nipw <- rep(NA, nrow(data))
+  nipw[data[, prop_mdl_y] == 1] <- ipw[data[, prop_mdl_y] == 1] / sum(ipw[data[, prop_mdl_y] == 1], na.rm=TRUE)
+  nipw[data[, prop_mdl_y] == 0] <- ipw[data[, prop_mdl_y] == 0] / sum(ipw[data[, prop_mdl_y] == 0], na.rm=TRUE)
+  #ATT weights
+  att <- rep(NA, nrow(data))
+  att[data[, prop_mdl_y] == 1] <- 1
+  att[data[, prop_mdl_y] == 0] <- pscore[data[, prop_mdl_y] == 0] / (1 - pscore[data[, prop_mdl_y] == 0])
+}
+  # Add covariates to model formula
+  if (is.null(weights)) {
+  #if (!weights %in% c(ipw, nipw, att)) {
+    if(!is.null(propensity)) {
+      if(xyvar[2] != ".") {
+        primary_formula <- update(primary_formula, paste("~ . +", "pscore"))
+      } else {
+        primary_formula <- update(primary_formula, paste("~  +", "pscore"))
+      }
     }
   }
+
 
   #Data frames to make later
   did_data <- NULL
@@ -217,12 +281,12 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
   top_data <- NULL
 
   #Proper regression arguments
-  if (!regression %in% c("none","ols","logistic")) {
-    stop("Error: 'regression='. Only select 'none', 'ols','logistic'.")
+  if (!regression %in% c("none","ols","logistic", "Poisson")) {
+    stop("Error: 'regression='. Only select 'none', 'ols', 'logistic', 'Poisson'.")
   }
-  if(regression %in% c("ols","logistic")) {
+  if(regression %in% c("ols","logistic", "Poisson")) {
     if(any(c(did,its) != "none")) {
-      stop("Error: regression= ols or logistic. Does not run concurrently with did or its.")
+      stop("Error: regression= ols, logistic, or Poisson. Does not run concurrently with did or its.")
     }
   }
   #Proper DID arguments
