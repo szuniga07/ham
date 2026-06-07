@@ -214,6 +214,15 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
     }
   }
 
+  #Make the weights argument a different name
+    ## Weight object ##
+    if(!is.null(weights)) {
+      wght_obj_var <- weights
+    } else {
+      wght_obj_var <- NULL
+    }
+
+
   # Creates propensity score model formula based on variable names
   if (all(class(propensity) == "character") == TRUE) {
     prop_mdl_fmla <- as.formula(paste(paste0(intervention , "~"),
@@ -781,7 +790,15 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
   # Add variables to model formula
   if(!is.null(topcode)) {
     if(!is.null(propensity)) {
-      primary_formula <- update(primary_formula, paste(new_topcode_yvar_name, "~ . +", "pscore"))
+      if(is.null(weights)) {
+        primary_formula <- update(primary_formula, paste(new_topcode_yvar_name, "~ . +", "pscore"))
+      }
+      if (!is.null(weights) && weights %in% c("ipw", "nipw", "att")) {
+#      if(weights %in% c("ipw","nipw","att")) {
+        primary_formula <- update(primary_formula, paste(new_topcode_yvar_name, "~ . "))
+      } else {
+        primary_formula <- update(primary_formula, paste(new_topcode_yvar_name, "~ . +", "pscore"))
+      }
     }
     if(is.null(propensity)) {
       if(xvar[1] == ".") {
@@ -793,7 +810,8 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
   }
   # Propenisty score data #
   if(!is.null(propensity)) {
-    prop_data <- pscore
+#    prop_data <- pscore
+    prop_data <- data.frame(pscore, ipw, nipw, att)
   }
   # Makes propensity score NULL if not done so formula is ok in DID regression
   if(!is.null(propensity)) {
@@ -805,7 +823,8 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
   ## Create newdata object ##
   # Range of new data includes: "did","its","propensity", "top code"
   if (any(additional_data) == TRUE) {
-    newdata_list <- list(data, did_data, its_data, topy_var=top_data, pscore=prop_data)
+#    newdata_list <- list(data, did_data, its_data, topy_var=top_data, pscore=prop_data)
+    newdata_list <- list(data, did_data, its_data, topy_var=top_data, prop_data)
     combined_df <- do.call(cbind, newdata_list[!sapply(newdata_list, is.null)])
     colnames(combined_df)[which(colnames(combined_df) =="topy_var")] <- new_topcode_yvar_name
   } else {
@@ -825,10 +844,20 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
     new_df <- NULL
   }
 
+  ## Weight object ##
+  if(!is.null(weights)) {
+    wght_obj <- combined_df[, wght_obj_var]
+  } else {
+    wght_obj <- NULL
+  }
+
   # Regressions #
+  #Put model formula into the environment because weights won't run without
+  environment(primary_formula) <- environment()
+
   #Standard covariate adjustment
   if(regression == "ols") {
-    model_1 <- stats::lm(formula= primary_formula, data=combined_df)
+    model_1 <- stats::lm(formula= primary_formula, data=combined_df, weights = wght_obj)
   }
   if(regression == "logistic") {
     model_1 <- stats::glm(formula= primary_formula, family=binomial(link='logit'), data=combined_df)
