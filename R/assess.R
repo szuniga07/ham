@@ -59,10 +59,10 @@
 #' or 'att' (Average Treatment Effect on the Treated) is selected for the analysis.
 #' @param trim an optional two-element numeric vector that sets limits between 0 and 1 for the
 #' propensity score. If NULL, the default values of >= 0 and <= 1 are used (i.e., c(0,1)).
-#' @param weights an optional vector of weights or character vector of either 'ipw', 'nipw', or 'att' for
-#' Inverse Probability of Treatment Weighting Using the propensity score (see 'propensity' above) to
-#' be used in the fitting process. Should be NULL or a numeric vector. If non-NULL, weighting is used
-#' with weights; otherwise standard regression is used.
+#' @param weights an optional 1-element character vector of the data frame column name or character
+#' vector of either 'ipw', 'nipw', or 'att' for Inverse Probability of Treatment Weighting Using the
+#' propensity score (see 'propensity' above) to be used in the fitting process. Should be NULL or a
+#' character vector. If non-NULL, weighting is used with weights; otherwise standard regression is used.
 #' @param offset this can be used to specify an a priori known component to be included in the linear
 #' predictor during fitting. This should be NULL or a numeric vector of length equal to the number of
 #' cases. One or more offset terms can be included in the formula instead or as well, and if more than
@@ -152,7 +152,7 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
   }
 
   main_data_vars <- colnames(data)
-  newdata_vars <- c("Post.All", "Period", "DID","DID.Trend","Int.Var","pscore")
+  newdata_vars <- c("Post.All", "Period", "DID","DID.Trend","Int.Var","pscore", "ipw", "nipw","att")
   dup_vars <- intersect(main_data_vars, newdata_vars)
   name_stop_fnc <-paste0("Error: Duplicated column name(s): ", paste(dup_vars, collapse = ", "),
                          ". Rename variables, these are reserved for function purposes.")
@@ -207,7 +207,12 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
       }
     }
   }
-
+#Make sure weights is a character class
+  if(!is.null(weights)) {
+    if (all(class(weights) == "character") == FALSE) {
+    stop("Error: Expecting weights argument as a character class vector.")
+  }
+}
   if(!is.null(trim)) {
     if(length(trim) != 2) {
     stop("Error: Expecting trim argument to have exactly 2 elements.")
@@ -221,7 +226,6 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
     } else {
       wght_obj_var <- NULL
     }
-
 
   # Creates propensity score model formula based on variable names
   if (all(class(propensity) == "character") == TRUE) {
@@ -239,6 +243,13 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
   #Create an object for the intervention variable name
   if(!is.null(propensity)) {
     prop_mdl_y <- as.character(prop_mdl_fmla[[2]])
+  }
+
+  #Stop if intervention variable name and propensity model Y are different
+  if (!is.null(propensity) && !is.null(intervention)) {
+    if(prop_mdl_y != intervention) {
+      stop("Error: Expecting intervention argument equal to propensity model Y.")
+    }
   }
 
   # Create propensity score model
@@ -270,9 +281,8 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
   att[data[, prop_mdl_y] == 1] <- 1
   att[data[, prop_mdl_y] == 0] <- pscore[data[, prop_mdl_y] == 0] / (1 - pscore[data[, prop_mdl_y] == 0])
 }
-  # Add covariates to model formula
+  # Add covariates to model formula when there are no weights
   if (is.null(weights)) {
-  #if (!weights %in% c(ipw, nipw, att)) {
     if(!is.null(propensity)) {
       if(xyvar[2] != ".") {
         primary_formula <- update(primary_formula, paste("~ . +", "pscore"))
@@ -281,8 +291,16 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
       }
     }
   }
-
-
+  # Add covariates to model formula when there are weights
+  if (!is.null(weights) && !weights %in% c("ipw", "nipw", "att")) {
+    if(!is.null(propensity)) {
+      if(xyvar[2] != ".") {
+        primary_formula <- update(primary_formula, paste("~ . +", "pscore"))
+      } else {
+        primary_formula <- update(primary_formula, paste("~  +", "pscore"))
+      }
+    }
+  }
   #Data frames to make later
   did_data <- NULL
   its_data <- NULL
@@ -794,7 +812,6 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
         primary_formula <- update(primary_formula, paste(new_topcode_yvar_name, "~ . +", "pscore"))
       }
       if (!is.null(weights) && weights %in% c("ipw", "nipw", "att")) {
-#      if(weights %in% c("ipw","nipw","att")) {
         primary_formula <- update(primary_formula, paste(new_topcode_yvar_name, "~ . "))
       } else {
         primary_formula <- update(primary_formula, paste(new_topcode_yvar_name, "~ . +", "pscore"))
@@ -938,6 +955,11 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
   if (create_did == TRUE) {
     attributes(DID_formula) <- NULL
   }
+  #Create new primary formula and remove attributes
+  if (!is.null(primary_formula)) {
+    primary_formul2 <- primary_formula
+    environment(primary_formul2) <- globalenv()
+  }
 
   # Calculate group means per time period #
   #Pick a model's data for aggregating
@@ -1003,10 +1025,11 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
 
   z <- list(model=model_1, DID=did_model, DID.Names=DID.Names, ITS=its_model,
             ITS.Effects=ITS.Effects,ITS.Names=ITS.Names, newdata=new_df,
-            formula=list(primary_formula=primary_formula,
+            formula=list(primary_formula= primary_formul2,
                          propensity_formula=propensity_formula,
                          DID_formula=DID_formula,
-                         ITS_formula=ITS_formula),
+                         ITS_formula=ITS_formula,
+                         weights= wght_obj_var),
             analysis_type=list(regression_type=regression_type,
                                did_type=did_type, itsa_type=itsa_type),
             study= list(regression=regression, did=did, its=its, intervention=intervention,

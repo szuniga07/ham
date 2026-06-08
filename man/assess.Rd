@@ -91,10 +91,10 @@ or 'att' (Average Treatment Effect on the Treated) is selected for the analysis.
 \item{trim}{an optional two-element numeric vector that sets limits between 0 and 1 for the
 propensity score. If NULL, the default values of >= 0 and <= 1 are used (i.e., c(0,1)).}
 
-\item{weights}{an optional vector of weights or character vector of either 'ipw', 'nipw', or 'att' for
-Inverse Probability of Treatment Weighting Using the propensity score (see 'propensity' above) to
-be used in the fitting process. Should be NULL or a numeric vector. If non-NULL, weighting is used
-with weights; otherwise standard regression is used.}
+\item{weights}{an optional 1-element character vector of the data frame column name or character
+vector of either 'ipw', 'nipw', or 'att' for Inverse Probability of Treatment Weighting Using the
+propensity score (see 'propensity' above) to be used in the fitting process. Should be NULL or a
+character vector. If non-NULL, weighting is used with weights; otherwise standard regression is used.}
 
 \item{offset}{this can be used to specify an a priori known component to be included in the linear
 predictor during fitting. This should be NULL or a numeric vector of length equal to the number of
