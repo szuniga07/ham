@@ -908,7 +908,7 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
     model_1 <- NULL
   }
   if (create_did == TRUE) {
-    did_model <- stats::lm(formula=DID_formula , data=combined_df)
+    did_model <- stats::lm(formula=DID_formula , data=combined_df, weights = wght_obj)
   } else {
     did_model <- NULL
   }
@@ -929,7 +929,7 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
   }
   # Finishes model
   if (create_its == TRUE) {
-    its_model <- stats::lm(formula=ITS_formula , data=combined_df)
+    its_model <- stats::lm(formula=ITS_formula , data=combined_df, weights = wght_obj)
   } else {
     its_model <- NULL
   }
