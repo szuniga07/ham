@@ -96,10 +96,9 @@ vector of either 'ipw', 'nipw', or 'att' for Inverse Probability of Treatment We
 propensity score (see 'propensity' above) to be used in the fitting process. Should be NULL or a
 character vector. If non-NULL, weighting is used with weights; otherwise standard regression is used.}
 
-\item{offset}{this can be used to specify an a priori known component to be included in the linear
-predictor during fitting. This should be NULL or a numeric vector of length equal to the number of
-cases. One or more offset terms can be included in the formula instead or as well, and if more than
-one is specified their sum is used.}
+\item{offset}{an optional 1-element character vector of the data frame column name to be used with the
+predictor during fitting. One or more offset terms can be included in the formula instead. offset is
+often used in for rates in Poisson models.}
 
 \item{newdata}{optional logical value that indicates if you want the new data returned. newdata=TRUE
 will return the data with any new columns created from the DID, ITS, propensity score, or top coding.

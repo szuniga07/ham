@@ -63,10 +63,9 @@
 #' vector of either 'ipw', 'nipw', or 'att' for Inverse Probability of Treatment Weighting Using the
 #' propensity score (see 'propensity' above) to be used in the fitting process. Should be NULL or a
 #' character vector. If non-NULL, weighting is used with weights; otherwise standard regression is used.
-#' @param offset this can be used to specify an a priori known component to be included in the linear
-#' predictor during fitting. This should be NULL or a numeric vector of length equal to the number of
-#' cases. One or more offset terms can be included in the formula instead or as well, and if more than
-#' one is specified their sum is used.
+#' @param offset an optional 1-element character vector of the data frame column name to be used with the
+#' predictor during fitting. One or more offset terms can be included in the formula instead. offset is
+#' often used in for rates in Poisson models.
 #' @param newdata optional logical value that indicates if you want the new data returned. newdata=TRUE
 #' will return the data with any new columns created from the DID, ITS, propensity score, or top coding.
 #' The default is newdata=FALSE. No new data will be returned if none was created.
@@ -226,6 +225,12 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
     } else {
       wght_obj_var <- NULL
     }
+  ## offset object ##
+  if(!is.null(offset)) {
+    offst_obj_var <- offset
+  } else {
+    offst_obj_var <- NULL
+  }
 
   # Creates propensity score model formula based on variable names
   if (all(class(propensity) == "character") == TRUE) {
@@ -867,6 +872,12 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
   } else {
     wght_obj <- NULL
   }
+  ## offset object ##
+  if(!is.null(offset)) {
+    offst_obj <- combined_df[, offst_obj_var]
+  } else {
+    offst_obj <- NULL
+  }
 
   # Regressions #
   #Put model formula into the environment because weights won't run without
@@ -874,7 +885,7 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
 
   #Standard covariate adjustment
   if(regression == "ols") {
-    model_1 <- stats::lm(formula= primary_formula, data=combined_df, weights = wght_obj)
+    model_1 <- stats::lm(formula= primary_formula, data=combined_df, weights = wght_obj, offset=offst_obj)
   }
   if(regression == "logistic") {
     model_1 <- stats::glm(formula= primary_formula, family=binomial(link='logit'), data=combined_df)
