@@ -22,7 +22,7 @@ assess(
   weights = NULL,
   offset = NULL,
   newdata = FALSE,
-  family = NULL
+  link = NULL
 )
 }
 \arguments{
@@ -35,7 +35,7 @@ will use all variables in the data.frame as is standard in formulas.}
 
 \item{regression}{Select a regression method for standard regression models (i.e., neither
 DID nor ITS). Options are regression="ols" (ordinary least squares AKA linear), regression="logistic",
-or regression='Poisson'. Default is regression="none" for no standard regression model.}
+or regression='poisson'. Default is regression="none" for no standard regression model.}
 
 \item{did}{option for Differences-in-Differences (DID) regression. Select did="two" for
 models with only 2 time points (e.g., pre/post-test). Select did="many" for >= 3 time points
@@ -98,16 +98,18 @@ character vector. If non-NULL, weighting is used with weights; otherwise standar
 
 \item{offset}{an optional 1-element character vector of the data frame column name to be used with the
 predictor during fitting. One or more offset terms can be included in the formula instead. offset is
-often used in for rates in Poisson models.}
+often used in for rates in Poisson models. Can only use the data frame column name, cannot transform
+the column directly in this argument. If transformations are needed, instead either do so in the formula
+call (e.g., 'y ~ x1 + offset(log(x2))') or transform the data directly in the data frame.}
 
 \item{newdata}{optional logical value that indicates if you want the new data returned. newdata=TRUE
 will return the data with any new columns created from the DID, ITS, propensity score, or top coding.
 The default is newdata=FALSE. No new data will be returned if none was created.}
 
-\item{family}{a description of the error distribution and link function to be used in the model.
-For glm this can be a character string naming a family function, a family function or the result
-of a call to a family function. For glm.fit only the third option is supported. See 'glm' function
-in Base R for more details. Currently available when regression= 'logistic' or 'Poisson'.}
+\item{link}{a description of the link function to be used in the glm model.
+This can be a character string naming a link. The 'binomial' family link options are the 'logit' (default),
+'probit', 'cauchit', (corresponding to 'logistic', 'normal' and 'Cauchy' CDFs respectively) 'log' and
+'cloglog' (complementary log-log); and the 'poisson' family links 'log' (default), 'identity', and 'sqrt'.}
 }
 \value{
 a list of results from selected regression models. Will return new data if selected.
@@ -163,6 +165,15 @@ Gebski, V., et al. (2012). Modelling Interrupted Time Series to Evaluate Prevent
 and Control of Infection in Healthcare. Epidemiology & Infections, 140, 2131–2141.
 https://doi.org/10.1017/S0950268812000179
 
+Gelman, A. & Hill, J. (2007). Data Analysis Using Regression and Multilevel/Hierarchical Models.
+Cambridge University Press. ISBN: 978-0-521-68689-1.
+
+Imbens, G. & Rubin, D. (2015). Causal Inference for Statistics, Social, and Biomedical Sciences:
+An Introduction. Cambridge University Press. ISBN: 978-0-521-88588-1.
+
 Linden, A. (2015). Conducting Interrupted Time-series Analysis for Single- and
 Multiple-group Comparisons. The Stata Journal, 15, 2, 480-500. https://doi.org/10.1177/1536867X1501500208
+
+Rosenbaum, P. (2010). Design of Observational Studies, Second Edition. New York: Springer.
+ISBN: 978-1-4419-1212-1.
 }

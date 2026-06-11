@@ -30,6 +30,6 @@ importance(assess(vs~mpg+wt+hp, data=mtcars, regression= "logistic")$model)
 
 }
 \references{
-Harrell, F. E., Jr. (2016). Regression Modeling Strategies. Springer
-International Publishing. ISBN: 978-3-319-19424-0.
+Harrell, F. E., Jr. (2016). Regression Modeling Strategies, Second Edition.
+Springer International Publishing. ISBN: 978-3-319-19424-0.
 }

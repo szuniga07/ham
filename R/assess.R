@@ -15,7 +15,7 @@
 #' @param data a data.frame in which to interpret the variables named in the formula.
 #' @param regression Select a regression method for standard regression models (i.e., neither
 #' DID nor ITS). Options are regression="ols" (ordinary least squares AKA linear), regression="logistic",
-#' or regression='Poisson'. Default is regression="none" for no standard regression model.
+#' or regression='poisson'. Default is regression="none" for no standard regression model.
 #' @param did option for Differences-in-Differences (DID) regression. Select did="two" for
 #' models with only 2 time points (e.g., pre/post-test). Select did="many" for >= 3 time points
 #' (e.g., monthly time points in 12 months of data). Default is did="none" for no DID.
@@ -65,14 +65,16 @@
 #' character vector. If non-NULL, weighting is used with weights; otherwise standard regression is used.
 #' @param offset an optional 1-element character vector of the data frame column name to be used with the
 #' predictor during fitting. One or more offset terms can be included in the formula instead. offset is
-#' often used in for rates in Poisson models.
+#' often used in for rates in Poisson models. Can only use the data frame column name, cannot transform
+#' the column directly in this argument. If transformations are needed, instead either do so in the formula
+#' call (e.g., 'y ~ x1 + offset(log(x2))') or transform the data directly in the data frame.
 #' @param newdata optional logical value that indicates if you want the new data returned. newdata=TRUE
 #' will return the data with any new columns created from the DID, ITS, propensity score, or top coding.
 #' The default is newdata=FALSE. No new data will be returned if none was created.
-#' @param family a description of the error distribution and link function to be used in the model.
-#' For glm this can be a character string naming a family function, a family function or the result
-#' of a call to a family function. For glm.fit only the third option is supported. See 'glm' function
-#' in Base R for more details. Currently available when regression= 'logistic' or 'Poisson'.
+#' @param link a description of the link function to be used in the glm model.
+#' This can be a character string naming a link. The 'binomial' family link options are the 'logit' (default),
+#' 'probit', 'cauchit', (corresponding to 'logistic', 'normal' and 'Cauchy' CDFs respectively) 'log' and
+#' 'cloglog' (complementary log-log); and the 'poisson' family links 'log' (default), 'identity', and 'sqrt'.
 #'
 #' @return a list of results from selected regression models. Will return new data if selected.
 #' And returns relevant model information such as variable names, type of analysis, formula, study
@@ -87,8 +89,17 @@
 #' and Control of Infection in Healthcare. Epidemiology & Infections, 140, 2131–2141.
 #' https://doi.org/10.1017/S0950268812000179
 #'
+#' Gelman, A. & Hill, J. (2007). Data Analysis Using Regression and Multilevel/Hierarchical Models.
+#' Cambridge University Press. ISBN: 978-0-521-68689-1.
+#'
+#' Imbens, G. & Rubin, D. (2015). Causal Inference for Statistics, Social, and Biomedical Sciences:
+#' An Introduction. Cambridge University Press. ISBN: 978-0-521-88588-1.
+#'
 #' Linden, A. (2015). Conducting Interrupted Time-series Analysis for Single- and
 #' Multiple-group Comparisons. The Stata Journal, 15, 2, 480-500. https://doi.org/10.1177/1536867X1501500208
+#'
+#' Rosenbaum, P. (2010). Design of Observational Studies, Second Edition. New York: Springer.
+#' ISBN: 978-1-4419-1212-1.
 #'
 #' @examples
 #' # ordinary least squares R^2
@@ -122,11 +133,11 @@
 #' summary(assess(formula=los ~ ., data=hosprog, intervention = "program",
 #' int.time="month", its="two", interrupt = c(5,9))$ITS)
 #'
-#' @importFrom stats as.formula binomial plogis predict update aggregate
+#' @importFrom stats as.formula binomial plogis predict update aggregate poisson
 assess <- function(formula, data, regression= "none", did ="none", its ="none",
                    intervention =NULL, int.time=NULL, treatment=NULL,interrupt=NULL,
                    subset=NULL, stagger= NULL, topcode =NULL, propensity =NULL, trim=NULL,
-                   weights=NULL,offset=NULL, newdata =FALSE, family=NULL) {
+                   weights=NULL,offset=NULL, newdata =FALSE, link=NULL) {
   # Use various formulas for the different models
   primary_formula <- formula
   #Get formula variables
@@ -231,6 +242,18 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
   } else {
     offst_obj_var <- NULL
   }
+  ## link object ##
+  if(!is.null(link)) {
+    family_link <- link
+  }
+  if(is.null(link)) {
+    if(regression == "logistic") {
+    family_link <- "logit"
+    }
+    if(regression == "poisson") {
+      family_link <- "log"
+    }
+  }
 
   # Creates propensity score model formula based on variable names
   if (all(class(propensity) == "character") == TRUE) {
@@ -313,12 +336,12 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
   top_data <- NULL
 
   #Proper regression arguments
-  if (!regression %in% c("none","ols","logistic", "Poisson")) {
-    stop("Error: 'regression='. Only select 'none', 'ols', 'logistic', 'Poisson'.")
+  if (!regression %in% c("none","ols","logistic", "poisson")) {
+    stop("Error: 'regression='. Only select 'none', 'ols', 'logistic', 'poisson'.")
   }
-  if(regression %in% c("ols","logistic", "Poisson")) {
+  if(regression %in% c("ols","logistic", "poisson")) {
     if(any(c(did,its) != "none")) {
-      stop("Error: regression= ols, logistic, or Poisson. Does not run concurrently with did or its.")
+      stop("Error: regression= ols, logistic, or poisson. Does not run concurrently with did or its.")
     }
   }
   #Proper DID arguments
@@ -888,7 +911,10 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
     model_1 <- stats::lm(formula= primary_formula, data=combined_df, weights = wght_obj, offset=offst_obj)
   }
   if(regression == "logistic") {
-    model_1 <- stats::glm(formula= primary_formula, family=binomial(link='logit'), data=combined_df)
+    model_1 <- stats::glm(formula= primary_formula, family=binomial(link=family_link), data=combined_df, weights = wght_obj, offset=offst_obj)
+  }
+  if(regression == "poisson") {
+    model_1 <- stats::glm(formula= primary_formula, family=poisson(link=family_link), data=combined_df, weights = wght_obj, offset=offst_obj)
   }
 
   # DID models # additional_data c(create_did, create_its, create_topcode, create_propensity)
@@ -919,7 +945,7 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
     model_1 <- NULL
   }
   if (create_did == TRUE) {
-    did_model <- stats::lm(formula=DID_formula , data=combined_df, weights = wght_obj)
+    did_model <- stats::lm(formula=DID_formula , data=combined_df, weights = wght_obj, offset=offst_obj)
   } else {
     did_model <- NULL
   }
@@ -940,7 +966,7 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
   }
   # Finishes model
   if (create_its == TRUE) {
-    its_model <- stats::lm(formula=ITS_formula , data=combined_df, weights = wght_obj)
+    its_model <- stats::lm(formula=ITS_formula , data=combined_df, weights = wght_obj, offset=offst_obj)
   } else {
     its_model <- NULL
   }
