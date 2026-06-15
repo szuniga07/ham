@@ -100,42 +100,62 @@ interpret <- function(object, digits=NULL) {
     }
   }
   # Logistic model #
+
+  #Length of non intercept sig predictors
+  if("assess" %in% class(object) ) {
+    if(object$analysis_type$regression_type == "logistic") {
+      intercept_column <- grep("Intercept", row.names(summary(object$model)[["coefficients"]]) )
+      sig_cov <- names(which(summary(object$model)[["coefficients"]][, "Pr(>|z|)"][-intercept_column] < .05))
+      sig_increase <- names(which((summary(object$model)[["coefficients"]][, "Pr(>|z|)"] < .05)[-intercept_column] & (summary(object$model)[["coefficients"]][, "Estimate"] > 0)[-intercept_column] ))
+      sig_decrease <- names(which((summary(object$model)[["coefficients"]][, "Pr(>|z|)"] < .05)[-intercept_column] & (summary(object$model)[["coefficients"]][, "Estimate"] < 0)[-intercept_column] ))
+      print(length(sig_increase))  ##DELETE THIS
+      print(length(sig_decrease))  ##DELETE THIS
+      print(length(sig_cov))  ##DELETE THIS
+      print((sig_increase))  ##DELETE THIS
+      print((sig_decrease))  ##DELETE THIS
+      print((sig_cov))  ##DELETE THIS
+    }
+  }
+
   if("assess" %in% class(object) ) {
     if(object$analysis_type$regression_type == "logistic") {
       Y_var_log <- all.vars(object$formula$primary_formula)[1]
       intercept_col <- grep("Intercept", row.names(summary(object$model)[["coefficients"]]) )
-      if(length(which(summary(object$model)[["coefficients"]][-intercept_col, "Pr(>|z|)"] < .05)) > 0) {
-        log_sig_b <- names(which(summary(object$model)[["coefficients"]][-intercept_col, "Pr(>|z|)"] < .05))
-      } else {
+      if(length(sig_cov) != 0) {
+        log_sig_b <- sig_cov
+      }
+      if(length(sig_cov) == 0) {
         log_sig_b <- "No significant coefficients in your model at the 0.05 alpha level."
       }
       # Determine if there was an increase or decrease in coefficients
       #Increased
-      if(length(intersect(names(which(summary(object$model)[["coefficients"]][-intercept_col, "Estimate"] > 0 )), log_sig_b) > 0)) {
-        log_sig_increase <- intersect(names(which(summary(object$model)[["coefficients"]][-intercept_col, "Estimate"] > 0 )), log_sig_b)
-      } else {
+      if(length(sig_increase) != 0) {
+        log_sig_increase <- intersect(names(which(summary(object$model)[["coefficients"]][, "Estimate"] > 0 )), log_sig_b)
+      }
+      if(length(sig_increase) == 0) {
         log_sig_increase <- "No positive coefficients in your model were significant."
       }
       #Decrease
-      if(length(intersect(names(which(summary(object$model)[["coefficients"]][-intercept_col, "Estimate"] < 0 )), log_sig_b) > 0)) {
-        log_sig_decrease <- intersect(names(which(summary(object$model)[["coefficients"]][-intercept_col, "Estimate"] < 0 )), log_sig_b)
-      } else {
+      if(length(sig_decrease) != 0) {
+        log_sig_decrease <- intersect(names(which(summary(object$model)[["coefficients"]][, "Estimate"] < 0 )), log_sig_b)
+      }
+      if(length(sig_decrease) == 0) {
         log_sig_decrease <- "No negative coefficients in your model were significant."
       }
       #Get odds ratios for those that increased/decreased
       #Increased
-      if(length(intersect(names(which(summary(object$model)[["coefficients"]][-intercept_col, "Estimate"] > 0 )), log_sig_b) > 0)) {
-        or_res_inc <- exp(object$model[["coefficients"]])[log_sig_increase]
+      if(length(sig_increase) != 0) {
+      or_res_inc <- exp(object$model[["coefficients"]])[log_sig_increase]
       }
       #Decreased
-      if(length(intersect(names(which(summary(object$model)[["coefficients"]][-intercept_col, "Estimate"] < 0 )), log_sig_b) > 0)) {
+      if(length(sig_decrease) != 0) {
         or_res_dec <- exp(object$model[["coefficients"]])[log_sig_decrease]
       }
       ## Functions to get increased/decreased % change in odds
       #Increased
       fncIncOdds <- function(y, digits) {
         if(y > 1) {
-          tmp_out <- paste0("(", signif((y - 1) * 100, digits), "% increased odds", ")" )
+          tmp_out <- paste0("(", signif((y - 1) * 100, digits), "% increased odds or odds are ", signif(y, digits), " times higher", ")" )
         }
       }
       #Decreased odds
@@ -145,18 +165,18 @@ interpret <- function(object, digits=NULL) {
         }
       }
       #Increased odds
-      if(length(intersect(names(which(summary(object$model)[["coefficients"]][-intercept_col, "Estimate"] > 0 )), log_sig_b) > 0)) {
+      if(length(sig_increase) > 0) {
         oddsr1 <- sapply(or_res_inc, FUN=fncIncOdds, digits=digits)
         odds_increase_text <- paste(names(oddsr1), oddsr1, collapse= "\n")
       } else {
-        odds_increase_text <- NULL
+        odds_increase_text <- log_sig_increase
       }
       #Decreased odds
-      if(length(intersect(names(which(summary(object$model)[["coefficients"]][-intercept_col, "Estimate"] < 0 )), log_sig_b) > 0)) {
+      if(length(sig_decrease) > 0) {
         oddsr2 <- sapply(or_res_dec, FUN=fncDecOdds, digits=digits)
         odds_decrease_text <- paste(names(oddsr2), oddsr2, collapse= "\n")
       } else {
-        odds_decrease_text <- NULL
+        odds_decrease_text <- log_sig_decrease
       }
 
       #Logistic interpretations

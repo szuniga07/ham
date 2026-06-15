@@ -155,6 +155,20 @@ summary(assess(hp ~ mpg+wt, data=mtcars, regression="ols")$model)
 interpret(assess(hp ~ mpg+wt, data=mtcars, regression="ols"))$model
 ```
 
+### Logistic regression
+```{r lrm}
+# Model summary
+lm1 <- assess(am ~ hp+wt, data=mtcars, regression="logistic")
+summary(lm1$model)
+```
+
+### Logistic regression interpretations
+```{r lrm_interpret}
+# Specify how many significant digits
+lm1 <- assess(am ~ hp+wt, data=mtcars, regression="logistic")
+interpret(lm1, digits=5)$model
+```
+
 ### OLS top-coding and propensity scores
 ham can topcode the outcome and create a propensity score variable. top-coding cost at $17,150 and propensity score based on age, female indicator, and a health risk probability score. 
 
