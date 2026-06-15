@@ -160,7 +160,7 @@ In this example, we predict the binary outcome of Automatic or Manual car transm
 ### Logistic regression
 ```{r lrm}
 # Model summary
-summary(assess(am ~ hp+wt, data=mtcars, regression="logistic"))
+summary(assess(am ~ hp+wt, data=mtcars, regression="logistic")$model)
 ```
 
 ### Logistic regression interpretations
@@ -171,12 +171,12 @@ interpret(assess(am ~ hp+wt, data=mtcars, regression="logistic"))$model
 
 ### Poisson regression
 
-In this example, we examine the Hospital Acquired Infection rate over 3+ years.
+In this example, we examine the Hospital Acquired Infection rate over 3+ years. Notice the offset(log(PatientDays)) part of the formula, offsets are common in health care analyses and allow to take into account varying exposures like patient days or can be used for observed/expected ratios, e.g., offset(log(Expected)). Another option is to log transform your exposure variable as a variable in your data frame and enter it into the offset argument. Please note that in assess, the offset argument uses a character name, thus offset= 'logPatientDays'.
 
 ```{r pm1}
 # Model summary
 summary(assess(HAI ~ Month + offset(log(PatientDays)),
-                data = infections, regression="poisson", link="log"))
+                data = infections, regression="poisson", link="log")$model)
 ```
 
 We see that there is a significant Incidence Rate by month as seen in the interpretations below.
@@ -184,8 +184,8 @@ We see that there is a significant Incidence Rate by month as seen in the interp
 ### Poisson regression interpretations
 ```{r pm1_interpret}
 # Specify how many significant digits with digits argument
-  interpret(summary(assess(HAI ~ Month + offset(log(PatientDays)),
-                data = infections, regression="poisson", link="log")))$model
+  interpret(assess(HAI ~ Month + offset(log(PatientDays)),
+                data = infections, regression="poisson", link="log"))$model
 ```
 
 ### OLS top-coding and propensity scores
@@ -211,6 +211,20 @@ summary(m1$model)
 Descriptive statistics on newly created variables and the original cost as a comparison. top.cost is the topcoded cost variable. R^2 is not bad.
 ```{r summary topcoding propensity}
 summary(m1$newdata[, c( "cost","top.cost", "pscore")])
+```
+
+In the previous example, we used covariate adjustment with the propensity score but now we will use inverse probability of treatment weighting using the propensity score (IPW). There is a weights argument that we can include a character vector for 3 types of IPW weights: "ipw" (Horvitz-Thompson estimator), "nipw" (Normalized IPW by Hajek estimator), and "att". Trimming of propensity scores is also available with 'trim' argument. See assess() documentation to read more. 
+
+### Inverse Probability of Treatment Weighting using the propensity score (IPW)
+```{r ols ipw weights}
+ipw1 <- assess(formula=cost ~ month * program, data=hosprog, intervention = "program",
+regression="ols", topcode=17150, propensity=c("female","age","risk"),
+newdata=TRUE, weights="ipw")
+```
+
+### Weighted least squares model results
+```{r ols ipw results}
+summary(ipw1$model)
 ```
 
 ### importance

@@ -178,7 +178,7 @@ interpret <- function(object, digits=NULL) {
       all_significant <- paste0("The following predictor variable(s) have coefficient(s) \nsignificantly different from 0 using an alpha of 0.05:\n", paste(log_sig_b, collapse=", "))
       positive_beta <- paste0("For every 1 unit increase in these predictor variables,\n", Y_var_log, " is predicted to increase by the value of the \ncoefficient, holding all other variables constant. The following \npredictor variable(s) have positive coefficient(s) that \nincrease the predicted value and odds of the outcome: \n", odds_increase_text)
       negative_beta <- paste0("For every 1 unit increase in these predictor variables,\n", Y_var_log, " is predicted to decrease by the value of the \ncoefficient, holding all other variables constant. The following \npredictor variable(s) have negative coefficient(s) that \ndecrease the predicted value and odds of the outcome: \n", odds_decrease_text)
-      R2 <- "There is no R2 or C-statistic information provided."
+      R2 <- "There is no R2 or C-statistic (AUC) information provided."
     }
   }
 
@@ -192,7 +192,6 @@ interpret <- function(object, digits=NULL) {
       sig_cov <- names(which(summary(object$model)[["coefficients"]][, "Pr(>|z|)"][-intercept_column] < .05))
       sig_increase <- names(which((summary(object$model)[["coefficients"]][, "Pr(>|z|)"] < .05)[-intercept_column] & (summary(object$model)[["coefficients"]][, "Estimate"] > 0)[-intercept_column] ))
       sig_decrease <- names(which((summary(object$model)[["coefficients"]][, "Pr(>|z|)"] < .05)[-intercept_column] & (summary(object$model)[["coefficients"]][, "Estimate"] < 0)[-intercept_column] ))
-      print(sig_cov)
     }
   }
 
@@ -263,7 +262,7 @@ interpret <- function(object, digits=NULL) {
       all_significant <- paste0("The following predictor variable(s) have coefficient(s) \nsignificantly different from 0 using an alpha of 0.05:\n", paste(log_sig_b, collapse=", "))
       positive_beta <- paste0("For every 1 unit increase in these predictor variables,\n", Y_var_log, " is predicted to increase by the value of the \ncoefficient, holding all other variables constant. The following \npredictor variable(s) have positive coefficient(s) that \nincrease the predicted value and incidence rate of the outcome: \n", odds_increase_text)
       negative_beta <- paste0("For every 1 unit increase in these predictor variables,\n", Y_var_log, " is predicted to decrease by the value of the \ncoefficient, holding all other variables constant. The following \npredictor variable(s) have negative coefficient(s) that \ndecrease the predicted value and incidence rate of the outcome: \n", odds_decrease_text)
-      R2 <- "There is no R2 or C-statistic information provided."
+      R2 <- "There is no R2 or C-statistic (AUC) information provided."
     }
   }
 
