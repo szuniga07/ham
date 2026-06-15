@@ -108,12 +108,6 @@ interpret <- function(object, digits=NULL) {
       sig_cov <- names(which(summary(object$model)[["coefficients"]][, "Pr(>|z|)"][-intercept_column] < .05))
       sig_increase <- names(which((summary(object$model)[["coefficients"]][, "Pr(>|z|)"] < .05)[-intercept_column] & (summary(object$model)[["coefficients"]][, "Estimate"] > 0)[-intercept_column] ))
       sig_decrease <- names(which((summary(object$model)[["coefficients"]][, "Pr(>|z|)"] < .05)[-intercept_column] & (summary(object$model)[["coefficients"]][, "Estimate"] < 0)[-intercept_column] ))
-      print(length(sig_increase))  ##DELETE THIS
-      print(length(sig_decrease))  ##DELETE THIS
-      print(length(sig_cov))  ##DELETE THIS
-      print((sig_increase))  ##DELETE THIS
-      print((sig_decrease))  ##DELETE THIS
-      print((sig_cov))  ##DELETE THIS
     }
   }
 
@@ -182,14 +176,100 @@ interpret <- function(object, digits=NULL) {
       #Logistic interpretations
       introduction <- c("These estimates tell you about the relationship between the \nindependent variables and the dependent variable. These estimates \ntell the amount of change in outcome scores that would be \npredicted by a 1 unit increase in the predictor.")
       all_significant <- paste0("The following predictor variable(s) have coefficient(s) \nsignificantly different from 0 using an alpha of 0.05:\n", paste(log_sig_b, collapse=", "))
-#      positive_beta <- paste0("For every 1 unit increase in these predictor variables,\n", Y_var_log, " is predicted to increase by the value of the \ncoefficient, holding all other variables constant. The following \npredictor variable(s) have positive coefficient(s) that \nincrease the predicted value and odds of the outcome: \n", paste(log_sig_increase, collapse=", "))
-#      negative_beta <- paste0("For every 1 unit increase in these predictor variables,\n", Y_var_log, " is predicted to decrease by the value of the \ncoefficient, holding all other variables constant. The following \npredictor variable(s) have negative coefficient(s) that \ndecrease the predicted value and odds of the outcome: \n", paste(log_sig_decrease, collapse=", "))
       positive_beta <- paste0("For every 1 unit increase in these predictor variables,\n", Y_var_log, " is predicted to increase by the value of the \ncoefficient, holding all other variables constant. The following \npredictor variable(s) have positive coefficient(s) that \nincrease the predicted value and odds of the outcome: \n", odds_increase_text)
       negative_beta <- paste0("For every 1 unit increase in these predictor variables,\n", Y_var_log, " is predicted to decrease by the value of the \ncoefficient, holding all other variables constant. The following \npredictor variable(s) have negative coefficient(s) that \ndecrease the predicted value and odds of the outcome: \n", odds_decrease_text)
       R2 <- "There is no R2 or C-statistic information provided."
     }
   }
+
+  #############
+  ## Poisson ##
+  #############
+  #Length of non intercept sig predictors
+  if("assess" %in% class(object) ) {
+    if(object$analysis_type$regression_type == "poisson") {
+      intercept_column <- grep("Intercept", row.names(summary(object$model)[["coefficients"]]) )
+      sig_cov <- names(which(summary(object$model)[["coefficients"]][, "Pr(>|z|)"][-intercept_column] < .05))
+      sig_increase <- names(which((summary(object$model)[["coefficients"]][, "Pr(>|z|)"] < .05)[-intercept_column] & (summary(object$model)[["coefficients"]][, "Estimate"] > 0)[-intercept_column] ))
+      sig_decrease <- names(which((summary(object$model)[["coefficients"]][, "Pr(>|z|)"] < .05)[-intercept_column] & (summary(object$model)[["coefficients"]][, "Estimate"] < 0)[-intercept_column] ))
+      print(sig_cov)
+    }
+  }
+
+  if("assess" %in% class(object) ) {
+    if(object$analysis_type$regression_type == "poisson") {
+      Y_var_log <- all.vars(object$formula$primary_formula)[1]
+      intercept_col <- grep("Intercept", row.names(summary(object$model)[["coefficients"]]) )
+      if(length(sig_cov) != 0) {
+        log_sig_b <- sig_cov
+      }
+      if(length(sig_cov) == 0) {
+        log_sig_b <- "No significant coefficients in your model at the 0.05 alpha level."
+      }
+      # Determine if there was an increase or decrease in coefficients
+      #Increased
+      if(length(sig_increase) != 0) {
+        log_sig_increase <- intersect(names(which(summary(object$model)[["coefficients"]][, "Estimate"] > 0 )), log_sig_b)
+      }
+      if(length(sig_increase) == 0) {
+        log_sig_increase <- "No positive coefficients in your model were significant."
+      }
+      #Decrease
+      if(length(sig_decrease) != 0) {
+        log_sig_decrease <- intersect(names(which(summary(object$model)[["coefficients"]][, "Estimate"] < 0 )), log_sig_b)
+      }
+      if(length(sig_decrease) == 0) {
+        log_sig_decrease <- "No negative coefficients in your model were significant."
+      }
+      #Get odds ratios for those that increased/decreased
+      #Increased
+      if(length(sig_increase) != 0) {
+        or_res_inc <- exp(object$model[["coefficients"]])[log_sig_increase]
+      }
+      #Decreased
+      if(length(sig_decrease) != 0) {
+        or_res_dec <- exp(object$model[["coefficients"]])[log_sig_decrease]
+      }
+      ## Functions to get increased/decreased % change in odds
+      #Increased
+      fncIncIR <- function(y, digits) {
+        if(y > 1) {
+          tmp_out <- paste0("(", signif((y - 1) * 100, digits), "% increased incidence rate (IR) or IRs are ", signif(y, digits), " times higher", ")" )
+        }
+      }
+      #Decreased odds
+      fncDecIR <- function(y, digits) {
+        if(y < 1) {
+          tmp_out <- paste0("(", signif((1 - y) * 100, digits), "% decreased incidence rate", ")" )
+        }
+      }
+      #Increased odds
+      if(length(sig_increase) > 0) {
+        oddsr1 <- sapply(or_res_inc, FUN=fncIncIR, digits=digits)
+        odds_increase_text <- paste(names(oddsr1), oddsr1, collapse= "\n")
+      } else {
+        odds_increase_text <- log_sig_increase
+      }
+      #Decreased odds
+      if(length(sig_decrease) > 0) {
+        oddsr2 <- sapply(or_res_dec, FUN=fncDecIR, digits=digits)
+        odds_decrease_text <- paste(names(oddsr2), oddsr2, collapse= "\n")
+      } else {
+        odds_decrease_text <- log_sig_decrease
+      }
+
+      #Poisson interpretations
+      introduction <- c("These estimates tell you about the relationship between the \nindependent variables and the dependent variable. These estimates \ntell the amount of change in outcome scores that would be \npredicted by a 1 unit increase in the predictor.")
+      all_significant <- paste0("The following predictor variable(s) have coefficient(s) \nsignificantly different from 0 using an alpha of 0.05:\n", paste(log_sig_b, collapse=", "))
+      positive_beta <- paste0("For every 1 unit increase in these predictor variables,\n", Y_var_log, " is predicted to increase by the value of the \ncoefficient, holding all other variables constant. The following \npredictor variable(s) have positive coefficient(s) that \nincrease the predicted value and incidence rate of the outcome: \n", odds_increase_text)
+      negative_beta <- paste0("For every 1 unit increase in these predictor variables,\n", Y_var_log, " is predicted to decrease by the value of the \ncoefficient, holding all other variables constant. The following \npredictor variable(s) have negative coefficient(s) that \ndecrease the predicted value and incidence rate of the outcome: \n", odds_decrease_text)
+      R2 <- "There is no R2 or C-statistic information provided."
+    }
+  }
+
+  #############
   # DID model #
+  #############
   if("assess" %in% class(object) ) {
     if(object$analysis_type$did_type == "many") {
       Y_var_did <- all.vars(object$formula$DID_formula)[1]
@@ -459,7 +539,7 @@ interpret <- function(object, digits=NULL) {
     return(z)
   }
   if (interpret_type == "assess") {
-    if(object$analysis_type$regression_type %in% c("ols","logistic")) {
+    if(object$analysis_type$regression_type %in% c("ols","logistic", "poisson")) {
       model <- list(introduction=introduction, all_significant=all_significant,
                     positive_beta=positive_beta, negative_beta=negative_beta, R2=R2)
     }
