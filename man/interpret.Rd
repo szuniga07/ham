@@ -4,10 +4,14 @@
 \alias{interpret}
 \title{Interpret model output}
 \usage{
-interpret(object)
+interpret(object, digits = NULL)
 }
 \arguments{
 \item{object}{alpha and assess class objects: alpha, ITS, DID, linear (ols) or logistic models.}
+
+\item{digits}{a non-null value for digits specifies the minimum number of significant digits
+to be printed in values. The default, NULL, uses 3. Non-integer values will be rounded down,
+and only values greater than or equal to 1 and no greater than 22 are accepted.}
 }
 \value{
 a list with interpretations of Cronbach's alpha scales or regression model results.
@@ -36,4 +40,7 @@ interpret(hos2)$did  #interpret(hos2) also runs, returns ITS results if present
 hos3 <- assess(formula=survey ~ ., data=hosprog, intervention = "program",
 int.time="month", its="two", interrupt = 5)
 interpret(hos3)$its
+}
+\seealso{
+\code{\link[=itsEffect]{itsEffect()}} for Interrupted Time Series effects calculated for "Summary 1".
 }

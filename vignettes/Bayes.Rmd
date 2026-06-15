@@ -34,7 +34,7 @@ MCMC chains created in the coda package (e.g., through JAGS or Stan with a class
 
 The following sections will introduce the various commands in Bayes and plot.Bayes. We'll review it in terms of a common focus in health care, hospital length of stay (LOS).
 
-If you are interested in Bayesian analysis and what like to learn more, I highly recommend John Kruschke's book, "Doing Bayesian Data Analysis: A Tutorial with R, JAGS, and Stan, Second Edition" as an excellent source of knowledge with comprehensive sections on putting the analysis into practice.
+If you are interested in Bayesian analysis and would like to learn more, I highly recommend John Kruschke's book, "Doing Bayesian Data Analysis: A Tutorial with R, JAGS, and Stan, Second Edition" as an excellent source of knowledge with comprehensive sections on putting the analysis into practice.
 
 <br>
 

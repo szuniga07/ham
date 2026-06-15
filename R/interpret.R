@@ -7,9 +7,14 @@
 #' of the various analyses.
 #'
 #' @param object alpha and assess class objects: alpha, ITS, DID, linear (ols) or logistic models.
+#' @param digits a non-null value for digits specifies the minimum number of significant digits
+#' to be printed in values. The default, NULL, uses 3. Non-integer values will be rounded down,
+#' and only values greater than or equal to 1 and no greater than 22 are accepted.
 #'
 #' @return a list with interpretations of Cronbach's alpha scales or regression model results.
 #' @export
+#'
+#' @seealso [itsEffect()] for Interrupted Time Series effects calculated for "Summary 1".
 #'
 #' @examples
 #' # Interpret Cronbach's alpha
@@ -28,11 +33,16 @@
 #' hos3 <- assess(formula=survey ~ ., data=hosprog, intervention = "program",
 #' int.time="month", its="two", interrupt = 5)
 #' interpret(hos3)$its
-interpret <- function(object) {
+interpret <- function(object, digits=NULL) {
 
   if(any(class(object) %in% c("alpha","assess")) == FALSE) {stop("Error: Expecting 'alpha' or 'assess' class object.")}
   # Sets "assess" return objects to NULL for model, DID, ITS
   model <- NULL; did <- NULL; its <- NULL
+  #Set default digits == 3
+  if(is.null(digits)) {
+    digits <- 3
+  }
+
   #alpha objects
   if("alpha" %in% class(object) ) {
     #Alpha cutoff levels
@@ -45,10 +55,10 @@ interpret <- function(object) {
     delete_items <- names(which(object$Item.Deleted$alpha.item.deleted > object$Scale.Statistics$alpha))
     #Interpretations
     alpha_overall <- paste0("Your ", object$Scale.Statistics$Items, " item scale has a Cronbach\'s alpha of ",
-                            round(object$Scale.Statistics$alpha, 2), ". ", "This is \ngenerally considered as being in the ",
+                            signif(object$Scale.Statistics$alpha, digits), ". ", "This is \ngenerally considered as being in the ",
                             alpha_rank, " range.")
-    descriptives <- paste0("The scale mean is ", round(object$Scale.Statistics$Overall.Mean, 2),
-                           " and has a standard deviation of ", round(object$Scale.Statistics$Overall.SD, 2),
+    descriptives <- paste0("The scale mean is ", signif(object$Scale.Statistics$Overall.Mean, digits),
+                           " and has a standard deviation of ", signif(object$Scale.Statistics$Overall.SD, digits),
                            ".")
     deleted <- paste0("Removing one of these item(s): ", paste(delete_items,collapse=", "),
                       ", can improve the Cronbach\'s \nalpha in a new scale to a higher level than the current alpha \nbased on all items.")
@@ -86,7 +96,7 @@ interpret <- function(object) {
       all_significant <- paste0("The following predictor variable(s) have coefficient(s) \nsignificantly different from 0 using an alpha of 0.05:\n", paste(ols_sig_b, collapse=", "))
       positive_beta <- paste0("For every 1 unit increase in these predictor variables,\n", Y_var_ols, " is predicted to increase by the value of the \ncoefficient, holding all other variables constant. The following \npredictor variable(s) have positive coefficient(s) that \nincrease the predicted value of the outcome: \n", paste(ols_sig_increase, collapse=", "))
       negative_beta <- paste0("For every 1 unit increase in these predictor variables,\n", Y_var_ols, " is predicted to decrease by the value of the \ncoefficient, holding all other variables constant. The following \npredictor variable(s) have negative coefficient(s) that \ndecrease the predicted value of the outcome: \n", paste(ols_sig_decrease, collapse=", "))
-      R2 <- paste0("R-Squared (R2) is the proportion of variance in the dependent \nvariable which can be predicted from the independent \nvariable(s). For example, if R2 = 0.50, 50% of the variance \nin test scores can be predicted from the 5 variables. R2 >= 0.80 \nmay be at a level to reliably make individual predictions. \nLower R2 may be helpful in group level predictions. And low R2 can \nstill be adequate for hypothesis testing. This model has a R2 of ", round(ols_r2, 3), ".")
+      R2 <- paste0("R-Squared (R2) is the proportion of variance in the dependent \nvariable which can be predicted from the independent \nvariable(s). For example, if R2 = 0.50, 50% of the variance \nin test scores can be predicted from the 5 variables. R2 >= 0.80 \nmay be at a level to reliably make individual predictions. \nLower R2 may be helpful in group level predictions. And low R2 can \nstill be adequate for hypothesis testing. This model has a R2 of ", signif(ols_r2, digits), ".")
     }
   }
   # Logistic model #
@@ -100,6 +110,7 @@ interpret <- function(object) {
         log_sig_b <- "No significant coefficients in your model at the 0.05 alpha level."
       }
       # Determine if there was an increase or decrease in coefficients
+      #Increased
       if(length(intersect(names(which(summary(object$model)[["coefficients"]][-intercept_col, "Estimate"] > 0 )), log_sig_b) > 0)) {
         log_sig_increase <- intersect(names(which(summary(object$model)[["coefficients"]][-intercept_col, "Estimate"] > 0 )), log_sig_b)
       } else {
@@ -111,12 +122,51 @@ interpret <- function(object) {
       } else {
         log_sig_decrease <- "No negative coefficients in your model were significant."
       }
+      #Get odds ratios for those that increased/decreased
+      #Increased
+      if(length(intersect(names(which(summary(object$model)[["coefficients"]][-intercept_col, "Estimate"] > 0 )), log_sig_b) > 0)) {
+        or_res_inc <- exp(object$model[["coefficients"]])[log_sig_increase]
+      }
+      #Decreased
+      if(length(intersect(names(which(summary(object$model)[["coefficients"]][-intercept_col, "Estimate"] < 0 )), log_sig_b) > 0)) {
+        or_res_dec <- exp(object$model[["coefficients"]])[log_sig_decrease]
+      }
+      ## Functions to get increased/decreased % change in odds
+      #Increased
+      fncIncOdds <- function(y, digits) {
+        if(y > 1) {
+          tmp_out <- paste0("(", signif((y - 1) * 100, digits), "% increased odds", ")" )
+        }
+      }
+      #Decreased odds
+      fncDecOdds <- function(y, digits) {
+        if(y < 1) {
+          tmp_out <- paste0("(", signif((1 - y) * 100, digits), "% decreased odds", ")" )
+        }
+      }
+      #Increased odds
+      if(length(intersect(names(which(summary(object$model)[["coefficients"]][-intercept_col, "Estimate"] > 0 )), log_sig_b) > 0)) {
+        oddsr1 <- sapply(or_res_inc, FUN=fncIncOdds, digits=digits)
+        odds_increase_text <- paste(names(oddsr1), oddsr1, collapse= "\n")
+      } else {
+        odds_increase_text <- NULL
+      }
+      #Decreased odds
+      if(length(intersect(names(which(summary(object$model)[["coefficients"]][-intercept_col, "Estimate"] < 0 )), log_sig_b) > 0)) {
+        oddsr2 <- sapply(or_res_dec, FUN=fncDecOdds, digits=digits)
+        odds_decrease_text <- paste(names(oddsr2), oddsr2, collapse= "\n")
+      } else {
+        odds_decrease_text <- NULL
+      }
+
       #Logistic interpretations
       introduction <- c("These estimates tell you about the relationship between the \nindependent variables and the dependent variable. These estimates \ntell the amount of change in outcome scores that would be \npredicted by a 1 unit increase in the predictor.")
       all_significant <- paste0("The following predictor variable(s) have coefficient(s) \nsignificantly different from 0 using an alpha of 0.05:\n", paste(log_sig_b, collapse=", "))
-      positive_beta <- paste0("For every 1 unit increase in these predictor variables,\n", Y_var_log, " is predicted to increase by the value of the \ncoefficient, holding all other variables constant. The following \npredictor variable(s) have positive coefficient(s) that \nincrease the predicted value of the outcome: \n", paste(log_sig_increase, collapse=", "))
-      negative_beta <- paste0("For every 1 unit increase in these predictor variables,\n", Y_var_log, " is predicted to decrease by the value of the \ncoefficient, holding all other variables constant. The following \npredictor variable(s) have negative coefficient(s) that \ndecrease the predicted value of the outcome: \n", paste(log_sig_decrease, collapse=", "))
-      R2 <- "There is no R2 information provided."
+#      positive_beta <- paste0("For every 1 unit increase in these predictor variables,\n", Y_var_log, " is predicted to increase by the value of the \ncoefficient, holding all other variables constant. The following \npredictor variable(s) have positive coefficient(s) that \nincrease the predicted value and odds of the outcome: \n", paste(log_sig_increase, collapse=", "))
+#      negative_beta <- paste0("For every 1 unit increase in these predictor variables,\n", Y_var_log, " is predicted to decrease by the value of the \ncoefficient, holding all other variables constant. The following \npredictor variable(s) have negative coefficient(s) that \ndecrease the predicted value and odds of the outcome: \n", paste(log_sig_decrease, collapse=", "))
+      positive_beta <- paste0("For every 1 unit increase in these predictor variables,\n", Y_var_log, " is predicted to increase by the value of the \ncoefficient, holding all other variables constant. The following \npredictor variable(s) have positive coefficient(s) that \nincrease the predicted value and odds of the outcome: \n", odds_increase_text)
+      negative_beta <- paste0("For every 1 unit increase in these predictor variables,\n", Y_var_log, " is predicted to decrease by the value of the \ncoefficient, holding all other variables constant. The following \npredictor variable(s) have negative coefficient(s) that \ndecrease the predicted value and odds of the outcome: \n", odds_decrease_text)
+      R2 <- "There is no R2 or C-statistic information provided."
     }
   }
   # DID model #
@@ -136,10 +186,10 @@ interpret <- function(object) {
       B1_coef <- coef(object$DID)[which(names(coef(object$DID))== "Period")]
       B2_coef <- coef(object$DID)[which(names(coef(object$DID))== "DID")]
       B3_coef <- coef(object$DID)[which(names(coef(object$DID))== "DID.Trend")]
-      B_0 <- paste0("The intercept represents the starting point of the control \ngroup's trend line at the baseline period (Time 1): ", round(B0_coef, 3), ".")
-      B_1 <- paste0("Period is the change in the control group's ", Y_var_did, " value trend \nline after the baseline period. There was a ", did_b1_sig, " ", did_b1_change, " \nfor the control group after the baseline period: ",round(B1_coef, 3), ".")
-      B_2 <- paste0("DID estimates the difference in mean overall level between \nthe intervention and both the non-intervention period/group. \nIn other words, there was a ", did_b2_sig, " ", did_b2_change, " in the \nmean ", Y_var_did, " by ", round(B2_coef, 3)," for the intervention group.")
-      B_3 <- paste0("DID.Trend is the difference in the intervention group's \ntrend line after the intervention period started (> Time 1). \nThe intervention group had a ", did_b3_sig, " ", did_b3_change, " in trend \nof the mean ", Y_var_did, " by ", round(B3_coef, 3),  " after the intervention started.")
+      B_0 <- paste0("The intercept represents the starting point of the control \ngroup's trend line at the baseline period (Time 1): ", signif(B0_coef, digits), ".")
+      B_1 <- paste0("Period is the change in the control group's ", Y_var_did, " value trend \nline after the baseline period. There is a ", did_b1_sig, " ", did_b1_change, " \nfor the control group after the baseline period: ",signif(B1_coef, digits), ".")
+      B_2 <- paste0("DID estimates the difference in mean overall level between \nthe intervention and both the non-intervention period/group. \nIn other words, there is a ", did_b2_sig, " ", did_b2_change, " in the \nmean ", Y_var_did, " by ", signif(B2_coef, digits)," for the intervention group.")
+      B_3 <- paste0("DID.Trend is the difference in the intervention group's \ntrend line after the intervention period started (> Time 1). \nThe intervention group had a ", did_b3_sig, " ", did_b3_change, " in trend \nof the mean ", Y_var_did, " by ", signif(B3_coef, digits),  " after the intervention started.")
       did_covariates <- c("If there are additional variables in the model then the coefficients \nabove represent the effects after controlling for the other variables.")
     }
     if(object$analysis_type$did_type == "two") {
@@ -157,10 +207,10 @@ interpret <- function(object) {
       B1_coef <- coef(object$DID)[which(names(coef(object$DID))== "Post.All")]
       B2_coef <- coef(object$DID)[which(names(coef(object$DID))== "Int.Var")]
       B3_coef <- coef(object$DID)[which(names(coef(object$DID))=="DID")]
-      B_0 <- paste0("The intercept represents the mean ", Y_var_did, " value of the \ncontrol group at the baseline period (Time 1): ", round(B0_coef, 3), ".")
-      B_1 <- paste0("Post.All is the change in the control group\'s ", Y_var_did, " \nvalue in the 2nd time period (Time 2). There was a \n", did_b1_sig, " ", did_b1_change," for the control group \nat time 2: ", round(B1_coef, 3), ".")
-      B_2 <- paste0("Int.Var is the difference between the intervention \nand control group at the baseline period (Time 1). The \nintervention group had a ", did_b2_sig, " ", did_b2_change, " in the \nmean ", Y_var_did, " value compared to the control group: ", round(B2_coef, 3), ".")
-      B_3 <- paste0("DID estimates the average treatment effect on the \ntreated group (ATET). This interaction represents the \ndifference in the trend differences for the intervention and \ncontrol groups: \n(Int. Time 2 - Int. Time 1) - (Ctl. Time 2 - Ctl. Time 1) = ", round(B3_coef, 3), ".", " ", " \nIn other words, there was a ", did_b3_sig, " ", did_b3_change," in the \nmean ", Y_var_did, " trend by ", round(B3_coef, 3)," for the intervention group.")
+      B_0 <- paste0("The intercept represents the mean ", Y_var_did, " value of the \ncontrol group at the baseline period (Time 1): ", signif(B0_coef, digits), ".")
+      B_1 <- paste0("Post.All is the change in the control group\'s ", Y_var_did, " \nvalue in the 2nd time period (Time 2). There is a \n", did_b1_sig, " ", did_b1_change," for the control group \nat time 2: ", signif(B1_coef, digits), ".")
+      B_2 <- paste0("Int.Var is the difference between the intervention \nand control group at the baseline period (Time 1). The \nintervention group had a ", did_b2_sig, " ", did_b2_change, " in the \nmean ", Y_var_did, " value compared to the control group: ", signif(B2_coef, digits), ".")
+      B_3 <- paste0("DID estimates the average treatment effect on the \ntreated group (ATET). This interaction represents the \ndifference in the trend differences for the intervention and \ncontrol groups: \n(Int. Time 2 - Int. Time 1) - (Ctl. Time 2 - Ctl. Time 1) = ", signif(B3_coef, digits), ".", " ", " \nIn other words, there is a ", did_b3_sig, " ", did_b3_change," in the \nmean ", Y_var_did, " trend by ", signif(B3_coef, digits)," for the intervention group.")
       did_covariates <- c("If there are additional variables in the model then the coefficients \nabove represent the effects after controlling for the other variables.")
     }
   }
@@ -184,11 +234,11 @@ interpret <- function(object) {
       Smry_int_sig <- ifelse(object$ITS.Effects[1, "p.value"] < .05, "significant", "non-significant")
       # Interpretations
       its_intro <- c("Note: Some variable names below based on time points (or 'interruptions'). \nThis analysis is for a one-group, single intervention period (interruption).")
-      B0 <- paste0("Intercept is ", round(its_b0_coef, 3), " and the starting value of the trend \nfor the intervention group.")
-      B1 <- paste0("ITS.Time is ", round(its_b1_coef, 3), " and the slope prior to intervention. \nThe coefficient is ", its_b1_sig, ".")
-      B2 <- paste0(X_var_its[2], " is ", round(its_b2_coef, 3), " and the immediate shift in the trend line \nafter the intervention start (e.g., 1st year of intervention). \nThe coefficient is ", its_b2_sig, ".")
-      B3 <- paste0(X_var_its[3], " is ", round(its_b3_coef, 3), " and the difference between pre- and \npost-intervention slopes (e.g., change in the pre-intervention \nslope). The coefficient is ", its_b3_sig,".")
-      its_Summary <- paste0("Summary: The results show that after the start of the intervention, \nthere was a ", Smry_int_sig, " change in the ", Y_var_its, " trend. This gives \na total post-intervention trend in the ", Y_var_its, " of ", round(Smry_int_coef, 3), " \nover time (i.e., the total combined value of change not the \nchange relative to pre-intervention).")
+      B0 <- paste0("Intercept is ", signif(its_b0_coef, digits), " and the starting value of the trend \nfor the intervention group.")
+      B1 <- paste0("ITS.Time is ", signif(its_b1_coef, digits), " and the slope prior to intervention. \nThe coefficient is ", its_b1_sig, ".")
+      B2 <- paste0(X_var_its[2], " is ", signif(its_b2_coef, digits), " and the immediate shift in the trend line \nafter the intervention start (e.g., 1st year of intervention). \nThe coefficient is ", its_b2_sig, ".")
+      B3 <- paste0(X_var_its[3], " is ", signif(its_b3_coef, digits), " and the difference between pre- and \npost-intervention slopes (e.g., change in the pre-intervention \nslope). The coefficient is ", its_b3_sig,".")
+      its_Summary <- paste0("Summary: The results show that after the start of the intervention, \nthere is a ", Smry_int_sig, " change in the ", Y_var_its, " trend. This gives \na post-intervention trend change per time unit in the ", Y_var_its, " of ", signif(Smry_int_coef, digits), " \n(i.e., the value of change per-unit-of-time, such as month or year, in \nthe intervention period; not the change relative to pre-intervention).")
       its_covariates <- c("If there are additional variables in the model then the coefficients \nabove represent effects after controlling for the other variables.")
     }
     # mgst
@@ -221,15 +271,15 @@ interpret <- function(object) {
       Smry_diff_sig <- ifelse(object$ITS.Effects[3, "p.value"] < .05, "significant", "non-significant")
       # Interpretations
       its_intro <- c("Note: Some variable names below based on time points (or 'interruptions'). \nThis analysis is for a two-group, single intervention period (interruption). \nPositive values indicate higher intervention group values and vice-versa for: \npost1, txp1, ixp1, txip1.")
-      B0 <- paste0("Intercept is ", round(its_b0_coef, 3), " and the starting value of the trend for the \ncontrol group.")
-      B1 <- paste0("ITS.Time is ", round(its_b1_coef, 3), " and the control group\'s slope prior to intervention. \nThe coefficient is ", its_b1_sig, ".")
-      B2 <- paste0("ITS.Int is ", round(its_b2_coef, 3), " and the difference in the level between intervention \nand control group prior to intervention (intervention - control). \nThe coefficient is ", its_b2_sig, ".")
-      B3 <- paste0("txi is ", round(its_b3_coef, 3), " and the difference between the intervention and \ncontrol group\'s pre-intervention slopes (intervention - control). \nThe coefficient is ", its_b3_sig, ".")
-      B4 <- paste0(X_var_its[4], " is ", round(its_b4_coef, 3), " and the immediate shift in the control group \ntrend line after the intervention start. The coefficient is \n", its_b4_sig, ".")
-      B5 <- paste0(X_var_its[5], " is ", round(its_b5_coef, 3), " and the difference between pre- and post- \ncontrol group slopes (e.g., change in the pre-intervention \nslope). The coefficient is ", its_b5_sig, ".")
-      B6 <- paste0(X_var_its[6], " is ", round(its_b6_coef, 3), " and the difference between the intervention and \ncontrol groups (intervention - control) in the period immediately \nafter the intervention started (e.g., 1st year of intervention). \nThe coefficient is ", its_b6_sig, ".")
-      B7 <- paste0(X_var_its[7], " is ", round(its_b7_coef, 3), " and ", its_b7_sig, "."," This is the difference in both \ngroup\'s slope changes since pre-intervention (pre-slopes compared \nto post-slopes). For example, both have pre-intervention slopes \nof 2, the control group\'s slope remained the same, therefore the \npost-intervention slope is 0. And the intervention group's slope \nincreased by 2, then txip1 = 2 (= 2 - 0).")
-      its_Summary <- paste0("Summary: For the intervention period, the results show that the \nintervention group\'s ", Smry_int_sig, " shift in ",Y_var_its, ", \npost-intervention was ", round(Smry_int_coef, 3), ". The control group\'s ",Smry_con_sig, " \nshift in ",Y_var_its, ", post-intervention was ", round(Smry_con_coef, 3), ". The ", Smry_diff_sig, " \ndifference between both groups is ", round(Smry_diff_coef, 3), ".")
+      B0 <- paste0("Intercept is ", signif(its_b0_coef, digits), " and the starting value of the trend for the \ncontrol group.")
+      B1 <- paste0("ITS.Time is ", signif(its_b1_coef, digits), " and the control group\'s slope prior to intervention. \nThe coefficient is ", its_b1_sig, ".")
+      B2 <- paste0("ITS.Int is ", signif(its_b2_coef, digits), " and the difference in the level between intervention \nand control group prior to intervention (intervention - control). \nThe coefficient is ", its_b2_sig, ".")
+      B3 <- paste0("txi is ", signif(its_b3_coef, digits), " and the difference between the intervention and \ncontrol group\'s pre-intervention slopes (intervention - control). \nThe coefficient is ", its_b3_sig, ".")
+      B4 <- paste0(X_var_its[4], " is ", signif(its_b4_coef, digits), " and the immediate shift in the control group \ntrend line after the intervention start. The coefficient is \n", its_b4_sig, ".")
+      B5 <- paste0(X_var_its[5], " is ", signif(its_b5_coef, digits), " and the difference between pre- and post- \ncontrol group slopes (e.g., change in the pre-intervention \nslope). The coefficient is ", its_b5_sig, ".")
+      B6 <- paste0(X_var_its[6], " is ", signif(its_b6_coef, digits), " and the difference between the intervention and \ncontrol groups (intervention - control) in the period immediately \nafter the intervention started (e.g., 1st year of intervention). \nThe coefficient is ", its_b6_sig, ".")
+      B7 <- paste0(X_var_its[7], " is ", signif(its_b7_coef, digits), " and ", its_b7_sig, "."," This is the difference in both \ngroup\'s slope changes since pre-intervention (pre-slopes compared \nto post-slopes). For example, both have pre-intervention slopes \nof 2, the control group\'s slope remained the same, therefore the \npost-intervention slope is 0. And the intervention group's slope \nincreased by 2, then txip1 = 2 (= 2 - 0).")
+      its_Summary <- paste0("Summary: For the intervention period, the results show that the \nintervention group\'s ", Smry_int_sig, " change in ",Y_var_its, ", \npost-intervention is ", signif(Smry_int_coef, digits), " (i.e., value of change per-unit-of-time, ","\nsuch as month or year, in the intervention period; not the change" ,"\nrelative to the prior period). The control group\'s ",Smry_con_sig, " \nchange in ",Y_var_its, ", post-intervention is ", signif(Smry_con_coef, digits), ". The ", Smry_diff_sig, " \ndifference between both groups is ", signif(Smry_diff_coef, digits), ".")
       its_covariates <- c("If there are additional variables in the model then the coefficients \nabove represent effects after controlling for the other variables.")
     }
     # sgmt
@@ -267,23 +317,23 @@ interpret <- function(object) {
       # Interpretations #
       its_intro <- c("Note: Some variable names below based on time points (or 'interruptions'). \nThis analysis is for a two-group, single intervention period (interruption). \nPositive values indicate higher intervention group values and vice-versa for: \npost1, txp1, ixp1, txip1, post2, txp2, ixp2, txip2.")
       # These are static interpretations that are NOT repeated
-      B0 <- paste0("Intercept is ", round(its_b0_coef, 3), " and the starting value of the trend for the \ncontrol group.")
-      B1 <- paste0("ITS.Time is ", round(its_b1_coef, 3), " and the group\'s slope prior to intervention. \nThe coefficient is ", its_b_sig[2], ".")
+      B0 <- paste0("Intercept is ", signif(its_b0_coef, 3), " and the starting value of the trend for the \ncontrol group.")
+      B1 <- paste0("ITS.Time is ", signif(its_b1_coef, 3), " and the group\'s slope prior to intervention. \nThe coefficient is ", its_b_sig[2], ".")
       # Interpretations that come from a for loop #
       # post
       post_interpret <- vector(mode="character", length=length(interruptions))
       for(i in 1:length(interruptions)) {
-        post_interpret[i] <- paste0(mainvars2[seq(3, expect_coefs, by=2)][i], " is ", round(post_its_coef[i], 3), " and the immediate shift in the group trend \nline after this intervention time starts. The coefficient is \n", its_b_sig[seq(3, expect_coefs, by=2)][i], ".")
+        post_interpret[i] <- paste0(mainvars2[seq(3, expect_coefs, by=2)][i], " is ", signif(post_its_coef[i], digits), " and the immediate shift in the group trend \nline after this intervention time starts. The coefficient is \n", its_b_sig[seq(3, expect_coefs, by=2)][i], ".")
       }
       # txp
       txp_interpret <- vector(mode="character", length=length(interruptions))
       for(i in 1:length(interruptions)) {
-        txp_interpret[i] <- paste0(mainvars2[seq(4, expect_coefs, by=2)][i], " is ", round(txp_its_coef[i], 3), " and the difference between current and prior intervention \ngroup slopes (e.g., change in the pre-intervention slope). \nThe coefficient is ", its_b_sig[seq(4, expect_coefs, by=2)][i], ".")
+        txp_interpret[i] <- paste0(mainvars2[seq(4, expect_coefs, by=2)][i], " is ", signif(txp_its_coef[i], digits), " and the difference between current and prior intervention \ngroup slopes (e.g., change in the pre-intervention slope). \nThe coefficient is ", its_b_sig[seq(4, expect_coefs, by=2)][i], ".")
       }
       ## Intervention period effect ##
       its_Summary <- vector(mode="character", length=length(interruptions))
       for(i in 1:length(interruptions)) {
-        its_Summary[i] <- paste0("Summary ", i, ": For this intervention period ", i, ", ", "the results show that \nthe group\'s ", Smry_int_sig[i], " shift in ", Y_var_its, ", post intervention \nwas ", round(Smry_int_coef[i], 3), " (e.g., the total combined value of change for later \nperiods not the change relative to solely the prior period).")
+        its_Summary[i] <- paste0("Summary ", i, ": For this intervention period ", i, ", ", "the results show that the \ngroup\'s ", Smry_int_sig[i], " change in ", Y_var_its, ", post-intervention is ", signif(Smry_int_coef[i], digits), "\n(i.e., the value of change per-unit-of-time, such as month or year, in \nthe intervention period; not the change relative to the prior period).")
       }
       # additional variables
       its_covariates <- c("If there are additional variables in the model then the coefficients \nabove represent effects after controlling for the other variables.")
@@ -347,35 +397,35 @@ interpret <- function(object) {
       # Interpretations #
       its_intro <- c("Note: Some variable names below based on time points (or 'interruptions'). \nThis analysis is for a two-group, single intervention period (interruption). \nPositive values indicate higher intervention group values and vice-versa for: \npost1, txp1, ixp1, txip1, post2, txp2, ixp2, txip2.")
       # These are static interpretations that are NOT repeated
-      B0 <- paste0("Intercept is ", round(its_b0_coef, 3), " and the starting value of the trend for the \ncontrol group.")
-      B1 <- paste0("ITS.Time is ", round(its_b1_coef, 3), " and the control group\'s slope prior to intervention. \nThe coefficient is ", its_b_sig[2], ".")
-      B2 <- paste0("ITS.Int is ", round(its_b2_coef, 3), " and the difference in the level between intervention \nand control group prior to intervention 1 (intervention - control). \nThe coefficient is ", its_b_sig[3], ".")
-      B3 <- paste0("txi is ", round(its_b3_coef, 3), " and the difference between the intervention and \ncontrol group\'s pre-intervention slopes (intervention - control). \nThe coefficient is ", its_b_sig[4], ".")
+      B0 <- paste0("Intercept is ", signif(its_b0_coef, digits), " and the starting value of the trend for the \ncontrol group.")
+      B1 <- paste0("ITS.Time is ", signif(its_b1_coef, digits), " and the control group\'s slope prior to intervention. \nThe coefficient is ", its_b_sig[2], ".")
+      B2 <- paste0("ITS.Int is ", signif(its_b2_coef, digits), " and the difference in the level between intervention \nand control group prior to intervention 1 (intervention - control). \nThe coefficient is ", its_b_sig[3], ".")
+      B3 <- paste0("txi is ", signif(its_b3_coef, digits), " and the difference between the intervention and \ncontrol group\'s pre-intervention slopes (intervention - control). \nThe coefficient is ", its_b_sig[4], ".")
       # Interpretations that come from a for loop #
       # post
       post_interpret <- vector(mode="character", length=length(interruptions))
       for(i in 1:length(interruptions)) {
-        post_interpret[i] <- paste0(mainvars2[seq(5, expect_coefs, by=4)][i], " is ", round(post_its_coef[i], 3), " and the immediate shift in the control group trend \nline after this intervention time starts. The coefficient is \n", its_b_sig[seq(5, expect_coefs, by=4)][i], ".")
+        post_interpret[i] <- paste0(mainvars2[seq(5, expect_coefs, by=4)][i], " is ", signif(post_its_coef[i], digits), " and the immediate shift in the control group trend \nline after this intervention time starts. The coefficient is \n", its_b_sig[seq(5, expect_coefs, by=4)][i], ".")
       }
       # txp
       txp_interpret <- vector(mode="character", length=length(interruptions))
       for(i in 1:length(interruptions)) {
-        txp_interpret[i] <- paste0(mainvars2[seq(6, expect_coefs, by=4)][i], " is ", round(txp_its_coef[i], 3), " and the difference between current and prior intervention \ncontrol group slopes (e.g., change in the pre-intervention slope). \nThe coefficient is ", its_b_sig[seq(6, expect_coefs, by=4)][i], ".")
+        txp_interpret[i] <- paste0(mainvars2[seq(6, expect_coefs, by=4)][i], " is ", signif(txp_its_coef[i], digits), " and the difference between current and prior intervention \ncontrol group slopes (e.g., change in the pre-intervention slope). \nThe coefficient is ", its_b_sig[seq(6, expect_coefs, by=4)][i], ".")
       }
       # ixp
       ixp_interpret <- vector(mode="character", length=length(interruptions))
       for(i in 1:length(interruptions)) {
-        ixp_interpret[i] <- paste0(mainvars2[seq(7, expect_coefs, by=4)][i], " is ", round(ixp_its_coef[i], 3), " and the difference between the intervention and \ncontrol groups (intervention - control) in the period immediately \nafter this intervention started (e.g., 1st year of intervention 1). \nThe coefficient is ", its_b_sig[seq(7, expect_coefs, by=4)][i], ".")
+        ixp_interpret[i] <- paste0(mainvars2[seq(7, expect_coefs, by=4)][i], " is ", signif(ixp_its_coef[i], digits), " and the difference between the intervention and \ncontrol groups (intervention - control) in the period immediately \nafter this intervention started (e.g., 1st year of intervention 1). \nThe coefficient is ", its_b_sig[seq(7, expect_coefs, by=4)][i], ".")
       }
       # txip
       txip_interpret <- vector(mode="character", length=length(interruptions))
       for(i in 1:length(interruptions)) {
-        txip_interpret[i] <- paste0(mainvars2[seq(8, expect_coefs, by=4)][i], " is ", round(txip_its_coef[i], 3), " and ", its_b_sig[seq(8, expect_coefs, by=4)][i], "."," This is the difference in both \ngroup\'s slope changes since the prior intervention (pre-slopes compared \nto post-slopes). For example, both have pre-intervention slopes \nof 2, the control group\'s slope remained the same, therefore the \npost 1st intervention slope is 0. And the intervention group's slope \nincreased by 2, then txip1 = 2 (= 2 - 0).")
+        txip_interpret[i] <- paste0(mainvars2[seq(8, expect_coefs, by=4)][i], " is ", signif(txip_its_coef[i], digits), " and ", its_b_sig[seq(8, expect_coefs, by=4)][i], "."," This is the difference in both \ngroup\'s slope changes since the prior intervention (pre-slopes compared \nto post-slopes). For example, both have pre-intervention slopes \nof 2, the control group\'s slope remained the same, therefore the \npost 1st intervention slope is 0. And the intervention group's slope \nincreased by 2, then txip1 = 2 (= 2 - 0).")
       }
       ## Intervention period effect ##
       its_Summary <- vector(mode="character", length=length(interruptions))
       for(i in 1:length(interruptions)) {
-        its_Summary[i] <- paste0("Summary ", i, ": For this intervention period ", i, ", ", "the results show that the \nintervention group\'s ", Smry_int_sig[i], " shift in ", Y_var_its, ", \npost intervention was ", round(Smry_int_coef[i], 3), ". The control group\'s ",Smry_con_sig[i], " \nshift in ", Y_var_its, ", post intervention was ", round(Smry_con_coef[i], 3), ". The ", Smry_diff_sig[i], " \ndifference between both groups is ", round(Smry_diff_coef[i], 3), ".")
+        its_Summary[i] <- paste0("Summary ", i, ": For this intervention period ", i, ", ", "the results show that \nthe intervention group\'s ", Smry_int_sig[i], " change in ", Y_var_its, ", \npost-intervention is ", signif(Smry_int_coef[i], digits), " (i.e., value of change per-unit-of-time,", "\nsuch as month or year, in the intervention period; not the change", "\nrelative to the prior period).", " The control group\'s ",Smry_con_sig[i], " \nchange in ", Y_var_its, ", post-intervention is ", signif(Smry_con_coef[i], digits), ". The ", Smry_diff_sig[i], " \ndifference between both groups, per-unit-of-time, is ", signif(Smry_diff_coef[i], digits), ".")
       }
       # additional variables
       its_covariates <- c("If there are additional variables in the model then the coefficients \nabove represent effects after controlling for the other variables.")

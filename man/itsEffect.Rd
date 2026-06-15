@@ -30,7 +30,19 @@ are provided that include the effect sizes, t-statistic, standard errors,
 p-values, and 95\% confidence intervals of the effect sizes. These values are
 provided for the intervention group, control group (when applicable), and the
 differences between the two groups (Linden, 2015). These values are automatically
-generated while running a model in assess.
+generated while running a model in assess and represent changes per unit of time
+in an intervention period. For example, In “Summary 1”, ITS effects are the expected
+differences for each time point (month, year, etc.) within that time period.
+The difference between intervention and control groups is per unit of time within
+the first intervention period and is analogous for subsequent periods. The summary
+values are calculated only using the trend coefficients for the intervention and
+control groups each value represents the change per unit of time for that period.
+For example, if two interruptions in a 1-group ITS model are at months 5 and 9 of the
+year with coefficients of 0.25 and 0.23, respectively, then adding the baseline trend
+-0.29 (ITS.Time) and 0.25 (txp) results in a trend change of -0.04 and would be reported
+under "Summary 1" for the first intervention period. Subsequently, the same coefficients
+have 0.23 (txp9) added to calculate the 0.19 (= -0.29 + 0.25 + 0.23) trend change value
+per unit of time in the second intervention period listed in "Summary 2".
 }
 \examples{
 i21 <- assess(formula=survey ~ ., data=hosprog, intervention = "program",topcode =NULL,

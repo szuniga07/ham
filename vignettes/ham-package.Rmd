@@ -44,11 +44,17 @@ What is unique about ham, is that it provides options for running standard linea
 This vignette will introduce ham's features in the following functions:
 
 * alpha: Conduct Cronbach's alpha on scale items (e.g., survey questions).
+
 * assess: Perform various regression methods (OLS, logistic, differences-in-differences, and interrupted time series).
+
 * group: Confidence Intervals for descriptive and inferential statistics. Compare groups in cross-sectional or repeated cross-sectional data.
+
 * importance: Rank variable importance from regression coefficients using the partial chi-square statistic.
+
 * interpret: Provides simple coefficient interpretations. This is a helpful reminder, especially as models have increased coefficients (e.g., ITS).
+
 * There are also printing and plotting options to help review your results.
+
 
 Below will cover 4 sections using an intervention program example and reduced length of stay in the hospital. 
 
@@ -328,6 +334,21 @@ im12 <- assess(formula=los ~ ., data=hosp1, intervention = "program",
 summary(im12$ITS)
 ```
 
+
+Let's take a look at the interpretations.
+
+### interpret ITS 2 coefficients
+```{r its model 2 interpretations}
+interpret(im12)$its
+```
+
+Let's take a look at the graph.
+
+### Graph ITS model 2 
+```{r plotITS02, fig.dim = c(6, 4.5)}
+plot(im12, "ITS", add.legend="topright", xlim=c(-1, 14), ylim=c(2, 9), main="ITS: Intervention LOS", col=("thistle"), lwd=7, cex=3, cex.axis=2, cex.lab=1.5,  cex.main=3, arrow=TRUE, xshift=c(.25, .25), cex.text=1.0, coefs=TRUE, round.c=2, cfact=T, conf.int=TRUE, adj.alpha=0.2, pos.text= list("Intercept"=1, "txp5"=3, "post5"=3, "post9"=3), cex.legend=1.25, add.means=TRUE )
+```
+
 Now that we see how our intervention group is performing, let's see how it compares with the control group. When looking at the confidence intervals from the group() results, we see what looks like a change in trends. Let's test that! 
 
 We have an interest in a comparison of the intervention and control group with 2 potential interruptions at months 5 and 9, which is specified with interrupt= c(5, 9) and its="two". We also have the option of comparing 2 groups with 1 interruption, if you would like to try that, use 1 time point instead (e.g., its="two", interrupt= 5). 
@@ -352,17 +373,18 @@ summary(im22$ITS)
 interpret(im22)$its
 ```
 
-<span style="color: red;" >Hint:</span> The 2 summaries at the bottom help us to understand the overall effect on the LOS reduction up to the end of those time periods. In other words, the coefficient interpretations explain what each means while the summaries give us an idea on the actual number in a lower (or higher) LOS over time for the intervention and/or control groups.  
+<span style="color: red;" >Hint:</span> The 2 summaries at the bottom help us to understand the overall effect on the LOS reduction up to the end of those time periods. In other words, the coefficient interpretations explain what each means while the summaries give us an idea that each value represents the change per unit of time in that period, the degree of lower (or higher) LOS over time for the intervention and/or control groups. For example, the intervention group saw a slight decrease of 0.037 per month after the first interruption but saw an increase of about 0.192 per month after the second interruption.
+
 
 We will now graph the results based on our coefficients. We use many of the same arguments as the DID model. In this example, I adjusted the position of the text to read better with the pos.text argument. And you'll notice that within the confidence bands there are dots that represent the means for each time period from the model data. This is done with the argument add.means=TRUE. Although not provided in ITS models with control groups, the ITS models that only have the intervention groups do have counterfactual lines. Counterfactual lines may be added to all ITS models in future versions if can do it in the way I prefer. 
 
 ### View a partial prediction plot
 ```{r plotAssess, fig.dim = c(6, 4.5)}
-plot(im22, "ITS", add.legend="top", xlim=c(-.75, 13.1), ylim=c(2, 9), 
+plot(im22, "ITS", add.legend="top", xlim=c(-.75, 13.1), ylim=c(2, 9),
      main="ITS: Length of Stay", col=c("springgreen","thistle"), lwd=7, cex=2, cex.axis=2,
      cex.lab=1.5,  cex.main=3, cex.legend=1.25, arrow=TRUE, xshift=c(0, .5), cex.text=1,
-     coefs=TRUE, round.c=1, pos.text= list("txp5"=3, "post9"=4), tcol="dodgerblue",
-     conf.int=TRUE, adj.alpha=0.3, add.means=TRUE)
+     coefs=TRUE, round.c=1, pos.text= list("Intercept"=1, "txp5"=3, "post5"=3, "post9"=3),
+     tcol="dodgerblue", conf.int=TRUE, adj.alpha=0.3, add.means=TRUE)
 ```
 
 The ITS model provides another layer of information. The graph is helpful at showing how the results changed. The control group appears to show a steady increase in LOS, perhaps this reflects a change in practice, patient population or some other issue that impacted results. However, the intervention group may have helped. It appears that their was an "immediate" change in the intercept. 
@@ -376,7 +398,7 @@ We can also perform an ITS on binary outcomes like death within 30-days.
 We will examine an intervention and control group at months 5 and 9,
 which is specified with interrupt= c(5, 9) and its ="two".
 
-### ITS model 4
+### ITS model 4: 30-day death (mortality)
 ```{r its model 4}
 id22 <- assess(formula=death30 ~ ., data=hosprog, intervention = "program", int.time="month", interrupt= c(5, 9), its="two")
 ```
@@ -385,6 +407,22 @@ id22 <- assess(formula=death30 ~ ., data=hosprog, intervention = "program", int.
 ```{r its model 4 results}
 summary(id22$ITS)
 ```
+
+Let's take a look at the interpretations.
+
+### interpret ITS 4 coefficients
+```{r its model 4 interpretations}
+interpret(id22)$its
+```
+
+Let's take a look at the graph (intervention is brown, control is gray).
+
+### Graph ITS model 4 
+```{r plotITS04, fig.dim = c(6, 4.5)}
+plot(id22, "ITS",  xlim=c(-1, 14), ylim=c(0, .37), main="ITS: 30-day Death", col=c("sienna3","slategray"), lwd=7, cex=3, cex.axis=2, cex.lab=1.5, tcol="green", cex.main=3, arrow=TRUE, xshift=c(.25, .25), cex.text=1.0, coefs=TRUE, round.c=2, cfact=T, conf.int=TRUE, adj.alpha=0.15, pos.text= list("Intercept"=1, "txp5"=3, "txi"=2, "post5"=3, "post9"=4, "ITS.Time"=3), 
+     cex.legend=.9, add.means=TRUE )
+```
+
 
 In the latest version of ham, we now have the option of an interrupted time series that tests as many interruptions as the data permits. This example demonstrates the US unemployment rate since 1929, highlighting key moments during that period. 
 
