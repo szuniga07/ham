@@ -63,6 +63,8 @@
 #' vector of either 'ipw', 'nipw', or 'att' for Inverse Probability of Treatment Weighting Using the
 #' propensity score (see 'propensity' above) to be used in the fitting process. Should be NULL or a
 #' character vector. If non-NULL, weighting is used with weights; otherwise standard regression is used.
+#' Weights calculated as ipw: treatment= 1/pscore, control= 1/(1-pscore); nipw: treatment= ipw / sum of
+#' treatment ipw, control= ipw / sum of control ipw; att: treatment= 1; control= pscore/(1-pscore).
 #' @param offset an optional 1-element character vector of the data frame column name to be used with the
 #' predictor during fitting. One or more offset terms can be included in the formula instead. offset is
 #' often used in for rates in Poisson models. Can only use the data frame column name, cannot transform

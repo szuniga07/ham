@@ -94,7 +94,9 @@ propensity score. If NULL, the default values of >= 0 and <= 1 are used (i.e., c
 \item{weights}{an optional 1-element character vector of the data frame column name or character
 vector of either 'ipw', 'nipw', or 'att' for Inverse Probability of Treatment Weighting Using the
 propensity score (see 'propensity' above) to be used in the fitting process. Should be NULL or a
-character vector. If non-NULL, weighting is used with weights; otherwise standard regression is used.}
+character vector. If non-NULL, weighting is used with weights; otherwise standard regression is used.
+Weights calculated as ipw: treatment= 1/pscore, control= 1/(1-pscore); nipw: treatment= ipw / sum of
+treatment ipw, control= ipw / sum of control ipw; att: treatment= 1; control= pscore/(1-pscore).}
 
 \item{offset}{an optional 1-element character vector of the data frame column name to be used with the
 predictor during fitting. One or more offset terms can be included in the formula instead. offset is
