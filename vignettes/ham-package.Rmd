@@ -124,7 +124,7 @@ print(gr1$Clustering)
 ```{r plotGroup2, fig.dim = c(6, 4.5)}
 plot(x=gr1, y="time", lwd=4, gcol=c("red", "blue"), gband=TRUE, overall=TRUE, oband=TRUE,
      ocol="gray", tgt=4.5, tcol="green", tpline=5, tpcol="yellow", name=TRUE, cex.axis=1,
-     cex.lab=1, cex.text=2, cex.main=1, adj.alpha=.3)
+     cex.lab=1, cex.text=2, cex.main=1, adj.alpha=.3, x.axis=c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
 ```
 
 The intervention group's data makes up the blue line while the control is indicated with the red line. This looks interesting, the intervention and control group swap LOS ranks at the same time as the start of the intervention. This graph is made for descriptive purposes but may shed light on trends for intervention and control groups. It looks like something happened, we should continue exploring.
