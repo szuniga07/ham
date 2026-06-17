@@ -33,8 +33,8 @@
 #' not 1-100). Must have equal lengths for unique x.axis values and replaced values (i.e., nrow(x)). Default is NULL.
 #' @param y.axis a vector of unique character or numeric values that makes up y-axis values to replace
 #' the outcome variable values. This will be most helpful if your outcome needs to be converted such as rate per
-#' 1,000 patient days (e.g., y.axis= seq(min(x$HAI)*1000, max(x$HAI)*1000, length.out=nrow(x))). Must have equal
-#' lengths for unique y.axis values and replaced values (i.e., nrow(x)). Default is NULL.
+#' 1,000 patient days (e.g., y.axis= seq(min(c(x$HAI, x$LCL))*1000, max(c(x$HAI, x$UCL))*1000, length.out=10)).
+#' Default is NULL.
 #' @param round.c an integer indicating the number of decimal places when rounding numbers such as for y.axis.
 #' Default is 2.
 #' @param ... additional arguments.
@@ -69,7 +69,7 @@
 #' # and y.axis changed to show HAIs per 1,000 patient days
 #' plot(spc_u, main="u-Chart: HAI per 1,000 Patient Days Pre/Post Intervention",
 #' col=c("green","dodgerblue"), trend=TRUE, trcol="red", x.axis=c((1:41+12)), round.c=1,
-#' y.axis=seq(min(spc_u$HAI)*1000, max(spc_u$HAI)*1000, length.out=nrow(spc_u)),
+#' y.axis=seq(min(c(spc_u[,2],spc_u$LCL))*1000, max(c(spc_u[,2],spc_u$UCL))*1000, length.out=10),
 #' xlab="Months (starting at year 2)", icol="gray", lwd=2, cex=2,
 #' cex.axis=1.1, cex.main=1.25, cex.text=1.25)
 
@@ -81,10 +81,10 @@ plot.control <- function(x, y=NULL, xlim=NULL, ylim=NULL, xlab=NULL, ylab=NULL, 
   if(!is.null(x.axis)) {
     if (nrow(x) != length(na.omit(unique(x.axis)))) {stop("Error: Expecting equal lengths for number of rows for x and length of x.axis." )}
   }
-  #x.axis having equal lengths with current time variable
-  if(!is.null(y.axis)) {
-    if (nrow(x) != length(na.omit(unique(y.axis)))) {stop("Error: Expecting equal lengths for number of rows for x and length of y.axis." )}
-  }
+  #y.axis having equal lengths with current time variable
+#  if(!is.null(y.axis)) {
+#    if (nrow(x) != length(na.omit(unique(y.axis)))) {stop("Error: Expecting equal lengths for number of rows for x and length of y.axis." )}
+#  }
   #chart type
   chart_type <- x[1, "type"]
 
@@ -161,11 +161,12 @@ plot.control <- function(x, y=NULL, xlim=NULL, ylim=NULL, xlab=NULL, ylab=NULL, 
     x.at <- NULL
   }
   #Indicates y axis "at" values
-  if(!is.null(x.axis)) {
-    y.at <- seq(min(x[, 2], na.rm=T), max(x[, 2], na.rm=T), length.out=nrow(x))
-  } else {
-    y.at <- NULL
-  }
+    if(!is.null(y.axis)) {
+      y.at <- seq(min(c(x[, 2], x[, "LCL"]), na.rm=T), max(c(x[, 2], x[, "UCL"]), na.rm=T),
+                  length.out=length(y.axis))
+    } else {
+      y.at <- NULL
+    }
   #Get intervention time if there is one
   has_intervention <- ifelse("intervention" %in% colnames(x), TRUE, FALSE )
   if(has_intervention == TRUE) {

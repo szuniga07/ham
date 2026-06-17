@@ -33,6 +33,15 @@
 #' @param roll.x one of 2 character options to graph rolling average x-axis values as either the 'Start' or 'Stop' of the time period.
 #' Selecting 'Start' indicates the time point on the x-axis as the first month (e.g., roll=12 will have a graph that starts at 1 on the x-axis).
 #' The default is 'Stop' (e.g., roll=12 will have a graph that starts at 12 on the x-axis).
+#' @param x.axis a vector of unique character or numeric values that makes up x-axis values to
+#' replace the time variable values. For use only when y="time" or y="roll". This will be most helpful if you prefer
+#' current calendar months/years instead of values starting at 1 (e.g., x.axis= sort(unique(data$Year)) for 1900-1999,
+#' not 1-100). Must have equal lengths for unique x.axis values and replaced values (i.e., nrow(x)). Default is NULL.
+#' @param y.axis a vector of unique character or numeric values that makes up y-axis values to replace
+#' the outcome variable values. For use only when y="time" or y="roll". This will be most helpful if your outcome
+#' needs to be converted such as rate per 1,000 patient days. The values are spaced equally between the minimum lower
+#' confidence interval and maximum upper confidence interval when either y="time" or y="roll", equal to length(y.axis).
+#' Review x$Time.CI$Group or x$Roll.CI$Rolling.All to view ranges. Default is NULL.
 #' @param ... additional arguments.
 #'
 #' @return plot of group level confidence intervals, including estimates over time periods.
@@ -67,7 +76,7 @@ plot.group <- function(x, y="group", order="alpha", gcol="blue", gband=FALSE, pc
                        tpcol="gray", xlim=NULL, ylim=NULL, main=NULL,
                        xlab=NULL, ylab=NULL, lwd=1, adj.alpha=0.4,
                        cex=1, cex.axis=1, cex.lab=1, cex.main=1, cex.text=1, round.c=2,
-                       name=FALSE, abbrv=5, roll.x="Stop", ...) {
+                       name=FALSE, abbrv=5, roll.x="Stop", x.axis=NULL, y.axis=NULL, ...) {
   if(any(is.null(c(x, y)) == TRUE)) {
     stop("Error: Expecting both an x and y argument.")
   }
@@ -174,9 +183,9 @@ plot.group <- function(x, y="group", order="alpha", gcol="blue", gband=FALSE, pc
       colnames(cidf_tot)[which(colnames(cidf_tot) == roll.x)] <- "z_lev"
     }
     #Unique levels
-    ctrs <- sort(unique(cidf[["x_lev"]]))
+    ctrs <- sort(na.omit(unique(cidf[["x_lev"]])))
     #Time periods
-    times <- sort(unique(cidf[["z_lev"]]))
+    times <- sort(na.omit(unique(cidf[["z_lev"]])))
     #Get confidence intervals for graphing
     min_ci <- cidf[["Lower"]]
     max_ci <- cidf[["Upper"]]
@@ -219,8 +228,51 @@ plot.group <- function(x, y="group", order="alpha", gcol="blue", gband=FALSE, pc
                     length.out=length(times)), type="n",cex.lab=cex.lab,
          axes=F, ylab=ylab, xlab=xlab, xlim=xlim, ylim=ylim )
     title(Main.Title, cex.main = cex.main)
-    axis(1, las=1, cex.axis=cex.axis )
-    axis(2, las=3, cex.axis=cex.axis )
+    #Indicates x axis "at" values
+    if(y == "time") {
+      if(!is.null(x.axis)) {
+      x.at <- sort(na.omit(unique(x[[ "Time.CI"]][["All"]][["z_lev"]])))
+    } else {
+      x.at <- NULL
+    }
+    }
+    if(y == "roll") {  #Using cidf_tot because it uses z_lev for start or stop
+      if(!is.null(x.axis)) {
+        x.at <- sort(na.omit(unique(cidf_tot[["z_lev"]])))
+      } else {
+        x.at <- NULL
+      }
+    }
+    #Indicates y axis "at" values
+    if(y == "time") {
+    if(!is.null(y.axis)) {
+      y.at <- seq(min(x[[ "Time.CI"]][["Group"]][["Lower"]], na.rm=T), max(x[[ "Time.CI"]][["Group"]][["Upper"]], na.rm=T),
+                  length.out=length(y.axis))
+    } else {
+      y.at <- NULL
+      }
+    }
+    if(y == "roll") {
+      if(!is.null(y.axis)) {
+        y.at <- seq(min(x[[ "Roll.CI"]][["Rolling"]][["Lower"]], na.rm=T), max(x[[ "Roll.CI"]][["Rolling"]][["Upper"]], na.rm=T),
+                    length.out=length(y.axis))
+      } else {
+        y.at <- NULL
+      }
+    }
+
+    #Add x-axis value to graph
+    if(!is.null(x.axis)) {
+      axis(side=1, at=x.at, las=1, labels=x.axis, cex.axis=cex.axis)
+    } else {
+      axis(1)
+    }
+    ## Add y-axis value to graph ##
+    if(!is.null(y.axis)) {
+      axis(side=2, at=y.at, las=3, labels=y.axis, cex.axis=cex.axis)
+    } else {
+      axis(2)
+    }
     box()
     #Confidence bands for group lines
     if(cibands == TRUE) {

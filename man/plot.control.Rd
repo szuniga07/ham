@@ -85,8 +85,8 @@ not 1-100). Must have equal lengths for unique x.axis values and replaced values
 
 \item{y.axis}{a vector of unique character or numeric values that makes up y-axis values to replace
 the outcome variable values. This will be most helpful if your outcome needs to be converted such as rate per
-1,000 patient days (e.g., y.axis= seq(min(x$HAI)*1000, max(x$HAI)*1000, length.out=nrow(x))). Must have equal
-lengths for unique y.axis values and replaced values (i.e., nrow(x)). Default is NULL.}
+1,000 patient days (e.g., y.axis= seq(min(c(x$HAI, x$LCL))*1000, max(c(x$HAI, x$UCL))*1000, length.out=10)).
+Default is NULL.}
 
 \item{round.c}{an integer indicating the number of decimal places when rounding numbers such as for y.axis.
 Default is 2.}
@@ -122,7 +122,7 @@ type="u", n.equal=FALSE, intervention=22)
 # and y.axis changed to show HAIs per 1,000 patient days
 plot(spc_u, main="u-Chart: HAI per 1,000 Patient Days Pre/Post Intervention",
 col=c("green","dodgerblue"), trend=TRUE, trcol="red", x.axis=c((1:41+12)), round.c=1,
-y.axis=seq(min(spc_u$HAI)*1000, max(spc_u$HAI)*1000, length.out=nrow(spc_u)),
+y.axis=seq(min(c(spc_u[,2],spc_u$LCL))*1000, max(c(spc_u[,2],spc_u$UCL))*1000, length.out=10),
 xlab="Months (starting at year 2)", icol="gray", lwd=2, cex=2,
 cex.axis=1.1, cex.main=1.25, cex.text=1.25)
 }
