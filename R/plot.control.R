@@ -79,11 +79,11 @@ plot.control <- function(x, y=NULL, xlim=NULL, ylim=NULL, xlab=NULL, ylab=NULL, 
   if (any(class(x) == "control") == FALSE) {stop("Error: Expecting control class object." )}
   #x.axis having equal lengths with current time variable
   if(!is.null(x.axis)) {
-    if (nrow(x) != length(unique(x.axis))) {stop("Error: Expecting equal lengths for number of rows for x and length of x.axis." )}
+    if (nrow(x) != length(na.omit(unique(x.axis)))) {stop("Error: Expecting equal lengths for number of rows for x and length of x.axis." )}
   }
   #x.axis having equal lengths with current time variable
   if(!is.null(y.axis)) {
-    if (nrow(x) != length(unique(y.axis))) {stop("Error: Expecting equal lengths for number of rows for x and length of y.axis." )}
+    if (nrow(x) != length(na.omit(unique(y.axis)))) {stop("Error: Expecting equal lengths for number of rows for x and length of y.axis." )}
   }
   #chart type
   chart_type <- x[1, "type"]
@@ -156,7 +156,7 @@ plot.control <- function(x, y=NULL, xlim=NULL, ylim=NULL, xlab=NULL, ylab=NULL, 
   }
   #Indicates x axis "at" values
   if(!is.null(x.axis)) {
-    x.at <- sort(unique(x[, 1]))
+    x.at <- sort(na.omit(unique(x[, 1])))
   } else {
     x.at <- NULL
   }
