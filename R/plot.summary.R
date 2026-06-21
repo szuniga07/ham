@@ -137,12 +137,14 @@ object <- x
         point_estimate <- x[["coefficients"]][, "Estimate"] * multi_vals
         lower_ci <- (x[["coefficients"]][, "Estimate"] * multi_vals - ((x[["coefficients"]][, "Std. Error"]* multi_vals) * critical_value))
         upper_ci <- (x[["coefficients"]][, "Estimate"] * multi_vals + ((x[["coefficients"]][, "Std. Error"]* multi_vals) * critical_value))
-        ci_data_frame <- data.frame(point_estimate, lower_ci, upper_ci)
+        pvalue <- x[["coefficients"]][, grep("Pr", colnames(x[["coefficients"]]))]
+        ci_data_frame <- data.frame(point_estimate, lower_ci, upper_ci, pvalue)
       } else {
         point_estimate <- x[["coefficients"]][, "Estimate"]
         lower_ci <- x[["coefficients"]][, "Estimate"] - ((x[["coefficients"]][, "Std. Error"]* multi_vals) * critical_value)
         upper_ci <- x[["coefficients"]][, "Estimate"] + ((x[["coefficients"]][, "Std. Error"]* multi_vals) * critical_value)
-        ci_data_frame <- data.frame(point_estimate, lower_ci, upper_ci)
+        pvalue <- x[["coefficients"]][, grep("Pr", colnames(x[["coefficients"]]))]
+        ci_data_frame <- data.frame(point_estimate, lower_ci, upper_ci, pvalue)
       }
     }
     if (reg_type %in% c("logistic","poisson","other")) {
@@ -150,12 +152,14 @@ object <- x
         point_estimate <- exp(x[["coefficients"]][, "Estimate"] * multi_vals)
         lower_ci <- exp((x[["coefficients"]][, "Estimate"] * multi_vals - ((x[["coefficients"]][, "Std. Error"]* multi_vals) * critical_value)))
         upper_ci <- exp((x[["coefficients"]][, "Estimate"] * multi_vals + ((x[["coefficients"]][, "Std. Error"]* multi_vals) * critical_value)))
-        ci_data_frame <- data.frame(point_estimate, lower_ci, upper_ci)
+        pvalue <- x[["coefficients"]][, grep("Pr", colnames(x[["coefficients"]]))]
+        ci_data_frame <- data.frame(point_estimate, lower_ci, upper_ci, pvalue)
       } else {
         point_estimate <- exp(x[["coefficients"]][, "Estimate"] )
         lower_ci <- exp(x[["coefficients"]][, "Estimate"] - ((x[["coefficients"]][, "Std. Error"]* multi_vals) * critical_value))
         upper_ci <- exp(x[["coefficients"]][, "Estimate"] + ((x[["coefficients"]][, "Std. Error"]* multi_vals) * critical_value))
-        ci_data_frame <- data.frame(point_estimate, lower_ci, upper_ci)
+        pvalue <- x[["coefficients"]][, grep("Pr", colnames(x[["coefficients"]]))]
+        ci_data_frame <- data.frame(point_estimate, lower_ci, upper_ci, pvalue)
       }
     }
     if (reg_type == "cox") {
@@ -163,12 +167,14 @@ object <- x
         point_estimate <- exp(x[["coefficients"]][, "coef"] * multi_vals)
         lower_ci <- exp((x[["coefficients"]][, "coef"] * multi_vals - ((x[["coefficients"]][, "se(coef)"]* multi_vals) * critical_value)))
         upper_ci <- exp((x[["coefficients"]][, "coef"] * multi_vals + ((x[["coefficients"]][, "se(coef)"]* multi_vals) * critical_value)))
-        ci_data_frame <- data.frame(point_estimate, lower_ci, upper_ci)
+        pvalue <- x[["coefficients"]][, grep("Pr", colnames(x[["coefficients"]]))]
+        ci_data_frame <- data.frame(point_estimate, lower_ci, upper_ci, pvalue)
       } else {
         point_estimate <- exp(x[["coefficients"]][, "coef"] )
         lower_ci <- exp(x[["coefficients"]][, "coef"] - ((x[["coefficients"]][, "se(coef)"]* multi_vals) * critical_value))
         upper_ci <- exp(x[["coefficients"]][, "coef"] + ((x[["coefficients"]][, "se(coef)"]* multi_vals) * critical_value))
-        ci_data_frame <- data.frame(point_estimate, lower_ci, upper_ci)
+        pvalue <- x[["coefficients"]][, grep("Pr", colnames(x[["coefficients"]]))]
+        ci_data_frame <- data.frame(point_estimate, lower_ci, upper_ci, pvalue)
       }
     }
     #Drop intercept row
@@ -176,7 +182,7 @@ object <- x
       ci_data_frame <- ci_data_frame[-intercept_row, ]
     }
     #Change column names
-    colnames(ci_data_frame) <- c("PointEst","Lower","Upper")
+    colnames(ci_data_frame) <- c("PointEst","Lower","Upper", "P")
     #Return object
     return(list("Estimates"=ci_data_frame, "Regression"=reg_type))
   }
