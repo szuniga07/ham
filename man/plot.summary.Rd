@@ -6,13 +6,30 @@
 \usage{
 \method{plot}{summary}(
   x,
-  y,
+  y = NULL,
+  increase = NULL,
   main = NULL,
-  cex = NULL,
+  sort = NULL,
+  decreasing = NULL,
+  abbrv = NULL,
+  xlim = NULL,
+  ylim = NULL,
+  xlab = NULL,
+  ylab = NULL,
+  lwd = NULL,
+  color = NULL,
+  scol = NULL,
+  pcol = NULL,
   pt.cex = NULL,
   pch = NULL,
-  color = NULL,
-  lcolor = NULL,
+  tgt = NULL,
+  tcol = NULL,
+  cex = NULL,
+  cex.axis = NULL,
+  cex.lab = NULL,
+  cex.main = NULL,
+  print = NULL,
+  round.c = NULL,
   ...
 )
 }
@@ -21,20 +38,59 @@
 
 \item{y}{not currently used.}
 
-\item{main}{overall title for the plot, default is 'Variable Importance'.}
+\item{increase}{a named list object of the coefficient name and associated increase in the predictor. For example,
+in the model y ~ a + b1 + b2, increase= list(b1=10), will produce point estimates and confidence intervals adjusted
+to a 10-unit increase in the coefficient b1. This is most helpful when the continuous predictor has many levels and
+the interpretation of the standard 1-unit increase is less informative than a larger change in X. For example,
+discussing a difference in 10 or 20 years may be more helpful in describing the impact on 30-day mortality.}
 
-\item{cex}{the character size to be used. Setting cex to a value smaller than 1
-can be a useful way of avoiding label overlap. This sets the actual size,
-not a multiple of par('cex').}
+\item{main}{overall title for the plot, default is NULL which then lists the outcome name for OLS regression or
+'Odds Ratio' (logistic), 'Incidence Rate Ratio' (Poisson), or 'Hazard Ratio' (Cox).}
+
+\item{sort}{specify how confidence intervals are sorted. Options are 'alpha' (alphabetical coefficient names),
+'coef' (coefficient values), 'p' (p-values), or 'enter' (how variables were entered in the model).
+Default is 'enter'. See decreasing argument to adjust how the selection is then sorted.}
+
+\item{decreasing}{logical TRUE or FALSE that indicates how confidence intervals are sorted. Defaults to FALSE.}
+
+\item{abbrv}{the minimum length of the coefficient name abbreviations. Default is 5.}
+
+\item{xlim}{specify plot's x-axis limits with a 2 value vector.}
+
+\item{ylim}{specify plot's y-axis limits with a 2 value vector.}
+
+\item{xlab}{a vector label for the x-axis.}
+
+\item{ylab}{a vector label for the y-axis.}
+
+\item{lwd}{select the line width. Default is 1.}
+
+\item{color}{the color(s) to be used for the horizontal lines. Default is 'gray'.}
+
+\item{scol}{the color to be used for lines when there are significant results. Default is 'red'.}
+
+\item{pcol}{select the point color for the point estimates. Default is 'blue'.}
 
 \item{pt.cex}{the cex to be applied to plotting symbols, default is 2.}
 
-\item{pch}{the plotting character or symbol to be used, default is 19.}
+\item{pch}{the plotting character or symbol to be used, default is 17.}
 
-\item{color}{the color to be used for points and labels when there are
-significant results. Default is 'red'.}
+\item{tgt}{specify 1 or more values on the x-axis of where to add a target line when y='group'. Or 1 or more values on the y-axis of where to add a
+target line when y='time' or 'roll'. Default is NULL.}
 
-\item{lcolor}{the color(s) to be used for the horizontal lines. Default is 'gray'.}
+\item{tcol}{select a color for the target line. Default is 'black'.}
+
+\item{cex}{A numerical value giving the amount by which plotting text and symbols should be magnified relative to the default of 1.}
+
+\item{cex.axis}{The magnification to be used for axis annotation relative to the current setting of cex. Default is 1.}
+
+\item{cex.lab}{The magnification to be used for x and y labels relative to the current setting of cex. Default is 1.}
+
+\item{cex.main}{The magnification to be used for main titles relative to the current setting of cex. Default is 1.}
+
+\item{print}{logical TRUE or FALSE that indicates whether to print point estimates and confidence intervals. Defaults to FALSE.}
+
+\item{round.c}{an integer indicating the number of decimal places to be used for rounding values in the printed point estimates and confidence intervals. Default is 3.}
 
 \item{...}{additional arguments.}
 }
@@ -51,12 +107,10 @@ graphical parameters of mar=c(4.2, 2, 3.5, 3) and oma = c(0, 0, 0, 3).
 }
 \examples{
 # OLS regression
-plot(importance(assess(mpg ~ hp + wt + cyl, data=mtcars, regression= "ols")$model))
 
 # logistic regression
-plot(importance(assess(vs~mpg+wt+hp, data=mtcars, regression= "logistic")$model))
 }
 \references{
-Harrell, F. E., Jr. (2016). Regression Modeling Strategies. Springer
-International Publishing. ISBN: 978-3-319-19424-0.
+Harrell, F. E., Jr. (2016). Regression Modeling Strategies, Second Edition.
+Springer International Publishing. ISBN: 978-3-319-19424-0.
 }

@@ -9,84 +9,59 @@
 #'
 #' @param x importance object.
 #' @param y not currently used.
-#' @param main overall title for the plot, default is 'Variable Importance'.
-#' @param cex the character size to be used. Setting cex to a value smaller than 1
-#' can be a useful way of avoiding label overlap. This sets the actual size,
-#' not a multiple of par('cex').
+#' @param increase a named list object of the coefficient name and associated increase in the predictor. For example,
+#' in the model y ~ a + b1 + b2, increase= list(b1=10), will produce point estimates and confidence intervals adjusted
+#' to a 10-unit increase in the coefficient b1. This is most helpful when the continuous predictor has many levels and
+#' the interpretation of the standard 1-unit increase is less informative than a larger change in X. For example,
+#' discussing a difference in 10 or 20 years may be more helpful in describing the impact on 30-day mortality.
+#' @param main overall title for the plot, default is NULL which then lists the outcome name for OLS regression or
+#' 'Odds Ratio' (logistic), 'Incidence Rate Ratio' (Poisson), or 'Hazard Ratio' (Cox).
+#' @param sort specify how confidence intervals are sorted. Options are 'alpha' (alphabetical coefficient names),
+#' 'coef' (coefficient values), 'p' (p-values), or 'enter' (how variables were entered in the model).
+#' Default is 'enter'. See decreasing argument to adjust how the selection is then sorted.
+#' @param decreasing logical TRUE or FALSE that indicates how confidence intervals are sorted. Defaults to FALSE.
+#' @param abbrv the minimum length of the coefficient name abbreviations. Default is 5.
+#' @param xlim specify plot's x-axis limits with a 2 value vector.
+#' @param ylim specify plot's y-axis limits with a 2 value vector.
+#' @param xlab a vector label for the x-axis.
+#' @param ylab a vector label for the y-axis.
+#' @param lwd select the line width. Default is 1.
+#' @param color the color(s) to be used for the horizontal lines. Default is 'gray'.
+#' @param scol the color to be used for lines when there are significant results. Default is 'red'.
+#' @param pcol select the point color for the point estimates. Default is 'blue'.
 #' @param pt.cex the cex to be applied to plotting symbols, default is 2.
-#' @param pch the plotting character or symbol to be used, default is 19.
-#' @param color the color to be used for points and labels when there are
-#' significant results. Default is 'red'.
-#' @param lcolor the color(s) to be used for the horizontal lines. Default is 'gray'.
+#' @param pch the plotting character or symbol to be used, default is 17.
+#' @param tgt specify 1 or more values on the x-axis of where to add a target line when y='group'. Or 1 or more values on the y-axis of where to add a
+#' target line when y='time' or 'roll'. Default is NULL.
+#' @param tcol select a color for the target line. Default is 'black'.
+#' @param cex A numerical value giving the amount by which plotting text and symbols should be magnified relative to the default of 1.
+#' @param cex.axis The magnification to be used for axis annotation relative to the current setting of cex. Default is 1.
+#' @param cex.lab The magnification to be used for x and y labels relative to the current setting of cex. Default is 1.
+#' @param cex.main The magnification to be used for main titles relative to the current setting of cex. Default is 1.
+#' @param print logical TRUE or FALSE that indicates whether to print point estimates and confidence intervals. Defaults to FALSE.
+#' @param round.c an integer indicating the number of decimal places to be used for rounding values in the printed point estimates and confidence intervals. Default is 3.
 #' @param ... additional arguments.
 #'
 #' @return plot of variable importance, significant variables highlighted in red.
 #'
-#' @importFrom graphics axis dotchart utils
+#' @importFrom graphics axis dotchart
 #' @export
 #' @references
-#' Harrell, F. E., Jr. (2016). Regression Modeling Strategies. Springer
-#' International Publishing. ISBN: 978-3-319-19424-0.
+#' Harrell, F. E., Jr. (2016). Regression Modeling Strategies, Second Edition.
+#' Springer International Publishing. ISBN: 978-3-319-19424-0.
 #'
 #' @examples
 #' # OLS regression
-#' plot(importance(assess(mpg ~ hp + wt + cyl, data=mtcars, regression= "ols")$model))
 #'
 #' # logistic regression
-#' plot(importance(assess(vs~mpg+wt+hp, data=mtcars, regression= "logistic")$model))
-plot.summary <- function(x, y, main=NULL, cex=NULL, pt.cex=NULL, pch=NULL,
-                            color=NULL, lcolor=NULL, ...) {
-  # Make default values #
-  if (!is.null(color)) {  #label color
-    color <- color
-  } else {
-    color <- "red"
-  }
-  if (!is.null(lcolor)) {  #line color
-    lcolor <- lcolor
-  } else {
-    lcolor <- "gray"
-  }
-  if (!is.null(main)) {
-    main <- main
-  } else {
-    main <- "Variable Importance"
-  }
-  if (!is.null(cex)) {
-    cex <- cex
-  } else {
-    cex <- 1
-  }
-  if (!is.null(pt.cex)) {
-    pt.cex <- pt.cex
-  } else {
-    pt.cex <- 2
-  }
-  if (!is.null(pch)) {
-    pch <- pch
-  } else {
-    pch <- 19
-  }
-# main arguments #
-object <- x
-  # Plotting objects
-  chi2_df <- object[, "Chi.Sq"]
-  a_o <- order(chi2_df, decreasing = T)
-  a_num <- chi2_df[a_o ]
-  p_vals <- object[a_o, "p.value"]
-  chi2_labels <- object[, "X"][a_o]
-
-  # Create the dot chart
-  graphics::dotchart(a_num, labels = chi2_labels, main = main,
-           col = ifelse(p_vals < .05, color, "black"), ,
-           xlab="X^2 - d.f.", lcolor=lcolor,
-           cex=cex, pt.cex=pt.cex, pch = pch)
-  # Add labels to the right margin
-  graphics::axis(4, at=1:(nrow(object)), tick= FALSE, las=1, cex.axis= 1.1,
-       labels= paste("p=" , sprintf("%.4f", p_vals)), line=-.7 )
+plot.summary <- function(x, y=NULL, increase=NULL, main=NULL, sort=NULL, decreasing=NULL, abbrv=NULL,
+                         xlim=NULL, ylim=NULL, xlab=NULL, ylab=NULL, lwd=NULL, color=NULL,
+                         scol=NULL, pcol=NULL, pt.cex=NULL, pch=NULL, tgt=NULL,
+                         tcol=NULL, cex=NULL, cex.axis=NULL, cex.lab=NULL, cex.main=NULL,
+                         print=NULL, round.c=NULL, ...) {
 
   ##############################################################################
-  #                                NEW                                         #
+  #                                Coefficients                                #
   ##############################################################################
   fncCoef <- function(x, y=NULL) {
     #Get regression model type
@@ -184,10 +159,78 @@ object <- x
     #Change column names
     colnames(ci_data_frame) <- c("PointEst","Lower","Upper", "P")
     #Return object
-    return(list("Estimates"=ci_data_frame, "Regression"=reg_type))
+    return(list("Estimates"=ci_data_frame, "Regression"=reg_type, "Outcome"=x[["call"]][[2]][[2]]))
   }
 
+  ##############################################################################
+  #                                Graph                                       #
+  ##############################################################################
+  plot_summary <- function(adf, alpha_num=NULL, main=NULL, xlab=NULL, ylab=NULL,
+                           lwd=NULL, Lcol=NULL, Pcol=NULL, tgt=NULL, Cbar=NULL,
+                          roundVal=NULL, xlim=NULL, ylim=NULL, abbrv=NULL, tcol=NULL,
+                          cex=NULL, cex.axis=NULL, cex.lab=NULL, cex.main=NULL) {
+    RegType <- adf$Regression
+    #Default title
+    nom <- switch(RegType,
+                  "ols"   = adf$Outcome,
+                  "logistic" = "Odds Ratio",
+                  "poisson"  = "Incidence Rate Ratio",
+                  "cox" = "Hazard Ratio" )
+    #Main title
+    if(!is.null(main) ) {
+      main_ttl <- main
+    } else {
+      main_ttl <- nom
+    }
+    # Create x and y labels
+    if (!is.null(xlab)) {
+      xlab <- xlab
+    } else {
+      xlab <- ""
+    }
+    if (!is.null(ylab)) {
+      ylab <- ylab
+    } else {
+      ylab <- ""
+    }
 
+    rng <- seq(min(adf$Estimates[, c("Lower","Upper")]), max(adf$Estimates[, c("Lower","Upper")]),
+               length.out=nrow(adf$Estimates))
+    plot(rng, 1:nrow(adf$Estimates), type="n", ylab=ylab,
+         xlab= xlab, axes=F,  cex.lab=cex.lab, xlim=xlim, ylim=ylim)
+    title(main_ttl, cex.main = cex.main)
+    #Target line
+    if(!is.null(tgt)) {
+      tgt <- tgt
+    } else {
+      if(RegType == "ols") {
+        tgt <- 0
+      } else {
+        tgt <- 1
+      }
+    }
+    abline(v= tgt, lty=3)
+    #axis(side=2, at=x.at, labels=x.axis, cex.axis=cex.axis)
+    axis(3, cex.axis=cex.axis)
+
+    ## Add confidence lines ##
+    for (i in 1:nrow(adf$Estimates)) {
+      segments(x0 = adf$Estimates[i, "Lower"], y0 = i,
+               x1 = adf$Estimates[i, "Upper"], y1 = i,
+               col = color, lwd = lwd, lty=1)
+    }
+  }
+
+  ################
+  # Create graph #
+  ################
+  #Create point estimate and confidence interval data
+  pecidf <- fncCoef(x=x, y=y)
+  #Run graph
+  plot_summary(adf=pecidf, alpha_num=NULL, main=NULL, xlab=xlab, ylab=ylab,
+               lwd=lwd, Lcol=color, Pcol=NULL, tgt=NULL, Cbar=NULL,
+               roundVal=NULL, xlim=NULL, ylim=NULL, abbrv=NULL, tcol=NULL,
+               cex=NULL, cex.axis=NULL, cex.lab=NULL, cex.main=NULL)
 
   #This closes out original plot.importance
 }
