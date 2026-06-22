@@ -168,7 +168,8 @@ plot.summary <- function(x, y=NULL, increase=NULL, main=NULL, sort=NULL, decreas
   plot_summary <- function(adf, alpha_num=NULL, main=NULL, xlab=NULL, ylab=NULL,
                            lwd=NULL, Lcol=NULL, Pcol=NULL, tgt=NULL, Cbar=NULL,
                           roundVal=NULL, xlim=NULL, ylim=NULL, abbrv=NULL, tcol=NULL,
-                          cex=NULL, cex.axis=NULL, cex.lab=NULL, cex.main=NULL) {
+                          cex=NULL, cex.axis=NULL, cex.lab=NULL, cex.main=NULL,
+                          scol=NULL, pt.cex=NULL, pch=NULL, print=NULL, decreasing=NULL) {
     RegType <- adf$Regression
     #Default title
     nom <- switch(RegType,
@@ -210,7 +211,9 @@ plot.summary <- function(x, y=NULL, increase=NULL, main=NULL, sort=NULL, decreas
       }
     }
     abline(v= tgt, lty=3)
-    #axis(side=2, at=x.at, labels=x.axis, cex.axis=cex.axis)
+    #Create values for the location of the y-axis labels
+    y.at <- 1:nrow(adf$Estimates)
+    axis(side=2, at=y.at, labels=rownames(adf$Estimates), cex.axis=cex.axis)
     axis(3, cex.axis=cex.axis)
 
     ## Add confidence lines ##
@@ -227,10 +230,11 @@ plot.summary <- function(x, y=NULL, increase=NULL, main=NULL, sort=NULL, decreas
   #Create point estimate and confidence interval data
   pecidf <- fncCoef(x=x, y=y)
   #Run graph
-  plot_summary(adf=pecidf, alpha_num=NULL, main=NULL, xlab=xlab, ylab=ylab,
-               lwd=lwd, Lcol=color, Pcol=NULL, tgt=NULL, Cbar=NULL,
-               roundVal=NULL, xlim=NULL, ylim=NULL, abbrv=NULL, tcol=NULL,
-               cex=NULL, cex.axis=NULL, cex.lab=NULL, cex.main=NULL)
+  plot_summary(adf=pecidf, alpha_num=sort, main=main, xlab=xlab, ylab=ylab,
+               lwd=lwd, Lcol=color, Pcol=pcol, tgt=tgt, roundVal=round.c, xlim=xlim,
+               ylim=ylim, abbrv=abbrv, tcol=tcol, cex=cex, cex.axis=cex.axis,
+               cex.lab=cex.lab, cex.main=cex.main,
+               scol=scol, pt.cex=pt.cex, pch=pch, print=print, decreasing=decreasing )
 
   #This closes out original plot.importance
 }
