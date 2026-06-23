@@ -2,13 +2,15 @@
 % Please edit documentation in R/plot.summary.R
 \name{plot.summary}
 \alias{plot.summary}
-\title{Plot of variable importance ranked by partial chi-square statistic}
+\title{Plot of a regression model's coefficient summary}
 \usage{
 \method{plot}{summary}(
   x,
   y = NULL,
+  coefs = NULL,
   increase = NULL,
   main = NULL,
+  sub = NULL,
   sort = NULL,
   decreasing = NULL,
   abbrv = NULL,
@@ -18,7 +20,6 @@
   ylab = NULL,
   lwd = NULL,
   color = NULL,
-  scol = NULL,
   pcol = NULL,
   pt.cex = NULL,
   pch = NULL,
@@ -28,89 +29,102 @@
   cex.axis = NULL,
   cex.lab = NULL,
   cex.main = NULL,
+  cex.sub = NULL,
   print = NULL,
   round.c = NULL,
   ...
 )
 }
 \arguments{
-\item{x}{importance object.}
+\item{x}{summary object from assess() model or lm(), glm(), and coxph() models. For assess objects, use
+summary(x$model). For model objects from lm(), glm(), or coxph(), use summary(x).}
 
 \item{y}{not currently used.}
 
-\item{increase}{a named list object of the coefficient name and associated increase in the predictor. For example,
-in the model y ~ a + b1 + b2, increase= list(b1=10), will produce point estimates and confidence intervals adjusted
+\item{coefs}{an expression defining a subset of the predictor coefficient rows (i.e., not the intercept) to view in
+the summary plot. The default is NULL, thereby using all predictor coefficients. Specify, for example, 1:2 to
+view just the summary of the first 2 coefficients. It is recommended to use print=TRUE to confirm the coefficient
+names because they will follow that same order and not necessarily the order of the coefficients listed in the
+original regression model.}
+
+\item{increase}{a named numeric vector object of the coefficient name and associated increase in the predictor. For example,
+in the model y ~ a + b1 + b2, increase= c(b1= 10), will produce point estimates and confidence intervals adjusted
 to a 10-unit increase in the coefficient b1. This is most helpful when the continuous predictor has many levels and
 the interpretation of the standard 1-unit increase is less informative than a larger change in X. For example,
 discussing a difference in 10 or 20 years may be more helpful in describing the impact on 30-day mortality.}
 
-\item{main}{overall title for the plot, default is NULL which then lists the outcome name for OLS regression or
-'Odds Ratio' (logistic), 'Incidence Rate Ratio' (Poisson), or 'Hazard Ratio' (Cox).}
+\item{main}{overall title for the plot, default is NULL which then lists 'Summary'  for OLS regression or the type
+of summary statistic such as 'Odds Ratio' (logistic), 'Incidence Rate Ratio' (Poisson), or 'Hazard Ratio' (Cox).}
+
+\item{sub}{a character vector for the subtitle of the plot, default is NULL which then lists the outcome name.}
 
 \item{sort}{specify how confidence intervals are sorted. Options are 'alpha' (alphabetical coefficient names),
 'coef' (coefficient values), 'p' (p-values), or 'enter' (how variables were entered in the model).
 Default is 'enter'. See decreasing argument to adjust how the selection is then sorted.}
 
-\item{decreasing}{logical TRUE or FALSE that indicates how confidence intervals are sorted. Defaults to FALSE.}
+\item{decreasing}{logical TRUE or FALSE that indicates how confidence intervals are sorted, in decreasing order or not.
+Defaults to FALSE.}
 
-\item{abbrv}{the minimum length of the coefficient name abbreviations. Default is 5.}
+\item{abbrv}{the minimum length of the character length for the coefficient name abbreviations. Default is 7.}
 
-\item{xlim}{specify plot's x-axis limits with a 2 value vector.}
+\item{xlim}{specify plot's x-axis limits with a 2 value numeric vector.}
 
-\item{ylim}{specify plot's y-axis limits with a 2 value vector.}
+\item{ylim}{specify plot's y-axis limits with a 2 value numeric vector.}
 
-\item{xlab}{a vector label for the x-axis.}
+\item{xlab}{a vector label for the x-axis. Default is blank space. Caution: It will overlap the 'sub' argument if sub != "".}
 
-\item{ylab}{a vector label for the y-axis.}
+\item{ylab}{a vector label for the y-axis. Default is blank space.}
 
 \item{lwd}{select the line width. Default is 1.}
 
-\item{color}{the color(s) to be used for the horizontal lines. Default is 'gray'.}
+\item{color}{the color to be used for the horizontal lines. Default is 'blue'.}
 
-\item{scol}{the color to be used for lines when there are significant results. Default is 'red'.}
+\item{pcol}{select the point color for the point estimates. Default is 'red'.}
 
-\item{pcol}{select the point color for the point estimates. Default is 'blue'.}
-
-\item{pt.cex}{the cex to be applied to plotting symbols, default is 2.}
+\item{pt.cex}{the cex to be applied to plotting symbols, default is 1.}
 
 \item{pch}{the plotting character or symbol to be used, default is 17.}
 
 \item{tgt}{specify 1 or more values on the x-axis of where to add a target line when y='group'. Or 1 or more values on the y-axis of where to add a
 target line when y='time' or 'roll'. Default is NULL.}
 
-\item{tcol}{select a color for the target line. Default is 'black'.}
+\item{tcol}{select a color for the vertical target line. Default is 'black'.}
 
 \item{cex}{A numerical value giving the amount by which plotting text and symbols should be magnified relative to the default of 1.}
 
-\item{cex.axis}{The magnification to be used for axis annotation relative to the current setting of cex. Default is 1.}
+\item{cex.axis}{the magnification to be used for axis annotation relative to the current setting of cex. Default is 1.}
 
-\item{cex.lab}{The magnification to be used for x and y labels relative to the current setting of cex. Default is 1.}
+\item{cex.lab}{the magnification to be used for x and y labels relative to the current setting of cex. Default is 1.}
 
-\item{cex.main}{The magnification to be used for main titles relative to the current setting of cex. Default is 1.}
+\item{cex.main}{the magnification to be used for main titles relative to the current setting of cex. Default is 1.}
+
+\item{cex.sub}{the magnification to be used for subtitles relative to the current setting of cex. Default is 1.}
 
 \item{print}{logical TRUE or FALSE that indicates whether to print point estimates and confidence intervals. Defaults to FALSE.}
 
-\item{round.c}{an integer indicating the number of decimal places to be used for rounding values in the printed point estimates and confidence intervals. Default is 3.}
+\item{round.c}{an integer indicating the number of decimal places to be used for rounding values in the printed point estimates and confidence intervals. Default is 4.}
 
 \item{...}{additional arguments.}
 }
 \value{
-plot of variable importance, significant variables highlighted in red.
+plot of the summary of regression coefficients, the display can be modified in various ways.
 }
 \description{
-Plots an importance class object. Produces a dot chart that places the predictor
-variable with the highest partial chi-square (Wald chi-square for individual
-coefficients) at the bottom. It is a metric of the partial chi-square
-minus its degrees of freedom (Harrell, 2015). Predictor variables
-with significant p-values at the 0.05 alpha are highlighted red. Consider
-graphical parameters of mar=c(4.2, 2, 3.5, 3) and oma = c(0, 0, 0, 3).
+Plots a summary class object of a regression model. Produces a chart of the predictor's
+coefficient estimates with 95\% confidence intervals (Harrell, 2015). Excludes the intercept
+(if present). Horizontal line segments represent the predictor variable coefficients and
+vertical lines are at 0 or 1 (e.g., odds ratio, incidence rate ratio, hazard ratio and other GLMs)
+to show if the proper reference is outside of the "normal range" or what represents no significant
+difference. The summary plot can be used on assess objects as well as models created from the base
+package lm() and glm() as well as coxph() from the survival package. There are various graphing
+options and sorting by coefficient name, value, p-value or the model formula.
 }
 \examples{
-# OLS regression
+# OLS regression--most basic format
 
 # logistic regression
 }
 \references{
-Harrell, F. E., Jr. (2016). Regression Modeling Strategies, Second Edition.
+Harrell, F. E., Jr. (2015). Regression Modeling Strategies, Second Edition.
 Springer International Publishing. ISBN: 978-3-319-19424-0.
 }
