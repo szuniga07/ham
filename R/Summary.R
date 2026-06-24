@@ -1,4 +1,4 @@
-#' Creates a Summary object from the standard summary object, for graphing purposes
+#' Creates a Summary object from the standard summary() object, for graphing purposes
 #'
 #' Produces a Summary object for regression models based on summary(model). The purpose
 #' is to later pass the object to the plot function to produce a summary of the
