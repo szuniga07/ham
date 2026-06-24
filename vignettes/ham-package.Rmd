@@ -244,6 +244,42 @@ plot(importance(m1$model))
 ```
 
 
+### Graph a summary of the coefficients
+This graph will be added in version 1.3 and it is a way to get summary of the coefficients, showing the direction of the effect with point estimates and 95% confidence intervals. This was inspired by Frank Harrell's plot.summary in the rms package. Instead ham uses plot.Summary (upper case 'S') with the almost identical summary (lower case 's') but adds some class information to help with plotting. This will work on assess regression objects for OLS linear, logistic, Poisson and models coming from Base R's lm() and glm() as well as the survival package and possibly other glm() models. It can work with Cox Proportional Hazards from the survival package. And this will work with the differences-in-differences and interrupted time series models created with assess().
+
+OLS regression--most basic format with Base R lm()
+```{r plotSummary1, fig.dim = c(6, 4.5)}
+m01 <- lm(mpg ~ wt+hp+am, data=mtcars)
+# note it uses Summary() with a captialized 'S'
+plot(x=Summary(m01))
+```
+
+Using the assess function, notice 'm02$model' object below
+```{r plotSummary2, fig.dim = c(6, 4.5)}
+m02 <- assess(formula=mpg ~ wt+hp+am, data=mtcars, regression="ols")
+# let's see the impactful 83.5 hp increase in the 1st to 3rd quartiles
+plot(x=Summary(m02$model), increase=c(hp= 83.5))
+```
+
+Logistic model
+```{r plotSummary3, fig.dim = c(6, 4.5)}
+m03 <- glm(vs ~ wt+hp+am, data=mtcars, family="binomial")
+# Display options, sorted plot, and printing the 95% CIs to review
+plot(x=Summary(m03), increase=c(wt=1.1375, hp= 83.5), color="aquamarine", lwd=4,
+pt.cex= 2, tcol="magenta", sort="coef", cex.axis=2, cex.main=2, xlim=c(-.5, 3),
+print=TRUE, round.c=6)
+```
+
+Poisson model with an offset using assess()
+```{r plotSummary4, fig.dim = c(6, 4.5)}
+m04 <- assess(formula=HAI ~  Month+ offset(log(PatientDays)),
+data=infections, regression="poisson")
+#Because 1 year is a meaninful period in program evaluation, Month=12
+plot(x=Summary(m04$model), increase=c(Month=12), xlim=c(0.6, 1.01),
+lwd=7, color="cyan", pcol="salmon", pt.cex=2)
+```
+
+
 ## 4. Differences-in-Differences
 
 Let us continue with our length of stay example. By now we have begun to compare results for the intervention and control groups. We've spoken with various stakeholders and primary intended users to learn more about the program and its potential effects. Staff have listed various outcomes that would benefit so the following analysis can be applied to those outcomes as well. 
@@ -407,6 +443,17 @@ im22 <- assess(formula=los ~ ., data=hosprog, intervention = "program",
 ```
 
 <span style="color: red;" >Hint:</span> Use top-coding or propensity scores in any DID or ITS model to improve accuracy of results. 
+
+### Plot the summary coefficients
+
+plot(Summary(x)) also works for ITS and DID causal models through ham
+```{r plotSummary5, fig.dim = c(6, 4.5)}
+im22 <- assess(formula=los ~ ., data=hosprog, intervention = "program",
+int.time="month", interrupt= c(5, 9), its="two")
+# The intervention group had the biggest change between the baseline and month 5
+plot(Summary(im22$ITS), sort="coef", decreasing=TRUE, color="red", pcol="green")
+```
+
 
 ### View ITS model 3 results
 ```{r its model 3 results}

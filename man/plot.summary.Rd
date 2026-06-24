@@ -36,14 +36,14 @@
 )
 }
 \arguments{
-\item{x}{summary object from assess() model or lm(), glm(), and coxph() models. For assess objects, use
-summary(x$model). For model objects from lm(), glm(), or coxph(), use summary(x).}
+\item{x}{Summary object from assess() model or lm(), glm(), and coxph() models. For assess objects, use
+Summary(x$model). For model objects from lm(), glm(), or coxph(), use Summary(x).}
 
 \item{y}{not currently used.}
 
 \item{coefs}{an expression defining a subset of the predictor coefficient rows (i.e., not the intercept) to view in
-the summary plot. The default is NULL, thereby using all predictor coefficients. Specify, for example, 1:2 to
-view just the summary of the first 2 coefficients. It is recommended to use print=TRUE to confirm the coefficient
+the Summary plot. The default is NULL, thereby using all predictor coefficients. Specify, for example, 1:2 to
+view just the Summary of the first 2 coefficients. It is recommended to use print=TRUE to confirm the coefficient
 names because they will follow that same order and not necessarily the order of the coefficients listed in the
 original regression model.}
 
@@ -54,7 +54,7 @@ the interpretation of the standard 1-unit increase is less informative than a la
 discussing a difference in 10 or 20 years may be more helpful in describing the impact on 30-day mortality.}
 
 \item{main}{overall title for the plot, default is NULL which then lists 'Summary'  for OLS regression or the type
-of summary statistic such as 'Odds Ratio' (logistic), 'Incidence Rate Ratio' (Poisson), or 'Hazard Ratio' (Cox).}
+of Summary statistic such as 'Odds Ratio' (logistic), 'Incidence Rate Ratio' (Poisson), or 'Hazard Ratio' (Cox).}
 
 \item{sub}{a character vector for the subtitle of the plot, default is NULL which then lists the outcome name.}
 
@@ -107,15 +107,15 @@ target line when y='time' or 'roll'. Default is NULL.}
 \item{...}{additional arguments.}
 }
 \value{
-plot of the summary of regression coefficients, the display can be modified in various ways.
+plot of the Summary of regression coefficients, the display can be modified in various ways.
 }
 \description{
-Plots a summary class object of a regression model. Produces a chart of the predictor's
-coefficient estimates with 95\% confidence intervals (Harrell, 2015). Excludes the intercept
-(if present). Horizontal line segments represent the predictor variable coefficients and
+Plots a Summary class object of a regression model (Summary() with a capital 'S'). Produces a chart of
+the predictor's coefficient estimates with 95\% confidence intervals (Harrell, 2015). Excludes the
+intercept (if present). Horizontal line segments represent the predictor variable coefficients and
 vertical lines are at 0 or 1 (e.g., odds ratio, incidence rate ratio, hazard ratio and other GLMs)
 to show if the proper reference is outside of the "normal range" or what represents no significant
-difference. The summary plot can be used on assess objects as well as models created from the base
+difference. The Summary plot can be used on assess objects as well as models created from the base
 package lm() and glm() as well as coxph() from the survival package. There are various graphing
 options and sorting by coefficient name, value, p-value or the model formula.
 }
@@ -148,6 +148,12 @@ lwd=7, color="cyan", pcol="salmon", pt.cex=2)
 #library(survival)
 #m04 <- coxph(Surv(time, status) ~ age+sex+ph.karno, data=cancer)
 #plot(x=Summary(m04), increase=c(age=13, ph.karno=15))
+
+# This also works for ITS and DID causal models through ham
+im22 <- assess(formula=los ~ ., data=hosprog, intervention = "program",
+int.time="month", interrupt= c(5, 9), its="two")
+# The intervention group had the biggest change between the baseline and month 5
+plot(Summary(im22$ITS), sort="coef", decreasing=TRUE, color="red", pcol="green")
 
 }
 \references{

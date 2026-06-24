@@ -1,26 +1,35 @@
-#' Importance of variables based on partial chi-square statistic
+#' Creates a Summary object from the standard summary object, for graphing purposes
 #'
-#' Calculates partial chi-square (Wald chi-square for individual
-#' coefficients) from assess class objects. The
-#' importance is the partial chi-square minus its degrees
-#' of freedom based on the regression coefficients (Harrell, 2015).
-#' A higher chi-square indicates a larger effect by the predictors.
-#' Therefore, the rank of the chi-square can indicate which predictors
-#' can contribute more in explaining the variation in the outcome variable.
+#' Produces a Summary object for regression models based on summary(model). The purpose
+#' is to later pass the object to the plot function to produce a summary of the
+#' predictor variable's coefficients. The main difference between Summary() and summary()
+#' is that the ham function adds new classes helpful for creating the plot and Summary()
+#' has a capital 'S'.
 #'
-#' @param model an assess class object or models with lm or glm class.
+#' @param model an assess class object or models with 'lm', 'glm', or 'coxph' class.
+#' This includes the differences-in-differences and interrupted time series models.
+#' For assess objects, make sure to select the correct element, for example,
+#' model= my_regression$model for ordinary least squares, logistic, or Poisson models.
+#' For 'ITS' or 'DID' models, use model= its_model$ITS or model= did_model$DID. If
+#' using lm(), glm() or even coxph(), the model object name is acceptable (e.g.,
+#' model= my_glm_model).
 #'
-#' @return an object with summary statistics.
+#' @return an object with summary statistics and additional classes.
 #' @export
 #'
+#' @seealso [plot.Summary()] for a plot of the 'Summary' class object.
 #'
 #' @examples
-#' # OLS regression
-#' summary(assess(mpg ~ hp + wt + cyl, data=mtcars, regression= "ols")$model)
+#' # OLS regression, identical output as 'lower case' summary(model)
+#' Summary(assess(mpg ~ hp + wt + cyl, data=mtcars, regression= "ols")$model)
+#'
+#' #Creates new classes useful for to plot the summary, e.g., plot(Summary(model))
+#' class(Summary(assess(mpg ~ hp + wt + cyl, data=mtcars, regression= "ols")$model))
 #'
 #' @importFrom stats lm glm
 Summary <- function(model) {
-  if (!any(class(model) %in% c("glm","lm","coxph", "ham", "assess"))) {stop("Error: Expecting 'assess', 'lm', 'glm', or 'coxph' class regression model." )}
+  if (!any(class(model) %in% c("glm","lm","coxph", "assess"))) {stop("Error: Expecting 'assess', 'lm', 'glm', or 'coxph' class regression model." )}
+
   #Make a data frame
   summary_model <- summary(model)
 
