@@ -117,7 +117,7 @@ vertical lines are at 0 or 1 (e.g., odds ratio, incidence rate ratio, hazard rat
 to show if the proper reference is outside of the "normal range" or what represents no significant
 difference. The Summary plot can be used on assess objects as well as models created from the base
 package lm() and glm() as well as coxph() from the survival package. There are various graphing
-options and sorting by coefficient name, value, p-value or the model formula.
+options and sorting by coefficient name, values, p-value or the model formula.
 }
 \examples{
 # OLS regression--most basic format with Base R lm()

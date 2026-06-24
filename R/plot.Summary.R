@@ -7,7 +7,7 @@
 #' to show if the proper reference is outside of the "normal range" or what represents no significant
 #' difference. The Summary plot can be used on assess objects as well as models created from the base
 #' package lm() and glm() as well as coxph() from the survival package. There are various graphing
-#' options and sorting by coefficient name, value, p-value or the model formula.
+#' options and sorting by coefficient name, values, p-value or the model formula.
 #'
 #' @param x Summary object from assess() model or lm(), glm(), and coxph() models. For assess objects, use
 #' Summary(x$model). For model objects from lm(), glm(), or coxph(), use Summary(x).

@@ -2,7 +2,7 @@
 % Please edit documentation in R/Summary.R
 \name{Summary}
 \alias{Summary}
-\title{Creates a Summary object from the standard summary object, for graphing purposes}
+\title{Creates a Summary object from the standard summary() object, for graphing purposes}
 \usage{
 Summary(model)
 }
