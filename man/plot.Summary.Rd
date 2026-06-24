@@ -37,7 +37,8 @@
 }
 \arguments{
 \item{x}{Summary object from assess() model or lm(), glm(), and coxph() models. For assess objects, use
-Summary(x$model). For model objects from lm(), glm(), or coxph(), use Summary(x).}
+Summary(my_regression$model) unless using ITS or DID models (my_did_model$DID). For model objects from
+lm(), glm(), or coxph(), use Summary(my_model).}
 
 \item{y}{not currently used.}
 
@@ -48,12 +49,12 @@ names because they will follow that same order and not necessarily the order of 
 original regression model.}
 
 \item{increase}{a named numeric vector object of the coefficient name and associated increase in the predictor. For example,
-in the model y ~ a + b1 + b2, increase= c(b1= 10), will produce point estimates and confidence intervals adjusted
-to a 10-unit increase in the coefficient b1. This is most helpful when the continuous predictor has many levels and
+in the model y ~ a + x1 + x2, increase= c(x1= 10), will produce point estimates and confidence intervals adjusted
+to a 10-unit increase in the variable x1. This is most helpful when the continuous predictor has many levels and
 the interpretation of the standard 1-unit increase is less informative than a larger change in X. For example,
 discussing a difference in 10 or 20 years may be more helpful in describing the impact on 30-day mortality.}
 
-\item{main}{overall title for the plot, default is NULL which then lists 'Summary'  for OLS regression or the type
+\item{main}{overall title for the plot, default is NULL which then lists 'Summary' for OLS regression or the type
 of Summary statistic such as 'Odds Ratio' (logistic), 'Incidence Rate Ratio' (Poisson), or 'Hazard Ratio' (Cox).}
 
 \item{sub}{a character vector for the subtitle of the plot, default is NULL which then lists the outcome name.}
@@ -67,13 +68,13 @@ Defaults to FALSE.}
 
 \item{abbrv}{the minimum length of the character length for the coefficient name abbreviations. Default is 7.}
 
-\item{xlim}{specify plot's x-axis limits with a 2 value numeric vector.}
+\item{xlim}{specify plot's x-axis limits using a numeric vector with length equal to 2.}
 
-\item{ylim}{specify plot's y-axis limits with a 2 value numeric vector.}
+\item{ylim}{specify plot's y-axis limits using a numeric vector with length equal to 2.}
 
-\item{xlab}{a vector label for the x-axis. Default is blank space. Caution: It will overlap the 'sub' argument if sub != "".}
+\item{xlab}{a vector label for the x-axis. Default is a blank space. Caution: It will overlap the 'sub' argument if sub != "".}
 
-\item{ylab}{a vector label for the y-axis. Default is blank space.}
+\item{ylab}{a vector label for the y-axis. Default is a blank space.}
 
 \item{lwd}{select the line width. Default is 1.}
 
@@ -85,12 +86,12 @@ Defaults to FALSE.}
 
 \item{pch}{the plotting character or symbol to be used, default is 17.}
 
-\item{tgt}{specify 1 or more values on the x-axis of where to add a target line when y='group'. Or 1 or more values on the y-axis of where to add a
-target line when y='time' or 'roll'. Default is NULL.}
+\item{tgt}{specify a value on the x-axis of where to add a target line to indicate when confidence intervals fall outside
+of a normal range or value that indicates no difference.}
 
 \item{tcol}{select a color for the vertical target line. Default is 'black'.}
 
-\item{cex}{A numerical value giving the amount by which plotting text and symbols should be magnified relative to the default of 1.}
+\item{cex}{a numerical value giving the amount by which plotting text and symbols should be magnified relative to the default of 1.}
 
 \item{cex.axis}{the magnification to be used for axis annotation relative to the current setting of cex. Default is 1.}
 
@@ -102,7 +103,8 @@ target line when y='time' or 'roll'. Default is NULL.}
 
 \item{print}{logical TRUE or FALSE that indicates whether to print point estimates and confidence intervals. Defaults to FALSE.}
 
-\item{round.c}{an integer indicating the number of decimal places to be used for rounding values in the printed point estimates and confidence intervals. Default is 4.}
+\item{round.c}{an integer indicating the number of decimal places to be used for rounding values in the printed point estimates
+and confidence intervals. Default is 4.}
 
 \item{...}{additional arguments.}
 }
@@ -113,11 +115,11 @@ plot of the Summary of regression coefficients, the display can be modified in v
 Plots a Summary class object of a regression model (Summary() with a capital 'S'). Produces a chart of
 the predictor's coefficient estimates with 95\% confidence intervals (Harrell, 2015). Excludes the
 intercept (if present). Horizontal line segments represent the predictor variable coefficients and
-vertical lines are at 0 or 1 (e.g., odds ratio, incidence rate ratio, hazard ratio and other GLMs)
+the vertical line is at 0 or 1 (e.g., odds ratio, incidence rate ratio, hazard ratio and other GLMs at 1)
 to show if the proper reference is outside of the "normal range" or what represents no significant
 difference. The Summary plot can be used on assess objects as well as models created from the base
 package lm() and glm() as well as coxph() from the survival package. There are various graphing
-options and sorting by coefficient name, values, p-value or the model formula.
+options and sorting by coefficient names, values, p-value or the model formula.
 }
 \examples{
 # OLS regression--most basic format with Base R lm()

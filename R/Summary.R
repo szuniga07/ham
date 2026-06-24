@@ -4,17 +4,16 @@
 #' is to later pass the object to the plot function to produce a summary of the
 #' predictor variable's coefficients. The main difference between Summary() and summary()
 #' is that the ham function adds new classes helpful for creating the plot and Summary()
-#' has a capital 'S'.
+#' has a capital letter 'S'.
 #'
 #' @param model an assess class object or models with 'lm', 'glm', or 'coxph' class.
 #' This includes the differences-in-differences and interrupted time series models.
-#' For assess objects, make sure to select the correct element, for example,
+#' For assess objects, make sure to select the correct model list element, for example,
 #' model= my_regression$model for ordinary least squares, logistic, or Poisson models.
 #' For 'ITS' or 'DID' models, use model= its_model$ITS or model= did_model$DID. If
-#' using lm(), glm() or even coxph(), the model object name is acceptable (e.g.,
-#' model= my_glm_model).
+#' using Base R's lm(), glm() or even coxph(), use the model object name (e.g., model= my_glm_model).
 #'
-#' @return an object with summary statistics and additional classes.
+#' @return an object with regression model summary statistics and additional classes.
 #' @export
 #'
 #' @seealso [plot.Summary()] for a plot of the 'Summary' class object.
@@ -23,8 +22,11 @@
 #' # OLS regression, identical output as 'lower case' summary(model)
 #' Summary(assess(mpg ~ hp + wt + cyl, data=mtcars, regression= "ols")$model)
 #'
-#' #Creates new classes useful for to plot the summary, e.g., plot(Summary(model))
+#' # Creates new classes useful for to plot the summary, e.g., plot(Summary(model))
 #' class(Summary(assess(mpg ~ hp + wt + cyl, data=mtcars, regression= "ols")$model))
+#'
+#' # Works with Base R
+#' Summary(lm(mpg ~ hp + wt + cyl, data=mtcars))
 #'
 #' @importFrom stats lm glm
 Summary <- function(model) {
