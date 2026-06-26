@@ -25,15 +25,15 @@ Bayes(
 \item{x}{list object of multiple MCMC chains (e.g., matrix class list elements or coda mcmc.list).}
 
 \item{y}{character vector for the type of analysis or output to perform. Select 'post', 'multi', 'target', 'r2', or 'mcmc' for a
-posterior summary, multilevel/hierarchical model summary (up to 3 levels), target summary, Gelman R-squared statistic, or
-list object of MCMC chains converted into a data frame. For MCMC diagnostics, select y='Dx' to get the auto-correlation factor, effective sample size, Monte Carlo standard
-error, and Gelman-Rubin shrink factor. Default is generic 'mcmc'(no analysis, just MCMC creation).}
+posterior summary, multilevel/hierarchical model summary (up to 3 levels), target summary, Gelman R-squared statistic,
+MCMC diagnostics, or list object of MCMC chains converted into a data frame. For MCMC diagnostics, select y='Dx' to get the
+auto-correlation factor, effective sample size, Monte Carlo standard error, and Gelman-Rubin shrink factor. Default is generic
+'mcmc'(no analysis, just MCMC creation).}
 
 \item{parameter}{single or multiple element character vector name of parameter(s) in MCMC chains to produce summary statistics.
 When y='target', use the generally 2 to 3 parameters that represent the distribution parameters (e.g., parameter= c('mean', 'sd')).
 When y='r2', use the regression parameters in order, ending with the residual or level-1 variance (e.g., parameter= c('intercept',
-'beta1', 'beta2', 'standard_deviation')). For MCMC diagnostics (i.e., y='Dx'), select only 1 parameter at a time or it will create
-an error. Default is NULL.}
+'beta1', 'beta2', 'standard_deviation')). For MCMC diagnostics (i.e., y='Dx'), select only 1 parameter at a time. Default is NULL.}
 
 \item{mass}{numeric vector that specifies the credible mass used in the Highest Density Interval (HDI). Default is 0.95.}
 
@@ -89,17 +89,17 @@ and possible 3rd shape distribution parameter (e.g., parameter=c('mean', 'sd')).
 data frame of summary statistics for the MCMC parameter's distribution and/or MCMC data frame.
 Statistics include highest density interval, effective sample size, proportion of distribution
 within and outside of a ROPE, distribution compared with a set value, and the parameter's mean,
-median, and mode. And distribution summaries for multilevel models, target summaries, and
-regression model R2.
+median, and mode. And distribution summaries for multilevel models, target summaries, regression model
+R2, and MCMC diagnostics.
 }
 \description{
 Convert a list of Bayesian analysis chains (e.g., coda package mcmc.list objects) into a data frame
 for analysis and creating plots. For example, models from JAGS or Stan that were converted into
 coda class objects can be used to create the data frames. Calculates a set of descriptive statistics
 that summarize MCMC parameters. And values can be calculated for use in descriptive graphs such as
-values associated with specific percentiles and vice-versa to help set targets, summaries on
-hierarchical or multilevel models (up to 3 levels), and the R2 for Bayesian regression models with
-metric level predictors.
+values associated with specific percentiles and vice-versa to help set targets, MCMC diagnostics,
+summaries on hierarchical or multilevel models (up to 3 levels), and the R2 for Bayesian regression
+models with metric level predictors.
 }
 \examples{
 # Posterior estimates of length of stay (LOS) #
@@ -130,6 +130,15 @@ print(bR2$R2.Summary$R2)                   # R^2
 print(bR2$R2.Summary$Variance.Pred.Y)      # Variance of predicted outcome
 print(bR2$R2.Summary$Variance.Residuals)   # Variance of residuals
 print(head(bR2$R2.Summary$yPRED))          # Predicted outcomes
+
+# MCMC diagnostics--we'll check chain representativeness and accuracy
+bDx <- Bayes(losmcmc, y="Dx", parameter="muOfY")
+#average ACF for lags 1-37 across 4 chains
+print(rowMeans(bDx$Diagnostics$Auto.Correlation.Factor[-1, -1])) #ACF
+print(bDx$Diagnostics$Effective.Sample.Size)           #ESS
+print(bDx$Diagnostics$Monte.Carlo.Standard.Error)      #MCSE
+#Gelman-Rubin statistic (shrink factor) across various iterations of the chains
+print(bDx$Diagnostics$Shrink.Factor)                   #Shrink
 }
 \references{
 Cohen, J. (1988). Statistical Power Analysis for the Behavioral Sciences, Second Edition.
