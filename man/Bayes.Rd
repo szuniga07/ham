@@ -26,12 +26,14 @@ Bayes(
 
 \item{y}{character vector for the type of analysis or output to perform. Select 'post', 'multi', 'target', 'r2', or 'mcmc' for a
 posterior summary, multilevel/hierarchical model summary (up to 3 levels), target summary, Gelman R-squared statistic, or
-list object of MCMC chains converted into a data frame. Default is generic 'mcmc'(no analysis, just MCMC creation).}
+list object of MCMC chains converted into a data frame. For MCMC diagnostics, select y='Dx' to get the auto-correlation factor, effective sample size, Monte Carlo standard
+error, and Gelman-Rubin shrink factor. Default is generic 'mcmc'(no analysis, just MCMC creation).}
 
 \item{parameter}{single or multiple element character vector name of parameter(s) in MCMC chains to produce summary statistics.
 When y='target', use the generally 2 to 3 parameters that represent the distribution parameters (e.g., parameter= c('mean', 'sd')).
 When y='r2', use the regression parameters in order, ending with the residual or level-1 variance (e.g., parameter= c('intercept',
-'beta1', 'beta2', 'standard_deviation')). Default is NULL.}
+'beta1', 'beta2', 'standard_deviation')). For MCMC diagnostics (i.e., y='Dx'), select only 1 parameter at a time or it will create
+an error. Default is NULL.}
 
 \item{mass}{numeric vector that specifies the credible mass used in the Highest Density Interval (HDI). Default is 0.95.}
 

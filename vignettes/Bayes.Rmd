@@ -62,11 +62,11 @@ There are similar plot options found in the 'y' argument.
 
 * post: Graphs a posterior distibution or curve for a parameter in the MCMC.
 
-* dxa: Graphs MCMC diagnostics for the autocorrelation factor.
+* dxa: Graphs MCMC diagnostics for the autocorrelation factor and effective sample size.
 
-* dxd: Graphs MCMC diagnostics for density plots of convergence.
+* dxd: Graphs MCMC diagnostics for density plots of convergence such as the Monte Carlo standard error.
 
-* dxg: Graphs MCMC diagnostics for the Gelman-Rubin statistic.
+* dxg: Graphs MCMC diagnostics for the Gelman-Rubin statistic (shrink factor).
 
 * dxt: Graphs MCMC diagnostics for traceplots.
 
@@ -262,15 +262,15 @@ Target graph using a posterior predictive check, more intuitive.
 
 ```{r plotTarget2, fig.dim = c(7.5, 4.5)}
 plot(x=btarget1, y="target", type="n", data=hosprog, dv="los", breaks=30,
-cex.axis=1.3, lwd=2, pline=20, vlim=c(-1, 12), xlim=c(-1, 10),
+cex.axis=1.3, lwd=1.5, pline=20, vlim=c(1, 12), xlim=c(1, 9),
 parameter=c("muOfY","sigmaOfY"), add.legend="right", main="Length of Stay",
-cex.main=1.5, xpt=5, pcol="black", lcol="cyan", tgtcol="blue", bcol="orange",
-cex.legend=1.25, cex.text = 1)
+cex.main=1.5, xpt=5, pcol="black", lcol="salmon", tgtcol="blue", bcol="gray90",
+cex.legend=1.25, cex.text = 1.5)
 ```
 
 <br>
 
-Target graph using the basic option of placing a target over a specific parameter. In this case overlaying the info on the estimate of mode parameter to show it relates to the center.
+Target graph using the basic option of placing a target over a specific parameter. In this case overlaying the info on the estimate of mode parameter to show how it relates to the center.
 
 ```{r plotTarget1, fig.dim = c(6, 4.5)}
 plot(x=btarget1, y="target", type="n", lcol="purple", tgtcol="blue", xlim=c(3.5, 5))

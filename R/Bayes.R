@@ -11,11 +11,13 @@
 #' @param x list object of multiple MCMC chains (e.g., matrix class list elements or coda mcmc.list).
 #' @param y character vector for the type of analysis or output to perform. Select 'post', 'multi', 'target', 'r2', or 'mcmc' for a
 #' posterior summary, multilevel/hierarchical model summary (up to 3 levels), target summary, Gelman R-squared statistic, or
-#' list object of MCMC chains converted into a data frame. Default is generic 'mcmc'(no analysis, just MCMC creation).
+#' list object of MCMC chains converted into a data frame. For MCMC diagnostics, select y='Dx' to get the auto-correlation factor, effective sample size, Monte Carlo standard
+#' error, and Gelman-Rubin shrink factor. Default is generic 'mcmc'(no analysis, just MCMC creation).
 #' @param parameter single or multiple element character vector name of parameter(s) in MCMC chains to produce summary statistics.
 #' When y='target', use the generally 2 to 3 parameters that represent the distribution parameters (e.g., parameter= c('mean', 'sd')).
 #' When y='r2', use the regression parameters in order, ending with the residual or level-1 variance (e.g., parameter= c('intercept',
-#' 'beta1', 'beta2', 'standard_deviation')). Default is NULL.
+#' 'beta1', 'beta2', 'standard_deviation')). For MCMC diagnostics (i.e., y='Dx'), select only 1 parameter at a time or it will create
+#' an error. Default is NULL.
 #' @param mass numeric vector that specifies the credible mass used in the Highest Density Interval (HDI). Default is 0.95.
 #' @param compare numeric vector with one comparison value to determine how much of the distribution is above or below
 #' the comparison value. Default is NULL.
@@ -144,6 +146,12 @@ Bayes <- function(x, y="mcmc", parameter=NULL, mass=.95, compare=NULL,
   if(y== "r2") {
     if (any(sapply(list(x, data, iv, parameter), is.null))) {
       stop("Error: Expecting that the 'x', 'data', 'iv', and 'parameter' arguments are not NULL when y='target'. Please include those missing argument entries.")
+    }
+  }
+  #Only takes 1 parameter at a time for diagnostics
+  if(y== "Dx") {
+    if (length(parameter) > 1) {
+      stop("Error: Expecting only 1 'parameter' name when y='Dx'.")
     }
   }
 
@@ -1433,6 +1441,128 @@ fncBayesOlsR2 <- function(Coda_Object, datFrm, xName=NULL, Intercept=NULL,
   return(list("R2"=R2, "Variance.Pred.Y"=varFit, "Variance.Residuals"=varRes, "yPRED"=yPRED))
 } #End of function
 
+################################################################################
+#                          Functions for Chain Diagnostics                     #
+################################################################################
+fncDx <- function(  x=x, parameter = parameter) {
+  MCMC <- fncMCMC(x)
+  #Get MCMC info
+  n_rows <- dim(MCMC[, parameter[[1]], drop=FALSE])[1]
+  n_chains <- max(MCMC[, "CHAIN"])
+  n_rowchn <- n_rows/n_chains
+  #######################
+  ## Run Gelman-Rubin  ##
+  #######################
+  gelman.rubin <- function(MCMC, parameter, n_rows, n_chains, n_rowchn, samp) {
+    #Make a chain list with 1 element per chain
+    chain_ls <- vector(mode="list", length=n_chains)
+    for(i in 1:n_chains) {
+      chain_ls[[i]] <- MCMC[MCMC$CHAIN== i, parameter]
+    }
+    #Make chains object
+    chains <- data.frame(do.call(cbind, chain_ls))
+    chains <- chains[1:samp, ]
+    m <- n_chains
+    n <-  n_rowchn
+
+    if (m < 2) {
+      stop("Gelman-Rubin statistic requires at least 2 chains.")
+    }
+    if (length(unique(sapply(chains, length))) > 1) {
+      stop("All chains must have the same number of iterations.")
+    }
+    # 1. Calculate the mean of each chain (theta_j_bar)
+    chain_means <- sapply(chains, mean)
+    # 2. Calculate the grand mean across all chains (theta_double_bar)
+    grand_mean <- mean(chain_means)
+    # 3. Calculate the between-chain variance (B)
+    B <- n / (m - 1) * sum((chain_means - grand_mean)^2)
+    # 4. Calculate the variance within each chain (s_j^2)
+    # The snippet below does this in one go for all chains
+    within_chain_vars <- sapply(chains, var) # In R, var() uses (n-1) in the denominator
+    # 5. Calculate the average of the within-chain variances (W)
+    W <- mean(within_chain_vars)
+    # 6. Calculate the estimated posterior variance (var_plus)
+    var_plus <- (n - 1) / n * W + B / n
+    # 7. Calculate the Potential Scale Reduction Factor (PSRF), R-hat
+    R_hat <- sqrt(var_plus / W)
+    return(R_hat)
+  }
+  #Run function to get stats in Gelman-Rubin Shrink.Factor
+  glsamp <- sort(round(c(100,500, (n_rowchn)/5:1)))
+  glstat <- vector(length= length(glsamp))
+  for(i in 1:length(glsamp)) {
+    glstat[i] <- gelman.rubin(MCMC=MCMC, parameter=parameter, n_rows=n_rows,
+                              n_chains=n_chains, n_rowchn=n_rowchn, samp=glsamp[i])
+  }
+  Shrink.Factor <- data.frame(glsamp, glstat)
+  colnames(Shrink.Factor) <- c("Iteration", "Gelman.Rubin.Statistic")
+
+  ################################################################################
+  #                     Modified effective sample size                           #
+  ################################################################################
+  fncESS <- function (x)  {
+    spectral <- function(x) {
+      x <- as.matrix(x)
+      v0 <- order <- numeric(ncol(x))
+      names(v0) <- names(order) <- colnames(x)
+      z <- 1:nrow(x)
+      for (i in 1:ncol(x)) {
+        lm.out <- lm(x[, i] ~ z)
+        if (identical(all.equal(sd(residuals(lm.out)), 0), TRUE)) {
+          v0[i] <- 0
+          order[i] <- 0
+        }
+        else {
+          ar.out <- ar(x[, i], aic = TRUE)
+          v0[i] <- ar.out$var.pred/(1 - sum(ar.out$ar))^2
+          order[i] <- ar.out$order
+        }
+      }
+      return(list(spec = v0, order = order))
+    }
+    #Run ESS
+    x <- as.matrix(x)
+    spec <- spectral(x)$spec
+    ans <- ifelse(spec == 0, 0, nrow(x) * apply(x, 2, var)/spec)
+    return(ans)
+  }
+  ## Get effective sample size ##
+  Effective.Sample.Size <- fncESS(MCMC[, c(parameter)])
+  ## Get Monte Carlo Standard Error
+  MCSE <- sd(MCMC[, parameter])/sqrt(Effective.Sample.Size)
+
+  ########################
+  # Autocorrelation plot #
+  ########################
+  fncAcf <- function( MCMC , parName, nChain) {
+    #Make a chain list with 1 element per chain
+    chain_ls <- vector(mode="list", length=nChain)
+    for(i in 1:nChain) {
+      chain_ls[[i]] <- MCMC[MCMC$CHAIN== i, parName]
+    }
+    #Make codaObject out of chain list
+    codaObject <- chain_ls
+
+    xMat = NULL
+    yMat = NULL
+    for ( cIdx in 1:nChain ) {
+      acfInfo = acf(codaObject[[cIdx]],plot=FALSE)
+      xMat = cbind(xMat,acfInfo$lag)[,1]
+      yMat = cbind(yMat,acfInfo$acf)
+    }
+    ACF_df <- data.frame(xMat, yMat)
+    colnames(ACF_df) <- c("Lag", paste0("Chain", 1:(ncol(ACF_df) - 1)))
+    return(ACF_df)
+  }
+  #Run the Auto Correlation Factor
+  Auto.Correlation.Factor <- fncAcf( MCMC=MCMC, parName=parameter, nChain=n_chains)
+  return(list("Auto.Correlation.Factor"= Auto.Correlation.Factor,
+              "Effective.Sample.Size"= Effective.Sample.Size,
+              "Monte.Carlo.Standard.Error"= MCSE,
+              "Shrink.Factor"= Shrink.Factor))
+}
+
 #################
 ## Run objects ##
 #################
@@ -1441,7 +1571,8 @@ if(y == "post") {
   Posterior.Summary <- as.data.frame(as.list(summarizePost( paramSampleVec=paramSampleVec ,
                                                             compVal=compVal, ROPE=ROPE, credMass=credMass )))
 } else {
-  Posterior.Summary <- NA
+#  Posterior.Summary <- NA
+  Posterior.Summary <- NULL
 }
 #Get multilevel summary
 if(y == "multi") {
@@ -1450,7 +1581,8 @@ if(y == "multi") {
                               Theta=parameter[1], Omega2=parameter[2], Omega3=parameter[3],
                               Average_type=center, Distribution=type, Cred.Mass=mass)
 } else {
-  multi_smry <- NA
+#  multi_smry <- NA
+  multi_smry <- NULL
 }
 ## Targets ##
 if(y == "target") {
@@ -1459,7 +1591,8 @@ if(y == "target") {
                             Spread=parameter[2], Skew=parameter[3],
                             CenTend=center )
 } else {
-  target_smry <- NA
+#  target_smry <- NA
+  target_smry <- NULL
 }
 ## R2 ##
 if(y == "r2") {
@@ -1467,30 +1600,60 @@ if(y == "r2") {
               Intercept= parameter[1], Betas=parameter[-c(1, length(parameter))],
               Level1.Sigma=parameter[length(parameter)], Average.type=center)
 } else {
-  r2_smry <- NA
+  r2_smry <- NULL
+}
+## Diagnostics ##
+if(y == "Dx") {
+  dx_parameter <- fncDx(  x=x, parameter = parameter)
+} else {
+  dx_parameter <- NULL
 }
 
 #Final output
 if(newdata == FALSE) {
-  MCMC <- NA
+#  MCMC <- NA
+  MCMC <- NULL
 }
 if (!is.null(parameter)) {
   parameter <- parameter
 } else {
-  parameter <- NA
+#  parameter <- NA
+  parameter <- NULL
 }
 #Add in targets if there
 if (!is.null(targets)) {
   targets <- targets
 } else {
-  targets <- NA
+#  targets <- NA
+  targets <- NULL
 }
 
 
+##################
+# Assign classes #
+##################
+if(!is.null(Posterior.Summary)) {
+  class(Posterior.Summary) <- c("Bayes", "post","ham", "data.frame")
+}
+if(!is.null(MCMC)) {
+  class(MCMC) <- c("Bayes", "mcmc","ham", "data.frame")
+}
+if(!is.null(multi_smry)) {
+  class(multi_smry) <- c("Bayes", "multi","ham", "list")
+}
+if(!is.null(target_smry)) {
+  class(target_smry) <- c("Bayes", "target","ham", "list")
+}
+if(!is.null(r2_smry)) {
+  class(r2_smry) <- c("Bayes", "r2","ham", "list")
+}
+if(!is.null(dx_parameter)) {
+  class(dx_parameter) <- c("Bayes", "Dx","ham", "list")
+}
 #Combine in list
 z <- list(Posterior.Summary=Posterior.Summary, MCMC=MCMC, Multilevel=multi_smry,
           Target=target_smry, targets=targets,
-          R2.Summary=r2_smry, parameter=parameter)
+          R2.Summary=r2_smry, parameter=parameter, Diagnostics=dx_parameter)
 # Assign ham classes
 class(z) <- c("Bayes","ham", "list")
 return(z)
