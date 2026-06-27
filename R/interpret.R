@@ -33,6 +33,11 @@
 #' hos3 <- assess(formula=survey ~ ., data=hosprog, intervention = "program",
 #' int.time="month", its="two", interrupt = 5)
 #' interpret(hos3)$its
+#'
+#' # interpret Bayesian MCMC diagnostics
+#' blos1 <- Bayes(losmcmc, y="Dx", parameter="muOfY")
+#' interpret(blos1$Diagnostics, digits=5)
+#'
 interpret <- function(object, digits=NULL) {
 
   if(any(class(object) %in% c("alpha","assess", "Dx")) == FALSE) {stop("Error: Expecting 'alpha' or 'assess' class object.")}
@@ -601,7 +606,7 @@ interpret <- function(object, digits=NULL) {
   ## Diagnostics ##
   #Section intro/background
   if(interpret_type == "Dx") {
-    rep_dx_intro <- "MCMC representativeness: The Gelman-Rubin statistic (shrink factor) nmeasures \nthe ratio of within- and between-chain variance and is considered as having \na good range of 1.0 to 1.1 with a value of 1.0 indicating the chains are \nfully converged and values above 1.1 indicating the chains have not converged \nyet. For MCMC representativeness graphs, please examine trace plots and \ndensity plots found with plot(Bayes())."
+    rep_dx_intro <- "MCMC representativeness: The Gelman-Rubin statistic (shrink factor) measures \nthe ratio of within- and between-chain variance and is considered as having \na good range of 1.0 to 1.1 with a value of 1.0 indicating the chains are \nfully converged and values above 1.1 indicating the chains have not converged \nyet. For MCMC representativeness graphs, please examine trace plots and \ndensity plots found with plot(Bayes())."
     acc_dx_intro <- "MCMC accuracy: 1) The autocorrelation factor (ACF) is a measure of chain step \nconcentration or clustering with values near 0 being ideal (indicating no \nclustering) for each chain at various lags (interested in 1-20 lags). In \nother words, higher ACF indicates that it changes only gradually from step \nto step. Values of 0 to 0.05 are essentially the same, very good, with \nregards to the ESS formula (see below). 2) The effective sample size (ESS) \ntells us the sample size of a completely non-correlated chain that yielded \nthe same info because we'd like a measure of how much independent info there \nis in autocorrelated chains. An ESS value of 10,000 is recommended. Note that \nthe ESS uses the ACF in its calculations with higher ACF leading to lower ESS. \n3) The Monte Carlo standard error (MCSE) = parameter Std. Dev. / sqrt(ESS) \nwith values on the parameter scale. If the MCSE is much smaller than the \nparameter mean, this indicates a good MCSE."
     eff_dx_intro <- "MCMC efficiency: Please see Kruschke, 2015, to read more about efficiency such \nas using different samplers, 2) parallel R, 3) changing parametrizations of \nthe model, 4) and thinning chains (record fewer steps)."
     dx_back_1 <- "We have 3 main quality goals when generating MCMC samples from our posterior \ndistribution: A) Chain values are representative of the posterior and there \nis no excessive initial value influence so our chains explore the full \nposterior range. B) Chains are sufficiently large for accurate and stable \nestimates (e.g., 95% HDI). C) Chains should be efficient in terms of \ncompletion time and computing power."
@@ -637,13 +642,35 @@ interpret <- function(object, digits=NULL) {
       GRS_2 <- paste0("2. The lowest GRS was ", round(lowest_1.1, digits),". The chains may not have \nconverged yet and you may want to consider adjusting your model or adding \nmore steps/iterations in the MCMC.")
     }
   }
+#Autocorrelation Factor
+  if(interpret_type == "Dx") {
+    acf_lags <- rowMeans(object$Auto.Correlation.Factor[which(object$Auto.Correlation.Factor$Lag %in% c(1,5,10,15,20)), -1])
+    ACF_1 <- paste0("1. Your average Autocorrelation Factor across chains is: \n", paste(round(acf_lags, digits=digits), collapse =", ")," at the \n1st, 5th, 10th, 15th, and 20th lags.")
+  } else {
+    acf_lags <- NULL
+    ACF_1 <- NULL
+  }
+  #Effective Sample Size
+  if(interpret_type == "Dx") {
+    ess_target <- object$Effective.Sample.Size
+    ess_target_met <- ifelse(ess_target >= 10000, "above", "below")
+    ESS_1 <- paste0("2. Your Effective Sample Size is ", round(ess_target, digits=digits)," and is ", ess_target_met ," the ideal target \nvalue of 10,000 or more.")
+  } else {
+    ess_target <- NULL
+    ess_target_met <- NULL
+    ESS_1 <- NULL
+  }
+  #Monte Carlo Standard Error
+  if(interpret_type == "Dx") {
+    MCSE_1 <- paste0("3. Your Monte Carlo Standard Error is ", round(object$Monte.Carlo.Standard.Error, digits=digits), ". Please compare this value \nwith the parameter's average to understand how large or small the MCSE is.")
+  } else {
+    MCSE_1 <- NULL
+  }
+
   if (interpret_type == "Dx") {
-    z <- list(rep_dx_intro=rep_dx_intro,
-              GRS_1=GRS_1, GRS_2=GRS_2   ,
-              acc_dx_intro=acc_dx_intro,
-              eff_dx_intro=eff_dx_intro,
-              dx_back_1=dx_back_1, dx_back_2=dx_back_2
-              )
+    z <- list(rep_dx_intro=rep_dx_intro, GRS_1=GRS_1, GRS_2=GRS_2,
+              acc_dx_intro=acc_dx_intro, ACF_1=ACF_1, ESS_1=ESS_1, MCSE_1=MCSE_1,
+              eff_dx_intro=eff_dx_intro, dx_back_1=dx_back_1, dx_back_2=dx_back_2)
     class(z) <- c("interpret", "Dx", "ham", "list")
     return(z)
   }

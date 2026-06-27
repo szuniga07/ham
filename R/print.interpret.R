@@ -31,6 +31,10 @@
 #' int.time="month", its="two", interrupt = 5)
 #' interpret(hos3)$its
 #'
+#' # interpret Bayesian MCMC diagnostics
+#' blos1 <- Bayes(losmcmc, y="Dx", parameter="muOfY")
+#' interpret(blos1$Diagnostics, digits=5)
+#'
 print.interpret <- function(x, ...) {
   object <- x
   #alpha objects
@@ -194,6 +198,12 @@ print.interpret <- function(x, ...) {
       cat(object$GRS_2, "\n" )
       cat("\n" )
       cat(object$acc_dx_intro , "\n" )
+      cat("\n" )
+      cat(object$ACF_1 , "\n" )
+      cat("\n" )
+      cat(object$ESS_1 , "\n" )
+      cat("\n" )
+      cat(object$MCSE_1 , "\n" )
       cat("\n" )
       cat(object$eff_dx_intro , "\n" )
       cat("\n" )

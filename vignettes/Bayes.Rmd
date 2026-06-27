@@ -121,6 +121,14 @@ plot(blos1, y="dxt", parameter="muOfY")
 
 A review of the diagnostics suggest that the model ran well.
 
+### interpretations
+The graphs are very helpful for reviewing the diagnostics but the interpretations are helpful in reviewing what information we gain from conducting the MCMC diagnostics. For example, here's a review of the blos1 object:
+
+```{r Diagnostics1}
+blos1 <- Bayes(losmcmc, y="Dx", parameter="muOfY")
+interpret(blos1$Diagnostics, digits=5)
+```
+
 <br>
 
 # 3. Posterior summary: 'post' 
