@@ -54,13 +54,15 @@ The 'y' argument allows us to ouput results with these options--
 
 * r2: Calculates Gelman's R^2 (see documentation).
 
+* Dx: MCMC diagnostics from the autocorrelation factor, effective sample size, Monte Carlo standard error, and Gelman-Rubin statistic (shrink factor).
+
 * mcmc: Returns the MCMC converted into a data frame which is required for all graphing options except when y= 'multi', Bayes() pre-processes the 'multi' output so no new new data is required. You can get your MCMC by specifying newdata=TRUE within Bayes().
 
 ## plot.Bayes()
 
 There are similar plot options found in the 'y' argument.
 
-* post: Graphs a posterior distibution or curve for a parameter in the MCMC.
+* post: Graphs a posterior distribution or curve for a parameter in the MCMC.
 
 * dxa: Graphs MCMC diagnostics for the autocorrelation factor and effective sample size.
 
@@ -80,7 +82,7 @@ This vignette will go in order of the sections in plot.Bayes since almost everyt
 
 # 2. Diagnostics: 'dxa', 'dxd', 'dxg', 'dxt'
 
-This will first create a Bayes object (because y='mcmc' by default) from a list of MCMC simulations. And we'll modify it later but for now, this produces an object we can start reviewing.
+We have 2 options in reviewing diagnostics: 1) with graphs or 2) assessing the statistics. This code will first create a Bayes object that we can produce our graphs (because y='mcmc' by default) from a list of MCMC simulations. And we'll modify it later but for now, this produces an object we can start reviewing.
 
 ```{r Post0}
 blos1 <- Bayes(x=losmcmc)
@@ -122,11 +124,19 @@ plot(blos1, y="dxt", parameter="muOfY")
 A review of the diagnostics suggest that the model ran well.
 
 ### interpretations
-The graphs are very helpful for reviewing the diagnostics but the interpretations are helpful in reviewing what information we gain from conducting the MCMC diagnostics. For example, here's a review of the blos1 object:
+The graphs are very helpful for reviewing the diagnostics but the interpretations are helpful in reviewing what information we gain from conducting the MCMC diagnostics. There are 3 types of information in the interpretation output.
+
+* 1. General overview of the MCMC representativeness, accuracy, and efficiency.
+
+* 2. Gelman-Rubin, ACF, ESS, and MCSE statistics about your parameter.
+
+* 3. Additional background information.
+
+For example, here's a review of the blos1 object:
 
 ```{r Diagnostics1}
-blos1 <- Bayes(losmcmc, y="Dx", parameter="muOfY")
-interpret(blos1$Diagnostics, digits=5)
+blos2 <- Bayes(losmcmc, y="Dx", parameter="muOfY")
+interpret(blos2$Diagnostics, digits=5)
 ```
 
 <br>
@@ -135,7 +145,7 @@ interpret(blos1$Diagnostics, digits=5)
 
 Posterior estimates of length of stay. First set up the Bayes object to convert the chains. We need, newdata=TRUE, to produce a graph later from our new MCMC data frame.
 
-This already uses the bare minimum code that will run and provide newdata to graph later. 
+This uses the bare minimum code that will run and provide newdata to graph later. 
 
 ```{r Post1}
 blos1 <- Bayes(x=losmcmc, y="post", parameter="muOfY", newdata=TRUE)
@@ -237,8 +247,7 @@ And now the level 3 plot (observation in plants in Treatment by type groups). Yo
 
 ```{r plotMulti2, fig.dim = c(6, 4.5)}
 plot(x=co2multi, y="multi", level=3, aorder=FALSE, lcol="blue", pcol= c("green", "pink"),
-round.c=1, bcol="lavender", xlim=c(-.1, 1), legend=NULL, add.legend="right", lwd=3,
-cex.lab =1.2, cex= 2, cex.main=1.25, cex.axis=.75, cex.legend=1.5, X.Lab=NULL)
+round.c=1, bcol="lavender", xlim=c(-.1, 1), legend=NULL, add.legend="bottomleft", lwd=3, cex.lab =1.2, cex= 2, cex.main=1.25, cex.axis=.75, cex.legend=1.25, X.Lab=NULL)
 ```
 
 <br>
@@ -259,7 +268,7 @@ print(btarget1$Target)
 
 We can now review the results to identify targets that represent increments of 5 points of probability. This potentially may requires another 5 points of effort to achieve, however moving around a rate in the middle is generally easier than moving to rates that are in the extremes (e.g., 0% infections). Using Jacob Cohen's effect sizes can help in that understanding. Notice "High.Low.Interval", represents the proportion under the curve of the highest and lowest value for y, here 4-3= 1 day. 
 
-Here is the bare minimum code that will run (if we want to print, newdata=TRUE is needed):
+Here is the bare minimum code that will run (if we want to print, newdata=TRUE is needed; displaying default center = 'mode'):
 
 btarget1 <- Bayes(x=losmcmc, y="target", type="n", parameter=c("muOfY","sigmaOfY"),
 target=list(p=c(.35,.4,.45, .5, .55),  y=c(3,4)))
