@@ -183,4 +183,28 @@ print.interpret <- function(x, ...) {
     }
   }
 
+  if("interpret" %in% class(object) ) {
+    if("Dx" %in% class(object) ) {
+      cat("MCMC Diagnostics", "\n" )
+      cat("----------------", "\n" )
+      cat(object$rep_dx_intro, "\n" )
+      cat("\n" )
+      cat(object$GRS_1, "\n" )
+      cat("\n" )
+      cat(object$GRS_2, "\n" )
+      cat("\n" )
+      cat(object$acc_dx_intro , "\n" )
+      cat("\n" )
+      cat(object$eff_dx_intro , "\n" )
+      cat("\n" )
+      cat("Background", "\n" )
+      cat("----------", "\n" )
+      cat(object$dx_back_1 , "\n" )
+      cat("\n" )
+      cat("MCMC diagnostics help us with most of these goals and allows us to review:", "\n" )
+      cat("\n" )
+      cat(object$dx_back_2 , "\n" )
+      cat("\n" )
+    }
+    }
 }

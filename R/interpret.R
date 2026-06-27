@@ -1,17 +1,17 @@
 #' Interpret model output
 #'
-#' Provides simple interpretations of regression coefficients and Cronbach's
-#' alpha from assess and alpha function classes. The interpretations describe
-#' coefficients and significance values as well as modifying item scales.
-#' The interpretations are text comments associated with specific parameters
-#' of the various analyses.
+#' Provides simple interpretations of regression coefficients, Cronbach's
+#' alpha, and Bayesian Markov Chain Monte Carlo diagnostics from assess, alpha, and
+#' Bayes function classes. The interpretations describe coefficients and significance
+#' values as well as modifying item scales. The interpretations are text comments associated
+#' with specific parameters of the various analyses.
 #'
-#' @param object alpha and assess class objects: alpha, ITS, DID, linear (ols) or logistic models.
+#' @param object alpha, assess, and Bayes class objects: alpha, ITS, DID, linear (ols) or logistic models, and Dx (Bayes Diagnostic).
 #' @param digits a non-null value for digits specifies the minimum number of significant digits
 #' to be printed in values. The default, NULL, uses 3. Non-integer values will be rounded down,
 #' and only values greater than or equal to 1 and no greater than 22 are accepted.
 #'
-#' @return a list with interpretations of Cronbach's alpha scales or regression model results.
+#' @return a list with interpretations of Cronbach's alpha scales, regression model results, or MCMC diagnostics.
 #' @export
 #'
 #' @seealso [itsEffect()] for Interrupted Time Series effects calculated for "Summary 1".
@@ -35,7 +35,7 @@
 #' interpret(hos3)$its
 interpret <- function(object, digits=NULL) {
 
-  if(any(class(object) %in% c("alpha","assess")) == FALSE) {stop("Error: Expecting 'alpha' or 'assess' class object.")}
+  if(any(class(object) %in% c("alpha","assess", "Dx")) == FALSE) {stop("Error: Expecting 'alpha' or 'assess' class object.")}
   # Sets "assess" return objects to NULL for model, DID, ITS
   model <- NULL; did <- NULL; its <- NULL
   #Set default digits == 3
@@ -67,6 +67,7 @@ interpret <- function(object, digits=NULL) {
   #Determine which objects are returned
   if(any(class(object) %in% c("alpha"))) interpret_type <- "alpha"
   if(any(class(object) %in% c("assess"))) interpret_type <- "assess"
+  if(any(class(object) %in% c("Dx"))) interpret_type <- "Dx"
 
   # OLS model #
   if("assess" %in% class(object) ) {
@@ -530,7 +531,7 @@ interpret <- function(object, digits=NULL) {
       its_covariates <- c("If there are additional variables in the model then the coefficients \nabove represent effects after controlling for the other variables.")
     }
   }
-  #Return
+  ## Return ##
   if (interpret_type == "alpha") {
     z <- list(alpha_overall=alpha_overall, descriptives=descriptives, deleted=deleted,
               excluded=excluded)
@@ -564,6 +565,7 @@ interpret <- function(object, digits=NULL) {
                   txip_interpret=txip_interpret, its_Summary=its_Summary, its_covariates=its_covariates)
     }
   }
+
   # Regression models
   if (interpret_type == "assess") {
     z <- list(model=model, did=did, its=its)
@@ -593,6 +595,56 @@ interpret <- function(object, digits=NULL) {
         class(z$its) <- c("interpret", "assess", "its","mgmt","ham", "list")
       }
     }
+    return(z)
+  }
+
+  ## Diagnostics ##
+  #Section intro/background
+  if(interpret_type == "Dx") {
+    rep_dx_intro <- "MCMC representativeness: The Gelman-Rubin statistic (shrink factor) nmeasures \nthe ratio of within- and between-chain variance and is considered as having \na good range of 1.0 to 1.1 with a value of 1.0 indicating the chains are \nfully converged and values above 1.1 indicating the chains have not converged \nyet. For MCMC representativeness graphs, please examine trace plots and \ndensity plots found with plot(Bayes())."
+    acc_dx_intro <- "MCMC accuracy: 1) The autocorrelation factor (ACF) is a measure of chain step \nconcentration or clustering with values near 0 being ideal (indicating no \nclustering) for each chain at various lags (interested in 1-20 lags). In \nother words, higher ACF indicates that it changes only gradually from step \nto step. Values of 0 to 0.05 are essentially the same, very good, with \nregards to the ESS formula (see below). 2) The effective sample size (ESS) \ntells us the sample size of a completely non-correlated chain that yielded \nthe same info because we'd like a measure of how much independent info there \nis in autocorrelated chains. An ESS value of 10,000 is recommended. Note that \nthe ESS uses the ACF in its calculations with higher ACF leading to lower ESS. \n3) The Monte Carlo standard error (MCSE) = parameter Std. Dev. / sqrt(ESS) \nwith values on the parameter scale. If the MCSE is much smaller than the \nparameter mean, this indicates a good MCSE."
+    eff_dx_intro <- "MCMC efficiency: Please see Kruschke, 2015, to read more about efficiency such \nas using different samplers, 2) parallel R, 3) changing parametrizations of \nthe model, 4) and thinning chains (record fewer steps)."
+    dx_back_1 <- "We have 3 main quality goals when generating MCMC samples from our posterior \ndistribution: A) Chain values are representative of the posterior and there \nis no excessive initial value influence so our chains explore the full \nposterior range. B) Chains are sufficiently large for accurate and stable \nestimates (e.g., 95% HDI). C) Chains should be efficient in terms of \ncompletion time and computing power."
+    dx_back_2 <- "1) Visual inspection of trace and density plots, see plot(Bayes()), and the \nGelman-Rubin statistic can suggest whether the burn-in period has been \nsuitably passed and \n2) suggests whether the chains are well-mixed and representative of the posterior. \n3) Remember these don't guarantee representativeness. \n4) ESS and MCSE suggest how stable and accurate the chains are. \n5) If you want stability in the 95% HDI limits then we should have an ESS=10,000. \n6) If you want accuracy in the posterior mean, review the MCSE which is on the \nscale of the parameter."
+  } else {
+    rep_dx_intro <- NULL
+    acc_dx_intro <- NULL
+    eff_dx_intro <- NULL
+    dx_back_1 <- NULL
+    dx_back_2 <- NULL
+  }
+  ## Shrink factor ##
+  if(interpret_type == "Dx") {
+    length_1.1 <- length(object$Shrink.Factor$Gelman.Rubin.Statistic)
+    first_1.1 <- which(as.data.frame(object$Shrink.Factor$Gelman.Rubin.Statistic) < 1.1)
+    iter_1.1 <- object$Shrink.Factor$Iteration[first_1.1[1]]
+  } else {
+    length_1.1 <- NULL
+    first_1.1 <- NULL
+    iter_1.1 <- NULL
+  }
+  #Get lowest GRS value
+  if(interpret_type == "Dx") {
+    lowest_1.1 <- min(object$Shrink.Factor$Gelman.Rubin.Statistic)
+  }
+  #If they had a good GRS
+  if(interpret_type == "Dx") {
+    if(lowest_1.1 < 1.1) {
+      GRS_1 <- paste0("1. According to the Gelman-Rubin Statistic (GRS) results, your MCMC first \nreached the level below 1.1 by about step ", iter_1.1, " in the chain.")
+      GRS_2 <- paste0("2. The lowest GRS was ", round(lowest_1.1, digits),". And ",length(first_1.1)," of the selected ",length_1.1," steps between the first \nand last steps in the MCMC had Gelman-Rubin statistics below 1.10.")
+    } else {
+      GRS_1 <- paste0("1. According to the Gelman-Rubin Statistic (GRS) results, your chains did \nnot fall below the 1.1 cutoff during these ",length_1.1," selected steps.")
+      GRS_2 <- paste0("2. The lowest GRS was ", round(lowest_1.1, digits),". The chains may not have \nconverged yet and you may want to consider adjusting your model or adding \nmore steps/iterations in the MCMC.")
+    }
+  }
+  if (interpret_type == "Dx") {
+    z <- list(rep_dx_intro=rep_dx_intro,
+              GRS_1=GRS_1, GRS_2=GRS_2   ,
+              acc_dx_intro=acc_dx_intro,
+              eff_dx_intro=eff_dx_intro,
+              dx_back_1=dx_back_1, dx_back_2=dx_back_2
+              )
+    class(z) <- c("interpret", "Dx", "ham", "list")
     return(z)
   }
 
