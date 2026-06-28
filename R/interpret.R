@@ -610,7 +610,7 @@ interpret <- function(object, digits=NULL) {
     acc_dx_intro <- "MCMC accuracy: 1) The autocorrelation factor (ACF) is a measure of chain step \nconcentration or clustering with values near 0 being ideal (indicating no \nclustering) for each chain at various lags (interested in lags 1-20). In \nother words, higher ACF indicates that it changes only gradually from step \nto step. Values of 0 to 0.05 are essentially the same, very good, with \nregards to the ESS formula (see below). 2) The effective sample size (ESS) \ntells us the sample size of a completely non-correlated chain that yielded \nthe same info because we'd like a measure of how much independent info there \nis in autocorrelated chains. An ESS value of 10,000 is recommended. Note that \nthe ESS uses the ACF in its calculations with higher ACF leading to lower ESS. \n3) The Monte Carlo standard error (MCSE) = parameter Std. Dev. / sqrt(ESS) \nwith values on the parameter scale. If the MCSE is much smaller than the \nparameter mean, this indicates a good MCSE."
     eff_dx_intro <- "MCMC efficiency: Please see Kruschke, 2015, to read more about efficiency such \nas 1) using different samplers, 2) parallel R, 3) changing parametrizations of \nthe model, 4) and thinning chains (recording fewer steps)."
     dx_back_1 <- "We have 3 main quality goals when generating MCMC samples from our posterior \ndistribution: A) Chain values are representative of the posterior and there \nis no excessive initial value influence, therefore our chains explore the full \nposterior range. B) Chains are sufficiently large for accurate and stable \nestimates (e.g., 95% HDI). C) Chains should be efficient in terms of \ncompletion time and computing power."
-    dx_back_2 <- "1) Visual inspection of trace and density plots, see plot(Bayes()), and the \nGelman-Rubin statistic can suggest whether the burn-in period has been \nsuitably passed and \n2) suggests whether the chains are well-mixed and representative of the posterior. \n3) Remember these don't guarantee representativeness. \n4) ESS and MCSE suggest how stable and accurate the chains are. \n5) If you want stability in the 95% HDI limits then we should have an ESS=10,000. \n6) If you want accuracy in the posterior mean, review the MCSE which is on the \nscale of the parameter."
+    dx_back_2 <- "1) Visual inspection of trace and density plots, see plot(Bayes()), and the \nGelman-Rubin statistic can suggest whether the burn-in period has been \nsuitably passed and \n2) suggests whether the chains are well-mixed and representative of the posterior. \n3) Remember these don't guarantee representativeness. \n4) ESS and MCSE suggest how stable and accurate the chains are. \n5) For stability in sparse regions (e.g., 95% HDI limits), ideally ESS >= 10,000. \n6) If you want accuracy in the dense regions of the distribution such as the mean, \na small MCSE may suggest the mean can be estimated very stably even with a low ESS."
   } else {
     rep_dx_intro <- NULL
     acc_dx_intro <- NULL
@@ -654,7 +654,7 @@ interpret <- function(object, digits=NULL) {
   if(interpret_type == "Dx") {
     ess_target <- object$Effective.Sample.Size
     ess_target_met <- ifelse(ess_target >= 10000, "above", "below")
-    ESS_1 <- paste0("2. Your Effective Sample Size is ", round(ess_target, digits=digits)," and is ", ess_target_met ," the ideal target \nvalue of 10,000 or more.")
+    ESS_1 <- paste0("2. Your Effective Sample Size is ", round(ess_target, digits=digits)," and is ", ess_target_met ," the ideal target of 10,000 \nor more for sparse regions of the distributions (e.g., limits of 95% HDIs).")
   } else {
     ess_target <- NULL
     ess_target_met <- NULL
@@ -662,7 +662,7 @@ interpret <- function(object, digits=NULL) {
   }
   #Monte Carlo Standard Error
   if(interpret_type == "Dx") {
-    MCSE_1 <- paste0("3. Your Monte Carlo Standard Error is ", round(object$Monte.Carlo.Standard.Error, digits=digits), ". Please compare this value \nwith the parameter's average to understand how large or small the MCSE is.")
+    MCSE_1 <- paste0("3. Your Monte Carlo Standard Error is ", round(object$Monte.Carlo.Standard.Error, digits=digits), ". Please compare this value with \nthe parameter's average to understand how large or small the MCSE is.")
   } else {
     MCSE_1 <- NULL
   }
