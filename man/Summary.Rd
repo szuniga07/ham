@@ -2,7 +2,7 @@
 % Please edit documentation in R/Summary.R
 \name{Summary}
 \alias{Summary}
-\title{Creates a Summary object from the standard summary() object, for graphing purposes}
+\title{Creates a Summary object of regression model results and for graphing purposes}
 \usage{
 Summary(model, increase = NULL, coefs = NULL)
 }
@@ -14,11 +14,12 @@ model= my_regression$model for ordinary least squares, logistic, or Poisson mode
 For 'ITS' or 'DID' models, use model= its_model$ITS or model= did_model$DID. If
 using Base R's lm(), glm() or even coxph(), use the model object name (e.g., model= my_glm_model).}
 
-\item{increase}{a named numeric vector object of the coefficient name and associated increase in the predictor. For example,
-in the model y ~ a + x1 + x2, increase= c(x1= 10), will produce point estimates and confidence intervals adjusted
-to a 10-unit increase in the variable x1. This is most helpful when the continuous predictor has many levels and
-the interpretation of the standard 1-unit increase is less informative than a larger change in X. For example,
-discussing a difference in 10 or 20 years may be more helpful in describing the impact on 30-day mortality.}
+\item{increase}{a named numeric vector object of the coefficient name and associated increase in the predictor.
+For example, in the model y ~ a + x1 + x2, increase= c(x1= 10), will produce point estimates and confidence
+intervals adjusted to a 10-unit increase in the variable x1. This is most helpful when the continuous predictor
+has many levels and the interpretation of the standard 1-unit increase is less informative than a larger change
+in X. For example, discussing a difference in 10 or 20 years may be more helpful in describing the impact on
+30-day mortality.}
 
 \item{coefs}{an expression defining a subset of the predictor coefficient rows (i.e., not the intercept) to view in
 the Summary plot. The default is NULL, thereby using all predictor coefficients. Specify, for example, 1:2 to
@@ -27,13 +28,13 @@ names because they will follow that same order and not necessarily the order of 
 original regression model.}
 }
 \value{
-an object with regression model summary statistics and additional classes.
+a list object with regression model summary statistics as a data.frame and additional information.
 }
 \description{
-Produces a Summary object for regression models based on summary(model). The purpose
+Produces a Summary object of regression models based on summary(model). The purpose
 is to later pass the object to the plot function to produce a summary of the
-predictor variable's coefficients. The main difference between Summary() and summary()
-is that the ham function can create the effects from increased predictor values and
+predictor variable's coefficients. In other words, it excludes the intercept. The main
+difference between Summary() and summary() is that the ham function can create the effects from increased predictor values and
 it has a capital letter 'S' in Summary().
 }
 \examples{
@@ -52,5 +53,5 @@ plot(x=Summary(m03, increase=c(wt=1.1375, hp= 83.5), coefs= c(1, 3) ))
 
 }
 \seealso{
-\code{\link[=plot.Summary]{plot.Summary()}} for a plot of the 'Summary' class object.
+\code{\link[=plot.Summary]{plot.Summary()}} for a plot and printed output of the 'Summary' class object.
 }
