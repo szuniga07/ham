@@ -25,6 +25,9 @@
 #' standard deviations, and 3-sigma upper and lower control limit values.
 #' @importFrom stats sd
 #' @export
+#'
+#' @seealso [plot.control()] for a plot of the 'control' class object.
+#'
 #' @references
 #' Ryan, T. (2011). Statistical Methods for Quality Improvement, Third Edition.
 #' New Jersey: John Wiley & Sons, Inc. ISBN: 978-0-470-59074-4.

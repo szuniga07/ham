@@ -15,6 +15,9 @@
 #' model at the specified threshold.
 #' @importFrom stats sd terms
 #' @export
+#'
+#' @seealso [plot.decide()] for a plot of the 'decide' class object.
+#'
 #' @references
 #' Vickers, A. & Elkin, E. (2006). Decision Curve Analysis: A Novel Method for Evaluating Prediction Models.
 #' Society for Medical Decision Making, 26, 6, 565-574. https://doi.org/10.1177/0272989X06295361

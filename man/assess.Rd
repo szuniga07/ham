@@ -179,3 +179,6 @@ Multiple-group Comparisons. The Stata Journal, 15, 2, 480-500. https://doi.org/1
 Rosenbaum, P. (2010). Design of Observational Studies, Second Edition. New York: Springer.
 ISBN: 978-1-4419-1212-1.
 }
+\seealso{
+\code{\link[=plot.assess]{plot.assess()}} for a plot of the 'assess' class object.
+}

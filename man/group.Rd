@@ -99,3 +99,6 @@ Sociological Methodology, 25, 267-316. https://doi.org/10.2307/271070.
 Rabe-Hesketh, S. & Skrondal, A. (2008). Multilevel and Longitudinal Modeling Using Stata,
 Second Edition. ISBN: 978-1-59718-040-5.
 }
+\seealso{
+\code{\link[=plot.group]{plot.group()}} for a plot of the 'group' class object.
+}

@@ -83,6 +83,8 @@
 #' information, and summary of ITS effects if analyzed.
 #' @export
 #'
+#' @seealso [plot.assess()] for a plot of the 'assess' class object.
+#'
 #' @references
 #' Angrist, J. D., & Pischke, J. S. (2009). Mostly Harmless Econometrics:
 #' An Empiricist's Companion. Princeton University Press. ISBN: 9780691120355.

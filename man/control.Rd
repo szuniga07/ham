@@ -73,3 +73,6 @@ print(spc_u) # get data frame output
 Ryan, T. (2011). Statistical Methods for Quality Improvement, Third Edition.
 New Jersey: John Wiley & Sons, Inc. ISBN: 978-0-470-59074-4.
 }
+\seealso{
+\code{\link[=plot.control]{plot.control()}} for a plot of the 'control' class object.
+}

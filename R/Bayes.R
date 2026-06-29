@@ -65,6 +65,9 @@
 #' R2, and MCMC diagnostics.
 #' @importFrom stats sd ar density median residuals var
 #' @export
+#'
+#' @seealso [plot.Bayes()] for a plot of the 'Bayes' class object.
+#'
 #' @references
 #' Cohen, J. (1988). Statistical Power Analysis for the Behavioral Sciences, Second Edition.
 #' Hillsdale, NJ: Lawrence Erlbaum Associates, Publishers. ISBN 0-8058-0283-5

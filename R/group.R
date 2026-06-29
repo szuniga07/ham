@@ -36,6 +36,9 @@
 #' and clustering measures. Some values returned in alphabetical and numerical order based on the group.
 #' @importFrom stats aov complete.cases na.omit poisson.test qnorm quantile sd binom.test
 #' @export
+#'
+#' @seealso [plot.group()] for a plot of the 'group' class object.
+#'
 #' @references
 #' Merlo, J. (2006). A brief conceptual tutorial of multilevel analysis in
 #' social epidemiology: using measures of clustering in multilevel logistic
