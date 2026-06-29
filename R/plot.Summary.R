@@ -6,11 +6,11 @@
 #' the vertical line is at 0 or 1 (e.g., odds ratio, incidence rate ratio, hazard ratio and other GLMs at 1)
 #' to show if the proper reference is outside of the "normal range" or what represents no significant
 #' difference. The Summary plot can be used on assess objects as well as models created from the base
-#' package lm() and glm() as well as coxph() from the survival package. There are various graphing
-#' options and sorting by coefficient names, values, p-value or the model formula.
+#' package's lm() and glm() as well as coxph() from the survival package. There are various graphing
+#' options and sorting by coefficient names, values, p-value, or the model formula.
 #'
 #' @param x Summary object from assess() model or lm(), glm(), and coxph() models. For assess objects, use
-#' Summary(my_regression$model) unless using ITS or DID models (my_did_model$DID). For model objects from
+#' Summary(my_regression$model) unless using ITS or DID models (e.g., my_did_model$DID). For model objects from
 #' lm(), glm(), or coxph(), use Summary(my_model).
 #' @param y not currently used.
 #' @param main overall title for the plot, default is NULL which then lists 'Summary' for OLS regression or the type
@@ -63,21 +63,21 @@
 #' # let's see the impactful 83.5 hp increase in the 1st to 3rd quartiles
 #' plot(x=Summary(m02$model, increase=c(hp= 83.5)))
 #'
-#' #Logistic model
+#' # Logistic model
 #' m03 <- glm(vs ~ wt+hp+am, data=mtcars, family="binomial")
 #' # Display options, sorted plot, and printing the 95% CIs to review
 #' plot(x=Summary(m03, increase=c(wt=1.1375, hp= 83.5) ), color="aquamarine", lwd=4,
 #' pt.cex= 2, tcol="magenta", sort="coef", cex.axis=2, cex.main=2, xlim=c(-.5, 3),
 #' print=TRUE, round.c=6)
 #'
-#' #Poisson model with an offset using assess()
+#' # Poisson model with an offset using assess()
 #' m04 <- assess(formula=HAI ~  Month+ offset(log(PatientDays)),
 #' data=infections, regression="poisson")
-#' #Because 1 year is a meaningful period in program evaluation, Month=12
+#' # Because 12 months is a meaningful period in program evaluation, Month=12
 #' plot(x=Summary(m04$model, increase=c(Month=12)), xlim=c(0.6, 1.01),
 #' lwd=7, color="cyan", pcol="salmon", pt.cex=2)
 #'
-#' #NOT RUN: Cox Proportional Hazards model
+#' # NOT RUN: Cox Proportional Hazards model
 #' #library(survival)
 #' #m04 <- coxph(Surv(time, status) ~ age+sex+ph.karno, data=cancer)
 #' #plot(x=Summary(m04, increase=c(age=13, ph.karno=15)))

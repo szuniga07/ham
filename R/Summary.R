@@ -1,10 +1,11 @@
-#' Creates a Summary object of regression model results and for graphing purposes
+#' Creates a Summary object of regression model results for graphing purposes
 #'
-#' Produces a Summary object of regression models based on summary(model). The purpose
-#' is to later pass the object to the plot function to produce a summary of the
-#' predictor variable's coefficients. In other words, it excludes the intercept. The main
-#' difference between Summary() and summary() is that the ham function can create the effects from increased predictor values and
-#' it has a capital letter 'S' in Summary().
+#' Produces a Summary object of regression models similar to base R's summary(). However,
+#' the purpose is to later pass the object to the plot function to produce a summary of
+#' only the predictor variable's coefficients (i.e.,. excludes the intercept). The main
+#' difference between Summary() and summary() is that the ham function can create the
+#' effects from increased predictor values (e.g., increase age by 25 years rather than
+#' report a 1 year effect) and it has a capital letter 'S' in Summary().
 #'
 #' @param model an assess class object or models with 'lm', 'glm', or 'coxph' class.
 #' This includes the differences-in-differences and interrupted time series models.
@@ -14,9 +15,7 @@
 #' using Base R's lm(), glm() or even coxph(), use the model object name (e.g., model= my_glm_model).
 #' @param coefs an expression defining a subset of the predictor coefficient rows (i.e., not the intercept) to view in
 #' the Summary plot. The default is NULL, thereby using all predictor coefficients. Specify, for example, 1:2 to
-#' view just the Summary of the first 2 coefficients. It is recommended to use print=TRUE to confirm the coefficient
-#' names because they will follow that same order and not necessarily the order of the coefficients listed in the
-#' original regression model.
+#' view just the Summary of the first 2 coefficients.
 #' @param increase a named numeric vector object of the coefficient name and associated increase in the predictor.
 #' For example, in the model y ~ a + x1 + x2, increase= c(x1= 10), will produce point estimates and confidence
 #' intervals adjusted to a 10-unit increase in the variable x1. This is most helpful when the continuous predictor
@@ -24,10 +23,11 @@
 #' in X. For example, discussing a difference in 10 or 20 years may be more helpful in describing the impact on
 #' 30-day mortality.
 #'
-#' @return a list object with regression model summary statistics as a data.frame and additional information.
+#' @return a list object with regression model summary statistics such as the point estimates, lower and upper
+#' confidence interval limits, p-values, and additional information.
 #' @export
 #'
-#' @seealso [plot.Summary()] for a plot and printed output of the 'Summary' class object.
+#' @seealso [plot.Summary()], [print.Summary()] for a plot and printed output of the 'Summary' class object.
 #'
 #' @examples
 #' # OLS regression

@@ -2,7 +2,7 @@
 % Please edit documentation in R/Summary.R
 \name{Summary}
 \alias{Summary}
-\title{Creates a Summary object of regression model results and for graphing purposes}
+\title{Creates a Summary object of regression model results for graphing purposes}
 \usage{
 Summary(model, increase = NULL, coefs = NULL)
 }
@@ -23,19 +23,19 @@ in X. For example, discussing a difference in 10 or 20 years may be more helpful
 
 \item{coefs}{an expression defining a subset of the predictor coefficient rows (i.e., not the intercept) to view in
 the Summary plot. The default is NULL, thereby using all predictor coefficients. Specify, for example, 1:2 to
-view just the Summary of the first 2 coefficients. It is recommended to use print=TRUE to confirm the coefficient
-names because they will follow that same order and not necessarily the order of the coefficients listed in the
-original regression model.}
+view just the Summary of the first 2 coefficients.}
 }
 \value{
-a list object with regression model summary statistics as a data.frame and additional information.
+a list object with regression model summary statistics such as the point estimates, lower and upper
+confidence interval limits, p-values, and additional information.
 }
 \description{
-Produces a Summary object of regression models based on summary(model). The purpose
-is to later pass the object to the plot function to produce a summary of the
-predictor variable's coefficients. In other words, it excludes the intercept. The main
-difference between Summary() and summary() is that the ham function can create the effects from increased predictor values and
-it has a capital letter 'S' in Summary().
+Produces a Summary object of regression models similar to base R's summary(). However,
+the purpose is to later pass the object to the plot function to produce a summary of
+only the predictor variable's coefficients (i.e.,. excludes the intercept). The main
+difference between Summary() and summary() is that the ham function can create the
+effects from increased predictor values (e.g., increase age by 25 years rather than
+report a 1 year effect) and it has a capital letter 'S' in Summary().
 }
 \examples{
 # OLS regression
@@ -53,5 +53,5 @@ plot(x=Summary(m03, increase=c(wt=1.1375, hp= 83.5), coefs= c(1, 3) ))
 
 }
 \seealso{
-\code{\link[=plot.Summary]{plot.Summary()}} for a plot and printed output of the 'Summary' class object.
+\code{\link[=plot.Summary]{plot.Summary()}}, \code{\link[=print.Summary]{print.Summary()}} for a plot and printed output of the 'Summary' class object.
 }

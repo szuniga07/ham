@@ -250,8 +250,8 @@ This graph will be added in version 1.3 and it is a way to get summary of the co
 OLS regression--most basic format with Base R lm()
 ```{r plotSummary1, fig.dim = c(6, 4.5)}
 m01 <- lm(mpg ~ wt+hp+am, data=mtcars)
-# note it uses Summary() with a captialized 'S'
-plot(x=Summary(m01))
+# Most basic code, note it uses Summary() with a captialized 'S'
+plot(Summary(m01))
 ```
 
 Take a look at the effect when hp is increased by 83.5
@@ -458,7 +458,7 @@ plot(Summary(x)) also works for ITS and DID causal models through ham
 im22 <- assess(formula=los ~ ., data=hosprog, intervention = "program",
 int.time="month", interrupt= c(5, 9), its="two")
 # The intervention group had the biggest change between the baseline and month 5
-plot(Summary(im22$ITS), sort="coef", decreasing=TRUE, color="red", pcol="green", lwd=2, pt.cex=1.5)
+plot(Summary(im22$ITS), sort="coef", decreasing=TRUE, main="ITS summary", color="red", pcol="green", lwd=2, pt.cex=1.5)
 ```
 
 
