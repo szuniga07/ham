@@ -157,3 +157,6 @@ for(i in 1:length(key_time)) {
          paste0(unemployment[ key_time[i], "Year"], ": ", unemployment[ key_time[i], "event"]))
 }
 }
+\seealso{
+\code{\link[=assess]{assess()}} for the 'assess' class object.
+}

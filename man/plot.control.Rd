@@ -130,3 +130,6 @@ cex.axis=1.1, cex.main=1.25, cex.text=1.25)
 Ryan, T. (2011). Statistical Methods for Quality Improvement, Third Edition.
 John Wiley & Sons, Inc. ISBN: 978-0-470-59074-4.
 }
+\seealso{
+\code{\link[=control]{control()}} for the 'control' class object.
+}

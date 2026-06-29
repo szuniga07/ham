@@ -47,6 +47,9 @@
 #' @return plot of group level confidence intervals, including estimates over time periods.
 #' @importFrom graphics box title
 #' @export
+#'
+#' @seealso [group()] for the 'group' class object.
+#'
 #' @examples
 #' #Simple graph for confidence intervals using the t-distribution
 #' gr1 <- group(x="program", y="los", z="month", data=hosprog, dist="t",

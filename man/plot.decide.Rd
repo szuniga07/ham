@@ -102,3 +102,6 @@ plot(x=d1, y= "is")
 Vickers, A. & Elkin, E. (2006). Decision Curve Analysis: A Novel Method for Evaluating Prediction Models.
 Society for Medical Decision Making, 26, 6, 565-574. https://doi.org/10.1177/0272989X06295361
 }
+\seealso{
+\code{\link[=decide]{decide()}} for the 'decide' class object.
+}

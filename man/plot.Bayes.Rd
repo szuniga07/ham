@@ -336,3 +336,6 @@ https://doi.org/10.1080/00031305.2018.1549100
 Kruschke, J. (2014). Doing Bayesian Data Analysis: A Tutorial with R, JAGS, and
 Stan, Second Edition. New York: Academic Press. ISBN: 9780124058880
 }
+\seealso{
+\code{\link[=Bayes]{Bayes()}} for the 'Bayes' class object.
+}

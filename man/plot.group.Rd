@@ -143,3 +143,6 @@ plot(x=gr1, y="roll", lwd=4, gcol=c("red", "blue"), gband=TRUE, overall=TRUE,
 
   # Helpful note: You can plot aggregated data if you used the argument asis=TRUE in group(),
 }
+\seealso{
+\code{\link[=group]{group()}} for the 'group' class object.
+}

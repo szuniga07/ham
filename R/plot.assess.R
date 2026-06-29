@@ -60,6 +60,8 @@
 #' @importFrom methods is
 #' @export
 #'
+#' @seealso [assess()] for the 'assess' class object.
+#'
 #' @examples
 #' am2 <- assess(formula= los ~ ., data=hosprog, intervention = "program",
 #' topcode =NULL, int.time="month", regression="none", treatment= 5,

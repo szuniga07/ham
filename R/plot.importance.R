@@ -24,6 +24,9 @@
 #'
 #' @importFrom graphics axis dotchart
 #' @export
+#'
+#' @seealso [importance()] for the 'importance' class object.
+#'
 #' @references
 #' Harrell, F. E., Jr. (2015). Regression Modeling Strategies, Second Edition.
 #' Springer International Publishing. ISBN: 978-3-319-19424-0.

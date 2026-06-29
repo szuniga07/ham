@@ -60,3 +60,6 @@ plot(importance(assess(vs~mpg+wt+hp, data=mtcars, regression= "logistic")$model)
 Harrell, F. E., Jr. (2015). Regression Modeling Strategies, Second Edition.
 Springer International Publishing. ISBN: 978-3-319-19424-0.
 }
+\seealso{
+\code{\link[=importance]{importance()}} for the 'importance' class object.
+}

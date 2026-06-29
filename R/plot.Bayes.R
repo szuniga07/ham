@@ -155,6 +155,9 @@
 #' @importFrom methods is
 #' @importFrom stats lm acf cor dgamma dlnorm dnorm dt dweibull pbeta pgamma plnorm pnorm pweibull qbeta qgamma qlnorm qweibull runif qchisq df
 #' @export
+#'
+#' @seealso [Bayes()] for the 'Bayes' class object.
+#'
 #' @references
 #' Cohen, J. (1988). Statistical Power Analysis for the Behavioral Sciences, Second Edition.
 #' Hillsdale, NJ: Lawrence Erlbaum Associates, Publishers. ISBN 0-8058-0283-5

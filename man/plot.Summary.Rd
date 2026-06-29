@@ -148,3 +148,6 @@ plot(Summary(im22$ITS), sort="coef", decreasing=TRUE, color="red", pcol="green")
 Harrell, F. E., Jr. (2015). Regression Modeling Strategies, Second Edition.
 Springer International Publishing. ISBN: 978-3-319-19424-0.
 }
+\seealso{
+\code{\link[=Summary]{Summary()}} for the 'Summary' class object.
+}
