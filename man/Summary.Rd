@@ -4,7 +4,7 @@
 \alias{Summary}
 \title{Creates a Summary object from the standard summary() object, for graphing purposes}
 \usage{
-Summary(model)
+Summary(model, increase = NULL, coefs = NULL)
 }
 \arguments{
 \item{model}{an assess class object or models with 'lm', 'glm', or 'coxph' class.
@@ -13,6 +13,18 @@ For assess objects, make sure to select the correct model list element, for exam
 model= my_regression$model for ordinary least squares, logistic, or Poisson models.
 For 'ITS' or 'DID' models, use model= its_model$ITS or model= did_model$DID. If
 using Base R's lm(), glm() or even coxph(), use the model object name (e.g., model= my_glm_model).}
+
+\item{increase}{a named numeric vector object of the coefficient name and associated increase in the predictor. For example,
+in the model y ~ a + x1 + x2, increase= c(x1= 10), will produce point estimates and confidence intervals adjusted
+to a 10-unit increase in the variable x1. This is most helpful when the continuous predictor has many levels and
+the interpretation of the standard 1-unit increase is less informative than a larger change in X. For example,
+discussing a difference in 10 or 20 years may be more helpful in describing the impact on 30-day mortality.}
+
+\item{coefs}{an expression defining a subset of the predictor coefficient rows (i.e., not the intercept) to view in
+the Summary plot. The default is NULL, thereby using all predictor coefficients. Specify, for example, 1:2 to
+view just the Summary of the first 2 coefficients. It is recommended to use print=TRUE to confirm the coefficient
+names because they will follow that same order and not necessarily the order of the coefficients listed in the
+original regression model.}
 }
 \value{
 an object with regression model summary statistics and additional classes.
@@ -21,18 +33,22 @@ an object with regression model summary statistics and additional classes.
 Produces a Summary object for regression models based on summary(model). The purpose
 is to later pass the object to the plot function to produce a summary of the
 predictor variable's coefficients. The main difference between Summary() and summary()
-is that the ham function adds new classes helpful for creating the plot and Summary()
-has a capital letter 'S'.
+is that the ham function can create the effects from increased predictor values and
+it has a capital letter 'S' in Summary().
 }
 \examples{
-# OLS regression, identical output as 'lower case' summary(model)
+# OLS regression
 Summary(assess(mpg ~ hp + wt + cyl, data=mtcars, regression= "ols")$model)
 
-# Creates new classes useful for to plot the summary, e.g., plot(Summary(model))
+# Creates new classes useful for plots, e.g., plot(Summary(model))
 class(Summary(assess(mpg ~ hp + wt + cyl, data=mtcars, regression= "ols")$model))
 
 # Works with Base R
 Summary(lm(mpg ~ hp + wt + cyl, data=mtcars))
+
+# Effect after increasing hp and excluding am's coefficient
+m03 <- glm(vs ~ wt+hp+am, data=mtcars, family="binomial")
+plot(x=Summary(m03, increase=c(wt=1.1375, hp= 83.5), coefs= c(1, 3) ))
 
 }
 \seealso{

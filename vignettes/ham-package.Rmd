@@ -254,18 +254,25 @@ m01 <- lm(mpg ~ wt+hp+am, data=mtcars)
 plot(x=Summary(m01))
 ```
 
-Using the assess function, notice 'm02$model' object below
+Take a look at the effect when hp is increased by 83.5
+
+```{r Summary model 2 results}
+m02 <- assess(formula=mpg ~ wt+hp+am, data=mtcars, regression="ols")
+# Using the assess function, notice 'm02$model' object below
+print(Summary(m02$model, increase=c(hp= 83.5))$Estimates)
+```
+
+let's see the impactful 83.5 hp increase in going from the 1st to 3rd quartiles
 ```{r plotSummary2, fig.dim = c(6, 4.5)}
 m02 <- assess(formula=mpg ~ wt+hp+am, data=mtcars, regression="ols")
-# let's see the impactful 83.5 hp increase in the 1st to 3rd quartiles
-plot(x=Summary(m02$model), increase=c(hp= 83.5))
+plot(x=Summary(m02$model, increase=c(hp= 83.5)))
 ```
 
 Logistic model
 ```{r plotSummary3, fig.dim = c(6, 4.5)}
 m03 <- glm(vs ~ wt+hp+am, data=mtcars, family="binomial")
 # Display options, sorted plot, and printing the 95% CIs to review
-plot(x=Summary(m03), increase=c(wt=1.1375, hp= 83.5), color="aquamarine", lwd=4,
+plot(x=Summary(m03, increase=c(wt=1.1375, hp= 83.5) ), color="aquamarine", lwd=5,
 pt.cex= 2, tcol="magenta", sort="coef", cex.axis=2, cex.main=2, xlim=c(-.5, 3),
 print=TRUE, round.c=6)
 ```
@@ -274,8 +281,8 @@ Poisson model with an offset using assess()
 ```{r plotSummary4, fig.dim = c(6, 4.5)}
 m04 <- assess(formula=HAI ~  Month+ offset(log(PatientDays)),
 data=infections, regression="poisson")
-#Because 1 year is a meaninful period in program evaluation, Month=12
-plot(x=Summary(m04$model), increase=c(Month=12), xlim=c(0.6, 1.01),
+#Because 1 year is a meaningful period in program evaluation, Month=12
+plot(x=Summary(m04$model, increase=c(Month=12)), xlim=c(0.6, 1.01),
 lwd=7, color="cyan", pcol="salmon", pt.cex=2)
 ```
 
@@ -451,7 +458,7 @@ plot(Summary(x)) also works for ITS and DID causal models through ham
 im22 <- assess(formula=los ~ ., data=hosprog, intervention = "program",
 int.time="month", interrupt= c(5, 9), its="two")
 # The intervention group had the biggest change between the baseline and month 5
-plot(Summary(im22$ITS), sort="coef", decreasing=TRUE, color="red", pcol="green")
+plot(Summary(im22$ITS), sort="coef", decreasing=TRUE, color="red", pcol="green", lwd=2, pt.cex=1.5)
 ```
 
 
@@ -513,7 +520,7 @@ Let's take a look at the graph (intervention is brown, control is gray).
 
 ### Graph ITS model 4 
 ```{r plotITS04, fig.dim = c(6, 4.5)}
-plot(id22, "ITS",  xlim=c(-1, 14), ylim=c(0, .37), main="ITS: 30-day Death", col=c("sienna3","slategray"), lwd=7, cex=3, cex.axis=2, cex.lab=1.5, tcol="green", cex.main=3, arrow=TRUE, xshift=c(.25, .25), cex.text=1.0, coefs=TRUE, round.c=2, cfact=T, conf.int=TRUE, adj.alpha=0.15, pos.text= list("Intercept"=1, "txp5"=3, "txi"=2, "post5"=3, "post9"=4, "ITS.Time"=3), 
+plot(id22, "ITS",  xlim=c(-1, 14), ylim=c(0, .37), main="ITS: 30-day Death", col=c("sienna3","slategray"), lwd=3, cex=2, cex.axis=2, cex.lab=1.5, tcol="green", cex.main=3, arrow=TRUE, xshift=c(.25, .25), cex.text=1.0, coefs=TRUE, round.c=2, cfact=T, conf.int=TRUE, adj.alpha=0.15, pos.text= list("Intercept"=1, "txp5"=3, "txi"=2, "post5"=3, "post9"=4, "ITS.Time"=3), 
      cex.legend=.9, add.means=TRUE )
 ```
 

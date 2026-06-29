@@ -1,6 +1,6 @@
 #' Plot of a regression model's coefficient summary
 #'
-#' Plots a Summary class object of a regression model (Summary() with a capital 'S'). Produces a chart of
+#' Plots a Summary class object of a regression model (Summary() with a capital 'S'). Prints a chart of
 #' the predictor's coefficient estimates with 95% confidence intervals (Harrell, 2015). Excludes the
 #' intercept (if present). Horizontal line segments represent the predictor variable coefficients and
 #' the vertical line is at 0 or 1 (e.g., odds ratio, incidence rate ratio, hazard ratio and other GLMs at 1)
@@ -13,16 +13,6 @@
 #' Summary(my_regression$model) unless using ITS or DID models (my_did_model$DID). For model objects from
 #' lm(), glm(), or coxph(), use Summary(my_model).
 #' @param y not currently used.
-#' @param coefs an expression defining a subset of the predictor coefficient rows (i.e., not the intercept) to view in
-#' the Summary plot. The default is NULL, thereby using all predictor coefficients. Specify, for example, 1:2 to
-#' view just the Summary of the first 2 coefficients. It is recommended to use print=TRUE to confirm the coefficient
-#' names because they will follow that same order and not necessarily the order of the coefficients listed in the
-#' original regression model.
-#' @param increase a named numeric vector object of the coefficient name and associated increase in the predictor. For example,
-#' in the model y ~ a + x1 + x2, increase= c(x1= 10), will produce point estimates and confidence intervals adjusted
-#' to a 10-unit increase in the variable x1. This is most helpful when the continuous predictor has many levels and
-#' the interpretation of the standard 1-unit increase is less informative than a larger change in X. For example,
-#' discussing a difference in 10 or 20 years may be more helpful in describing the impact on 30-day mortality.
 #' @param main overall title for the plot, default is NULL which then lists 'Summary' for OLS regression or the type
 #' of Summary statistic such as 'Odds Ratio' (logistic), 'Incidence Rate Ratio' (Poisson), or 'Hazard Ratio' (Cox).
 #' @param sub a character vector for the subtitle of the plot, default is NULL which then lists the outcome name.
@@ -71,26 +61,26 @@
 #' # Using the assess function, notice 'm02$model' object below
 #' m02 <- assess(formula=mpg ~ wt+hp+am, data=mtcars, regression="ols")
 #' # let's see the impactful 83.5 hp increase in the 1st to 3rd quartiles
-#' plot(x=Summary(m02$model), increase=c(hp= 83.5))
+#' plot(x=Summary(m02$model, increase=c(hp= 83.5)))
 #'
 #' #Logistic model
 #' m03 <- glm(vs ~ wt+hp+am, data=mtcars, family="binomial")
 #' # Display options, sorted plot, and printing the 95% CIs to review
-#' plot(x=Summary(m03), increase=c(wt=1.1375, hp= 83.5), color="aquamarine", lwd=4,
+#' plot(x=Summary(m03, increase=c(wt=1.1375, hp= 83.5) ), color="aquamarine", lwd=4,
 #' pt.cex= 2, tcol="magenta", sort="coef", cex.axis=2, cex.main=2, xlim=c(-.5, 3),
 #' print=TRUE, round.c=6)
 #'
 #' #Poisson model with an offset using assess()
 #' m04 <- assess(formula=HAI ~  Month+ offset(log(PatientDays)),
 #' data=infections, regression="poisson")
-#' #Because 1 year is a meaninful period in program evaluation, Month=12
-#' plot(x=Summary(m04$model), increase=c(Month=12), xlim=c(0.6, 1.01),
+#' #Because 1 year is a meaningful period in program evaluation, Month=12
+#' plot(x=Summary(m04$model, increase=c(Month=12)), xlim=c(0.6, 1.01),
 #' lwd=7, color="cyan", pcol="salmon", pt.cex=2)
 #'
 #' #NOT RUN: Cox Proportional Hazards model
 #' #library(survival)
 #' #m04 <- coxph(Surv(time, status) ~ age+sex+ph.karno, data=cancer)
-#' #plot(x=Summary(m04), increase=c(age=13, ph.karno=15))
+#' #plot(x=Summary(m04, increase=c(age=13, ph.karno=15)))
 #'
 #' # This also works for ITS and DID causal models through ham
 #' im22 <- assess(formula=los ~ ., data=hosprog, intervention = "program",
@@ -98,24 +88,13 @@
 #' # The intervention group had the biggest change between the baseline and month 5
 #' plot(Summary(im22$ITS), sort="coef", decreasing=TRUE, color="red", pcol="green")
 #'
-plot.Summary <- function(x, y=NULL, coefs=NULL, increase=NULL, main=NULL, sub=NULL, sort=NULL,
+plot.Summary <- function(x, y=NULL, main=NULL, sub=NULL, sort=NULL,
                          decreasing=NULL, abbrv=NULL, xlim=NULL, ylim=NULL, xlab=NULL,
                          ylab=NULL, lwd=NULL, color=NULL, pcol=NULL, pt.cex=NULL, pch=NULL,
                          tgt=NULL, tcol=NULL, cex=NULL, cex.axis=NULL, cex.lab=NULL,
                          cex.main=NULL, cex.sub=NULL, print=NULL, round.c=NULL, ...) {
   #Checks
   if (any(class(x) == 'Summary') ==FALSE) {stop("Error: Expecting 'Summary' class object." )}
-  if(!is.null(coefs)) {
-    if (is.numeric(coefs) == FALSE) {
-      stop("Error: Expecting 'coefs' is a numeric class object." )
-    }
-  }
-  if(!is.null(increase)) {
-    if (is.numeric(increase) == FALSE) {stop("Error: Expecting 'increase' is a numeric class object." )}
-  }
-  if(!is.null(increase)) {
-    if (is.null(names(increase))) {stop("Error: Expecting 'increase' is a named object." )}
-  }
   if(!is.null(sort)) {
     if (!sort %in% c('alpha','coef','p','enter')) {stop("Error: Expecting 'sort' using one of these options: 'alpha', 'coef', 'p', 'enter' ." )}
   }
@@ -130,132 +109,12 @@ plot.Summary <- function(x, y=NULL, coefs=NULL, increase=NULL, main=NULL, sub=NU
   }
 
   ##############################################################################
-  #                                Coefficients                                #
-  ##############################################################################
-  fncCoef <- function(x, y=NULL, coefs=NULL) {
-
-    #Get regression model type
-    if (any(class(x) == "Summary.ols") == TRUE) {
-      reg_type <- "ols"
-    }
-    if (any(class(x) == "Summary.logistic") == TRUE) {
-      reg_type <- "logistic"
-    }
-    if (any(class(x) == "Summary.poisson") == TRUE) {
-      reg_type <- "poisson"
-    }
-    if (any(class(x) == "Summary.coxph") == TRUE) {
-      reg_type <- "cox"
-    }
-    if (any(class(x) == "Summary.other") == TRUE) {
-      reg_type <- "other"
-    }
-    #Get degrees of freedom
-    if (reg_type == "ols") {
-      degrees_of_freedom <- max(x$df)
-    } else {
-      degrees_of_freedom <- 1
-    }
-    #Get critical values for distributions
-    if (reg_type == "ols") {
-      critical_value <- qt(p=.975, df=degrees_of_freedom)
-    } else {
-      critical_value <- qnorm(p=.975)
-    }
-    #Get intercept column name
-    intercept_row <- grep("Intercept", row.names(x[["coefficients"]]) )
-    #Get the number of coefficients
-    names_coefs <- rownames(x[["coefficients"]])
-    #Create multiplier values
-    multi_vals <- rep(1, length(names_coefs))
-    #create multiplier values based on coefficients
-    names(multi_vals) <- names_coefs
-    #Identify which standard values of 1 will get changed
-    if(!is.null(y)) {
-      match1 <- match(names(y), names(multi_vals))
-      multi_vals[names(y)]
-      multi_vals[match1] <- y
-    }
-    # Get point estimates and 95% confidence intervals #
-    if (reg_type == "ols") {
-      if(!is.null(y)) {
-        point_estimate <- x[["coefficients"]][, "Estimate"] * multi_vals
-        lower_ci <- (x[["coefficients"]][, "Estimate"] * multi_vals - ((x[["coefficients"]][, "Std. Error"]* multi_vals) * critical_value))
-        upper_ci <- (x[["coefficients"]][, "Estimate"] * multi_vals + ((x[["coefficients"]][, "Std. Error"]* multi_vals) * critical_value))
-        pvalue <- x[["coefficients"]][, grep("Pr", colnames(x[["coefficients"]]))]
-        ci_data_frame <- data.frame(point_estimate, lower_ci, upper_ci, pvalue)
-      } else {
-        point_estimate <- x[["coefficients"]][, "Estimate"]
-        lower_ci <- x[["coefficients"]][, "Estimate"] - ((x[["coefficients"]][, "Std. Error"]* multi_vals) * critical_value)
-        upper_ci <- x[["coefficients"]][, "Estimate"] + ((x[["coefficients"]][, "Std. Error"]* multi_vals) * critical_value)
-        pvalue <- x[["coefficients"]][, grep("Pr", colnames(x[["coefficients"]]))]
-        ci_data_frame <- data.frame(point_estimate, lower_ci, upper_ci, pvalue)
-      }
-    }
-    if (reg_type %in% c("logistic","poisson","other")) {
-      if(!is.null(y)) {
-        point_estimate <- exp(x[["coefficients"]][, "Estimate"] * multi_vals)
-        lower_ci <- exp((x[["coefficients"]][, "Estimate"] * multi_vals - ((x[["coefficients"]][, "Std. Error"]* multi_vals) * critical_value)))
-        upper_ci <- exp((x[["coefficients"]][, "Estimate"] * multi_vals + ((x[["coefficients"]][, "Std. Error"]* multi_vals) * critical_value)))
-        pvalue <- x[["coefficients"]][, grep("Pr", colnames(x[["coefficients"]]))]
-        ci_data_frame <- data.frame(point_estimate, lower_ci, upper_ci, pvalue)
-      } else {
-        point_estimate <- exp(x[["coefficients"]][, "Estimate"] )
-        lower_ci <- exp(x[["coefficients"]][, "Estimate"] - ((x[["coefficients"]][, "Std. Error"]* multi_vals) * critical_value))
-        upper_ci <- exp(x[["coefficients"]][, "Estimate"] + ((x[["coefficients"]][, "Std. Error"]* multi_vals) * critical_value))
-        pvalue <- x[["coefficients"]][, grep("Pr", colnames(x[["coefficients"]]))]
-        ci_data_frame <- data.frame(point_estimate, lower_ci, upper_ci, pvalue)
-      }
-    }
-    if (reg_type == "cox") {
-      if(!is.null(y)) {
-        point_estimate <- exp(x[["coefficients"]][, "coef"] * multi_vals)
-        lower_ci <- exp((x[["coefficients"]][, "coef"] * multi_vals - ((x[["coefficients"]][, "se(coef)"]* multi_vals) * critical_value)))
-        upper_ci <- exp((x[["coefficients"]][, "coef"] * multi_vals + ((x[["coefficients"]][, "se(coef)"]* multi_vals) * critical_value)))
-        pvalue <- x[["coefficients"]][, grep("Pr", colnames(x[["coefficients"]]))]
-        ci_data_frame <- data.frame(point_estimate, lower_ci, upper_ci, pvalue)
-      } else {
-        point_estimate <- exp(x[["coefficients"]][, "coef"] )
-        lower_ci <- exp(x[["coefficients"]][, "coef"] - ((x[["coefficients"]][, "se(coef)"]* multi_vals) * critical_value))
-        upper_ci <- exp(x[["coefficients"]][, "coef"] + ((x[["coefficients"]][, "se(coef)"]* multi_vals) * critical_value))
-        pvalue <- x[["coefficients"]][, grep("Pr", colnames(x[["coefficients"]]))]
-        ci_data_frame <- data.frame(point_estimate, lower_ci, upper_ci, pvalue)
-      }
-    }
-    #Drop intercept row
-    if (reg_type != "cox") {
-      ci_data_frame <- ci_data_frame[-intercept_row, ]
-    }
-    #Change column names
-    colnames(ci_data_frame) <- c("PointEst","Lower","Upper", "P")
-    #Identify all rows to use for subsets
-    all_rows <- nrow(ci_data_frame)
-    if(!is.null(coefs)) {
-      coefs <- coefs
-    } else {
-      coefs <- 1:all_rows
-    }
-    #Create subset data if needed
-    if(!is.null(coefs)) {
-      ci_data_frame <-   ci_data_frame[coefs, ]
-    }
-    #Get outcome
-    if(reg_type == "cox") {
-      outcome_y <- x[["call"]][[2]][[2]]
-    } else {
-      outcome_y <- x$terms[[2]]
-    }
-    #Return object
-    return(list("Estimates"=ci_data_frame, "Regression"=reg_type, "Outcome"= outcome_y))
-  }
-
-  ##############################################################################
   #                                Graph                                       #
   ##############################################################################
   plot_Summary <- function(adf, alpha_num=NULL, main=NULL, xlab=NULL, ylab=NULL,
-                           lwd=NULL, Lcol=NULL, Pcol=NULL, tgt=NULL,
-                          roundVal=NULL, xlim=NULL, ylim=NULL, abbrv=NULL, tcol=NULL,
-                          cex=NULL, cex.axis=NULL, cex.lab=NULL, cex.main=NULL, cex.sub=NULL,
+                           lwd=NULL, Lcol=NULL, Pcol=NULL, tgt=NULL, roundVal=NULL,
+                           xlim=NULL, ylim=NULL, abbrv=NULL, tcol=NULL, cex=NULL,
+                           cex.axis=NULL, cex.lab=NULL, cex.main=NULL, cex.sub=NULL,
                           pt.cex=NULL, pch=NULL, print=NULL,sub=NULL,decreasing=NULL) {
     if(!is.null(cex)) {
       cex <- cex
@@ -435,10 +294,8 @@ plot.Summary <- function(x, y=NULL, coefs=NULL, increase=NULL, main=NULL, sub=NU
   ################
   # Create graph #
   ################
-  #Create point estimate and confidence interval data
-  pecidf <- fncCoef(x=x, y=increase, coefs=coefs)
   #Run graph
-  plot_Summary(adf=pecidf, alpha_num=sort, main=main, xlab=xlab,
+  plot_Summary(adf=x, alpha_num=sort, main=main, xlab=xlab,
                ylab=ylab, lwd=lwd, Lcol=color, Pcol=pcol, tgt=tgt, roundVal=round.c, xlim=xlim,
                ylim=ylim, abbrv=abbrv, tcol=tcol, cex=cex, cex.axis=cex.axis,
                cex.lab=cex.lab, cex.main=cex.main, cex.sub=cex.sub,

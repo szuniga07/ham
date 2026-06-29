@@ -7,8 +7,6 @@
 \method{plot}{Summary}(
   x,
   y = NULL,
-  coefs = NULL,
-  increase = NULL,
   main = NULL,
   sub = NULL,
   sort = NULL,
@@ -41,18 +39,6 @@ Summary(my_regression$model) unless using ITS or DID models (my_did_model$DID). 
 lm(), glm(), or coxph(), use Summary(my_model).}
 
 \item{y}{not currently used.}
-
-\item{coefs}{an expression defining a subset of the predictor coefficient rows (i.e., not the intercept) to view in
-the Summary plot. The default is NULL, thereby using all predictor coefficients. Specify, for example, 1:2 to
-view just the Summary of the first 2 coefficients. It is recommended to use print=TRUE to confirm the coefficient
-names because they will follow that same order and not necessarily the order of the coefficients listed in the
-original regression model.}
-
-\item{increase}{a named numeric vector object of the coefficient name and associated increase in the predictor. For example,
-in the model y ~ a + x1 + x2, increase= c(x1= 10), will produce point estimates and confidence intervals adjusted
-to a 10-unit increase in the variable x1. This is most helpful when the continuous predictor has many levels and
-the interpretation of the standard 1-unit increase is less informative than a larger change in X. For example,
-discussing a difference in 10 or 20 years may be more helpful in describing the impact on 30-day mortality.}
 
 \item{main}{overall title for the plot, default is NULL which then lists 'Summary' for OLS regression or the type
 of Summary statistic such as 'Odds Ratio' (logistic), 'Incidence Rate Ratio' (Poisson), or 'Hazard Ratio' (Cox).}
@@ -112,7 +98,7 @@ and confidence intervals. Default is 4.}
 plot of the Summary of regression coefficients, the display can be modified in various ways.
 }
 \description{
-Plots a Summary class object of a regression model (Summary() with a capital 'S'). Produces a chart of
+Plots a Summary class object of a regression model (Summary() with a capital 'S'). Prints a chart of
 the predictor's coefficient estimates with 95\% confidence intervals (Harrell, 2015). Excludes the
 intercept (if present). Horizontal line segments represent the predictor variable coefficients and
 the vertical line is at 0 or 1 (e.g., odds ratio, incidence rate ratio, hazard ratio and other GLMs at 1)
@@ -130,26 +116,26 @@ plot(x=Summary(m01))
 # Using the assess function, notice 'm02$model' object below
 m02 <- assess(formula=mpg ~ wt+hp+am, data=mtcars, regression="ols")
 # let's see the impactful 83.5 hp increase in the 1st to 3rd quartiles
-plot(x=Summary(m02$model), increase=c(hp= 83.5))
+plot(x=Summary(m02$model, increase=c(hp= 83.5)))
 
 #Logistic model
 m03 <- glm(vs ~ wt+hp+am, data=mtcars, family="binomial")
 # Display options, sorted plot, and printing the 95\% CIs to review
-plot(x=Summary(m03), increase=c(wt=1.1375, hp= 83.5), color="aquamarine", lwd=4,
+plot(x=Summary(m03, increase=c(wt=1.1375, hp= 83.5) ), color="aquamarine", lwd=4,
 pt.cex= 2, tcol="magenta", sort="coef", cex.axis=2, cex.main=2, xlim=c(-.5, 3),
 print=TRUE, round.c=6)
 
 #Poisson model with an offset using assess()
 m04 <- assess(formula=HAI ~  Month+ offset(log(PatientDays)),
 data=infections, regression="poisson")
-#Because 1 year is a meaninful period in program evaluation, Month=12
-plot(x=Summary(m04$model), increase=c(Month=12), xlim=c(0.6, 1.01),
+#Because 1 year is a meaningful period in program evaluation, Month=12
+plot(x=Summary(m04$model, increase=c(Month=12)), xlim=c(0.6, 1.01),
 lwd=7, color="cyan", pcol="salmon", pt.cex=2)
 
 #NOT RUN: Cox Proportional Hazards model
 #library(survival)
 #m04 <- coxph(Surv(time, status) ~ age+sex+ph.karno, data=cancer)
-#plot(x=Summary(m04), increase=c(age=13, ph.karno=15))
+#plot(x=Summary(m04, increase=c(age=13, ph.karno=15)))
 
 # This also works for ITS and DID causal models through ham
 im22 <- assess(formula=los ~ ., data=hosprog, intervention = "program",
