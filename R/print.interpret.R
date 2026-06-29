@@ -11,6 +11,9 @@
 #'
 #' @return formatted interpret object results.
 #' @export
+#'
+#' @seealso [interpret()] for the 'interpret' class object.
+#'
 #' @importFrom methods show
 #' @examples
 #'

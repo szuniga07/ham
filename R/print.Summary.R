@@ -17,6 +17,9 @@
 #' @importFrom methods show
 #'
 #' @export
+#'
+#' @seealso [Summary()] for the 'Summary' class object.
+#'
 print.Summary <- function(x, digits=NULL, ...) {
   #Stop if not a Summary class object
   if (any(class(x) == 'Summary') ==FALSE) {stop("Error: Expecting 'Summary' class object." )}

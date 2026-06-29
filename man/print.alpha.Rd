@@ -24,3 +24,6 @@ an item is removed from the scale, and the total sample size.
 print(alpha(items=c("i1","i2","i3","i4","i5"), data=cas))
 
 }
+\seealso{
+\code{\link[=alpha]{alpha()}} for the 'alpha' class object.
+}

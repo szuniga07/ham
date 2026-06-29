@@ -24,6 +24,8 @@
 #' alpha(items=c("i2","i3","i4","i5"), data=cas)
 #' @export
 #'
+#' @seealso [print.alpha()], [interpret()] for a formatted print and interpretation of the 'alpha' class object.
+#'
 alpha <- function(items, data) {
   if (sum( length(quote(items)), length(quote(data)) ) != 2) stop("Error: You did not type both names for 'items' and 'data' arguments.")  #If statement expression prints this.
   if (is.character(items) != TRUE) stop("Error: Expecting a character vector.")

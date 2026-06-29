@@ -53,5 +53,5 @@ plot(x=Summary(m03, increase=c(wt=1.1375, hp= 83.5), coefs= c(1, 3) ))
 
 }
 \seealso{
-\code{\link[=plot.Summary]{plot.Summary()}}, \code{\link[=print.Summary]{print.Summary()}} for a plot and printed output of the 'Summary' class object.
+\code{\link[=plot.Summary]{plot.Summary()}}, \code{\link[=print.Summary]{print.Summary()}} for a plot and a formatted print output of the 'Summary' class object.
 }

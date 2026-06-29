@@ -180,5 +180,5 @@ Rosenbaum, P. (2010). Design of Observational Studies, Second Edition. New York:
 ISBN: 978-1-4419-1212-1.
 }
 \seealso{
-\code{\link[=plot.assess]{plot.assess()}} for a plot of the 'assess' class object.
+\code{\link[=plot.assess]{plot.assess()}}, \code{\link[=interpret]{interpret()}} for a plot and interpretation of the 'assess' class object.
 }

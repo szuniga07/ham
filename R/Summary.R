@@ -27,7 +27,7 @@
 #' confidence interval limits, p-values, and additional information.
 #' @export
 #'
-#' @seealso [plot.Summary()], [print.Summary()] for a plot and printed output of the 'Summary' class object.
+#' @seealso [plot.Summary()], [print.Summary()] for a plot and a formatted print output of the 'Summary' class object.
 #'
 #' @examples
 #' # OLS regression

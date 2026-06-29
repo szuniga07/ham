@@ -83,7 +83,7 @@
 #' information, and summary of ITS effects if analyzed.
 #' @export
 #'
-#' @seealso [plot.assess()] for a plot of the 'assess' class object.
+#' @seealso [plot.assess()], [interpret()] for a plot and interpretation of the 'assess' class object.
 #'
 #' @references
 #' Angrist, J. D., & Pischke, J. S. (2009). Mostly Harmless Econometrics:

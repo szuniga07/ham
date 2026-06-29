@@ -47,5 +47,6 @@ interpret(blos1$Diagnostics, digits=5)
 
 }
 \seealso{
-\code{\link[=itsEffect]{itsEffect()}} for Interrupted Time Series effects calculated for "Summary 1".
+\code{\link[=print.interpret]{print.interpret()}}, \code{\link[=itsEffect]{itsEffect()}} for formatted interpret print classes such as
+Interrupted Time Series effects calculated for 'Summary 1', 'Summary 2', etc.
 }

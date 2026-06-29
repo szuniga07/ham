@@ -152,5 +152,5 @@ Kruschke, J. (2014). Doing Bayesian Data Analysis: A Tutorial with R, JAGS, and
 Stan, Second Edition. New York: Academic Press. ISBN: 9780124058880
 }
 \seealso{
-\code{\link[=plot.Bayes]{plot.Bayes()}} for a plot of the 'Bayes' class object.
+\code{\link[=plot.Bayes]{plot.Bayes()}}, \code{\link[=interpret]{interpret()}} for a plot and interpretation of the 'Bayes' class object.
 }

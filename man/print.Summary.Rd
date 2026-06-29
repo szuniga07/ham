@@ -26,3 +26,6 @@ the p-value. Excludes intercept coefficient as does Summary().
 print(Summary(assess(mpg ~ wt+hp+am, data=mtcars, regression="ols")$model) )
 
 }
+\seealso{
+\code{\link[=Summary]{Summary()}} for the 'Summary' class object.
+}

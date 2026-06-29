@@ -18,6 +18,9 @@
 #' @importFrom methods show
 #'
 #' @export
+#'
+#' @seealso [alpha()] for the 'alpha' class object.
+#'
 print.alpha <- function(x, ...) {
   Alpha <- x
   #Combine item statistics

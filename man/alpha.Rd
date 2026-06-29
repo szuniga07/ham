@@ -32,3 +32,6 @@ Brooks/Cole. ISBN: 0-8185-0283-5.
 Kline, Paul (1999). Handbook of Psychological Testing (2nd ed).
 Routledge, New York. ISBN: 9780415211581.
 }
+\seealso{
+\code{\link[=print.alpha]{print.alpha()}}, \code{\link[=interpret]{interpret()}} for a formatted print and interpretation of the 'alpha' class object.
+}

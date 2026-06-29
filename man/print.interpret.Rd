@@ -44,3 +44,6 @@ blos1 <- Bayes(losmcmc, y="Dx", parameter="muOfY")
 interpret(blos1$Diagnostics, digits=5)
 
 }
+\seealso{
+\code{\link[=interpret]{interpret()}} for the 'interpret' class object.
+}

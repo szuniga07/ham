@@ -34,6 +34,8 @@
 #' Generally run within the assess function.
 #' @export
 #'
+#' @seealso [assess()], [interpret()] for ITS models and interpretation of the 'itsEffect' class object.
+#'
 #' @references
 #' Linden, Ariel. (2015). Conducting Interrupted Time-series Analysis for Single- and Multiple-group
 #' Comparisons. The Stata Journal, 2015, 15(2), 480-500, https://doi.org/10.1177/1536867X1501500208

@@ -66,7 +66,7 @@
 #' @importFrom stats sd ar density median residuals var
 #' @export
 #'
-#' @seealso [plot.Bayes()] for a plot of the 'Bayes' class object.
+#' @seealso [plot.Bayes()], [interpret()] for a plot and interpretation of the 'Bayes' class object.
 #'
 #' @references
 #' Cohen, J. (1988). Statistical Power Analysis for the Behavioral Sciences, Second Edition.

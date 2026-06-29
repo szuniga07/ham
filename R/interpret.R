@@ -14,7 +14,8 @@
 #' @return a list with interpretations of Cronbach's alpha scales, regression model results, or MCMC diagnostics.
 #' @export
 #'
-#' @seealso [itsEffect()] for Interrupted Time Series effects calculated for "Summary 1".
+#' @seealso [print.interpret()], [itsEffect()] for formatted interpret print classes such as
+#' Interrupted Time Series effects calculated for 'Summary 1', 'Summary 2', etc.
 #'
 #' @examples
 #' # Interpret Cronbach's alpha
