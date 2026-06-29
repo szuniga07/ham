@@ -31,7 +31,7 @@ print.Summary <- function(x, digits=NULL, ...) {
   model_summary <- signif(x$Estimates, dig_val)
 
   ## Print function ##
-    cat("\n=================================================")
+    cat("=================================================")
     cat("\n                  Model Summary")
     cat("\n=================================================\n")
     print.data.frame(model_summary)

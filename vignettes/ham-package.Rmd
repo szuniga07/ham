@@ -259,7 +259,7 @@ Take a look at the effect when hp is increased by 83.5
 ```{r Summary model 2 results}
 m02 <- assess(formula=mpg ~ wt+hp+am, data=mtcars, regression="ols")
 # Using the assess function, notice 'm02$model' object below
-#print(Summary(m02), digits=4)
+print(Summary(m02$model), digits=4)
 ```
 
 let's see the impactful 83.5 hp increase in going from the 1st to 3rd quartiles
