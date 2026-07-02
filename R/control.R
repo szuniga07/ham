@@ -11,7 +11,7 @@
 #' @param time time variable name.
 #' @param data name of data frame object.
 #' @param type indicate what type of control chart is needed. Options for the X-bar, p-, and u-charts should be listed as
-#' 'x', 'p', and 'u'. Default is the 'x' chart.
+#' 'x', 'p', and 'u'. The 'u' chart is a ratio of x:y, therefore both x and y column names are required. Default is the 'x' chart.
 #' @param n.equal whether there are or we assume equal subgroup (sample) sizes. If n.equal=TRUE, control limits are calculated using the overall
 #' mean n value. If n.equal=FALSE, control limits are based on each subgroup's sample size. Default is TRUE.
 #' @param intervention a single numeric value for the time when an intervention begins (e.g., intervention=25;
@@ -205,6 +205,8 @@ control <- function(x, y=NULL, time, data, type="x", subset=NULL,
   ############################
   #Uses y argument
   rateSPC <- function(x, y, time, data, type, n.equal) {
+    #Remove missing data
+    data <- data[complete.cases(data[, which(colnames(data) %in% c(x, y, time))]), ]
     #By each X level
     if(type == "u") {
       agr_sum <- data[, x]
@@ -263,6 +265,8 @@ control <- function(x, y=NULL, time, data, type="x", subset=NULL,
   ## rateSPC for interventions ##
   ###############################
   rateSPCd <- function(x, y, time, data, type, n.equal, intervention) {
+    #Remove missing data
+    data <- data[complete.cases(data[, which(colnames(data) %in% c(x, y, time, intervention))]), ]
     #Baseline data
     baseline <- rateSPC(x=x, y=y, time=time, data=data[data[, time] < intervention, ],
                         type=type, n.equal=n.equal)
