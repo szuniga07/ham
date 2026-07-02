@@ -11,7 +11,8 @@
 #' @param time time variable name.
 #' @param data name of data frame object.
 #' @param type indicate what type of control chart is needed. Options for the X-bar, p-, and u-charts should be listed as
-#' 'x', 'p', and 'u'. The 'u' chart is a ratio of x:y, therefore both x and y column names are required. Default is the 'x' chart.
+#' 'x', 'p', and 'u'. The 'u' chart (and p-chart when y is present, e.g., y='denominator') is a ratio of x:y, therefore both
+#' x and y column names are required. Default is the 'x' chart.
 #' @param n.equal whether there are or we assume equal subgroup (sample) sizes. If n.equal=TRUE, control limits are calculated using the overall
 #' mean n value. If n.equal=FALSE, control limits are based on each subgroup's sample size. Default is TRUE.
 #' @param intervention a single numeric value for the time when an intervention begins (e.g., intervention=25;
