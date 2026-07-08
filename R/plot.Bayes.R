@@ -985,13 +985,16 @@ if(y== "target") {
              col=tgtcol, cex=cex.text )
       }
       #Add in text for distribution associated with Y
-      if(any(!is.na(x$Target$Est.Prob.GT.Y)) == TRUE) {
+      if(any(!is.na(x$Target$Est.Prob.LT.Y)) == TRUE) {
         for(i in 1:num_tgt_y) {
           text( x$targets$y[[i]] , y_coord[i+num_tgt_p] ,
-                bquote( .(round(100*(1-x$Target$Est.Prob.GT.Y[[i]][[1]]), 1)) * "% < " *
+#                bquote( .(round(100*(1-x$Target$Est.Prob.LT.Y[[i]][[1]]), 1)) * "% < " *
+                bquote( .(round(100*(x$Target$Est.Prob.LT.Y[[i]][[1]]), 1)) * "% < " *
                           .(signif(x$targets$y[[i]], 3)) * " < " *
-                          .(round(100*x$Target$Est.Prob.GT.Y[[i]][[1]], 1)) * "%" ) ,
-                adj=c((1-x$Target$Est.Prob.GT.Y[[i]][[1]]), 0), cex=cex.text , col=tgtcol)
+#                          .(round(100*x$Target$Est.Prob.LT.Y[[i]][[1]], 1)) * "%" ) ,
+                          .(round(100*(1-x$Target$Est.Prob.LT.Y[[i]][[1]]), 1)) * "%" ) ,
+#                adj=c((1-x$Target$Est.Prob.LT.Y[[i]][[1]]), 0), cex=cex.text , col=tgtcol)
+                adj=c((x$Target$Est.Prob.LT.Y[[i]][[1]]), 0), cex=cex.text , col=tgtcol)
         }
       }
     }
@@ -2016,13 +2019,16 @@ if(y == "check") {
              col=tgtcol, cex=cex.text )
       }
       #Add in text for distribution associated with Y
-      if(any(!is.na(x$Target$Est.Prob.GT.Y)) == TRUE) {
+      if(any(!is.na(x$Target$Est.Prob.LT.Y)) == TRUE) {
         for(i in 1:num_tgt_y) {
           text( x$targets$y[[i]] , y_coord[i+num_tgt_p] ,
-            bquote( .(round(100*(1-x$Target$Est.Prob.GT.Y[[i]][[1]]), 1)) * "% < " *
+#            bquote( .(round(100*(1-x$Target$Est.Prob.LT.Y[[i]][[1]]), 1)) * "% < " *
+            bquote( .(round(100*(x$Target$Est.Prob.LT.Y[[i]][[1]]), 1)) * "% < " *
                       .(signif(x$targets$y[[i]], 3)) * " < " *
-                      .(round(100*x$Target$Est.Prob.GT.Y[[i]][[1]], 1)) * "%" ) ,
-            adj=c((1-x$Target$Est.Prob.GT.Y[[i]][[1]]), 0), cex=cex.text , col=tgtcol)
+#                      .(round(100*x$Target$Est.Prob.LT.Y[[i]][[1]], 1)) * "%" ) ,
+                      .(round(100*(1 - x$Target$Est.Prob.LT.Y[[i]][[1]]), 1)) * "%" ) ,
+#            adj=c((1-x$Target$Est.Prob.LT.Y[[i]][[1]]), 0), cex=cex.text , col=tgtcol)
+            adj=c((x$Target$Est.Prob.LT.Y[[i]][[1]]), 0), cex=cex.text , col=tgtcol)
           }
       }
     }

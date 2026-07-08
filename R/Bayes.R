@@ -47,16 +47,20 @@
 #' data frames when  y='multi'. This variable is the denominator that can be used to calculate a rate in the formula
 #' numerator/denominator. For example, when the 'numerator' column equals 4 and the 'denominator' column equals 10, then this
 #' single row of data is expanded to 10 rows with four values of 1 and six values of 0 when expand='denominator'. Default is NULL.
-#' @param targets list of one or two named elements (p, y) with numeric values that represent quantile values (p) in the distribution
-#' to return associated outcome values and/or specific outcome values (y) to retrieve associated probabilities. For example, a
-#' distribution of harmful hospital readmission rates has an estimated median value of 0.25. Staff are considering 2 types of targets,
-#' percentiles (p) of key interest and specific outcome rates (y). They want to know the readmission rate that is at
-#' the 40th percentile for a reduced readmission rate (below what is 'average' at the 50th percentile) and the probability greater
-#' than a readmission rate of 0.20. They get this information by entering targets=list(p=0.40, y=0.20); calculating 1 - prob(y)
-#' from returned results gives them an idea about the effort needed to meet this target of a reduced readmission rate.
+#' @param targets list of one, two, or three named elements ('p', 'y', 'e') with numeric values that represent quantile values (p)
+#' in the distribution to return associated outcome values, specific outcome values (y) to retrieve associated probabilities less than Y,
+#' and/or a 2 element list (named 'a' and 'b') of low and high proportions (no particular order) that Cohen's h effect sizes ('e') are calculated from it (i.e.,
+#' not Bayesian analysis) to give us an idea of how large differences in targets are (e.g., target 0.50 vs target 0.40 = Cohen's h of 0.201
+#' = 'small effect'--0.2, 0.5, 0.8 as small, medium, and large effect sizes). For example, a distribution of harmful hospital readmission
+#' rates has an estimated median value of 0.25. Staff are considering 2 types of targets, percentiles (p) of key interest and specific
+#' outcome rates (y). They want to know the readmission rate that is at the 40th percentile for a reduced readmission rate (below what
+#' is 'average' at the 50th percentile) and the probability greater than a readmission rate of 0.20. They get this information by
+#' entering targets=list(p=0.40, y=0.20, e=list(0.50, 0.40)); considering prob(y) from the returned results gives them an idea about
+#' the effort needed to meet this target of a reduced readmission rate. And as they are searching for a shift in targets as a small
+#' but substantial effect, the Cohen's h effect size of 0.20 indicates that this is met when comparing targets of 0.50 vs 0.40.
 #' Select type= one of these options: 'n', 'ln', 'w', 'g', 't', 'bern', 'bin'. Also select parameter= the appropriate center, spread,
-#' and possible 3rd shape distribution parameter (e.g., parameter=c('mean', 'sd')). And option to select center= 'mean',
-#' 'median', 'mode'. Default is NULL.
+#' and possible 3rd shape distribution parameter (e.g., parameter=c('mean', 'sd')). And option to select center= 'mean', 'median',
+#' 'mode'. Default is NULL.
 
 #' @return data frame of summary statistics for the MCMC parameter's distribution and/or MCMC data frame.
 #' Statistics include highest density interval, effective sample size, proportion of distribution
@@ -95,7 +99,8 @@
 #' # Our administrators ask how far are we from our goals, they ask about targets
 #' # in increments of 5 points of probability or specific days. We answer both.
 #' btarget1 <- Bayes(x=losmcmc, y="target", type="n", parameter=c("muOfY","sigmaOfY"),
-#' newdata=TRUE, target=list(p=c(.35,.4,.45, .5, .55),  y=c(3,4))) # 'newdata' for plots
+#' newdata=TRUE, target=list(p=c(.35,.4,.45, .5, .55),  y=c(3,4),
+#' e= list(a=c(.35,.4,.45), b= c(.5, .5, .5)) )) # 'newdata' for plots
 #' print(btarget1$Target$Est.Quantile.P)  # 5-point increments
 #' print(btarget1$Target$Est.Prob.GT.Y)   # specific day values, 4 days is plausible
 #'
@@ -195,6 +200,39 @@ Bayes <- function(x, y="mcmc", parameter=NULL, mass=.95, compare=NULL,
       stop("Error: Expecting a named list for 'targets'.")
     }
   }
+  # make list to test if there are equal target effect elements and warn if necessary
+  if(y == "target") {
+    if(!is.null(targets)) {
+      if(!is.null(targets$e)) {
+        val_ls <-  targets$e
+        #Get the ratio of longer to shorter element
+        xy_ratio <- length(val_ls[[which.max(c(length(val_ls[[1]]), length(val_ls[[2]])) )]])/
+          length(val_ls[[which.min(c(length(val_ls[[1]]), length(val_ls[[2]])) )]])
+      } else {
+        val_ls <- NULL
+        xy_ratio <- NULL
+      }
+    }
+  }
+  # warning
+  if(y == "target") {
+    if( !is.null(xy_ratio)) {
+    if(xy_ratio != round(xy_ratio)) {
+      warning("Warning message: In y='target': e's longer object length is not a multiple of shorter object length")
+    }
+    }
+  }
+# make sure effect sizes values are named a and b
+  if(y == "target") {
+    if(!is.null(targets)) {
+      if(!is.null(targets$e)) {
+        if(all(c("a","b") %in% names(targets$e)) == FALSE) {
+          stop("Error: Expecting a named list of 'a' and 'b' for targets 'e' element.")
+        }
+      }
+      }
+    }
+
 #Convert center to median when y="r2"
   if(y == "r2") {
     if(center == "mode") {
@@ -813,7 +851,7 @@ fncHdiBinSmry <- function(MCmatrix, expand=NULL, datFrm, Outcome, Group2, Group3
 #           6. Get proportions above/below specific values                     #
 ################################################################################
 #This function calculates the proportion above specific values.
-fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL,
+fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL, eVal=NULL,
                         Center=NULL, Spread=NULL, Skew=NULL, CenTend=NULL ) {
   #Sort yVal
   if(!is.null(yVal)) {
@@ -868,11 +906,11 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL,
   if(!is.null(yVal)) {
     if(length(yVal) > 1) {
     if(Distribution %in% c("bern", "bin")) {
-      for (i in 1:length(yVal)) {
-        PbetaGtY[[i]] <- summarizePost( 1- pbeta(yVal[i], a_shape,
+      for (i in 1:length(yVal)) {        #replaced "1- pbeta" with "pbeta" to get p < X
+        PbetaGtY[[i]] <- summarizePost( pbeta(yVal[i], a_shape,
                                                  b_shape) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
-        PbetaGtY[[1 + length(yVal)]] <- summarizePost( abs((1- pbeta(yVal[length(yVal)], a_shape, b_shape)) -
-                                                       (1- pbeta(yVal[1], a_shape, b_shape)))    )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+        PbetaGtY[[1 + length(yVal)]] <- summarizePost( abs((pbeta(yVal[length(yVal)], a_shape, b_shape)) -
+                                                       (pbeta(yVal[1], a_shape, b_shape)))    )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
         names(PbetaGtY)[i] <- paste0("Y_", yVal[i])
         names(PbetaGtY)[length(yVal) + 1] <- "High.Low.Interval"
       }
@@ -880,7 +918,7 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL,
     } else {
       if(Distribution %in% c("bern", "bin")) {
         for (i in 1:length(yVal)) {
-          PbetaGtY[[i]] <- summarizePost( 1- pbeta(yVal[i], a_shape,
+          PbetaGtY[[i]] <- summarizePost( pbeta(yVal[i], a_shape,
                                                    b_shape) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
           names(PbetaGtY)[i] <- paste0("Y_", yVal[i])
         }
@@ -954,9 +992,9 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL,
     if(Distribution == "ln") {
       for (i in 1:length(yVal)) {
         PlogGtY[[i]] <- summarizePost( plnorm(q=yVal[i], meanlog= MC.Matrix[, Center],
-                                              sdlog= MC.Matrix[, Spread], lower.tail=FALSE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
-        PlogGtY[[1 + length(yVal)]] <- summarizePost( abs(plnorm(q=yVal[length(yVal)], meanlog= MC.Matrix[, Center], sdlog= MC.Matrix[, Spread], lower.tail=FALSE) -
-                                       plnorm(q=yVal[1], meanlog= MC.Matrix[, Center], sdlog= MC.Matrix[, Spread], lower.tail=FALSE)) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+                                              sdlog= MC.Matrix[, Spread], lower.tail=TRUE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+        PlogGtY[[1 + length(yVal)]] <- summarizePost( abs(plnorm(q=yVal[length(yVal)], meanlog= MC.Matrix[, Center], sdlog= MC.Matrix[, Spread], lower.tail=TRUE) -
+                                       plnorm(q=yVal[1], meanlog= MC.Matrix[, Center], sdlog= MC.Matrix[, Spread], lower.tail=TRUE)) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
         names(PlogGtY)[i] <- paste0("Y_", yVal[i])
         names(PlogGtY)[length(yVal) + 1] <- "High.Low.Interval"
       }
@@ -965,7 +1003,7 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL,
       if(Distribution == "ln") {
         for (i in 1:length(yVal)) {
           PlogGtY[[i]] <- summarizePost( plnorm(q=yVal[i], meanlog= MC.Matrix[, Center],
-                                                sdlog= MC.Matrix[, Spread], lower.tail=FALSE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+                                                sdlog= MC.Matrix[, Spread], lower.tail=TRUE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
           names(PlogGtY)[i] <- paste0("Y_", yVal[i])
         }
       }
@@ -1021,9 +1059,9 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL,
       if(Distribution == "n") {
         for (i in 1:length(yVal)) {
           PnormGtY[[i]] <- summarizePost( pnorm(q=yVal[i], mean= MC.Matrix[, Center],
-                                                sd= MC.Matrix[, Spread], lower.tail=FALSE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
-          PnormGtY[[1 + length(yVal)]] <- summarizePost( abs(pnorm(q=yVal[length(yVal)], mean= MC.Matrix[, Center], sd= MC.Matrix[, Spread], lower.tail=FALSE) -
-                                                           pnorm(q=yVal[1], mean= MC.Matrix[, Center], sd= MC.Matrix[, Spread], lower.tail=FALSE)))[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+                                                sd= MC.Matrix[, Spread], lower.tail=TRUE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+          PnormGtY[[1 + length(yVal)]] <- summarizePost( abs(pnorm(q=yVal[length(yVal)], mean= MC.Matrix[, Center], sd= MC.Matrix[, Spread], lower.tail=TRUE) -
+                                                           pnorm(q=yVal[1], mean= MC.Matrix[, Center], sd= MC.Matrix[, Spread], lower.tail=TRUE)))[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
           names(PnormGtY)[i] <- paste0("Y_", yVal[i])
           names(PnormGtY)[length(yVal) + 1] <- "High.Low.Interval"
         }
@@ -1032,7 +1070,7 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL,
       if(Distribution == "n") {
         for (i in 1:length(yVal)) {
           PnormGtY[[i]] <- summarizePost( pnorm(q=yVal[i], mean= MC.Matrix[, Center],
-                                                sd= MC.Matrix[, Spread], lower.tail=FALSE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+                                                sd= MC.Matrix[, Spread], lower.tail=TRUE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
           names(PnormGtY)[i] <- paste0("Y_", yVal[i])
         }
       }
@@ -1086,8 +1124,8 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL,
   if(!is.null(yVal)) {
 #    if(length(yVal) > 1) {
 #    if(Distribution == "sn") {
-#      for (i in 1:length(yVal)) {         #I need to subtract 1-psn to get the right prop > 1
-#        PsnormGtY[[i]] <- summarizePost( 1 - pskewn(x=yVal[i], xi= MC.Matrix[, Center], omega= MC.Matrix[, Spread],
+#      for (i in 1:length(yVal)) {         #I need to subtract 1-psn to get the prop > 1...changed mind
+#        PsnormGtY[[i]] <- summarizePost( pskewn(x=yVal[i], xi= MC.Matrix[, Center], omega= MC.Matrix[, Spread],
 #                                                    alpha= MC.Matrix[, Skew], lower.tail=FALSE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
 #        names(PsnormGtY)[i] <- paste0("Y_", yVal[i])
 #      }
@@ -1095,10 +1133,10 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL,
 #  } else {
 #    if(Distribution == "sn") {
 #      for (i in 1:length(yVal)) {         #I need to subtract 1-psn to get the right prop > 1
-#        PsnormGtY[[i]] <- summarizePost( 1 - pskewn(x=yVal[i], xi= MC.Matrix[, Center], omega= MC.Matrix[, Spread],
+#        PsnormGtY[[i]] <- summarizePost( pskewn(x=yVal[i], xi= MC.Matrix[, Center], omega= MC.Matrix[, Spread],
 #                                                    alpha= MC.Matrix[, Skew], lower.tail=FALSE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
-#        PsnormGtY[[1 + length(yVal)]] <- summarizePost( abs((1 - pskewn(x=yVal[length(yVal)], xi= MC.Matrix[, Center], omega= MC.Matrix[, Spread], alpha= MC.Matrix[, Skew], lower.tail=FALSE)) -
-#                                                          (1 - pskewn(x=yVal[1], xi= MC.Matrix[, Center], omega= MC.Matrix[, Spread], alpha= MC.Matrix[, Skew], lower.tail=FALSE)) ))[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+#        PsnormGtY[[1 + length(yVal)]] <- summarizePost( abs((pskewn(x=yVal[length(yVal)], xi= MC.Matrix[, Center], omega= MC.Matrix[, Spread], alpha= MC.Matrix[, Skew], lower.tail=FALSE)) -
+#                                                          (pskewn(x=yVal[1], xi= MC.Matrix[, Center], omega= MC.Matrix[, Spread], alpha= MC.Matrix[, Skew], lower.tail=FALSE)) ))[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
 #        names(PsnormGtY)[i] <- paste0("Y_", yVal[i])
 #        names(PsnormGtY)[length(yVal) + 1] <- "High.Low.Interval"
 #      }
@@ -1157,9 +1195,9 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL,
     if(Distribution == "t") {
       for (i in 1:length(yVal)) {
         PtGtY[[i]] <- summarizePost( pt(q=yVal[i], df= MC.Matrix[, Skew],
-                                        ncp= MC.Matrix[, Center], lower.tail=FALSE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
-        PtGtY[[length(yVal) + 1]] <- summarizePost( abs(pt(q=yVal[length(yVal)], df= MC.Matrix[, Skew], ncp= MC.Matrix[, Center], lower.tail=FALSE) -
-                                                      pt(q=yVal[1], df= MC.Matrix[, Skew], ncp= MC.Matrix[, Center], lower.tail=FALSE)) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+                                        ncp= MC.Matrix[, Center], lower.tail=TRUE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+        PtGtY[[length(yVal) + 1]] <- summarizePost( abs(pt(q=yVal[length(yVal)], df= MC.Matrix[, Skew], ncp= MC.Matrix[, Center], lower.tail=TRUE) -
+                                                      pt(q=yVal[1], df= MC.Matrix[, Skew], ncp= MC.Matrix[, Center], lower.tail=TRUE)) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
         names(PtGtY)[i] <- paste0("Y_", yVal[i])
         names(PtGtY)[length(yVal) + 1] <- "High.Low.Interval"
       }
@@ -1168,7 +1206,7 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL,
       if(Distribution == "t") {
         for (i in 1:length(yVal)) {
           PtGtY[[i]] <- summarizePost( pt(q=yVal[i], df= MC.Matrix[, Skew],
-                                          ncp= MC.Matrix[, Center], lower.tail=FALSE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+                                          ncp= MC.Matrix[, Center], lower.tail=TRUE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
           names(PtGtY)[i] <- paste0("Y_", yVal[i])
         }
       }
@@ -1224,9 +1262,9 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL,
     if(Distribution == "w") {
       for (i in 1:length(yVal)) {
         PWeibGtY[[i]] <- summarizePost( pweibull(q=yVal[i], shape= MC.Matrix[, Center],
-                                                 scale= MC.Matrix[, Spread], lower.tail=FALSE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
-        PWeibGtY[[1 + length(yVal)]] <- summarizePost( abs(pweibull(q=yVal[length(yVal)], shape= MC.Matrix[, Center], scale= MC.Matrix[, Spread], lower.tail=FALSE) -
-                                          pweibull(q=yVal[1], shape= MC.Matrix[, Center], scale= MC.Matrix[, Spread], lower.tail=FALSE)) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+                                                 scale= MC.Matrix[, Spread], lower.tail=TRUE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+        PWeibGtY[[1 + length(yVal)]] <- summarizePost( abs(pweibull(q=yVal[length(yVal)], shape= MC.Matrix[, Center], scale= MC.Matrix[, Spread], lower.tail=TRUE) -
+                                          pweibull(q=yVal[1], shape= MC.Matrix[, Center], scale= MC.Matrix[, Spread], lower.tail=TRUE)) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
         names(PWeibGtY)[i] <- paste0("Y_", yVal[i])
         names(PWeibGtY)[length(yVal) + 1] <- "High.Low.Interval"
       }
@@ -1235,7 +1273,7 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL,
       if(Distribution == "w") {
         for (i in 1:length(yVal)) {
           PWeibGtY[[i]] <- summarizePost( pweibull(q=yVal[i], shape= MC.Matrix[, Center],
-                                                   scale= MC.Matrix[, Spread], lower.tail=FALSE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+                                                   scale= MC.Matrix[, Spread], lower.tail=TRUE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
           names(PWeibGtY)[i] <- paste0("Y_", yVal[i])
         }
       }
@@ -1291,9 +1329,9 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL,
     if(Distribution == "g") {
       for (i in 1:length(yVal)) {
         PGammaGtY[[i]] <- summarizePost( pgamma(q=yVal[i], shape= MC.Matrix[, Center],
-                                                rate= MC.Matrix[, Spread], lower.tail=FALSE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
-        PGammaGtY[[1 + length(yVal)]] <- summarizePost( abs(pgamma(q=yVal[length(yVal)], shape= MC.Matrix[, Center], rate= MC.Matrix[, Spread], lower.tail=FALSE) -
-                                                        pgamma(q=yVal[1], shape= MC.Matrix[, Center], rate= MC.Matrix[, Spread], lower.tail=FALSE)) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+                                                rate= MC.Matrix[, Spread], lower.tail=TRUE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+        PGammaGtY[[1 + length(yVal)]] <- summarizePost( abs(pgamma(q=yVal[length(yVal)], shape= MC.Matrix[, Center], rate= MC.Matrix[, Spread], lower.tail=TRUE) -
+                                                        pgamma(q=yVal[1], shape= MC.Matrix[, Center], rate= MC.Matrix[, Spread], lower.tail=TRUE)) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
         names(PGammaGtY)[i] <- paste0("Y_", yVal[i])
         names(PGammaGtY)[length(yVal) + 1] <- "High.Low.Interval"
       }
@@ -1302,7 +1340,7 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL,
       if(Distribution == "g") {
         for (i in 1:length(yVal)) {
           PGammaGtY[[i]] <- summarizePost( pgamma(q=yVal[i], shape= MC.Matrix[, Center],
-                                                  rate= MC.Matrix[, Spread], lower.tail=FALSE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+                                                  rate= MC.Matrix[, Spread], lower.tail=TRUE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
           names(PGammaGtY)[i] <- paste0("Y_", yVal[i])
         }
       }
@@ -1402,10 +1440,27 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL,
   if (is.null(QdisGtY)) {
     QdisGtY <- NA
   }
+  ###########################
+  ## Calculate effect size ##
+  ###########################
+  fncPropEffectSize <- function( x=NULL, y=NULL) {
+    as1 <- (asin(sign(x) * sqrt(abs(x))))*2  #Arcsine transformation for vector 1
+    as2 <- (asin(sign(y) * sqrt(abs(y))))*2  #Arcsine transformation for vector 2
+    #Effect size
+    Effect.Size.Output <- abs(as1 - as2 )
+    return("Effect.Size.Output"=Effect.Size.Output )
+  }
+  #Run function to get effect sizes
+  if(!is.null(eVal)) {
+    Effect.Size.Output <- fncPropEffectSize(x=eVal[[1]], y=eVal[[2]])
+  } else {
+    Effect.Size.Output <- NA
+  }
 
   return(list("Est.Quantile.P"= QdisGtY,
-              "Est.Prob.GT.Y"= PdisGtY,
-              "Est.Mean.Beta"=mean_val_dist ) )
+              "Est.Prob.LT.Y"= PdisGtY, #Changing to traditional CDF value
+              "Est.Mean.Beta"=mean_val_dist,
+              "Effect.Size.Prop"=Effect.Size.Output) )
 }
 
 
@@ -1599,8 +1654,8 @@ if(y == "multi") {
 ## Targets ##
 if(y == "target") {
   target_smry <- fncPropGtY(MCMC=MCMC, Distribution=type, yVal=targets[["y"]],
-                            qVal=targets[["p"]], Center=parameter[1],
-                            Spread=parameter[2], Skew=parameter[3],
+                            qVal=targets[["p"]], eVal=targets[["e"]],
+                            Center=parameter[1], Spread=parameter[2], Skew=parameter[3],
                             CenTend=center )
 } else {
 #  target_smry <- NA
