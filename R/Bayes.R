@@ -47,21 +47,24 @@
 #' data frames when  y='multi'. This variable is the denominator that can be used to calculate a rate in the formula
 #' numerator/denominator. For example, when the 'numerator' column equals 4 and the 'denominator' column equals 10, then this
 #' single row of data is expanded to 10 rows with four values of 1 and six values of 0 when expand='denominator'. Default is NULL.
-#' @param targets list of one, two, or three named elements ('p', 'y', 'e') with numeric values that represent quantile or percentile
-#' values between 0 and 1 (p) in the distribution to return associated outcome values (i.e., inverse cumulative distribution function),
-#' specific outcome values (y) to retrieve associated probabilities less than Y (i.e., cumulative distribution function), and/or
-#' a 2 element list (named 'a' and 'b') of low and high proportions (no particular order) that Cohen's h effect sizes ('e') for proportions
-#' are calculated from it (i.e., not Bayesian analysis) to give us an idea of how large differences in targets are (e.g., target
-#' 0.50 vs target 0.40 = Cohen's h of 0.201 = 'small effect'--0.2, 0.5, 0.8 as thresholds for small, medium, and large effect sizes).
-#' For example, a distribution of harmful hospital readmission rates has an estimated median value of 0.25. Staff are considering 2
-#' types of targets, percentiles (p) of key interest and specific outcome rates (y). They want to know the readmission rate that
-#' is at the 40th percentile for a reduced readmission rate (below what is 'average' at the 50th percentile) and the probability
-#' greater than a readmission rate of 0.20. They get this information by entering targets=list(p=0.40, y=0.20, e=list(0.50, 0.40));
-#' considering prob(y) from the returned results gives them an idea about the effort needed to meet this target of a reduced
-#' readmission rate. And as they are searching for a shift in targets as a 'small effect', but substantial, the Cohen's h effect
-#' size of 0.20 indicates that this is met when comparing targets of 0.50 vs 0.40. Select type= one of these options: 'n', 'ln',
-#' 'w', 'g', 't', 'bern', 'bin'. Also select parameter= the appropriate center, spread, and possible 3rd shape distribution
-#' parameter (e.g., parameter=c('mean', 'sd')). And option to select center= 'mean', 'median', 'mode'. Default is NULL.
+#' @param targets allows probabilities and percentiles to be calculated from a list of one, two, or three named elements ('p', 'y', 'e')
+#' with numeric values that represent quantile or percentile values between 0 and 1 (p) in the distribution to return associated outcome
+#' values (i.e., inverse cumulative distribution function), specific outcome values (y) to retrieve associated probabilities less than Y
+#' (i.e., cumulative distribution function), and/or a 2 element list (named 'a' and 'b') of low and high proportions (no particular
+#' order) that Cohen's h effect sizes ('e') for proportions are calculated from it (i.e., not Bayesian analysis) to give us an idea
+#' of how large differences in targets are (e.g., target 0.50 vs target 0.40 = Cohen's h of 0.201 = 'small effect'--0.2, 0.5, 0.8 as
+#' thresholds for small, medium, and large effect sizes). For example, a distribution of harmful hospital readmission rates has an
+#' estimated median value of 0.25. Staff are considering 2 types of targets, percentiles (p) of key interest and specific outcome
+#' rates (y). They want to know the readmission rate that is at the 40th percentile for a reduced readmission rate (below what is
+#' 'average' at the 50th percentile) and the probability greater than a readmission rate of 0.20. They get this information by
+#' entering targets=list(p=0.40, y=0.20, e=list(0.50, 0.40)); considering prob(y) from the returned results gives them an idea
+#' about the effort needed to meet this target of a reduced readmission rate. And as they are searching for a shift in targets
+#' as a 'small effect', but substantial, the Cohen's h effect size of 0.20 indicates that this is met when comparing targets of
+#' 0.50 vs 0.40. For list elements 'p' and 'y, selecting 2 values will result in the intervals between the values in the form of
+#' the object 'High.Low.Interval'. When there are more than 2 listed values, the interval is between the lowest and highest values.
+#' Select type= one of these options: 'n', 'ln', 'w', 'g', 't', 'bern', 'bin'. Also select parameter= the appropriate center, spread,
+#' and possible 3rd shape distribution parameter (e.g., parameter=c('mean', 'sd')). And option to select center= 'mean', 'median',
+#' 'mode'. Default is NULL.
 
 #' @return data frame of summary statistics for the MCMC parameter's distribution and/or MCMC data frame.
 #' Statistics include highest density interval, effective sample size, proportion of distribution
@@ -83,6 +86,8 @@
 #'
 #' Kruschke, J. (2014). Doing Bayesian Data Analysis: A Tutorial with R, JAGS, and
 #' Stan, Second Edition. New York: Academic Press. ISBN: 9780124058880
+#'
+#' Pitman, J. (1993). Probability. Springer-Verlag. ISBN: 978-0-387-97974-8
 #'
 #' @examples
 #' # Posterior estimates of length of stay (LOS) #
