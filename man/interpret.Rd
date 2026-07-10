@@ -7,7 +7,8 @@
 interpret(object, digits = NULL)
 }
 \arguments{
-\item{object}{alpha, assess, and Bayes class objects: alpha, ITS, DID, linear (ols) or logistic models, and Dx (Bayes Diagnostic).}
+\item{object}{alpha, assess, and Bayes class objects: alpha, ITS, DID, linear (ols) or logistic models,
+and Dx and target (Bayes diagnostics and target setting).}
 
 \item{digits}{a non-null value for digits specifies the minimum number of significant digits
 to be printed in values. The default, NULL, uses 3. Non-integer values will be rounded down,

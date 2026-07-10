@@ -1,11 +1,11 @@
-#' Creates a Summary object of regression model results for graphing purposes
+#' Creates a review object of regression model results for graphing purposes
 #'
-#' Produces a Summary object of regression models similar to base R's summary(). However,
-#' the purpose is to later pass the object to the plot function to produce a summary of
+#' Produces a review object of a regression model's coefficients similar to base R's summary().
+#' However, the purpose is to later pass the object to the plot function to produce a summary of
 #' only the predictor variable's coefficients (i.e.,. excludes the intercept). The main
-#' difference between Summary() and summary() is that the ham function can create the
+#' difference between the two is that the ham function review can create the
 #' effects from increased predictor values (e.g., increase age by 25 years rather than
-#' report a 1 year effect) and it has a capital letter 'S' in Summary().
+#' report a 1 year effect).
 #'
 #' @param model an assess class object or models with 'lm', 'glm', or 'coxph' class.
 #' This includes the differences-in-differences and interrupted time series models.
@@ -14,8 +14,8 @@
 #' For 'ITS' or 'DID' models, use model= its_model$ITS or model= did_model$DID. If
 #' using Base R's lm(), glm() or even coxph(), use the model object name (e.g., model= my_glm_model).
 #' @param coefs an expression defining a subset of the predictor coefficient rows (i.e., not the intercept) to view in
-#' the Summary plot. The default is NULL, thereby using all predictor coefficients. Specify, for example, 1:2 to
-#' view just the Summary of the first 2 coefficients.
+#' the review plot. The default is NULL, thereby using all predictor coefficients. Specify, for example, 1:2 to
+#' view just the summary of the first 2 coefficients.
 #' @param increase a named numeric vector object of the coefficient name and associated increase in the predictor.
 #' For example, in the model y ~ a + x1 + x2, increase= c(x1= 10), will produce point estimates and confidence
 #' intervals adjusted to a 10-unit increase in the variable x1. This is most helpful when the continuous predictor
@@ -27,24 +27,24 @@
 #' confidence interval limits, p-values, and additional information.
 #' @export
 #'
-#' @seealso [plot.Summary()], [print.Summary()] for a plot and a formatted print output of the 'Summary' class object.
+#' @seealso [plot.review()], [print.review()] for a plot and a formatted print output of the 'review' class object.
 #'
 #' @examples
 #' # OLS regression
-#' Summary(assess(mpg ~ hp + wt + cyl, data=mtcars, regression= "ols")$model)
+#' review(assess(mpg ~ hp + wt + cyl, data=mtcars, regression= "ols")$model)
 #'
-#' # Creates new classes useful for plots, e.g., plot(Summary(model))
-#' class(Summary(assess(mpg ~ hp + wt + cyl, data=mtcars, regression= "ols")$model))
+#' # Creates new classes useful for plots, e.g., plot(review(model))
+#' class(review(assess(mpg ~ hp + wt + cyl, data=mtcars, regression= "ols")$model))
 #'
 #' # Works with Base R
-#' Summary(lm(mpg ~ hp + wt + cyl, data=mtcars))
+#' review(lm(mpg ~ hp + wt + cyl, data=mtcars))
 #'
 #' # Effect after increasing hp and excluding am's coefficient
 #' m03 <- glm(vs ~ wt+hp+am, data=mtcars, family="binomial")
-#' plot(x=Summary(m03, increase=c(wt=1.1375, hp= 83.5), coefs= c(1, 3) ))
+#' plot(x=review(m03, increase=c(wt=1.1375, hp= 83.5), coefs= c(1, 3) ))
 #'
 #' @importFrom stats lm glm
-Summary <- function(model, increase=NULL, coefs=NULL) {
+review <- function(model, increase=NULL, coefs=NULL) {
   if (!any(class(model) %in% c("glm","lm","coxph", "assess"))) {stop("Error: Expecting 'assess', 'lm', 'glm', or 'coxph' class regression model." )}
 
   if(!is.null(coefs)) {
@@ -85,19 +85,19 @@ Summary <- function(model, increase=NULL, coefs=NULL) {
   fncCoef <- function(x, y=NULL, coefs=NULL) {
 
     #Get regression model type
-    if (any(class(x) == "Summary.ols") == TRUE) {
+    if (any(class(x) == "review.ols") == TRUE) {
       reg_type <- "ols"
     }
-    if (any(class(x) == "Summary.logistic") == TRUE) {
+    if (any(class(x) == "review.logistic") == TRUE) {
       reg_type <- "logistic"
     }
-    if (any(class(x) == "Summary.poisson") == TRUE) {
+    if (any(class(x) == "review.poisson") == TRUE) {
       reg_type <- "poisson"
     }
-    if (any(class(x) == "Summary.coxph") == TRUE) {
+    if (any(class(x) == "review.coxph") == TRUE) {
       reg_type <- "cox"
     }
-    if (any(class(x) == "Summary.other") == TRUE) {
+    if (any(class(x) == "review.other") == TRUE) {
       reg_type <- "other"
     }
     #Get degrees of freedom
@@ -206,6 +206,6 @@ Summary <- function(model, increase=NULL, coefs=NULL) {
   pecidf <- fncCoef(x=summary_model, y=increase, coefs=coefs)
 
 #  return class
-  class(pecidf) <- c("Summary", "ham", "list")
+  class(pecidf) <- c("review", "ham", "list")
   return(pecidf)
 }

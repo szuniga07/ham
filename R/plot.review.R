@@ -1,20 +1,20 @@
-#' Plot of a regression model's coefficient summary
+#' Plot of a regression model's coefficient review
 #'
-#' Plots a Summary class object of a regression model (Summary() with a capital 'S'). Prints a chart of
+#' Plots a review class object of a regression model. Plots a chart of
 #' the predictor's coefficient estimates with 95% confidence intervals (Harrell, 2015). Excludes the
 #' intercept (if present). Horizontal line segments represent the predictor variable coefficients and
 #' the vertical line is at 0 or 1 (e.g., odds ratio, incidence rate ratio, hazard ratio and other GLMs at 1)
 #' to show if the proper reference is outside of the "normal range" or what represents no significant
-#' difference. The Summary plot can be used on assess objects as well as models created from the base
+#' difference. The review plot can be used on assess objects as well as models created from the base
 #' package's lm() and glm() as well as coxph() from the survival package. There are various graphing
 #' options and sorting by coefficient names, values, p-value, or the model formula.
 #'
-#' @param x Summary object from assess() model or lm(), glm(), and coxph() models. For assess objects, use
-#' Summary(my_regression$model) unless using ITS or DID models (e.g., my_did_model$DID). For model objects from
-#' lm(), glm(), or coxph(), use Summary(my_model).
+#' @param x review object from assess() model or lm(), glm(), and coxph() models. For assess objects, use
+#' review(my_regression$model) unless using ITS or DID models (e.g., my_did_model$DID). For model objects from
+#' lm(), glm(), or coxph(), use review(my_model).
 #' @param y not currently used.
-#' @param main overall title for the plot, default is NULL which then lists 'Summary' for OLS regression or the type
-#' of Summary statistic such as 'Odds Ratio' (logistic), 'Incidence Rate Ratio' (Poisson), or 'Hazard Ratio' (Cox).
+#' @param main overall title for the plot, default is NULL which then lists 'review' for OLS regression or the type
+#' of summary statistic such as 'Odds Ratio' (logistic), 'Incidence Rate Ratio' (Poisson), or 'Hazard Ratio' (Cox).
 #' @param sub a character vector for the subtitle of the plot, default is NULL which then lists the outcome name.
 #' @param sort specify how confidence intervals are sorted. Options are 'alpha' (alphabetical coefficient names),
 #' 'coef' (coefficient values), 'p' (p-values), or 'enter' (how variables were entered in the model).
@@ -44,12 +44,12 @@
 #' and confidence intervals. Default is 4.
 #' @param ... additional arguments.
 #'
-#' @return plot of the Summary of regression coefficients, the display can be modified in various ways.
+#' @return plot of the review of regression coefficients, the display can be modified in various ways.
 #'
 #' @importFrom graphics axis
 #' @export
 #'
-#' @seealso [Summary()] for the 'Summary' class object.
+#' @seealso [review()] for the 'review' class object.
 #'
 #' @references
 #' Harrell, F. E., Jr. (2015). Regression Modeling Strategies, Second Edition.
@@ -58,18 +58,17 @@
 #' @examples
 #' # OLS regression--most basic format with Base R lm()
 #' m01 <- lm(mpg ~ wt+hp+am, data=mtcars)
-#' # note it uses Summary() with a captialized 'S'
-#' plot(x=Summary(m01))
+#' plot(x=review(m01))
 #'
 #' # Using the assess function, notice 'm02$model' object below
 #' m02 <- assess(formula=mpg ~ wt+hp+am, data=mtcars, regression="ols")
 #' # let's see the impactful 83.5 hp increase in the 1st to 3rd quartiles
-#' plot(x=Summary(m02$model, increase=c(hp= 83.5)))
+#' plot(x=review(m02$model, increase=c(hp= 83.5)))
 #'
 #' # Logistic model
 #' m03 <- glm(vs ~ wt+hp+am, data=mtcars, family="binomial")
 #' # Display options, sorted plot, and printing the 95% CIs to review
-#' plot(x=Summary(m03, increase=c(wt=1.1375, hp= 83.5) ), color="aquamarine", lwd=4,
+#' plot(x=review(m03, increase=c(wt=1.1375, hp= 83.5) ), color="aquamarine", lwd=4,
 #' pt.cex= 2, tcol="magenta", sort="coef", cex.axis=2, cex.main=2, xlim=c(-.5, 3),
 #' print=TRUE, round.c=6)
 #'
@@ -77,27 +76,27 @@
 #' m04 <- assess(formula=HAI ~  Month+ offset(log(PatientDays)),
 #' data=infections, regression="poisson")
 #' # Because 12 months is a meaningful period in program evaluation, Month=12
-#' plot(x=Summary(m04$model, increase=c(Month=12)), xlim=c(0.6, 1.01),
+#' plot(x=review(m04$model, increase=c(Month=12)), xlim=c(0.6, 1.01),
 #' lwd=7, color="cyan", pcol="salmon", pt.cex=2)
 #'
 #' # NOT RUN: Cox Proportional Hazards model
 #' #library(survival)
 #' #m04 <- coxph(Surv(time, status) ~ age+sex+ph.karno, data=cancer)
-#' #plot(x=Summary(m04, increase=c(age=13, ph.karno=15)))
+#' #plot(x=review(m04, increase=c(age=13, ph.karno=15)))
 #'
 #' # This also works for ITS and DID causal models through ham
 #' im22 <- assess(formula=los ~ ., data=hosprog, intervention = "program",
 #' int.time="month", interrupt= c(5, 9), its="two")
 #' # The intervention group had the biggest change between the baseline and month 5
-#' plot(Summary(im22$ITS), sort="coef", decreasing=TRUE, color="red", pcol="green")
+#' plot(review(im22$ITS), sort="coef", decreasing=TRUE, color="red", pcol="green")
 #'
-plot.Summary <- function(x, y=NULL, main=NULL, sub=NULL, sort=NULL,
+plot.review <- function(x, y=NULL, main=NULL, sub=NULL, sort=NULL,
                          decreasing=NULL, abbrv=NULL, xlim=NULL, ylim=NULL, xlab=NULL,
                          ylab=NULL, lwd=NULL, color=NULL, pcol=NULL, pt.cex=NULL, pch=NULL,
                          tgt=NULL, tcol=NULL, cex=NULL, cex.axis=NULL, cex.lab=NULL,
                          cex.main=NULL, cex.sub=NULL, print=NULL, round.c=NULL, ...) {
   #Checks
-  if (any(class(x) == 'Summary') ==FALSE) {stop("Error: Expecting 'Summary' class object." )}
+  if (any(class(x) == 'review') ==FALSE) {stop("Error: Expecting 'review' class object." )}
   if(!is.null(sort)) {
     if (!sort %in% c('alpha','coef','p','enter')) {stop("Error: Expecting 'sort' using one of these options: 'alpha', 'coef', 'p', 'enter' ." )}
   }
@@ -211,7 +210,7 @@ plot.Summary <- function(x, y=NULL, main=NULL, sub=NULL, sort=NULL,
 
     #Default title
     nom <- switch(RegType,
-                  "ols"   = "Summary",
+                  "ols"   = "Review",
                   "logistic" = "Odds Ratio",
                   "poisson"  = "Incidence Rate Ratio",
                   "cox" = "Hazard Ratio" )

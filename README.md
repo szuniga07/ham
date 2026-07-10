@@ -70,10 +70,10 @@ alpha(items=c("i1","i2","i3","i4","i5"), data=cas)
 interpret(alpha(items=c("i1","i2","i3","i4","i5"), data=cas))
 #> Interpretations: Alpha 
 #> ---------------------- 
-#> Your 5 item scale has a Cronbach's alpha of 0.92. This is 
+#> Your 5 item scale has a Cronbach's alpha of 0.919. This is 
 #> generally considered as being in the 'excellent' range. 
 #> 
-#> The scale mean is 3.77 and has a standard deviation of 0.67. 
+#> The scale mean is 3.77 and has a standard deviation of 0.673. 
 #> 
 #> Removing one of these item(s): i1, can improve the Cronbach's 
 #> alpha in a new scale to a higher level than the current alpha 
@@ -191,7 +191,8 @@ mtcars data. These use lm() and glm() found in R’s stats package.
 summary(assess(hp ~ mpg+wt, data=mtcars, regression="ols")$model)
 #> 
 #> Call:
-#> stats::lm(formula = primary_formula, data = combined_df)
+#> stats::lm(formula = primary_formula, data = combined_df, weights = wght_obj, 
+#>     offset = offst_obj)
 #> 
 #> Residuals:
 #>    Min     1Q Median     3Q    Max 
@@ -216,8 +217,8 @@ summary(assess(hp ~ mpg+wt, data=mtcars, regression="ols")$model)
 summary(assess(formula=vs~mpg+wt+hp, data=mtcars, regression="logistic")$model)
 #> 
 #> Call:
-#> stats::glm(formula = primary_formula, family = binomial(link = "logit"), 
-#>     data = combined_df)
+#> stats::glm(formula = primary_formula, family = binomial(link = family_link), 
+#>     data = combined_df, weights = wght_obj, offset = offst_obj)
 #> 
 #> Coefficients:
 #>              Estimate Std. Error z value Pr(>|z|)  
@@ -239,7 +240,7 @@ summary(assess(formula=vs~mpg+wt+hp, data=mtcars, regression="logistic")$model)
 ## Interpret the results
 interpret(assess(formula=vs~mpg+wt+hp, data=mtcars, regression="logistic")
           )$model
-#> Interpretations: Model 
+#> Interpretations: Regression model 
 #> ---------------------- 
 #> These estimates tell you about the relationship between the 
 #> independent variables and the dependent variable. These estimates 
@@ -254,17 +255,17 @@ interpret(assess(formula=vs~mpg+wt+hp, data=mtcars, regression="logistic")
 #> vs is predicted to increase by the value of the 
 #> coefficient, holding all other variables constant. The following 
 #> predictor variable(s) have positive coefficient(s) that 
-#> increase the predicted value of the outcome: 
+#> increase the predicted value and odds of the outcome: 
 #> No positive coefficients in your model were significant. 
 #> 
 #> For every 1 unit increase in these predictor variables,
 #> vs is predicted to decrease by the value of the 
 #> coefficient, holding all other variables constant. The following 
 #> predictor variable(s) have negative coefficient(s) that 
-#> decrease the predicted value of the outcome: 
-#> hp 
+#> decrease the predicted value and odds of the outcome: 
+#> hp (8.9% decreased odds) 
 #> 
-#> There is no R2 information provided.
+#> There is no R2 or C-statistic (AUC) information provided.
 ```
 
 ham can topcode the outcome and create a propensity score variable. Here
@@ -290,7 +291,8 @@ newdata=TRUE)
 summary(m1$model)
 #> 
 #> Call:
-#> stats::lm(formula = primary_formula, data = combined_df)
+#> stats::lm(formula = primary_formula, data = combined_df, weights = wght_obj, 
+#>     offset = offst_obj)
 #> 
 #> Residuals:
 #>     Min      1Q  Median      3Q     Max 
@@ -382,7 +384,8 @@ dm1 <- assess(formula= los ~ ., data=hosprog, intervention = "program",
 summary(dm1$DID)
 #> 
 #> Call:
-#> stats::lm(formula = DID_formula, data = combined_df)
+#> stats::lm(formula = DID_formula, data = combined_df, weights = wght_obj, 
+#>     offset = offst_obj)
 #> 
 #> Residuals:
 #>     Min      1Q  Median      3Q     Max 
@@ -409,25 +412,25 @@ interpret(dm1)$did
 #> Interpretations: DID 
 #> -------------------- 
 #> The intercept represents the mean los value of the 
-#> control group at the baseline period (Time 1): 3.494. 
+#> control group at the baseline period (Time 1): 3.49. 
 #> 
 #> Post.All is the change in the control group's los 
-#> value in the 2nd time period (Time 2). There was a 
+#> value in the 2nd time period (Time 2). There is a 
 #> significant increase for the control group 
-#> at time 2: 1.563. 
+#> at time 2: 1.56. 
 #> 
 #> Int.Var is the difference between the intervention 
 #> and control group at the baseline period (Time 1). The 
 #> intervention group had a significant increase in the 
-#> mean los value compared to the control group: 2.066. 
+#> mean los value compared to the control group: 2.07. 
 #> 
 #> DID estimates the average treatment effect on the 
 #> treated group (ATET). This interaction represents the 
 #> difference in the trend differences for the intervention and 
 #> control groups: 
-#> (Int. Time 2 - Int. Time 1) - (Ctl. Time 2 - Ctl. Time 1) = -3.545.  
-#> In other words, there was a significant decrease in the 
-#> mean los trend by -3.545 for the intervention group. 
+#> (Int. Time 2 - Int. Time 1) - (Ctl. Time 2 - Ctl. Time 1) = -3.54.  
+#> In other words, there is a significant decrease in the 
+#> mean los trend by -3.54 for the intervention group. 
 #> 
 #> If there are additional variables in the model then the coefficients 
 #> above represent the effects after controlling for the other variables.
@@ -449,7 +452,8 @@ dm2 <- assess(formula= los ~ ., data=hosprog, intervention = "program",
 summary(dm2$DID)
 #> 
 #> Call:
-#> stats::lm(formula = DID_formula, data = combined_df)
+#> stats::lm(formula = DID_formula, data = combined_df, weights = wght_obj, 
+#>     offset = offst_obj)
 #> 
 #> Residuals:
 #>     Min      1Q  Median      3Q     Max 
@@ -476,15 +480,15 @@ interpret(dm2)$did
 #> Interpretations: DID 
 #> -------------------- 
 #> The intercept represents the starting point of the control 
-#> group's trend line at the baseline period (Time 1): 4.172. 
+#> group's trend line at the baseline period (Time 1): 4.17. 
 #> 
 #> Period is the change in the control group's los value trend 
-#> line after the baseline period. There was a significant increase 
+#> line after the baseline period. There is a significant increase 
 #> for the control group after the baseline period: 0.108. 
 #> 
 #> DID estimates the difference in mean overall level between 
 #> the intervention and both the non-intervention period/group. 
-#> In other words, there was a non-significant increase in the 
+#> In other words, there is a non-significant increase in the 
 #> mean los by 0.148 for the intervention group. 
 #> 
 #> DID.Trend is the difference in the intervention group's 
@@ -510,7 +514,8 @@ dm3 <- assess(formula= rdm30 ~ ., data=hosprog, intervention = "program",
 summary(dm3$DID)
 #> 
 #> Call:
-#> stats::lm(formula = DID_formula, data = combined_df)
+#> stats::lm(formula = DID_formula, data = combined_df, weights = wght_obj, 
+#>     offset = offst_obj)
 #> 
 #> Residuals:
 #>      Min       1Q   Median       3Q      Max 
@@ -561,7 +566,8 @@ im11 <- assess(formula=los ~ ., data=hosp1, intervention = "program",
 summary(im11$ITS)
 #> 
 #> Call:
-#> stats::lm(formula = ITS_formula, data = combined_df)
+#> stats::lm(formula = ITS_formula, data = combined_df, weights = wght_obj, 
+#>     offset = offst_obj)
 #> 
 #> Residuals:
 #>     Min      1Q  Median      3Q     Max 
@@ -596,7 +602,7 @@ interpret(im11)$its
 #> ITS.Time is -0.289 and the slope prior to intervention. 
 #> The coefficient is significant. 
 #> 
-#> post5 is -1.003 and the immediate shift in the trend line 
+#> post5 is -1 and the immediate shift in the trend line 
 #> after the intervention start (e.g., 1st year of intervention). 
 #> The coefficient is significant. 
 #> 
@@ -605,10 +611,10 @@ interpret(im11)$its
 #> slope). The coefficient is non-significant. 
 #> 
 #> Summary: The results show that after the start of the intervention, 
-#> there was a non-significant change in the los trend. This gives 
-#> a total post-intervention trend in the los of -0.087 
-#> over time (i.e., the total combined value of change not the 
-#> change relative to pre-intervention). 
+#> there is a non-significant change in the los trend. This gives 
+#> a post-intervention trend change per time unit in the los of -0.0874 
+#> (i.e., the value of change per-unit-of-time, such as month or year, in 
+#> the intervention period; not the change relative to pre-intervention). 
 #> 
 #> If there are additional variables in the model then the coefficients 
 #> above represent effects after controlling for the other variables.
@@ -630,7 +636,8 @@ im12 <- assess(formula=los ~ ., data=hosp1, intervention = "program",
 summary(im12$ITS)
 #> 
 #> Call:
-#> stats::lm(formula = ITS_formula, data = combined_df)
+#> stats::lm(formula = ITS_formula, data = combined_df, weights = wght_obj, 
+#>     offset = offst_obj)
 #> 
 #> Residuals:
 #>     Min      1Q  Median      3Q     Max 
@@ -668,7 +675,8 @@ im21 <- assess(formula=los ~ ., data=hosprog, intervention = "program",
 summary(im21$ITS)
 #> 
 #> Call:
-#> stats::lm(formula = ITS_formula, data = combined_df)
+#> stats::lm(formula = ITS_formula, data = combined_df, weights = wght_obj, 
+#>     offset = offst_obj)
 #> 
 #> Residuals:
 #>     Min      1Q  Median      3Q     Max 
@@ -708,7 +716,8 @@ im22 <- assess(formula=los ~ ., data=hosprog, intervention = "program",
 summary(im22$ITS)
 #> 
 #> Call:
-#> stats::lm(formula = ITS_formula, data = combined_df)
+#> stats::lm(formula = ITS_formula, data = combined_df, weights = wght_obj, 
+#>     offset = offst_obj)
 #> 
 #> Residuals:
 #>     Min      1Q  Median      3Q     Max 
@@ -761,7 +770,8 @@ id22 <- assess(formula=death30 ~ ., data=hosprog, intervention = "program",
 summary(id22$ITS)
 #> 
 #> Call:
-#> stats::lm(formula = ITS_formula, data = combined_df)
+#> stats::lm(formula = ITS_formula, data = combined_df, weights = wght_obj, 
+#>     offset = offst_obj)
 #> 
 #> Residuals:
 #>      Min       1Q   Median       3Q      Max 
@@ -800,17 +810,17 @@ interpret(id22)$its
 #> Positive values indicate higher intervention group values and vice-versa for: 
 #> post1, txp1, ixp1, txip1, post2, txp2, ixp2, txip2. 
 #> 
-#> Intercept is 0.083 and the starting value of the trend for the 
+#> Intercept is 0.0829 and the starting value of the trend for the 
 #> control group. 
 #> 
-#> ITS.Time is -0.009 and the control group's slope prior to intervention. 
+#> ITS.Time is -0.0091 and the control group's slope prior to intervention. 
 #> The coefficient is non-significant. 
 #> 
 #> ITS.Int is 0.181 and the difference in the level between intervention 
 #> and control group prior to intervention 1 (intervention - control). 
 #> The coefficient is non-significant. 
 #> 
-#> txi is -0.014 and the difference between the intervention and 
+#> txi is -0.0137 and the difference between the intervention and 
 #> control group's pre-intervention slopes (intervention - control). 
 #> The coefficient is non-significant. 
 #> 
@@ -818,7 +828,7 @@ interpret(id22)$its
 #> line after this intervention time starts. The coefficient is 
 #> significant. 
 #> 
-#> txp5 is -0.026 and the difference between current and prior intervention 
+#> txp5 is -0.0265 and the difference between current and prior intervention 
 #> control group slopes (e.g., change in the pre-intervention slope). 
 #> The coefficient is non-significant. 
 #> 
@@ -827,7 +837,7 @@ interpret(id22)$its
 #> after this intervention started (e.g., 1st year of intervention 1). 
 #> The coefficient is significant. 
 #> 
-#> txip5 is 0.072 and non-significant. This is the difference in both 
+#> txip5 is 0.0716 and non-significant. This is the difference in both 
 #> group's slope changes since the prior intervention (pre-slopes compared 
 #> to post-slopes). For example, both have pre-intervention slopes 
 #> of 2, the control group's slope remained the same, therefore the 
@@ -838,7 +848,7 @@ interpret(id22)$its
 #> line after this intervention time starts. The coefficient is 
 #> non-significant. 
 #> 
-#> txp9 is -0.014 and the difference between current and prior intervention 
+#> txp9 is -0.0142 and the difference between current and prior intervention 
 #> control group slopes (e.g., change in the pre-intervention slope). 
 #> The coefficient is non-significant. 
 #> 
@@ -847,24 +857,28 @@ interpret(id22)$its
 #> after this intervention started (e.g., 1st year of intervention 1). 
 #> The coefficient is significant. 
 #> 
-#> txip9 is 0.02 and non-significant. This is the difference in both 
+#> txip9 is 0.0201 and non-significant. This is the difference in both 
 #> group's slope changes since the prior intervention (pre-slopes compared 
 #> to post-slopes). For example, both have pre-intervention slopes 
 #> of 2, the control group's slope remained the same, therefore the 
 #> post 1st intervention slope is 0. And the intervention group's slope 
 #> increased by 2, then txip1 = 2 (= 2 - 0). 
 #> 
-#> Summary 1: For this intervention period 1, the results show that the 
-#> intervention group's non-significant shift in death30, 
-#> post intervention was 0.022. The control group's non-significant 
-#> shift in death30, post intervention was -0.036. The non-significant 
-#> difference between both groups is 0.058. 
+#> Summary 1: For this intervention period 1, the results show that 
+#> the intervention group's non-significant change in death30, 
+#> post-intervention is 0.0223 (i.e., value of change per-unit-of-time,
+#> such as month or year, in the intervention period; not the change
+#> relative to the prior period). The control group's non-significant 
+#> change in death30, post-intervention is -0.0356. The non-significant 
+#> difference between both groups, per-unit-of-time, is 0.0579. 
 #> 
-#> Summary 2: For this intervention period 2, the results show that the 
-#> intervention group's non-significant shift in death30, 
-#> post intervention was 0.028. The control group's significant 
-#> shift in death30, post intervention was -0.05. The significant 
-#> difference between both groups is 0.078. 
+#> Summary 2: For this intervention period 2, the results show that 
+#> the intervention group's non-significant change in death30, 
+#> post-intervention is 0.0282 (i.e., value of change per-unit-of-time,
+#> such as month or year, in the intervention period; not the change
+#> relative to the prior period). The control group's significant 
+#> change in death30, post-intervention is -0.0497. The significant 
+#> difference between both groups, per-unit-of-time, is 0.0779. 
 #> 
 #> If there are additional variables in the model then the coefficients 
 #> above represent effects after controlling for the other variables.
@@ -932,7 +946,7 @@ for(i in 1:length(key_time)) {
 
 <br>
 
-These and other changes include:
+These and other changes included in version 1.2:
 
 ### assess
 
@@ -1095,3 +1109,208 @@ plot(x=d1, y= "is")
 <img src="man/figures/README-plotIS1-1.png" width="100%" />
 
 <br>
+
+## Version 1.3 mostly has bug fixes and current feature improvements.
+
+These and other changes included in version 1.3:
+
+New additions
+
+- Digits added to interpret
+
+- Poisson regression added to assess
+
+- Odds ratio added to interpret results for logistic regression
+
+- NHSN data added
+
+- Summary of ITS effects updated for interpretations
+
+- ITS models 3 and 4 updated with graphs and interpretations
+
+- Weights added to assess
+
+- Offset added to assess
+
+- review, print.review, and plot.review added for summarizing regression
+  coefficients
+
+- Add x.axis and y.axis examples in ham_package and control vignette
+
+- Bayes() diagnostics and interpretations
+
+- Bayes() target interpretations added and vignette updated
+
+- Interpretations of Bayes diagnostics
+
+- Added Cohen’s h effect sizes to guide Bayesian target analysis
+
+Corrected errors
+
+- Error fixed that significant coefficients weren’t listed in
+  interpretations when there is only 1 predictor in the model.
+
+- Fixed y.axis issue for plot.control so that it is no longer
+  illogically using the number of x-axis values
+
+- group() no longer adds extra time period in rolling time periods when
+  there are NAs in the data frame
+
+- Other missing data issues in different functions
+
+### Graph a summary of the coefficients
+
+This graph will be added in version 1.3 and it is a way to get a review
+of the coefficients, showing the direction of the effect with point
+estimates and 95% confidence intervals. This was inspired by Frank
+Harrell’s plot.summary in the rms package. Instead ham uses plot.review
+with the almost identical summary but adds some class information to
+help with plotting. This will work on assess regression objects for OLS
+linear, logistic, Poisson and models coming from Base R’s lm() and glm()
+as well as the survival package and possibly other glm() models. It can
+work with Cox Proportional Hazards from the survival package. And this
+will work with the differences-in-differences and interrupted time
+series models created with assess().
+
+Take a look at the effect when hp is increased by 83.5
+
+``` r
+m02 <- assess(formula=mpg ~ wt+hp+am, data=mtcars, regression="ols")
+# Using the assess function, notice 'm02$model' object below
+print(review(m02$model), digits=4)
+#> =================================================
+#>                   Model Review
+#> =================================================
+#>    PointEst    Lower   Upper         P
+#> wt -2.87900 -4.73200 -1.0250 0.0035740
+#> hp -0.03748 -0.05715 -0.0178 0.0005464
+#> am  2.08400 -0.73580  4.9030 0.1413000
+#> =================================================
+```
+
+let’s see the impactful 83.5 hp increase in going from the 1st to 3rd
+quartiles
+
+``` r
+m02 <- assess(formula=mpg ~ wt+hp+am, data=mtcars, regression="ols")
+plot(x=review(m02$model, increase=c(hp= 83.5)))
+```
+
+<img src="man/figures/README-plotreview2b-1.png" width="100%" />
+
+### Bayesian Diagnostics
+
+Here’s a new way to all diagnostics for the parameters with an
+interpretation
+
+``` r
+blos2 <- Bayes(losmcmc, y="Dx", parameter="muOfY")
+interpret(blos2$Diagnostics, digits=5)
+#> MCMC Diagnostics 
+#> ---------------- 
+#> MCMC representativeness: The Gelman-Rubin statistic (shrink factor) measures 
+#> the ratio of within- and between-chain variance and is considered as having 
+#> a good range of 1.0 to 1.1 with a value of 1.0 indicating the chains are 
+#> fully converged and values above 1.1 suggesting the chains have not converged 
+#> yet. For MCMC representativeness graphs, please examine trace plots and 
+#> density plots found with plot(Bayes()). 
+#> 
+#> 1. According to the Gelman-Rubin Statistic (GRS) results, your MCMC first 
+#> reached the level below 1.1 by about step 100 in the chain. 
+#> 
+#> 2. The lowest GRS was 1. And 7 of the selected 7 steps between the first 
+#> and last steps in the MCMC had Gelman-Rubin statistics below 1.10. 
+#> 
+#> MCMC accuracy: 1) The autocorrelation factor (ACF) is a measure of chain step 
+#> concentration or clustering with values near 0 being ideal (indicating no 
+#> clustering) for each chain at various lags (interested in lags 1-20). In 
+#> other words, higher ACF indicates that it changes only gradually from step 
+#> to step. Values of 0 to 0.05 are essentially the same, very good, with 
+#> regards to the ESS formula (see below). 2) The effective sample size (ESS) 
+#> tells us the sample size of a completely non-correlated chain that yielded 
+#> the same info because we'd like a measure of how much independent info there 
+#> is in autocorrelated chains. An ESS value of 10,000 is recommended. Note that 
+#> the ESS uses the ACF in its calculations with higher ACF leading to lower ESS. 
+#> 3) The Monte Carlo standard error (MCSE) = parameter Std. Dev. / sqrt(ESS) 
+#> with values on the parameter scale. If the MCSE is much smaller than the 
+#> parameter mean, this indicates a good MCSE. 
+#> 
+#> 1. Your average Autocorrelation Factor across chains is: 
+#> 0.00461, 0.00383, -0.00818, -0.01403, -0.00424 at the 
+#> 1st, 5th, 10th, 15th, and 20th lags. 
+#> 
+#> 2. Your Effective Sample Size is 20000 and is above the ideal target of 10,000 
+#> or more for sparse regions of the distributions (e.g., limits of 95% HDIs). 
+#> 
+#> 3. Your Monte Carlo Standard Error is 0.00052. Please compare this value with 
+#> the parameter's average to understand how large or small the MCSE is. 
+#> 
+#> MCMC efficiency: Please see Kruschke, 2015, to read more about efficiency such 
+#> as 1) using different samplers, 2) parallel R, 3) changing parametrizations of 
+#> the model, 4) and thinning chains (recording fewer steps). 
+#> 
+#> Background 
+#> ---------- 
+#> We have 3 main quality goals when generating MCMC samples from our posterior 
+#> distribution: A) Chain values are representative of the posterior and there 
+#> is no excessive initial value influence, therefore our chains explore the full 
+#> posterior range. B) Chains are sufficiently large for accurate and stable 
+#> estimates (e.g., 95% HDI). C) Chains should be efficient in terms of 
+#> completion time and computing power. 
+#> 
+#> MCMC diagnostics help us with most of these goals and allows us to review: 
+#> 
+#> 1) Visual inspection of trace and density plots, see plot(Bayes()), and the 
+#> Gelman-Rubin statistic can suggest whether the burn-in period has been 
+#> suitably passed and 
+#> 2) suggests whether the chains are well-mixed and representative of the posterior. 
+#> 3) Remember these don't guarantee representativeness. 
+#> 4) ESS and MCSE suggest how stable and accurate the chains are. 
+#> 5) For stability in sparse regions (e.g., 95% HDI limits), ideally ESS >= 10,000. 
+#> 6) If you want accuracy in the dense regions of the distribution such as the mean, 
+#> a small MCSE may suggest the mean can be estimated very stably even with a low ESS.
+```
+
+### Bayesian target analysis
+
+A possible healthcare target analysis with interpretations of results.
+
+``` r
+btarget1 <- Bayes(x=losmcmc, y="target", type="n", parameter=c("muOfY","sigmaOfY"),
+newdata=TRUE, targets=list(p=c(.35,.4,.45, .5, .55),  y=c(3,4), e= list(a=c(.35,.4,.45), b=.5)))
+interpret(btarget1$Target, digits=3)
+#> Interpretations: Target 
+#> ----------------------- 
+#> Based on the cumulative distribution function for P(X <= x), 
+#> the following probability is at or less than point x, with 
+#> 95% Highest Density Intervals [HDI Low, HDI High]: 
+#> The probability of x <= 3 is 0.232 [0.209, 0.259]. 
+#> The probability of x <= 4 is 0.416 [0.385, 0.442]. 
+#> 
+#> The estimated interval of the lowest and highest x values you 
+#> listed have this estimated area under the curve between them: 
+#> The AUC in the interval of 3 and 4 is 0.18 [0.171, 0.19]. 
+#> 
+#> Based on the inverse cumulative distribution function for 
+#> P(X <= x) = p'th quantile, the following x is at this percentile, 
+#> with 95% Highest Density Intervals [HDI Low, HDI High]: 
+#> The 35th percentile of x is 3.69 [3.53, 3.82]. 
+#> The 40th percentile of x is 3.92 [3.79, 4.08]. 
+#> The 45th percentile of x is 4.18 [4.04, 4.33]. 
+#> The 50th percentile of x is 4.43 [4.29, 4.58]. 
+#> The 55th percentile of x is 4.67 [4.53, 4.82]. 
+#> 
+#> The estimated interval of the lowest and highest percentile values you 
+#> listed have this estimated absolute difference in x between them: 
+#> The difference in the interval of 0.35 and 0.55 is 1.01 [0.953, 1.06]. 
+#> 
+#> The estimated mean of the X values from the beta distribution 
+#> with 95% Highest Density Intervals [HDI Low, HDI High]: 
+#> NA 
+#> 
+#> Cohen's h effect sizes may help understand the difference in potential 
+#> targets, for the following absolute differences in proportions: 
+#> The effect size of 0.5 minus 0.35 is 0.305, a small effect. 
+#> The effect size of 0.5 minus 0.4 is 0.201, a small effect. 
+#> The effect size of 0.5 minus 0.45 is 0.1, a less than small effect.
+```

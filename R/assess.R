@@ -302,17 +302,20 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
   # Create for weighted regression
   if(!is.null(propensity)) {
   ipw <- rep(NA, nrow(data))
-  ipw[data[, prop_mdl_y] == 1 ] <- 1 / pscore[data[, prop_mdl_y] == 1 ]
-  ipw[data[, prop_mdl_y] == 0 ] <- 1 / (1 - pscore[data[, prop_mdl_y] == 0 ])
+  ipw <- ifelse(data[, prop_mdl_y] == 1, 1/pscore[data[, prop_mdl_y] == 1 ],
+                1 / (1 - pscore[data[, prop_mdl_y] == 0 ]))
+
   #Normalized IPW weights
   nipw <- rep(NA, nrow(data))
-  nipw[data[, prop_mdl_y] == 1] <- ipw[data[, prop_mdl_y] == 1] / sum(ipw[data[, prop_mdl_y] == 1], na.rm=TRUE)
-  nipw[data[, prop_mdl_y] == 0] <- ipw[data[, prop_mdl_y] == 0] / sum(ipw[data[, prop_mdl_y] == 0], na.rm=TRUE)
+  nipw <- ifelse(data[, prop_mdl_y] == 1, ipw[data[, prop_mdl_y] == 1] / sum(ipw[data[, prop_mdl_y] == 1], na.rm=TRUE),
+                 ipw[data[, prop_mdl_y] == 0] / sum(ipw[data[, prop_mdl_y] == 0], na.rm=TRUE))
+
   #ATT weights
   att <- rep(NA, nrow(data))
-  att[data[, prop_mdl_y] == 1] <- 1
-  att[data[, prop_mdl_y] == 0] <- pscore[data[, prop_mdl_y] == 0] / (1 - pscore[data[, prop_mdl_y] == 0])
-}
+  att <- ifelse(data[, prop_mdl_y] == 1, 1,
+                pscore[data[, prop_mdl_y] == 0] / (1 - pscore[data[, prop_mdl_y] == 0]))
+  }
+
   # Add covariates to model formula when there are no weights
   if (is.null(weights)) {
     if(!is.null(propensity)) {

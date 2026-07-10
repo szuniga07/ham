@@ -970,31 +970,28 @@ if(y== "target") {
     }
     #target code
     #Value for total number of targets
-    num_tgt_p <- length(grep("p", names(unlist(x$targets))))
-    num_tgt_y <- length(grep("y", names(unlist(x$targets))))
+    num_tgt_p <- length(grep("p", names(unlist(x$Target$targets))))
+    num_tgt_y <- length(grep("y", names(unlist(x$Target$targets))))
     num_tgt <- sum(num_tgt_p,num_tgt_y)
     #Make y coordinates
     y_coord <- seq(dnsinfo[1], dnsinfo[2], length.out=(num_tgt + 2))[-1]
     #Add target lines and text
-    if(any(!is.na(x$Target$Est.Quantile.P)) == TRUE) {
+    if(any(!is.na(x$Target$Target$Est.Quantile.P)) == TRUE) {
       #Add lines to for where targets are at for P
       for(i in 1:num_tgt_p) {
-        abline(v= x$Target$Est.Quantile.P[[i]][1], col=tgtcol, lwd=lwd, lty=3)
-        text(x$Target$Est.Quantile.P[[i]][1], y_coord[i],
-             paste0(round(x$Target$Est.Quantile.P[[i]][1], round.c), " (", x$targets$p[[i]], ")"),
+        abline(v= x$Target$Target$Est.Quantile.P[[i]][1], col=tgtcol, lwd=lwd, lty=3)
+        text(x$Target$Target$Est.Quantile.P[[i]][1], y_coord[i],
+             paste0(round(x$Target$Target$Est.Quantile.P[[i]][1], round.c), " (", x$Target$targets$p[[i]], ")"),
              col=tgtcol, cex=cex.text )
       }
       #Add in text for distribution associated with Y
-      if(any(!is.na(x$Target$Est.Prob.LT.Y)) == TRUE) {
+      if(any(!is.na(x$Target$Target$Est.Prob.LT.Y)) == TRUE) {
         for(i in 1:num_tgt_y) {
-          text( x$targets$y[[i]] , y_coord[i+num_tgt_p] ,
-#                bquote( .(round(100*(1-x$Target$Est.Prob.LT.Y[[i]][[1]]), 1)) * "% < " *
-                bquote( .(round(100*(x$Target$Est.Prob.LT.Y[[i]][[1]]), 1)) * "% < " *
-                          .(signif(x$targets$y[[i]], 3)) * " < " *
-#                          .(round(100*x$Target$Est.Prob.LT.Y[[i]][[1]], 1)) * "%" ) ,
-                          .(round(100*(1-x$Target$Est.Prob.LT.Y[[i]][[1]]), 1)) * "%" ) ,
-#                adj=c((1-x$Target$Est.Prob.LT.Y[[i]][[1]]), 0), cex=cex.text , col=tgtcol)
-                adj=c((x$Target$Est.Prob.LT.Y[[i]][[1]]), 0), cex=cex.text , col=tgtcol)
+          text( x$Target$targets$y[[i]] , y_coord[i+num_tgt_p] ,
+                bquote( .(round(100*(x$Target$Target$Est.Prob.LT.Y[[i]][[1]]), 1)) * "% < " *
+                          .(signif(x$Target$targets$y[[i]], 3)) * " < " *
+                          .(round(100*(1-x$Target$Target$Est.Prob.LT.Y[[i]][[1]]), 1)) * "%" ) ,
+                adj=c((x$Target$Target$Est.Prob.LT.Y[[i]][[1]]), 0), cex=cex.text , col=tgtcol)
         }
       }
     }
@@ -1998,8 +1995,8 @@ if(y == "check") {
     #Get density info
     dnsinfo <- range(hist(paramSampleVec, plot=F)$density)
     #Value for total number of targets
-    num_tgt_p <- length(grep("p", names(unlist(x$targets))))
-    num_tgt_y <- length(grep("y", names(unlist(x$targets))))
+    num_tgt_p <- length(grep("p", names(unlist(x$Target$targets))))
+    num_tgt_y <- length(grep("y", names(unlist(x$Target$targets))))
     num_tgt <- sum(num_tgt_p,num_tgt_y)
     #Make y coordinates
     y_coord <- seq(dnsinfo[1], dnsinfo[2], length.out=(num_tgt + 2))[-1]
@@ -2010,25 +2007,22 @@ if(y == "check") {
               bcol=lcol , lcol=NULL , border=NULL ,
               showCurve=TRUE , breaks=breaks , math=math, es=es, ... )
     #Add target lines and text
-    if(any(!is.na(x$Target$Est.Quantile.P)) == TRUE) {
+    if(any(!is.na(x$Target$Target$Est.Quantile.P)) == TRUE) {
       #Add lines to for where targets are at for P
       for(i in 1:num_tgt_p) {
-        abline(v= x$Target$Est.Quantile.P[[i]][1], col=tgtcol, lwd=lwd, lty=3)
-        text(x$Target$Est.Quantile.P[[i]][1], y_coord[i],
-             paste0(round(x$Target$Est.Quantile.P[[i]][1], round.c), " (", x$targets$p[[i]], ")"),
+        abline(v= x$Target$Target$Est.Quantile.P[[i]][1], col=tgtcol, lwd=lwd, lty=3)
+        text(x$Target$Target$Est.Quantile.P[[i]][1], y_coord[i],
+             paste0(round(x$Target$Target$Est.Quantile.P[[i]][1], round.c), " (", x$Target$targets$p[[i]], ")"),
              col=tgtcol, cex=cex.text )
       }
       #Add in text for distribution associated with Y
-      if(any(!is.na(x$Target$Est.Prob.LT.Y)) == TRUE) {
+      if(any(!is.na(x$Target$Target$Est.Prob.LT.Y)) == TRUE) {
         for(i in 1:num_tgt_y) {
-          text( x$targets$y[[i]] , y_coord[i+num_tgt_p] ,
-#            bquote( .(round(100*(1-x$Target$Est.Prob.LT.Y[[i]][[1]]), 1)) * "% < " *
-            bquote( .(round(100*(x$Target$Est.Prob.LT.Y[[i]][[1]]), 1)) * "% < " *
-                      .(signif(x$targets$y[[i]], 3)) * " < " *
-#                      .(round(100*x$Target$Est.Prob.LT.Y[[i]][[1]], 1)) * "%" ) ,
-                      .(round(100*(1 - x$Target$Est.Prob.LT.Y[[i]][[1]]), 1)) * "%" ) ,
-#            adj=c((1-x$Target$Est.Prob.LT.Y[[i]][[1]]), 0), cex=cex.text , col=tgtcol)
-            adj=c((x$Target$Est.Prob.LT.Y[[i]][[1]]), 0), cex=cex.text , col=tgtcol)
+          text( x$Target$targets$y[[i]] , y_coord[i+num_tgt_p] ,
+            bquote( .(round(100*(x$Target$Target$Est.Prob.LT.Y[[i]][[1]]), 1)) * "% < " *
+                      .(signif(x$Target$targets$y[[i]], 3)) * " < " *
+                      .(round(100*(1 - x$Target$Target$Est.Prob.LT.Y[[i]][[1]]), 1)) * "%" ) ,
+            adj=c((x$Target$Target$Est.Prob.LT.Y[[i]][[1]]), 0), cex=cex.text , col=tgtcol)
           }
       }
     }

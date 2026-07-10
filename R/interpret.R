@@ -6,7 +6,8 @@
 #' values as well as modifying item scales. The interpretations are text comments associated
 #' with specific parameters of the various analyses.
 #'
-#' @param object alpha, assess, and Bayes class objects: alpha, ITS, DID, linear (ols) or logistic models, and Dx (Bayes Diagnostic).
+#' @param object alpha, assess, and Bayes class objects: alpha, ITS, DID, linear (ols) or logistic models,
+#' and Dx and target (Bayes diagnostics and target setting).
 #' @param digits a non-null value for digits specifies the minimum number of significant digits
 #' to be printed in values. The default, NULL, uses 3. Non-integer values will be rounded down,
 #' and only values greater than or equal to 1 and no greater than 22 are accepted.
@@ -41,7 +42,7 @@
 #'
 interpret <- function(object, digits=NULL) {
 
-  if(any(class(object) %in% c("alpha","assess", "Dx")) == FALSE) {stop("Error: Expecting 'alpha' or 'assess' class object.")}
+  if(any(class(object) %in% c("alpha","assess", "Dx", "target")) == FALSE) {stop("Error: Expecting 'alpha', 'assess', 'Dx', or 'target' class object.")}
   # Sets "assess" return objects to NULL for model, DID, ITS
   model <- NULL; did <- NULL; its <- NULL
   #Set default digits == 3
@@ -74,6 +75,7 @@ interpret <- function(object, digits=NULL) {
   if(any(class(object) %in% c("alpha"))) interpret_type <- "alpha"
   if(any(class(object) %in% c("assess"))) interpret_type <- "assess"
   if(any(class(object) %in% c("Dx"))) interpret_type <- "Dx"
+  if(any(class(object) %in% c("target"))) interpret_type <- "target"
 
   # OLS model #
   if("assess" %in% class(object) ) {
@@ -675,5 +677,159 @@ interpret <- function(object, digits=NULL) {
     class(z) <- c("interpret", "Dx", "ham", "list")
     return(z)
   }
+  #############
+  ## Targets ##
+  #############
+  if (interpret_type == "target") {
+    if("target" %in% class(object) ) {
+      #Function to produce Cohen's H effect size text
+      fncESText <-  function(x) {
+        if(x < 0.2) {
+          ESText <- "less than small"
+        }
+        if(x >= 0.2) {
+          ESText <- "small"
+        }
+        if(x >= 0.5) {
+          ESText <- "medium"
+        }
+        if(x >= 0.8) {
+          ESText <- "large"
+        }
+        return(ESText)
+      }
 
+      # Get specific targets #
+      if(any(!is.na(object$targets$y))) {
+        Y_targets <- sort(object$targets$y)
+      } else {
+        Y_targets <- NA
+      }
+      if(any(!is.na(object$targets$p))) {
+        P_targets <- sort(object$targets$p)
+      } else {
+        P_targets <- NA
+      }
+      if(any(!is.na(object$targets$e))) {
+        E_targets <- do.call(cbind.data.frame, object$targets$e)
+      } else {
+        E_targets <- NA
+      }
+
+      #Get target estimates
+      if(any(!is.na(object$Target$Est.Prob.LT.Y))) {
+        Y_targets_est <- object$Target$Est.Prob.LT.Y
+      } else {
+        Y_targets_est <- NA
+      }
+      #Y interval
+      if(!is.null(object$Target$Est.Prob.LT.Y$High.Low.Interval)) {
+        Y_interval_est <- object$Target$Est.Prob.LT.Y$High.Low.Interval
+      } else {
+        Y_interval_est <- NA
+      }
+      if(any(!is.na(object$Target$Est.Quantile.P))) {
+        P_targets_est <- object$Target$Est.Quantile.P
+      } else {
+        P_targets_est <- NA
+      }
+      #P interval
+      if(!is.null(object$Target$Est.Quantile.P$High.Low.Interval)) {
+        P_interval_est <- object$Target$Est.Quantile.P$High.Low.Interval
+      } else {
+        P_interval_est <- NA
+      }
+      if(any(!is.na(object$Target$Effect.Size.Prop))) {
+        E_targets_est <- object$Target$Effect.Size.Prop
+      } else {
+        E_targets_est <- NA
+      }
+      #Get effect size text
+      if(any(!is.na(E_targets_est))) {
+        E_targets_ESize <- vapply(E_targets_est, FUN=fncESText, FUN.VALUE=character(1))
+      } else {
+        E_targets_ESize <- NA
+      }
+
+      #Get beta mean estimate
+      if(any(!is.na(object$Target$Est.Mean.Beta))) {
+        beta_mean <- object$Target$Est.Mean.Beta
+      } else {
+        beta_mean <- NA
+      }
+      # Interpretations #
+      Y_targets_intro <- c("Based on the cumulative distribution function for P(X <= x), \nthe following probability is at or less than point x, with \n95% Highest Density Intervals [HDI Low, HDI High]:")
+      P_targets_intro <- c("Based on the inverse cumulative distribution function for \nP(X <= x) = p'th quantile, the following x is at this percentile, \nwith 95% Highest Density Intervals [HDI Low, HDI High]:")
+      Y_interval_intro <- c("The estimated interval of the lowest and highest x values you \nlisted have this estimated area under the curve between them:")
+      P_interval_intro <- c("The estimated interval of the lowest and highest percentile values you \nlisted have this estimated absolute difference in x between them:")
+      E_targets_intro <- c("Cohen's h effect sizes may help understand the difference in potential \ntargets, for the following absolute differences in proportions:")
+      beta_mean_intro <- c("The estimated mean of the X values from the beta distribution \nwith 95% Highest Density Intervals [HDI Low, HDI High]:")
+
+      # Interpretations that come from a for loop #
+      # Y_targets #
+      if(any(!is.na(Y_targets))) {
+        Y_interpret <- vector(mode="character", length=length(Y_targets))
+        for(i in 1:length(Y_targets)) {
+          Y_interpret[i] <- paste0("The probability of x <= ", Y_targets[i], " is ", signif(Y_targets_est[[i]][1], digits=digits), " [", signif(Y_targets_est[[i]][2], digits=digits), ", ", signif(Y_targets_est[[i]][3], digits=digits), "].")
+        }
+      } else {
+        Y_interpret <- NA
+      }
+      # P_targets #
+      if(any(!is.na(P_targets))) {
+        P_interpret <- vector(mode="character", length=length(P_targets))
+        for(i in 1:length(P_targets)) {
+          P_interpret[i] <- paste0("The ", P_targets[i]*100, "th percentile of x is ", signif(P_targets_est[[i]][1], digits=digits), " [", signif(P_targets_est[[i]][2], digits=digits), ", ", signif(P_targets_est[[i]][3], digits=digits), "].")
+        }
+      } else {
+        P_interpret <- NA
+      }
+      # Cohen's effect sizes #
+      if(any(!is.na(E_targets))) {
+        E_interpret <- vector(mode="character", length=nrow(E_targets))
+        for(i in 1:nrow(E_targets)) {
+          E_interpret[i] <- paste0("The effect size of ", signif(E_targets[i, 2], digits=digits), " minus ", signif(E_targets[i, 1], digits=digits)," is ", signif(E_targets_est[i], digits=digits),", a ", E_targets_ESize[i]," effect.")
+        }
+      } else {
+        E_interpret <- NA
+      }
+
+      #No for loop needed
+      # Y and P intervals P_interval_est
+      if(any(!is.na(Y_interval_est))) {
+        Y_int_interpret <- paste0("The AUC in the interval of ", min(Y_targets), " and ", max(Y_targets), " is ",
+                                  signif(Y_interval_est[1], digits=digits), " [", signif(Y_interval_est[2], digits=digits), ", ", signif(Y_interval_est[3], digits=digits),"].")
+      } else {
+        Y_int_interpret <- NA
+      }
+      if(any(!is.na(P_interval_est))) {
+        P_int_interpret <- paste0("The difference in the interval of ", min(P_targets), " and ", max(P_targets), " is ",
+                                  signif(P_interval_est[1], digits=digits), " [", signif(P_interval_est[2], digits=digits), ", ", signif(P_interval_est[3], digits=digits),"].")
+      } else {
+        P_int_interpret <- NA
+      }
+      #Beta estimate with HDIs
+      if(any(!is.na(beta_mean))) {
+        beta_interpret <- paste0("The estimated mean is ", signif(beta_mean[1], digits=digits),
+                                    " [", signif(beta_mean[2], digits=digits), ", ", signif(beta_mean[3], digits=digits),"]." )
+      } else {
+        beta_interpret <- NA
+      }
+
+    }
+  }
+
+  #Make final object
+  if (interpret_type == "target") {
+    if("target" %in% class(object) ) {
+      z <- list(Y_targets_intro=Y_targets_intro, Y_interpret=Y_interpret,
+                Y_interval_intro=Y_interval_intro, Y_int_interpret=Y_int_interpret,
+                P_targets_intro =P_targets_intro , P_interpret=P_interpret,
+                P_interval_intro=P_interval_intro, P_int_interpret=P_int_interpret,
+                beta_mean_intro=beta_mean_intro, beta_interpret=beta_interpret,
+                E_targets_intro=E_targets_intro, E_interpret=E_interpret)
+      class(z) <- c("interpret", "target", "ham", "list")
+  }
+  }
+  return(z)
 }

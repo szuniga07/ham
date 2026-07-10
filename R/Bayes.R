@@ -1487,8 +1487,8 @@ fncBayesOlsR2 <- function(Coda_Object, datFrm, xName=NULL, Intercept=NULL,
                           Betas=NULL, Level1.Sigma=NULL, Average.type =center) {
   #Make coda into as.matrix
   mcmc_coda_object <- MCMC
-  mean.Intercept <-  mean(mcmc_coda_object[, which(colnames(mcmc_coda_object) == Intercept)])
-  median.Intercept <-  median(mcmc_coda_object[, which(colnames(mcmc_coda_object) == Intercept)])
+  mean.Intercept <-  mean(mcmc_coda_object[, which(colnames(mcmc_coda_object) == Intercept)], na.rm=TRUE)
+  median.Intercept <-  median(mcmc_coda_object[, which(colnames(mcmc_coda_object) == Intercept)], na.rm=TRUE)
   #Make list to store fitted values (minus the intercept)
   fitval.mean <- vector(mode="list", length= nrow(datFrm))
   fitval.median <- vector(mode="list", length= nrow(datFrm))
@@ -1498,24 +1498,24 @@ fncBayesOlsR2 <- function(Coda_Object, datFrm, xName=NULL, Intercept=NULL,
     for (j in 1:length(Betas)) {
       if (Average.type=="mean") {
         fitval.mean[[i]][j] <- mean(mcmc_coda_object[, which(colnames(mcmc_coda_object) %in% Betas[j])]*
-                                      datFrm[, which(colnames(datFrm) %in% xName[j])][i])
+                                      datFrm[, which(colnames(datFrm) %in% xName[j])][i], na.rm=TRUE)
       } else {
         fitval.median[[i]][j] <- median(mcmc_coda_object[, which(colnames(mcmc_coda_object) %in% Betas[j])]*
-                                          datFrm[, which(colnames(datFrm) %in% xName[j])][i])
+                                          datFrm[, which(colnames(datFrm) %in% xName[j])][i], na.rm=TRUE)
       }
     }
   }
   #Get the predicted values from the mean
   if (Average.type=="mean") {
-    yPRED <- mapply(fitval.mean, FUN="sum", + mean.Intercept)
+    yPRED <- mapply(fitval.mean, FUN="sum", + mean.Intercept, na.rm=TRUE)
   }
   if (Average.type %in% c("median","mode")) {
-    yPRED <- mapply(fitval.median, FUN="sum", + median.Intercept)
+    yPRED <- mapply(fitval.median, FUN="sum", + median.Intercept, na.rm=TRUE)
   }
   #Get variance of the fit
-  varFit <- sd(yPRED)^2
+  varFit <- sd(yPRED, na.rm=TRUE)^2
   #Get variance of the residuals
-  varRes <- mean(mcmc_coda_object[, Level1.Sigma]^2)
+  varRes <- mean(mcmc_coda_object[, Level1.Sigma]^2, na.rm=TRUE)
   #Calculate R^2
   R2 <- varFit/(varFit + varRes)
   return(list("R2"=R2, "Variance.Pred.Y"=varFit, "Variance.Residuals"=varRes, "yPRED"=yPRED))
@@ -1670,10 +1670,19 @@ if(y == "target") {
                             qVal=targets[["p"]], eVal=targets[["e"]],
                             Center=parameter[1], Spread=parameter[2], Skew=parameter[3],
                             CenTend=center )
+  target_list <- list("Target"=target_smry, "targets"=targets)
 } else {
 #  target_smry <- NA
   target_smry <- NULL
 }
+if(y == "target") {
+  target_list <- list("Target"=target_smry, "targets"=targets)
+} else {
+  target_list <- NULL
+}
+
+target_list <- list("Target"=target_smry, "targets"=targets)
+
 ## R2 ##
 if(y == "r2") {
   r2_smry <- fncBayesOlsR2(Coda_Object=MCMC, datFrm=data, xName=iv,
@@ -1721,8 +1730,8 @@ if(!is.null(MCMC)) {
 if(!is.null(multi_smry)) {
   class(multi_smry) <- c("Bayes", "multi","ham", "list")
 }
-if(!is.null(target_smry)) {
-  class(target_smry) <- c("Bayes", "target","ham", "list")
+if(!is.null(target_list)) {
+  class(target_list) <- c("Bayes", "target","ham", "list")
 }
 if(!is.null(r2_smry)) {
   class(r2_smry) <- c("Bayes", "r2","ham", "list")
@@ -1732,8 +1741,7 @@ if(!is.null(dx_parameter)) {
 }
 #Combine in list
 z <- list(Posterior.Summary=Posterior.Summary, MCMC=MCMC, Multilevel=multi_smry,
-          Target=target_smry, targets=targets,
-          R2.Summary=r2_smry, parameter=parameter, Diagnostics=dx_parameter)
+          Target=target_list, R2.Summary=r2_smry, parameter=parameter, Diagnostics=dx_parameter)
 # Assign ham classes
 class(z) <- c("Bayes","ham", "list")
 return(z)

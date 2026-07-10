@@ -189,7 +189,7 @@ print.interpret <- function(x, ...) {
       cat(object$its_covariates , "\n" )
     }
   }
-
+#Diagnostics
   if("interpret" %in% class(object) ) {
     if("Dx" %in% class(object) ) {
       cat("MCMC Diagnostics", "\n" )
@@ -219,5 +219,36 @@ print.interpret <- function(x, ...) {
       cat(object$dx_back_2 , "\n" )
       cat("\n" )
     }
+  }
+  #Targets
+  if("interpret" %in% class(object) ) {
+    if("target" %in% class(object) ) {
+      cat("Interpretations: Target", "\n" )
+      cat("-----------------------", "\n" )
+      cat(object$Y_targets_intro, "\n" )
+      for(i in 1:length(object$Y_interpret)) {
+        cat(object$Y_interpret[i] , "\n" )
+      }
+      cat("\n" )
+      cat(object$Y_interval_intro, "\n" )
+      cat(object$Y_int_interpret, "\n" )
+      cat("\n" )
+      cat(object$P_targets_intro, "\n" )
+      for(i in 1:length(object$P_interpret)) {
+        cat(object$P_interpret[i] , "\n" )
+      }
+      cat("\n" )
+      cat(object$P_interval_intro, "\n" )
+      cat(object$P_int_interpret, "\n" )
+      cat("\n" )
+      cat(object$beta_mean_intro, "\n" )
+      cat(object$beta_interpret, "\n" )
+      cat("\n" )
+      cat(object$E_targets_intro, "\n" )
+      for(i in 1:length(object$E_interpret)) {
+        cat(object$E_interpret[i], "\n" )
+      }
     }
+  }
+
 }
