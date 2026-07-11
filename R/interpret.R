@@ -423,7 +423,7 @@ interpret <- function(object, digits=NULL) {
       # Significance test for ITS effects #
       Smry_int_sig <- ifelse(object$ITS.Effects[, "p.value"] < .05, "significant", "non-significant")
       # Interpretations #
-      its_intro <- c("Note: Some variable names below based on time points (or 'interruptions'). \nThis analysis is for a two-group, single intervention period (interruption). \nPositive values indicate higher intervention group values and vice-versa for: \npost1, txp1, ixp1, txip1, post2, txp2, ixp2, txip2.")
+      its_intro <- c("Note: Some variable names below based on time points (or 'interruptions'). \nThis analysis is for a one-group, multiple intervention period (interruption). \nPositive values indicate higher intervention group values and vice-versa for: \npost1, txp1, post2, txp2.")
       # These are static interpretations that are NOT repeated
       B0 <- paste0("Intercept is ", signif(its_b0_coef, 3), " and the starting value of the trend for the \ncontrol group.")
       B1 <- paste0("ITS.Time is ", signif(its_b1_coef, 3), " and the group\'s slope prior to intervention. \nThe coefficient is ", its_b_sig[2], ".")
@@ -503,7 +503,7 @@ interpret <- function(object, digits=NULL) {
         Smry_diff_sig[i] <- Smry_sig_all[seq(3, length(Smry_sig_all), by=3)][i]
       }
       # Interpretations #
-      its_intro <- c("Note: Some variable names below based on time points (or 'interruptions'). \nThis analysis is for a two-group, single intervention period (interruption). \nPositive values indicate higher intervention group values and vice-versa for: \npost1, txp1, ixp1, txip1, post2, txp2, ixp2, txip2.")
+      its_intro <- c("Note: Some variable names below based on time points (or 'interruptions'). \nThis analysis is for a two-group, multiple intervention period (interruption). \nPositive values indicate higher intervention group values and vice-versa for: \npost1, txp1, ixp1, txip1, post2, txp2, ixp2, txip2.")
       # These are static interpretations that are NOT repeated
       B0 <- paste0("Intercept is ", signif(its_b0_coef, digits), " and the starting value of the trend for the \ncontrol group.")
       B1 <- paste0("ITS.Time is ", signif(its_b1_coef, digits), " and the control group\'s slope prior to intervention. \nThe coefficient is ", its_b_sig[2], ".")
