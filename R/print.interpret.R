@@ -58,7 +58,7 @@ print.interpret <- function(x, ...) {
   if("interpret" %in% class(object) ) {
     if("model" %in% class(object) ) {
       cat("Interpretations: Regression model", "\n" )
-      cat("----------------------", "\n" )
+      cat("---------------------------------", "\n" )
       cat(object$introduction, "\n" )
       cat("\n" )
       cat(object$all_significant, "\n" )
