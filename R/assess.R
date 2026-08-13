@@ -166,13 +166,27 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
   }
 
   main_data_vars <- colnames(data)
-  newdata_vars <- c("Post.All", "Period", "DID","DID.Trend","Int.Var","pscore", "ipw", "nipw","att")
+#  newdata_vars <- c("Post.All", "Period", "DID","DID.Trend","Int.Var","pscore", "ipw", "nipw","att")
+  newdata_vars <- c("Post.All", "Period", "DID","DID.Trend","Int.Var")
   dup_vars <- intersect(main_data_vars, newdata_vars)
   name_stop_fnc <-paste0("Error: Duplicated column name(s): ", paste(dup_vars, collapse = ", "),
                          ". Rename variables, these are reserved for function purposes.")
   if (length( dup_vars) >= 1) {
     stop(name_stop_fnc)
   }
+  #Stops if using propensity when "pscore", "ipw", "nipw","att" is in the data
+  prpsnty_newdata_vars <- c("pscore", "ipw", "nipw","att")
+  prpsnty_dup_vars <- intersect(main_data_vars, prpsnty_newdata_vars)
+  prpsnty_name_stop_fnc <- paste0("Error: Duplicated column name(s): ", paste(prpsnty_dup_vars, collapse = ", "),
+                         ". Rename variables, these are reserved for propensity score weighting purposes.")
+  if(!is.null(propensity)) {
+    if (length( prpsnty_dup_vars) >= 1) {
+      stop(prpsnty_name_stop_fnc)
+    }
+  }
+
+  if(length(treatment) > 1) stop("Error: treatment > 1. Expecting only 1 time.")
+
   #Stop too many treatment and duplicated interruption periods
   if(length(treatment) > 1) stop("Error: treatment > 1. Expecting only 1 time.")
   if(any(duplicated(interrupt)) == TRUE) stop("Error: Duplicated 'interrupt'. Expecting unique values.")
@@ -302,18 +316,21 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
   # Create for weighted regression
   if(!is.null(propensity)) {
   ipw <- rep(NA, nrow(data))
-  ipw <- ifelse(data[, prop_mdl_y] == 1, 1/pscore[data[, prop_mdl_y] == 1 ],
-                1 / (1 - pscore[data[, prop_mdl_y] == 0 ]))
+#  ipw <- ifelse(data[, prop_mdl_y] == 1, 1/pscore[data[, prop_mdl_y] == 1 ], 1 / (1 - pscore[data[, prop_mdl_y] == 0 ]))
+  ipw <- ifelse(data[, prop_mdl_y] == 1, 1/pscore, 1 / (1 - pscore))
 
   #Normalized IPW weights
   nipw <- rep(NA, nrow(data))
-  nipw <- ifelse(data[, prop_mdl_y] == 1, ipw[data[, prop_mdl_y] == 1] / sum(ipw[data[, prop_mdl_y] == 1], na.rm=TRUE),
-                 ipw[data[, prop_mdl_y] == 0] / sum(ipw[data[, prop_mdl_y] == 0], na.rm=TRUE))
-
+  #Sum of treatment and control weights
+  trt_nipw_sum <- sum(ipw[data[, prop_mdl_y] == 1], na.rm=TRUE)
+  ctl_nipw_sum <- sum(ipw[data[, prop_mdl_y] == 0], na.rm=TRUE)
+  #  nipw <- ifelse(data[, prop_mdl_y] == 1, ipw[data[, prop_mdl_y] == 1] / sum(ipw[data[, prop_mdl_y] == 1], na.rm=TRUE), ipw[data[, prop_mdl_y] == 0] / sum(ipw[data[, prop_mdl_y] == 0], na.rm=TRUE))
+  #NIPW
+  nipw <- ifelse(data[, prop_mdl_y] == 1,  ipw / trt_nipw_sum,  ipw / ctl_nipw_sum)
   #ATT weights
   att <- rep(NA, nrow(data))
-  att <- ifelse(data[, prop_mdl_y] == 1, 1,
-                pscore[data[, prop_mdl_y] == 0] / (1 - pscore[data[, prop_mdl_y] == 0]))
+#  att <- ifelse(data[, prop_mdl_y] == 1, 1, pscore[data[, prop_mdl_y] == 0] / (1 - pscore[data[, prop_mdl_y] == 0]))
+  att <- ifelse(data[, prop_mdl_y] == 1,  1,  pscore / (1 - pscore))
   }
 
   # Add covariates to model formula when there are no weights
