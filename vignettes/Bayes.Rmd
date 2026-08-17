@@ -126,11 +126,11 @@ A review of the diagnostics suggest that the model ran well.
 ### interpretations
 The graphs are very helpful for reviewing the diagnostics but the interpretations are helpful in reviewing what information we gain from conducting the MCMC diagnostics. There are 3 types of information in the interpretation output.
 
-* 1. General overview of the MCMC representativeness, accuracy, and efficiency.
+* General overview of the MCMC representativeness, accuracy, and efficiency.
 
-* 2. Gelman-Rubin, ACF, ESS, and MCSE statistics about your parameter.
+* Gelman-Rubin, ACF, ESS, and MCSE statistics about your parameter.
 
-* 3. Additional background information.
+* Additional background information.
 
 For example, here's a review of the blos1 object:
 
