@@ -236,7 +236,7 @@ We see below that there are solid and hollow triangles. The hollow triangles rep
 ```{r plotMulti1, fig.dim = c(6, 4.5)}
 plot(x=co2multi, y="multi", level=2, aorder=FALSE,
 subset= c("Qn2","Qn3","Qc3","Qc2","Mn3","Mn2","Mc2","Mc3"),
-lcol="blue", pcol= c("red", "skyblue"), round.c=1, bcol="yellow",
+lcol="blue", pcol= c("red", "skyblue"), round.c=2, bcol="yellow",
 xlim=c(-.1, 1), legend=NULL, add.legend="topright", lwd=3, cex.lab=1.2,
 cex= 2, cex.main=1.25, cex.axis=.75, cex.legend=1.5, X.Lab=NULL)
 ```
@@ -247,7 +247,7 @@ And now the level 3 plot (observation in plants in Treatment by type groups). Yo
 
 ```{r plotMulti2, fig.dim = c(6, 4.5)}
 plot(x=co2multi, y="multi", level=3, aorder=FALSE, lcol="blue", pcol= c("green", "pink"),
-round.c=1, bcol="lavender", xlim=c(-.1, 1), legend=NULL, add.legend="bottomleft", lwd=3, cex.lab =1.2, cex= 2, cex.main=1.25, cex.axis=.75, cex.legend=1.25, X.Lab=NULL)
+round.c=3, bcol="lavender", xlim=c(-.1, 1), legend=NULL, add.legend="bottomleft", lwd=3, cex.lab =1.2, cex= 2, cex.main=1.25, cex.axis=.75, cex.legend=1.25, X.Lab=NULL)
 ```
 
 <br>

@@ -489,7 +489,8 @@ fncHdiBinSmry <- function(MCmatrix, expand=NULL, datFrm, Outcome, Group2, Group3
     keep_theta_cols <- grep(paste0(Theta, "\\["), colnames(MCmatrix))
   }
   if(Level== 2) {
-    keep_omega2_cols <- grep(paste0(Omega2, "\\["), colnames(MCmatrix))
+    #keep_omega2_cols <- grep(paste0(Omega2, "\\["), colnames(MCmatrix))
+    keep_omega2_cols  <- grep(Omega2, colnames(MCmatrix))
   }
   #Level-3, hierarchical model
   if(Level== 3) {
@@ -601,7 +602,8 @@ fncHdiBinSmry <- function(MCmatrix, expand=NULL, datFrm, Outcome, Group2, Group3
   if(Level== 2) {
     param2_so_far <- length(c(theta_cols, omega2_cols))
     other_param2 <- m_param_tot - param2_so_far
-    num_rep_Group2 <- other_param2 + 1
+#    num_rep_Group2 <- other_param2 + 1
+    num_rep_Group2 <- other_param2
   }
   #Level-3, hierarchical model
   if(Level== 3) {
@@ -705,7 +707,8 @@ fncHdiBinSmry <- function(MCmatrix, expand=NULL, datFrm, Outcome, Group2, Group3
     theta_rows <- grep(paste0(Theta, "\\["), rownames(postDF))
   }
   if(Level== 2) {
-    omega2_rows <- grep(paste0(Omega2, "\\["), rownames(postDF))
+    #omega2_rows <- grep(paste0(Omega2, "\\["), rownames(postDF))
+    omega2_rows <- grep(Omega2, rownames(postDF))
   }
   #Level-3, hierarchical model
   if(Level== 3) {
@@ -768,14 +771,15 @@ fncHdiBinSmry <- function(MCmatrix, expand=NULL, datFrm, Outcome, Group2, Group3
   }
   if(Level== 2) {
     postDFb <- rbind(postDF[o6[1:LTR], ],
-                     postDF[o6[(LTR + 1):(LTR + LO2R )], ],
-                     postDF[ o6[( (LTR + LO2R) + 1):nrow(postDF)], ])
+#                     postDF[o6[(LTR + 1):(LTR + LO2R )], ],
+#                     postDF[ o6[( (LTR + LO2R) + 1):nrow(postDF)], ])
+                     postDF[o6[(LTR + 1)], ])
   }
   if(Level== 3) {  #In this order: theta, Omega2, omega3
     postDFb <- rbind(postDF[o6[1:LTR], ],                                   #Thetas
                      postDF[o6[(LTR + 1):(LTR + LO2R )], ],                 #omega2
-                     postDF[o6[(LTR + LO2R + 1):(LTR + LO2R + 1)], ],       #omega3
-                     postDF[ o6[( (LTR + LO2R + LO3R) + 1):nrow(postDF)], ])  #all others
+                     postDF[o6[(LTR + LO2R + 1):(LTR + LO2R + 1)], ]) #,       #omega3
+#                     postDF[ o6[( (LTR + LO2R + LO3R) + 1):nrow(postDF)], ])  #all others
   }
   ## Put postDF in reverse order so that it will plot correctly
   if(Level== 1) {
@@ -783,8 +787,9 @@ fncHdiBinSmry <- function(MCmatrix, expand=NULL, datFrm, Outcome, Group2, Group3
   }
   if(Level== 2) {
     postDFa <- rbind(postDF[rev(1:LTR), ],
-                     postDF[rev(omega2_rows), ],
-                     postDF[ rev(( (LTR + LO2R) + 1):nrow(postDF)), ])
+#                     postDF[rev(omega2_rows), ],
+#                     postDF[ rev(( (LTR + LO2R) + 1):nrow(postDF)), ])
+                     postDF[rev(omega2_rows), ])
   }
   if(Level== 3) {  #In this order: theta, Omega2, omega3
     postDFa <- rbind(postDF[ rev(1:LTR), ],                                   #Thetas
@@ -1656,14 +1661,29 @@ if(y == "post") {
 }
 #Get multilevel summary
 if(y == "multi") {
-  multi_smry <- fncHdiBinSmry(MCmatrix=MCMC, expand=expand, datFrm=data,
-                              Outcome=dv, Group2=iv[1], Group3=iv[2],
-                              Theta=parameter[1], Omega2=parameter[2], Omega3=parameter[3],
-                              Average_type=center, Distribution=type, Cred.Mass=mass)
+  if(length(parameter) == 3) {
+    multi_smry <- fncHdiBinSmry(MCmatrix=MCMC, expand=expand, datFrm=data,
+                                Outcome=dv, Group2=iv[1], Group3=iv[2],
+                                Theta=parameter[1], Omega2=parameter[2], Omega3=parameter[3],
+                                Average_type=center, Distribution=type, Cred.Mass=mass)
+  }
+  if(length(parameter) == 2) {
+    multi_smry <- fncHdiBinSmry(MCmatrix=MCMC, expand=expand, datFrm=data,
+                                Outcome=dv, Group2=iv[1], Group3=NULL,
+                                Theta=parameter[1], Omega2=parameter[2], Omega3=NULL,
+                                Average_type=center, Distribution=type, Cred.Mass=mass)
+  }
+  if(length(parameter) == 1) {
+    multi_smry <- fncHdiBinSmry(MCmatrix=MCMC, expand=expand, datFrm=data,
+                                Outcome=dv, Group2=iv[1], Group3=NULL,
+                                Theta=parameter[1], Omega2=NULL, Omega3=NULL,
+                                Average_type=center, Distribution=type, Cred.Mass=mass)
+  }
 } else {
 #  multi_smry <- NA
   multi_smry <- NULL
 }
+
 ## Targets ##
 if(y == "target") {
   target_smry <- fncPropGtY(MCMC=MCMC, Distribution=type, yVal=targets[["y"]],
