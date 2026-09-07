@@ -257,9 +257,11 @@ plot.Bayes <- function(x, y=NULL, type="n", parameter=NULL, center="mode", mass=
       stop("Error: Expecting a parameter list when math is not 'n'.")
     }
   }
-  if(math == "n") {
+  if(y != "vary") {
+    if(math == "n") {
     if(is.list(parameter)) {
       stop("Error: Expecting a character vector when math is 'n'.")
+    }
     }
   }
   # ensure no other distributions for effect sizes are used right now
@@ -475,7 +477,7 @@ if(y== "target") {
   ########################
   ## Set math functions ##
   ########################
-  if(y != "multi") {
+  if(!y %in% c("multi", "vary")) {
     paramSampleVec <- switch(math,
                              "n" =   rowMeans(as.matrix(MCMC[, parameter, drop=FALSE])),
                              "add" =  rowMeans(as.matrix(MCMC[, parameter[[1]], drop=FALSE ])) + rowMeans(as.matrix(MCMC[, parameter[[2]], drop=FALSE ])),
@@ -809,7 +811,7 @@ if(y== "target") {
     }
     axis(1, cex.axis=cex.axis)  #Put values in labels
     #This adds in minimum value in case it isn't in range (e.g., show negatve range of normal distribution)
-    axis(1, at=X.Lim[1], cex.axis=cex.axis)
+   # axis(1, at=X.Lim[1], cex.axis=cex.axis)
     axis(2, cex.axis=cex.axis)  #Put values in density
     # box()   #Dropping this for now because it looks better without
     #Add in posterior estimate lines
@@ -873,16 +875,16 @@ if(y== "target") {
   ################################################################################
   #Use the coda object and dataset. Works for normal and log-normal distributions.
   fncGrpPostPredCheckTarget <- function(MCMC, datFrm, Outcome,
-                                  Group=NULL, Group.Level=NULL, Bar.Color=NULL,Hist.Breaks=NULL,
-                                  Mean.Var, SD.Var, MCnu=NULL, Distribution, Num.Lines=NULL,
-                                  Main.Title=NULL, X.Lab=NULL, Y.Lab=NULL, #new
-                                  lwd=NULL, #new
-                                  Line.Color=NULL,
-                                  cex.lab=NULL, cex= 1, cex.main=NULL, cex.axis=NULL, #new
-                                  X.Lim=NULL, Y.Lim=NULL,
-                                  Min.Val=NULL, Max.Val=NULL, Round.Digits=NULL,
-                                  Point.Loc= NULL, PCol=NULL,
-                                  Leg.Loc= NULL, legend= NULL, cex.legend= NULL ) { #new
+                                        Group=NULL, Group.Level=NULL, Bar.Color=NULL,Hist.Breaks=NULL,
+                                        Mean.Var, SD.Var, MCnu=NULL, Distribution, Num.Lines=NULL,
+                                        Main.Title=NULL, X.Lab=NULL, Y.Lab=NULL, #new
+                                        lwd=NULL, #new
+                                        Line.Color=NULL,
+                                        cex.lab=NULL, cex= 1, cex.main=NULL, cex.axis=NULL, #new
+                                        X.Lim=NULL, Y.Lim=NULL,
+                                        Min.Val=NULL, Max.Val=NULL, Round.Digits=NULL,
+                                        Point.Loc= NULL, PCol=NULL,
+                                        Leg.Loc= NULL, legend= NULL, cex.legend= NULL ) { #new
     #Make coda into as.matrix
     MC.Chain <- MCMC
     chainLength <- NROW(MC.Chain)  #Chain length
@@ -905,13 +907,13 @@ if(y== "target") {
     #Get density info
     dnsinfo <- range(hist( datFrm[, Outcome], plot=FALSE)$density)
     #Histogram
-      hist( datFrm[, Outcome], xlab= X.Lab, ylab=Y.Lab,
-            main= Main.Title, breaks=Hist.Breaks, col= Bar.Color, border="white",
-            prob=TRUE, cex.lab=cex.lab, cex=cex, cex.main=cex.main,
-            xlim=X.Lim, ylim=Y.Lim, axes=FALSE)
+    hist( datFrm[, Outcome], xlab= X.Lab, ylab=Y.Lab,
+          main= Main.Title, breaks=Hist.Breaks, col= Bar.Color, border="white",
+          prob=TRUE, cex.lab=cex.lab, cex=cex, cex.main=cex.main,
+          xlim=X.Lim, ylim=Y.Lim, axes=FALSE)
     axis(1, cex.axis=cex.axis)  #Put values in labels
     #This adds in minimum value in case it isn't in range (e.g., show negatve range of normal distribution)
-    axis(1, at=X.Lim[1], cex.axis=cex.axis)
+    #axis(1, at=X.Lim[1], cex.axis=cex.axis)
     axis(2, cex.axis=cex.axis)  #Put values in density
     # box()   #Dropping this for now because it looks better without
     #Add in posterior estimate lines
@@ -996,6 +998,155 @@ if(y== "target") {
       }
     }
 
+  } #End of function
+
+  ################################################################################
+  #                  4b. Posterior Predictive Check for Variation analysis       #
+  ################################################################################
+  #Use the coda object and dataset. Works for normal and log-normal distributions.
+  fncGrpPostPredCheckVar <- function(MCMC, datFrm, Outcome,
+                                     Group=NULL, Group.Level=NULL, parameter,
+                                     #Mean.Var, SD.Var, MCnu=NULL,
+                                     Distribution, Num.Lines=NULL,
+                                     Main.Title=NULL, X.Lab=NULL, Y.Lab=NULL, #new
+                                     Bar.Color=NULL, lwd=NULL, #new
+                                     Line.Color=NULL, Hist.Breaks=NULL,
+                                     cex.lab=NULL, cex= 1, cex.main=NULL, cex.axis=NULL, #new
+                                     X.Lim=NULL, Y.Lim=NULL,
+                                     Min.Val=NULL, Max.Val=NULL, Round.Digits=NULL,
+                                     Point.Loc= NULL, PCol=NULL,
+                                     Leg.Loc= NULL, legend= NULL, cex.legend= NULL ) { #new
+    # Get number of sets of checks
+    num_checks <- length(parameter)
+    #Main title
+    if(is.null(Main.Title)) {
+      Main.Title <- "Variation"
+    } else {
+      Main.Title <- Main.Title
+    }
+
+    #Line color
+    if(is.null(Line.Color)) {
+      Line.Color <- c("black", "gray")
+    } else {
+      Line.Color <- Line.Color
+    }
+    Line.Color2 <- vector()
+    for (i in 1:num_checks) {
+      Line.Color2[i] <- Line.Color[(i - 1) %% length(Line.Color) + 1]
+    }
+    #Final line color
+    Line.Color <- Line.Color2
+
+    #Make coda into as.matrix
+    MC.Chain <- MCMC
+    chainLength <- NROW(MC.Chain)  #Chain length
+    #Get min and max value for key parameter
+    if(is.null(Min.Val)) {
+#      Min.Val <- min(MC.Chain[, Mean.Var])
+      Min.Val <- min(datFrm[, Outcome], na.rm=TRUE)
+    }
+    if(is.null(Max.Val)) {
+#      Max.Val <- max(MC.Chain[, Mean.Var])
+      Max.Val <- max(datFrm[, Outcome], na.rm=TRUE)
+    }
+    #Get a number of pseudo-random chains
+    pltIdx <- floor(seq(1, chainLength, length= Num.Lines))
+    #Get spread in outcome variable values
+    #  xComb <- seq( Min.Val , max(datFrm[, Outcome], na.rm=TRUE) , length=501 )
+    xComb <- seq( Min.Val , Max.Val , length=501 )
+    #Make X limit values, I can set my minimum value
+    if (is.null(X.Lim)) {
+          #X.Lim <- c(Min.Val, round(max(datFrm[, Outcome], na.rm=TRUE), digits=Round.Digits))
+          X.Lim <- c(Min.Val, round(Max.Val, digits=Round.Digits))
+    }
+    #Make histograms
+    if ( is.null(Group)) {
+      hist( datFrm[, Outcome], xlab= X.Lab, ylab=Y.Lab,
+            main= Main.Title, breaks=Hist.Breaks, col= Bar.Color, border="white",
+            prob=TRUE, cex.lab=cex.lab, cex=cex, cex.main=cex.main,
+            xlim=X.Lim, ylim=Y.Lim, axes=FALSE)
+    } else {
+      hist( datFrm[, Outcome][datFrm[, Group] == Group.Level], xlab= X.Lab, ylab=Y.Lab,
+            main= Main.Title, breaks=Hist.Breaks, col= Bar.Color, border="white",
+            prob=TRUE, cex.lab=cex.lab, cex=cex, cex.main=cex.main,
+            xlim=X.Lim, ylim=Y.Lim, axes=FALSE)
+    }
+    axis(1, cex.axis=cex.axis)  #Put values in labels
+    #This adds in minimum value in case it isn't in range (e.g., show negative range of normal distribution)
+#      axis(1, at=X.Lim[1], cex.axis=cex.axis)
+    axis(2, cex.axis=cex.axis)  #Put values in density
+    # box()   #Dropping this for now because it looks better without
+    fncPostCheck1 <- function(MCMC=MCMC, Min.Val=Min.Val, Max.Val=Max.Val,
+                              Distribution=Distribution,
+                              Mean.Var, SD.Var, MCnu, X.Lim=X.Lim,
+                              Num.Lines=Num.Lines, Line.Color=Line.Color, lwd=lwd) {
+      ## Graph ##
+      #Allows me to run if I only have 1 group by leaving "generate levels =="No"
+      #Add in posterior estimate lines
+      for ( chnIdx in pltIdx ) {
+        #Normal Distribution
+        if (Distribution == "n") {
+          lines( xComb ,
+                 dnorm( xComb, MC.Chain[chnIdx, Mean.Var], MC.Chain[chnIdx, SD.Var] ),
+                 col= Line.Color, lwd=lwd )
+        }
+        #Log-Normal Distribution
+        if (Distribution == "ln") {
+          lines( xComb ,
+                 dlnorm( xComb, MC.Chain[chnIdx, Mean.Var], MC.Chain[chnIdx, SD.Var] ),
+                 col= Line.Color , lwd=lwd)
+        }
+        #Skew-Normal Distribution
+        if (Distribution == "sn") {
+          lines( xComb ,
+                 dskewn( xComb, xi=MC.Chain[chnIdx, Mean.Var], omega=MC.Chain[chnIdx, SD.Var],
+                         alpha=MC.Chain[chnIdx, MCnu]), col= Line.Color, lwd=lwd )
+        }
+        #Weibull Distribution
+        if (Distribution == "w") {
+          lines( xComb ,
+                 dweibull( xComb, shape=MC.Chain[chnIdx, Mean.Var], scale=MC.Chain[chnIdx, SD.Var] ),
+                 col= Line.Color, lwd=lwd )
+        }
+        #Gamma Distribution
+        if (Distribution == "g") {
+          lines( xComb ,
+                 dgamma( xComb, shape=MC.Chain[chnIdx, Mean.Var], rate=MC.Chain[chnIdx, SD.Var] ),
+                 col= Line.Color, lwd=lwd )
+        }
+        #t Distribution
+        if (Distribution == "t") {
+          lines( xComb ,
+                 dt( xComb, df= MC.Chain[chnIdx, MCnu], ncp= MC.Chain[chnIdx, Mean.Var] ),
+                 col= Line.Color, lwd=lwd )
+        }
+      }
+    }  #end of sub-function
+
+    ## Run function ##
+    # Create predictive check lines
+    for(i in 1:num_checks) {
+      fncPostCheck1(MCMC=MCMC, Min.Val=Min.Val, Max.Val=Max.Val, Distribution=Distribution,
+                    Mean.Var=parameter[[i]][1], SD.Var=parameter[[i]][2], MCnu=parameter[[i]][3],
+                    X.Lim=X.Lim, Num.Lines=Num.Lines, Line.Color=Line.Color[i], lwd=lwd)
+    }
+    #Add points
+    if (!is.null(Point.Loc)) {
+      for (i in 1:length(Point.Loc)) {
+        points(x=Point.Loc[i], y=0, pch=3, cex=cex, col=PCol)
+      }
+    }
+    #Add legend
+    if(!is.null(Leg.Loc) ) {
+      legend_text <- if (!is.null(legend)) legend else c("Observed",
+                                                         rep(paste("Group", 1:length(Line.Color))))
+      legend_type <- 1
+      pcol_vector <- c(Bar.Color, Line.Color)
+      legend(x=Leg.Loc, legend=legend_text, col=pcol_vector, lty=legend_type,
+             pt.bg=pcol_vector, cex = cex.legend, bty="n", inset=c(0, .05),
+             lwd=cex.legend)
+    }
   } #End of function
 
 
@@ -1958,7 +2109,60 @@ if(y == "check") {
                                     cex.legend=cex.legend, X.Lim=xlim, Y.Lim=ylim,
                                     X.Min=vlim[1], X.Max=vlim[2], PCol=pcol, Leg.Loc=add.legend)
       )
-    }
+}
+# Variation analysis of multiple distributions
+  if(y == "vary") {
+    switch(type,
+           "n" = fncGrpPostPredCheckVar(MCMC=MCMC, datFrm=data, Outcome=dv, Group=group[[1]],
+                                     Group.Level=group[[2]], parameter=parameter,
+                                     Distribution=type, Num.Lines=pline,
+                                     Main.Title=main, X.Lab=xlab, Bar.Color=bcol,
+                                     Line.Color=lcol, Hist.Breaks=breaks, X.Lim=xlim, Y.Lim=ylim,  Min.Val=vlim[1],
+                                     Max.Val=vlim[2], Round.Digits=round.c, Point.Loc= xpt, PCol=pcol,
+                                     Leg.Loc= add.legend, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
+                                     cex.axis=cex.axis, legend=legend, cex.legend=cex.legend, lwd=lwd, Y.Lab=ylab ),
+           "ln" = fncGrpPostPredCheckVar(MCMC=MCMC, datFrm=data, Outcome=dv, Group=group[[1]],
+                                      Group.Level=group[[2]], parameter=parameter,
+                                      Distribution=type, Num.Lines=pline,
+                                      Main.Title=main, X.Lab=xlab, Bar.Color=bcol,
+                                      Line.Color=lcol, Hist.Breaks=breaks, X.Lim=xlim, Y.Lim=ylim,  Min.Val=vlim[1],
+                                      Max.Val=vlim[2], Round.Digits=round.c, Point.Loc= xpt, PCol=pcol,
+                                      Leg.Loc= add.legend, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
+                                      cex.axis=cex.axis, legend=legend, cex.legend=cex.legend, lwd=lwd, Y.Lab=ylab ),
+           "sn" = fncGrpPostPredCheckVar(MCMC=MCMC, datFrm=data, Outcome=dv, Group=group[[1]],
+                                      Group.Level=group[[2]], parameter=parameter,
+                                      Distribution=type, Num.Lines=pline,
+                                      Main.Title=main, X.Lab=xlab, Bar.Color=bcol,
+                                      Line.Color=lcol, Hist.Breaks=breaks, X.Lim=xlim, Y.Lim=ylim,  Min.Val=vlim[1],
+                                      Max.Val=vlim[2], Round.Digits=round.c, Point.Loc= xpt, PCol=pcol,
+                                      Leg.Loc= add.legend, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
+                                      cex.axis=cex.axis, legend=legend, cex.legend=cex.legend, lwd=lwd, Y.Lab=ylab ),
+           "w" = fncGrpPostPredCheckVar(MCMC=MCMC, datFrm=data, Outcome=dv, Group=group[[1]],
+                                     Group.Level=group[[2]], parameter=parameter,
+                                     Distribution=type, Num.Lines=pline,
+                                     Main.Title=main, X.Lab=xlab, Bar.Color=bcol,
+                                     Line.Color=lcol, Hist.Breaks=breaks, X.Lim=xlim, Y.Lim=ylim,  Min.Val=vlim[1],
+                                     Max.Val=vlim[2], Round.Digits=round.c, Point.Loc= xpt, PCol=pcol,
+                                     Leg.Loc= add.legend, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
+                                     cex.axis=cex.axis, legend=legend, cex.legend=cex.legend, lwd=lwd, Y.Lab=ylab ),
+           "g" = fncGrpPostPredCheckVar(MCMC=MCMC, datFrm=data, Outcome=dv, Group=group[[1]],
+                                     Group.Level=group[[2]], parameter=parameter,
+                                     Distribution=type, Num.Lines=pline,
+                                     Main.Title=main, X.Lab=xlab, Bar.Color=bcol,
+                                     Line.Color=lcol, Hist.Breaks=breaks, X.Lim=xlim, Y.Lim=ylim,  Min.Val=vlim[1],
+                                     Max.Val=vlim[2], Round.Digits=round.c, Point.Loc= xpt, PCol=pcol,
+                                     Leg.Loc= add.legend, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
+                                     cex.axis=cex.axis, legend=legend, cex.legend=cex.legend, lwd=lwd, Y.Lab=ylab ),
+           "t" = fncGrpPostPredCheckVar(MCMC=MCMC, datFrm=data, Outcome=dv, Group=group[[1]],
+                                     Group.Level=group[[2]], parameter=parameter,
+                                     Distribution=type, Num.Lines=pline,
+                                     Main.Title=main, X.Lab=xlab, Bar.Color=bcol,
+                                     Line.Color=lcol, Hist.Breaks=breaks, X.Lim=xlim, Y.Lim=ylim,  Min.Val=vlim[1],
+                                     Max.Val=vlim[2], Round.Digits=round.c, Point.Loc= xpt, PCol=pcol,
+                                     Leg.Loc= add.legend, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
+                                     cex.axis=cex.axis, legend=legend, cex.legend=cex.legend, lwd=lwd, Y.Lab=ylab )
+    )
+  }
 ## Multilevel summary ##
     if(y == "multi") {
     switch(level,
