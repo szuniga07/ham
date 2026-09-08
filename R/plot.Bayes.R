@@ -1043,11 +1043,11 @@ if(y== "target") {
     chainLength <- NROW(MC.Chain)  #Chain length
     #Get min and max value for key parameter
     if(is.null(Min.Val)) {
-#      Min.Val <- min(MC.Chain[, Mean.Var])
+      # Min.Val <- min(MC.Chain[, Mean.Var])
       Min.Val <- min(datFrm[, Outcome], na.rm=TRUE)
     }
     if(is.null(Max.Val)) {
-#      Max.Val <- max(MC.Chain[, Mean.Var])
+      #Max.Val <- max(MC.Chain[, parameter[[1]][1]])
       Max.Val <- max(datFrm[, Outcome], na.rm=TRUE)
     }
     #Get a number of pseudo-random chains
