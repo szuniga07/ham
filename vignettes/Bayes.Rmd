@@ -191,7 +191,114 @@ knitr::include_graphics("taov.png")
 
 <br>
 
-# 4b. Checking the regression trend line: 'check'
+# 4b. Variation analysis: 'vary'
+
+This option, ‘vary’, is a modified version of 'check' and allows us to view multiple posterior predictive check lines. The primary purpose is for use in a Bayesian differences-in-differences study on the variation parameter. For example, in a model with a normal distribution in the likelihood function, we would compare the change in the standard deviation for the treatment and control groups. 
+
+The motivation for ‘vary’ is to test if the treatment group reduces variation. An important goal in hospital quality improvement is to reduce variation in our health outcomes. And a Bayesian DID can be done by estimating the parameters for the control group’s pre- and post-intervention values and the treatment group’s pre- and post-intervention values and then mathematically calculate the DID coefficient.
+
+For example, we could calculate the DID for variation in a Bayesian model:
+
+#Control group (post intervention - pre intervention)
+
+  delta21SigmaOfY <- sigmaOfY[2] - sigmaOfY[1]
+  
+#Treatment group (post intervention - pre intervention)
+
+  delta43SigmaOfY <- sigmaOfY[4] - sigmaOfY[3]
+  
+#DID for 'variation' 
+
+B3DIDSigma <- delta43SigmaOfY - delta21SigmaOfY 
+
+We can also use ‘vary’ for the DID of the mean or if we just want to view multiple posterior predictive checks if we select ‘type’ as 'n', 'ln', 'sn', 'w', 'g', or 't'. 
+
+Below, we have code to do a variation analysis of a model with a log-normal distribution for length of stay (LOS). The losvary object requires we modify the 
+hosprog data by adding the predictor variable for 'Post.Int'. 
+
+
+```{r PostInt1}
+# These make 4 levels for the intervention program * pre/post period
+#pre/post indicator
+hosprog$prepost <- ifelse(hosprog$month >= 5, 1, 0)
+#Control group at pre-test
+hosprog$Post.Int <- 1
+#Control group at post-test
+hosprog[, "Post.Int"][hosprog$program == 0 & hosprog$prepost == 1 ] <- 2
+#Intervention group at pre-test
+hosprog[, "Post.Int"][hosprog$program == 1 & hosprog$prepost == 0 ] <- 3
+#Intervention group at post-test
+hosprog[, "Post.Int"][hosprog$program == 1 & hosprog$prepost == 1 ] <- 4
+```
+
+Now we can create the ham object.
+
+```{r DIDVary}
+bvlos <- Bayes(x=losvary, newdata=TRUE)
+#key parameters for post check
+parls <- list(c("muOfLogY[1]", "sigmaOfLogY[1]"),  
+              c("muOfLogY[2]", "sigmaOfLogY[2]"),
+              c("muOfLogY[3]", "sigmaOfLogY[3]"),
+              c("muOfLogY[4]", "sigmaOfLogY[4]"))
+```
+
+We'll first look at the DID for variation. We see the amount is about a 1 day reduction
+in standard deviation for the treatment group. In other words, the control group 
+increased standard deviation in the post-intervention period by 1/2 a day while the treatment group decreased by 1/2 a day. The estimates aren't found in the losvary 
+object but it comes out to about equivalent to this calculation: (1.5 - 2.1) - (2.0 - 1.6) = -1.
+
+```{r plotDIDvary, fig.dim = c(6, 4.5)}
+plot(x=bvlos, y="post", parameter="B3DIDSig", bcol="green", compare=0,
+     HDItext=.3, cex=2, main= "B3DIDSig")
+```
+
+Let's take a look at the various posterior predictive checks, this will give us insight in how the control and treatment groups vary by pre/post intervention periods. Note that the grey observed data bars are all data and only 1 single line for each parameter is used for clarity.
+
+```{r plotVary1, fig.dim = c(6, 4.5)}
+plot(x=bvlos, y="vary", type="ln", dv="los", breaks=75, pline=1, lwd=5, vlim=c(0, 15),
+     data=hosprog, lcol= c("pink","red", "cyan", "blue"), xlim=c(0.5, 15), ylim=c(0, .35), parameter=parls, main="LOS and posterior pred checks", cex.main=2, cex.legend=1.5, cex.label=1.5,
+     cex.axis=1.5, add.legend="topright", legend=c("Observed Data", "CTL Pre Est.", "CTL Post Est.", "Treat Pre Est.", "Treat Post Est."))
+```
+
+The lighter colors represent the pre-intervention time. For example, the pink line shows lower LOS for the control group which is similar to the blue line for the treatment group's post-intervention period. In other words, things got better for the treatment group's LOS while things got worse for the control group. 
+
+Now we zoom in on the tails that represent the high lengths of stay. 
+
+```{r plotVary2, fig.dim = c(6, 4.5)}
+plot(x=bvlos, y="vary", type="ln", dv="los", breaks=75, pline=1, lwd=5, vlim=c(0, 15),
+     data=hosprog, lcol= c("pink","red", "cyan", "blue"), xlim=c(10, 15), ylim=c(0, .03), parameter=parls, main="LOS Zoomed In", cex.main=2, cex.legend=1.5, cex.label=1.5,
+     cex.axis=1.5, add.legend="topright", legend=c("Observed Data", "CTL Pre Est.", "CTL Post Est.", "Treat Pre Est.", "Treat Post Est."))
+```
+
+We can see that the post-intervention period for the treatment group has a lower estimated length of stay when compared to the pre-intervention period.
+
+Because a log-normal model was utilized, we get DID estimates for the mean, median, and mode. For completeness, we'll review the DID on average reductions in LOS for the treatment group.
+
+Mean DID
+
+```{r plotDIDavg1, fig.dim = c(6, 4.5)}
+plot(x=bvlos, y="post", parameter="B3DIDMu", bcol="yellow",
+     HDItext=.3, cex=2, main= "DID for the mean")
+```
+
+Median DID
+
+```{r plotDIDavg2, fig.dim = c(6, 4.5)}
+plot(x=bvlos, y="post", parameter="B3DIDMed", bcol="tomato",
+     HDItext=.3, cex=2, main= "DID for the median")
+```
+
+Mode DID
+
+```{r plotDIDavg3, fig.dim = c(6, 4.5)}
+plot(x=bvlos, y="post", parameter="B3DIDMode", bcol="slategray",
+     HDItext=.3, cex=2, main= "DID for the mode")
+```
+
+Either way you look at it, the average DID showed a significant improvement for the treatment group.
+
+
+# 4c. Checking the regression trend line: 'check'
 
 Now lets look at the trend of conc on CO2 uptake from the CO2 data.
 Using a quadratic model with conc^2 would help and is an option in ham.

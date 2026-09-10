@@ -168,3 +168,28 @@
 #' distribution priors for the mean and sigma parameters.
 #'
 "losmcmc"
+
+#' Markov Chain Monte Carlo estimates of the differences-in-differences of mean and variation for the hospital length of stay from the hosprog data frame
+#' @format ## `losvary`
+#' MCMC list of 4 chains with 1500 rows and 13 columns in each of the list elements:
+#' \describe{
+#'   \item{ CHAIN}{Estimate of the mean parameter.}
+#'   \item{ `muOfLogY[1]`}{Estimate of the log mean parameter for the control group's pre-intervention period.}
+#'   \item{ `muOfLogY[2]`}{Estimate of the log mean parameter for the control group's post-intervention period.}
+#'   \item{ `muOfLogY[3]`}{Estimate of the log mean parameter for the treatment group's pre-intervention period.}
+#'   \item{ `muOfLogY[4]`}{Estimate of the log mean parameter for the treatment group's post-intervention period.}
+#'   \item{ `sigmaOfLogY[1]`}{Estimate of the log standard deviation parameter for the control group's pre-intervention period.}
+#'   \item{ `sigmaOfLogY[2]`}{Estimate of the log standard deviation parameter for the control group's post-intervention period.}
+#'   \item{ `sigmaOfLogY[3]`}{Estimate of the log standard deviation parameter for the treatment group's pre-intervention period.}
+#'   \item{ `sigmaOfLogY[4]`}{Estimate of the log standard deviation parameter for the treatment group's post-intervention period.}
+#'   \item{ B3DIDMu }{Estimate of the differences-in-differences parameter for the mean.}
+#'   \item{ B3DIDMed }{Estimate of the differences-in-differences parameter for the median.}
+#'   \item{ B3DIDMode }{Estimate of the differences-in-differences parameter for the mode.}
+#'   \item{ B3DIDSig }{Estimate of the differences-in-differences standard deviation (variation) parameter.}
+#'   ...
+#' }
+#' @source losvary is a list of 4 MCMC simulations. It estimates the mean and standard deviation using the artificial hosprog
+#' data frame from ham. An estimation was specified using a log-normal distribution maximum likelihood and normal and uniform
+#' distribution priors for the mean and sigma parameters.
+#'
+"losvary"

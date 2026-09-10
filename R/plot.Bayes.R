@@ -10,7 +10,11 @@
 #' @param y character vector for the type of plot to graph. Select 'post', 'dxa', 'dxd', 'dxg', 'dxt', 'check',
 #' 'multi' (specialized version of 'check'), or 'target' for posterior summary, diagnostics (4 'dx' plots produced:
 #' autocorrelation factor, density plots on chain convergence, Gelman-Rubin statistic, and traceplot), posterior predictive
-#' check, multilevel or hierarchical model summary (up to 3 levels), or target summary plots. Default is 'post'.
+#' check, multilevel or hierarchical model summary (up to 3 levels), or target summary plots. When y="vary", it allows multiple
+#' posterior predictive check lines for various parameters over observed data. This produces a modified version of y="check" for continuous
+#' outcomes when 'type' is one of the following: 'n', 'ln', 'sn', 'w', 'g', 't'. This was created for a variation analysis, assessed with a
+#' Bayesian DID model of the variance (i.e., 'spread') parameter. 'vary' works for parameters that represent the 'average' (i.e.,
+#' center) or basically whenever you would like to have multiple posterior predictive check lines in the same graph. Default is 'post'.
 #' @param type character vector of length == 1 that indicates the likelihood function used in the model when y='check' or y='multi'.
 #' Posterior predictive checks allow us to see how well our estimates match the observed data. These checks are
 #' available for Bayesian estimation of outcomes and regression trend lines (with polynomial terms) using various distributions in the
@@ -29,7 +33,7 @@
 #' limits may help). When graphing target summary plots that use posterior predictive checks rather than the basic posterior
 #' summary graph (plots target values over the parameter estimate of the center such as the mean), enter y='target' and other
 #' arguments relevant to y='check'. However, type= 'bern', 'bin', 'sn' are not available but type='n', 'ln', 'w', 'g', or 't' are
-#' available. Default is NULL.
+#' available. When y='vary', select 'n', 'ln', 'sn', 'w', 'g', or 't'. Default is NULL.
 #' @param parameter a character vector of length >= 1 or a 2 element list with the name(s) of parameter in MCMC chains to produce
 #' summary statistics. Use a 1 element vector to get posterior estimates of a single parameter. Use a 2 or more element vector
 #' to estimate the average joint effects of multiple parameters (e.g., average infection rate for interventions A and B when
@@ -40,11 +44,13 @@
 #' represents center, spread, and additional distribution parameters in order of 1st, 2nd, and 3rd distribution parameters. For example,
 #' mean and sd for a normal distribution; mean log and sd log of a log-normal dist.; xi, omega, and alpha of a skew-normal distribution;
 #' shape, scale, and lambda of a Weibull distribution; shape and rate of a Gamma distribution; and mean, SD and nu (i.e., degrees
-#' of freedom) of a t-distribution. Or indicate regression parameters in order (e.g., intercept, Beta 1, Beta 2, etc.). When y='multi',
-#' use a multiple element character vector to list the parameter names of the hierarchy, in order of the nesting with the lowest level
-#' first (e.g., exams nested in patients nested in hospital). When y='multi', for parameters from multiple groups such as various
-#' hospitals, only enter the first unit's prefix of each parameter and the remaining groups will be set up for graphing. For example,
-#' parameter=c('theta', 'omega') will plot data for `theta[1]` to `theta[8]` and `omega[1]` to `omega[8]` for all 8 hospitals as well.
+#' of freedom) of a t-distribution. Similarly, when y='vary' (i.e., modified y='check'), parameter is a list object where each element
+#' is a vector of column names for parameter (e.g., list(c('muOfY1', 'sdOfY1'), c('muOfY2', 'sdOfY2')))). Indicate regression parameters
+#' in order (e.g., intercept, Beta 1, Beta 2, etc.). When y='multi', use a multiple element character vector to list the parameter names
+#' of the hierarchy, in order of the nesting with the lowest level first (e.g., exams nested in patients nested in hospital). When
+#' y='multi', for parameters from multiple groups such as various hospitals, only enter the first unit's prefix of each parameter and
+#' the remaining groups will be set up for graphing. For example, parameter=c('theta', 'omega') will plot data for `theta[1]` to
+#' `theta[8]` and `omega[1]` to `omega[8]` for all 8 hospitals as well.
 #' @param center character vector that selects the type of central tendency to use when reporting parameter values.
 #' Choices include: 'mean', 'median', and 'mode'. Default is 'mode'.
 #' @param mass numeric vector that specifies the credible mass used in the Highest Density Interval (HDI). Default is 0.95.
