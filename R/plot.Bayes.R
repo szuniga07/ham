@@ -205,6 +205,43 @@
 #' main="Length of Stay", cex.main=1.5, xpt=5, pcol="red", lcol="orange",
 #' cex.legend=1, bcol="cyan")
 #'
+#' # When y='vary', this alternative Posterior Predictive Check involves reviewing lines
+#' # of multiple estimates to assess variation. Key to hospital quality improvement
+#' # goals is reducing variation. For example, viewing both the pre- and post-intervention
+#' # lines can help show that lower length of stay (LOS) hospital visits increased while
+#' # the very high LOS visits decreased. In addition, a Bayesian differences-in-differences
+#' # model assessing the difference in the variation parameter (e.g., standard deviation)
+#' # provides useful information. We show both in this example that uses a log-normal
+#' # likelihood function.
+#'
+#' # These make 4 levels for the intervention program * pre/post period
+#' hosprog$prepost <- ifelse(hosprog$month >= 5, 1, 0) #pre/post indicator
+#' # Control group at pre-test
+#' hosprog$Post.Int <- 1
+#' # Control group at post-test
+#' hosprog[, "Post.Int"][hosprog$program == 0 & hosprog$prepost == 1 ] <- 2
+#' # Intervention group at pre-test
+#' hosprog[, "Post.Int"][hosprog$program == 1 & hosprog$prepost == 0 ] <- 3
+#' # Intervention group at post-test
+#' hosprog[, "Post.Int"][hosprog$program == 1 & hosprog$prepost == 1 ] <- 4
+#' # Create a ham object out of losvary
+#' bvlos <- Bayes(x=losvary, newdata=TRUE)
+#' # list of key center and spread parameters for post check
+#' parls <- list(c("muOfLogY[1]", "sigmaOfLogY[1]"), c("muOfLogY[2]", "sigmaOfLogY[2]"),
+#'               c("muOfLogY[3]", "sigmaOfLogY[3]"), c("muOfLogY[4]", "sigmaOfLogY[4]"))
+#' # We now look at the variation DID parameter which excludes 0 (i.e., significant)
+#' plot(x=bvlos, y="post", parameter="B3DIDSig", bcol="green", compare=0,
+#' HDItext=.3, cex=2, main= "B3DIDSig")
+#'
+#' # Let's take a look at the various posterior predictive checks with y='vary'.
+#' # The control group increased standard deviation post-intervention period by
+#' # 1/2 a day while the treatment group decreased it by 1/2 a day.
+#' plot(x=bvlos, y="vary", type="ln", dv="los", breaks=75, pline=1, lwd=5, vlim=c(0, 15),
+#' data=hosprog, lcol= c("pink","red", "cyan", "blue"), xlim=c(0.5, 15), ylim=c(0, .35),
+#' parameter=parls, main="LOS and posterior pred checks", cex.main=2, cex.legend=1.5,
+#' cex.label=1.5, cex.axis=1.5, add.legend="topright",
+#' legend=c("Observed Data", "CTL Pre", "CTL Post", "Treat Pre", "Treat Post"))
+#'
 #' # Estimating the regression trend line
 #' # Now lets look at the trend of conc on CO2 uptake from the CO2 data.
 #' # Using a quadratic model with conc^2 would help and an option in ham.
