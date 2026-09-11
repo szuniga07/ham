@@ -6,7 +6,8 @@
 #' that summarize MCMC parameters. And values can be calculated for use in descriptive graphs such as
 #' values associated with specific percentiles and vice-versa to help set targets, MCMC diagnostics,
 #' summaries on hierarchical or multilevel models (up to 3 levels), and the R2 for Bayesian regression
-#' models with metric level predictors.
+#' models with metric level predictors. It is advisable to restart your R session after using the
+#' coda package and prior to using ham.
 #'
 #' @param x list object of multiple MCMC chains (e.g., matrix class list elements or coda mcmc.list).
 #' @param y character vector for the type of analysis or output to perform. Select 'post', 'multi', 'target', 'r2', or 'mcmc' for a
