@@ -260,7 +260,8 @@ Graph Bayesian diagnostic traceplots, density plots on convergence, autocorrelat
 Monte Carlo Standard Errors, and effective sample sizes. And plot summaries of posterior distributions, posterior
 predictive checks, summaries on hierarchical or multilevel models (up to 3 levels), and summary graphs of values
 associated with specific percentiles (and vice-versa) that can be used to help set targets. Plots are developed
-from Bayes class objects that converted multiple chains into data frames.
+from Bayes class objects that converted multiple chains into data frames. It is advisable to restart your R
+session after using the coda package and prior to using ham.
 }
 \examples{
 # Posterior estimates of length of stay #
