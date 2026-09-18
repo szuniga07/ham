@@ -323,7 +323,7 @@ lcol="steelblue")              #vlim lets me extrapolate a little
 <br>
 
 
-# 5. Hierarchical or Multilevel Model summary: 'multi' 
+# 5. Hierarchical or Multilevel Model summary with multilevel/shrinkage plots: 'multi' 
 
 We generally only need the first 3 arguments below. But we'll subset
 on 8 of 12 plants in the level 2 model (observations nested in plants)

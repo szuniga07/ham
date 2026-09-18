@@ -1122,53 +1122,50 @@ plot(x=d1, y= "is")
 
 <br>
 
-## Version 1.3 mostly has bug fixes and current feature improvements.
+## Version 1.4 mostly has bug fixes and current feature improvements.
 
-These and other changes included in version 1.3:
+These and other changes included in version 1.4:
 
 New additions
 
-- Digits added to interpret
+- plot.Bayes variation analysis, multiple posterior predictive check
+  lines
 
-- Poisson regression added to assess
+- losvary Bayesian chains of hospital LOS added for plot.Bayes examples
 
-- Odds ratio added to interpret results for logistic regression
-
-- NHSN data added
-
-- Summary of ITS effects updated for interpretations
-
-- ITS models 3 and 4 updated with graphs and interpretations
-
-- Weights added to assess
-
-- Offset added to assess
-
-- review, print.review, and plot.review added for summarizing regression
-  coefficients
-
-- Add x.axis and y.axis examples in ham_package and control vignette
-
-- Bayes() diagnostics and interpretations
-
-- Bayes() target interpretations added and vignette updated
-
-- Interpretations of Bayes diagnostics
-
-- Added Cohen’s h effect sizes to guide Bayesian target analysis
+- compapt data of VA hospitals completed appointments for 1 month across
+  locations
 
 Corrected errors
 
-- Error fixed that significant coefficients weren’t listed in
-  interpretations when there is only 1 predictor in the model.
+- For the interrupted time-series interpretations, “one-group, multiple
+  intervention period” and “two group, multiple time periods” are
+  correctly described.
 
-- Fixed y.axis issue for plot.control so that it is no longer
-  illogically using the number of x-axis values
+- The propensity score weights, “ipw”, “nipw”, and “att”, are now
+  correct because the code was fixed.
 
-- group() no longer adds extra time period in rolling time periods when
-  there are NAs in the data frame
+- The propensity score covariate and weights, “pscore”, “ipw”, “nipw”,
+  and “att”, can be used in later regressions after the variables
+  initial creation without causing the regression to get stopped with an
+  error message.
 
-- Other missing data issues in different functions
+- In Bayes, the code was fixed so level 2 models can have their model
+  summary created when y=“multi”.
+
+- The Bayesian data co2multi.rda was revised, with the above level 2
+  model correction.
+
+- The NHSN data now has the “logPredicted” variable as originally
+  intended.
+
+- It was discovered that the coda and ham packages’ namespaces conflict.
+  It is recommended to restart your R session after using coda and prior
+  to using ham so that the ham functions will run as expected.
+
+- The Bayes vignette has typos fixed in the form of formatted bullets
+  and “X.Lab” was correctly replaced with “xlab” in the multilevel
+  plots.
 
 ### Graph a summary of the coefficients
 
@@ -1326,3 +1323,90 @@ interpret(btarget1$Target, digits=3)
 #> The effect size of 0.5 minus 0.4 is 0.201, a small effect. 
 #> The effect size of 0.5 minus 0.45 is 0.1, a less than small effect.
 ```
+
+### Bayesian Variation Analysis
+
+Two types of variation can be reviewed with Bayesian analysis: 1)
+Conduct a Bayesian differences-in-differences analysis in which the DID
+is calculated for the variation parameter of the model (e.g., standard
+deviation) and graph the posterior predictive checks at pre-test over
+the observed post-test data to view the change or 2) compare and
+contrast lines from multiple posterior predictive checks of parameters
+to see the difference in estimated distributions.
+
+Here is an example of the 1st option of the variation DID but this same
+plot code works for the 2nd option.
+
+Below, we have code to do a variation analysis of a model with a
+log-normal distribution for length of stay (LOS). The losvary object
+requires we modify the hosprog data by adding the predictor variable for
+‘Post.Int’.
+
+``` r
+# These make 4 levels for the intervention program * pre/post period
+#pre/post indicator
+hosprog$prepost <- ifelse(hosprog$month >= 5, 1, 0)
+#Control group at pre-test
+hosprog$Post.Int <- 1
+#Control group at post-test
+hosprog[, "Post.Int"][hosprog$program == 0 & hosprog$prepost == 1 ] <- 2
+#Intervention group at pre-test
+hosprog[, "Post.Int"][hosprog$program == 1 & hosprog$prepost == 0 ] <- 3
+#Intervention group at post-test
+hosprog[, "Post.Int"][hosprog$program == 1 & hosprog$prepost == 1 ] <- 4
+```
+
+Now we can create the ham object.
+
+``` r
+bvlos <- Bayes(x=losvary, newdata=TRUE)
+#key parameters for post check
+parls <- list(c("muOfLogY[1]", "sigmaOfLogY[1]"),  
+              c("muOfLogY[2]", "sigmaOfLogY[2]"),
+              c("muOfLogY[3]", "sigmaOfLogY[3]"),
+              c("muOfLogY[4]", "sigmaOfLogY[4]"))
+```
+
+We’ll first look at the DID for variation. We see the amount is about a
+1 day reduction in standard deviation for the treatment group. In other
+words, the control group increased standard deviation in the
+post-intervention period by 1/2 a day while the treatment group
+decreased by 1/2 a day. The estimates aren’t found in the losvary object
+but it comes out to about equivalent to this calculation: (1.5 - 2.1) -
+(2.0 - 1.6) = -1.
+
+``` r
+plot(x=bvlos, y="post", parameter="B3DIDSig", bcol="green", compare=0,
+     HDItext=.3, cex=2, main= "B3DIDSig")
+```
+
+<img src="man/figures/README-plotDIDvary10-1.png" width="100%" />
+
+Let’s take a look at the various posterior predictive checks, this will
+give us insight in how the control and treatment groups vary by pre/post
+intervention periods. Note that the grey observed data bars are all data
+and only 1 single line for each parameter is used for clarity.
+
+``` r
+plot(x=bvlos, y="vary", type="ln", dv="los", breaks=75, pline=1, lwd=5, vlim=c(0, 15),
+     data=hosprog, lcol= c("pink","red", "cyan", "blue"), xlim=c(0.5, 15), ylim=c(0, .35), parameter=parls, main="LOS and posterior pred checks", cex.main=2, cex.legend=1.5, cex.label=1.5,
+     cex.axis=1.5, add.legend="topright", legend=c("Observed Data", "CTL Pre Est.", "CTL Post Est.", "Treat Pre Est.", "Treat Post Est."))
+```
+
+<img src="man/figures/README-plotVary10-1.png" width="100%" />
+
+The lighter colors represent the pre-intervention time. For example, the
+pink line shows lower LOS for the control group which is similar to the
+blue line for the treatment group’s post-intervention period. In other
+words, things got better for the treatment group’s LOS while things got
+worse for the control group.
+
+Now we zoom in on the tails that represent the high lengths of stay.
+
+``` r
+plot(x=bvlos, y="vary", type="ln", dv="los", breaks=75, pline=1, lwd=5, vlim=c(0, 15),
+     data=hosprog, lcol= c("pink","red", "cyan", "blue"), xlim=c(10, 15), ylim=c(0, .03), parameter=parls, main="LOS Zoomed In", cex.main=2, cex.legend=1.5, cex.label=1.5,
+     cex.axis=1.5, add.legend="topright", legend=c("Observed Data", "CTL Pre Est.", "CTL Post Est.", "Treat Pre Est.", "Treat Post Est."))
+```
+
+<img src="man/figures/README-plotVary20-1.png" width="100%" />
