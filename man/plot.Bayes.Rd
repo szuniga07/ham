@@ -329,7 +329,7 @@ HDItext=.3, cex=2, main= "B3DIDSig")
 # Let's take a look at the various posterior predictive checks with y='vary'.
 # The control group increased standard deviation post-intervention period by
 # 1/2 a day while the treatment group decreased it by 1/2 a day.
-plot(x=bvlos, y="vary", type="ln", dv="los", breaks=75, pline=1, lwd=5, vlim=c(0, 15),
+plot(x=bvlos, y="vary", type="ln", dv="los", breaks=75, pline=3, lwd=1, vlim=c(0, 15),
 data=hosprog, lcol= c("pink","red", "cyan", "blue"), xlim=c(0.5, 15), ylim=c(0, .35),
 parameter=parls, main="LOS and posterior pred checks", cex.main=2, cex.legend=1.5,
 cex.label=1.5, cex.axis=1.5, add.legend="topright",

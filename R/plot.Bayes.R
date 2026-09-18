@@ -240,7 +240,7 @@
 #' # Let's take a look at the various posterior predictive checks with y='vary'.
 #' # The control group increased standard deviation post-intervention period by
 #' # 1/2 a day while the treatment group decreased it by 1/2 a day.
-#' plot(x=bvlos, y="vary", type="ln", dv="los", breaks=75, pline=1, lwd=5, vlim=c(0, 15),
+#' plot(x=bvlos, y="vary", type="ln", dv="los", breaks=75, pline=3, lwd=1, vlim=c(0, 15),
 #' data=hosprog, lcol= c("pink","red", "cyan", "blue"), xlim=c(0.5, 15), ylim=c(0, .35),
 #' parameter=parls, main="LOS and posterior pred checks", cex.main=2, cex.legend=1.5,
 #' cex.label=1.5, cex.axis=1.5, add.legend="topright",
@@ -624,15 +624,12 @@ if(y== "target") {
     if(View.Order == FALSE) {                                  #Post2
       hdidf <- multi_smry$Post2[row_numbers , c(Group2, Average, Lower, Upper, "Obs.Rate")]
     }
-    #kermit
     #Decreasing or increasing order
     if(decreasing == FALSE) {
       hdidf <- hdidf
     } else {
-#      hdidf <- hdidf[rev(1:nrow(hdidf)) , ]
       hdidf <- hdidf[c(rev(1:(nrow(hdidf) - 1)), nrow(hdidf)) , ]
     }
-    print(hdidf)
     #Create adf table of observed values
     if(View.Order == TRUE) {                                  #Post1
       adf <- multi_smry$Post1[row_numbers , c(Group2, "Obs.Rate")]
@@ -640,15 +637,12 @@ if(y== "target") {
     if(View.Order == FALSE) {                                  #Post2
       adf <- multi_smry$Post2[row_numbers , c(Group2, "Obs.Rate")]
     }
-    #kermit
     #Decreasing or increasing order
     if(decreasing == FALSE) {
       adf <- adf
     } else {
-#      adf <- adf[rev(1:nrow(adf)) , ]
       adf <- adf[c(rev(1:(nrow(adf) - 1)), nrow(adf)) , ]
     }
-    print(adf)
     #Hierarchical average for the highest level (e.g., Omega)
     if(Level >= 2) {
       mainYmn <- hdidf[nrow(hdidf), which(colnames(hdidf)== Average)]
@@ -662,16 +656,12 @@ if(y== "target") {
     if(View.Order == FALSE) {                                  #Post2
       Group3.Obs <- Group3.Obs2
     }
-    #kermit
     #Decreasing or increasing order, using length(Group3.Obs) because it is a list
     if(decreasing == FALSE) {
       Group3.Obs <- Group3.Obs
     } else {
-    #  Group3.Obs <- Group3.Obs[rev(1:length(Group3.Obs))  ]
       Group3.Obs <- Group3.Obs[c(rev(1:(length(Group3.Obs) - 1)), length(Group3.Obs)) ]
     }
-    print(Group3.Obs)
-
     #Main X labels
     if(Level >= 2) {
       X_Label <- paste0("Dashed line= Overall hierarchical est. of ", round(mainYmn, roundVal), ", ", ciconf_lev * 100, "% ", "HDI",

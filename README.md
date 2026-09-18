@@ -1122,7 +1122,7 @@ plot(x=d1, y= "is")
 
 <br>
 
-## Version 1.4 mostly has bug fixes and current feature improvements.
+## New Version 1.4 mostly has bug fixes and current feature improvements.
 
 These and other changes included in version 1.4:
 
@@ -1140,9 +1140,9 @@ New additions
 
 Corrected errors
 
-- For the interrupted time-series interpretations, “one-group, multiple
-  intervention period” and “two group, multiple time periods” are
-  correctly described.
+- For the interrupted time-series interpretations, the phrases
+  “one-group, multiple intervention period” and “two group, multiple
+  time periods” are correctly stated with the relevant models.
 
 - The propensity score weights, “ipw”, “nipw”, and “att”, are now
   correct because the code was fixed.
@@ -1387,10 +1387,11 @@ plot(x=bvlos, y="post", parameter="B3DIDSig", bcol="green", compare=0,
 Let’s take a look at the various posterior predictive checks, this will
 give us insight in how the control and treatment groups vary by pre/post
 intervention periods. Note that the grey observed data bars are all data
-and only 1 single line for each parameter is used for clarity.
+and only 1 single line for each parameter is used for clarity in the
+lower zoomed in section.
 
 ``` r
-plot(x=bvlos, y="vary", type="ln", dv="los", breaks=75, pline=1, lwd=5, vlim=c(0, 15),
+plot(x=bvlos, y="vary", type="ln", dv="los", breaks=75, pline=3, lwd=1, vlim=c(0, 15),
      data=hosprog, lcol= c("pink","red", "cyan", "blue"), xlim=c(0.5, 15), ylim=c(0, .35), parameter=parls, main="LOS and posterior pred checks", cex.main=2, cex.legend=1.5, cex.label=1.5,
      cex.axis=1.5, add.legend="topright", legend=c("Observed Data", "CTL Pre Est.", "CTL Post Est.", "Treat Pre Est.", "Treat Post Est."))
 ```
