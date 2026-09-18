@@ -2,7 +2,10 @@
 #'
 #' @param x group object.
 #' @param y type of confidence interval object, specify either 'group', 'time', or 'roll'.
-#' @param order specify confidence interval object order as 'alpha' or 'numeric' for alphabetical or numerical ordering in the 'group' graph.
+#' @param order specify confidence interval object order as 'alpha' or 'numeric' for alphabetical or numerical ordering in the y='group' graph.
+#' @param decreasing logical TRUE or FALSE that indicates a decreasing or increasing order in displayed results in the y='group' graph. When
+#' decreasing=TRUE, the results go from high to low in alphabetical or numerical order. When decreasing=FALSE, results go from low to high.
+#' Default is decreasing=FALSE.
 #' @param gcol pick confidence interval line colors for groups in the 'group' graph. Default is 'blue'.
 #' @param gband logical TRUE or FALSE that indicates whether group lines have confidence bands for trend over time results. Default is FALSE.
 #' @param pcol select point color for 'group' only confidence intervals. Default is 'red'.
@@ -73,8 +76,8 @@
 #'   # Helpful note: You can plot aggregated data if you used the argument asis=TRUE in group(),
 
 
-plot.group <- function(x, y="group", order="alpha", gcol="blue", gband=FALSE, pcol="red", overall=FALSE,
-                       ocol="gray", oband=FALSE, tgt=NULL, tcol="gray", tpline=NULL,
+plot.group <- function(x, y="group", order="alpha", decreasing=NULL, gcol="blue", gband=FALSE, pcol="red",
+                       overall=FALSE, ocol="gray", oband=FALSE, tgt=NULL, tcol="gray", tpline=NULL,
                        tpcol="gray", xlim=NULL, ylim=NULL, main=NULL,
                        xlab=NULL, ylab=NULL, lwd=1, adj.alpha=0.4,
                        cex=1, cex.axis=1, cex.lab=1, cex.main=1, cex.text=1, round.c=2,
@@ -84,11 +87,20 @@ plot.group <- function(x, y="group", order="alpha", gcol="blue", gband=FALSE, pc
   }
   if (any(class(x) == "group") == FALSE) {stop("Error: Expecting group class object." )}
   if (!y %in% c("group", "time", "roll")) {stop("Error: Expecting y='group', y='time', or y='roll'." )}
+  if(!is.null(decreasing)) {
+    if (is.logical(decreasing) == FALSE) {stop("Error: Expecting 'decreasing' is a logical (TRUE or FALSE) class object." )}
+  }
+  #Set decreasing argument
+  if(!is.null(decreasing)) {
+    decreasing <- decreasing
+  } else {
+    decreasing <- FALSE
+  }
 
   ##########################################
   # Plot function for confidence intervals #
   ##########################################
-  plot_ci_fnc <- function(x, alpha_num, main, xlab, ylab, lwd, Lcol, Pcol, tgt, Cbar,
+  plot_ci_fnc <- function(x, alpha_num, decreasing=decreasing, main, xlab, ylab, lwd, Lcol, Pcol, tgt, Cbar,
                           roundVal, adj.alpha, xlim, ylim, abbrv, ocol, tcol,
                           cex, cex.axis, cex.lab, cex.main) {
     # Get analysis info #
@@ -102,10 +114,18 @@ plot.group <- function(x, y="group", order="alpha", gcol="blue", gband=FALSE, pc
     cidf <- x[["Group.CI"]]
     #Get data in alphabetical or numerical order
     if (alpha_num=="alpha") {
-      adf <- cidf$adf_alpha
+      if(decreasing == FALSE) {
+        adf <- cidf$adf_alpha
+      } else {
+        adf <- cidf$adf_alpha[rev(1:nrow(cidf$adf_alpha)), ]
+      }
     }
     if (alpha_num=="numeric") {
-      adf <- cidf$adf_numeric
+      if(decreasing == FALSE) {
+        adf <- cidf$adf_numeric
+      } else {
+        adf <- cidf$adf_numeric[rev(1:nrow(cidf$adf_numeric)), ]
+      }
     }
       mainYmn <- ydf$PointEst
     #Main title
@@ -352,7 +372,7 @@ plot.group <- function(x, y="group", order="alpha", gcol="blue", gband=FALSE, pc
 
   # Run the functions above #
   switch(y,
-         "group"   = plot_ci_fnc(x=x, alpha_num=order, main=main,xlab=xlab,ylab=ylab,lwd=lwd, Lcol=gcol,
+         "group"   = plot_ci_fnc(x=x, alpha_num=order, decreasing=decreasing,main=main,xlab=xlab,ylab=ylab,lwd=lwd, Lcol=gcol,
                                  Pcol=pcol, tgt=tgt, Cbar=oband,
                                  roundVal=round.c, adj.alpha=adj.alpha, xlim=xlim, ylim=ylim, abbrv=abbrv, ocol=ocol,
                                  tcol=tcol, cex=cex, cex.axis=cex.axis, cex.lab=cex.lab, cex.main=cex.main),

@@ -50,7 +50,7 @@
   es = "n",
   subset = NULL,
   level = NULL,
-  aorder = TRUE,
+  aorder = NULL,
   round.c = 2,
   ...
 )
@@ -352,9 +352,10 @@ lcol="blue", pcol= c("red", "skyblue"), round.c=1, bcol="yellow",
 xlim=c(-.1, 1), legend=NULL, add.legend="topright", lwd=3, cex.lab=1.2,
 cex= 2, cex.main=1.5, cex.axis=.75, cex.legend=1.5, X.Lab=NULL)
 # And now the level 3 plot (observation in plants in Treatment by type groups)
-plot(x=co2multi, y="multi", level=3, aorder=FALSE, lcol="blue", pcol= c("green", "pink"),
-round.c=1, bcol="lavender", xlim=c(-.1, 1), legend=NULL, add.legend="right", lwd=3,
-cex.lab =1.2, cex= 2, cex.main=1.5, cex.axis=.75, cex.legend=1.5, X.Lab=NULL)
+plot(x=co2multi, y="multi", level=3, aorder=FALSE, lcol="blue",
+pcol= c("green", "pink"), round.c=1, bcol="lavender", xlim=c(-.1, 1), legend=NULL,
+add.legend="right", lwd=3, cex.lab =1.2, cex= 2, cex.main=1.5, cex.axis=.75,
+cex.legend=1.5, X.Lab=NULL)
 
 # Targets for length of stay (LOS) #
 # Our administrators ask how far are we from our goals, they ask about targets

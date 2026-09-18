@@ -241,7 +241,7 @@ summary(assess(formula=vs~mpg+wt+hp, data=mtcars, regression="logistic")$model)
 interpret(assess(formula=vs~mpg+wt+hp, data=mtcars, regression="logistic")
           )$model
 #> Interpretations: Regression model 
-#> ---------------------- 
+#> --------------------------------- 
 #> These estimates tell you about the relationship between the 
 #> independent variables and the dependent variable. These estimates 
 #> tell the amount of change in outcome scores that would be 
@@ -267,6 +267,18 @@ interpret(assess(formula=vs~mpg+wt+hp, data=mtcars, regression="logistic")
 #> 
 #> There is no R2 or C-statistic (AUC) information provided.
 ```
+
+### Poisson model with an offset using assess()
+
+``` r
+m04 <- assess(formula=HAI ~  Month+ offset(log(PatientDays)),
+data=infections, regression="poisson")
+#Because 1 year is a meaningful period in program evaluation, Month=12
+plot(x=review(m04$model, increase=c(Month=12)), xlim=c(0.6, 1.01),
+lwd=7, color="cyan", pcol="salmon", pt.cex=2)
+```
+
+<img src="man/figures/README-plotreview04-1.png" width="100%" />
 
 ham can topcode the outcome and create a propensity score variable. Here
 is an example using the artificially created hosprog data with hospital
@@ -806,7 +818,7 @@ interpret(id22)$its
 #> Interpretations: ITS 
 #> -------------------- 
 #> Note: Some variable names below based on time points (or 'interruptions'). 
-#> This analysis is for a two-group, single intervention period (interruption). 
+#> This analysis is for a two-group, multiple intervention period (interruption). 
 #> Positive values indicate higher intervention group values and vice-versa for: 
 #> post1, txp1, ixp1, txip1, post2, txp2, ixp2, txip2. 
 #> 

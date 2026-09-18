@@ -193,7 +193,7 @@ knitr::include_graphics("taov.png")
 
 # 4b. Variation analysis: 'vary'
 
-This option, ‘vary’, is a modified version of 'check' and allows us to view multiple posterior predictive check lines. The primary purpose is for use in a Bayesian differences-in-differences study on the variation parameter. For example, in a model with a normal distribution in the likelihood function, we would compare the change in the standard deviation for the treatment and control groups. 
+This option, ‘vary’, is a modified version of 'check' and allows us to view multiple posterior predictive check lines. The primary purpose is for use in a Bayesian differences-in-differences study on the variation parameter. For example, in a model with a normal distribution in the likelihood function, we would compare the change in the standard deviation for the treatment and control groups. Or if we wanted to compare the Great Lakes' rainfall and evaporation rates, we can produce posterior predictive checks for Ontario, Superior, etc.
 
 The motivation for ‘vary’ is to test if the treatment group reduces variation. An important goal in hospital quality improvement is to reduce variation in our health outcomes. And a Bayesian DID can be done by estimating the parameters for the control group’s pre- and post-intervention values and the treatment group’s pre- and post-intervention values and then mathematically calculate the DID coefficient.
 
@@ -345,7 +345,7 @@ plot(x=co2multi, y="multi", level=2, aorder=FALSE,
 subset= c("Qn2","Qn3","Qc3","Qc2","Mn3","Mn2","Mc2","Mc3"),
 lcol="blue", pcol= c("red", "skyblue"), round.c=2, bcol="yellow",
 xlim=c(-.1, 1), legend=NULL, add.legend="topright", lwd=3, cex.lab=1.2,
-cex= 2, cex.main=1.25, cex.axis=.75, cex.legend=1.5, X.Lab=NULL)
+cex= 2, cex.main=1.25, cex.axis=.75, cex.legend=1.5, xlab=NULL)
 ```
 
 <br>
@@ -354,7 +354,7 @@ And now the level 3 plot (observation in plants in Treatment by type groups). Yo
 
 ```{r plotMulti2, fig.dim = c(6, 4.5)}
 plot(x=co2multi, y="multi", level=3, aorder=FALSE, lcol="blue", pcol= c("green", "pink"),
-round.c=3, bcol="lavender", xlim=c(-.1, 1), legend=NULL, add.legend="bottomleft", lwd=3, cex.lab =1.2, cex= 2, cex.main=1.25, cex.axis=.75, cex.legend=1.25, X.Lab=NULL)
+round.c=3, bcol="lavender", xlim=c(-.1, 1), legend=NULL, add.legend="bottomleft", lwd=3, cex.lab =1.2, cex= 2, cex.main=1.25, cex.axis=.75, cex.legend=1.25, xlab=NULL)
 ```
 
 <br>

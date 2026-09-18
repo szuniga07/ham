@@ -8,6 +8,7 @@
   x,
   y = "group",
   order = "alpha",
+  decreasing = NULL,
   gcol = "blue",
   gband = FALSE,
   pcol = "red",
@@ -44,7 +45,11 @@
 
 \item{y}{type of confidence interval object, specify either 'group', 'time', or 'roll'.}
 
-\item{order}{specify confidence interval object order as 'alpha' or 'numeric' for alphabetical or numerical ordering in the 'group' graph.}
+\item{order}{specify confidence interval object order as 'alpha' or 'numeric' for alphabetical or numerical ordering in the y='group' graph.}
+
+\item{decreasing}{logical TRUE or FALSE that indicates a decreasing or increasing order in displayed results in the y='group' graph. When
+decreasing=TRUE, the results go from high to low in alphabetical or numerical order. When decreasing=FALSE, results go from low to high.
+Default is decreasing=FALSE.}
 
 \item{gcol}{pick confidence interval line colors for groups in the 'group' graph. Default is 'blue'.}
 

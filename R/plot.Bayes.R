@@ -265,9 +265,10 @@
 #' xlim=c(-.1, 1), legend=NULL, add.legend="topright", lwd=3, cex.lab=1.2,
 #' cex= 2, cex.main=1.5, cex.axis=.75, cex.legend=1.5, X.Lab=NULL)
 #' # And now the level 3 plot (observation in plants in Treatment by type groups)
-#' plot(x=co2multi, y="multi", level=3, aorder=FALSE, lcol="blue", pcol= c("green", "pink"),
-#' round.c=1, bcol="lavender", xlim=c(-.1, 1), legend=NULL, add.legend="right", lwd=3,
-#' cex.lab =1.2, cex= 2, cex.main=1.5, cex.axis=.75, cex.legend=1.5, X.Lab=NULL)
+#' plot(x=co2multi, y="multi", level=3, aorder=FALSE, lcol="blue",
+#' pcol= c("green", "pink"), round.c=1, bcol="lavender", xlim=c(-.1, 1), legend=NULL,
+#' add.legend="right", lwd=3, cex.lab =1.2, cex= 2, cex.main=1.5, cex.axis=.75,
+#' cex.legend=1.5, X.Lab=NULL)
 #'
 #' # Targets for length of stay (LOS) #
 #' # Our administrators ask how far are we from our goals, they ask about targets
@@ -289,7 +290,7 @@ plot.Bayes <- function(x, y=NULL, type="n", parameter=NULL, center="mode", mass=
                        bcol=NULL, lcol=NULL, pcol=NULL, xpt=NULL, tgt=NULL, tgtcol="gray", tpline=NULL, tpcol=NULL,
                        pline=20, pct=95, add.legend=NULL, legend=NULL, cex=1, cex.lab=NULL, cex.axis=NULL, cex.main=NULL,
                        cex.text=NULL, cex.legend=NULL, HDItext=0.7, math="n", es="n",
-                       subset=NULL, level=NULL, aorder=TRUE, round.c=2, ...) {
+                       subset=NULL, level=NULL, aorder=NULL, round.c=2, ...) {
   if (any(class(x) == "Bayes") == FALSE) {stop("Error: Expecting Bayes class object." )}
   #Looking for 1 parameter name
   if(!center %in% c("mode","median","mean")) {
@@ -409,6 +410,7 @@ if(y== "target") {
     }
 }
 }
+
 #Assign new objects
   MCMC <- x$MCMC
   multi_smry <- x$Multilevel
@@ -497,7 +499,6 @@ if(y== "target") {
       }
     }
   }
-
   #Chain statistics
   if(y != "multi") {
     #  if(y %in% c('dxa', 'dxd', 'dxg', 'dxt')) {
@@ -540,12 +541,13 @@ if(y== "target") {
   #           3. Function to plot HDIs for hierarchical estimation               #
   ################################################################################
   #MCmatrix is the output object from fncHdiBinSmry()
-  fncHdiBinP <- function(multi_smry=multi_smry, View.Order=TRUE, View.Level=NULL,
-                         GroupX=NULL, Lcol=NULL, Pcol=NULL,
+  fncHdiBinP <- function(multi_smry=multi_smry, main=main, View.Order=TRUE,
+                         View.Level=NULL, GroupX=NULL, Lcol=NULL, Pcol=NULL,
                          tgt=NULL, tgt.col=NULL, plyCol=NULL, roundVal=NULL,
                          XLim1=NULL, XLim2=NULL, legend=NULL, Leg.Loc=NULL,
                          lwd=NULL, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
                          cex.axis=cex.axis, cex.legend=cex.legend, X.Lab=NULL) {
+
     #Convert View.Level back to a numeric value
     View.Level <- as.numeric(level)
     # Assign objects from MCMC matrix objects
@@ -658,6 +660,12 @@ if(y== "target") {
     }
     if(Level < 3) {
       main_ttl <- paste0(ciconf_lev * 100, "% ", "Highest Density Intervals of ", Outcome, " by ", Group2)
+    }
+    #Select main titles
+    if(!is.null(main)) {
+      main_ttl <- main
+    } else {
+      main_ttl <- main_ttl
     }
     #Legend
     legend_text <- NA
@@ -2210,20 +2218,20 @@ if(y == "check") {
 ## Multilevel summary ##
     if(y == "multi") {
     switch(level,
-           "1"= fncHdiBinP(multi_smry=multi_smry, View.Order=aorder, View.Level= "1",
-                         GroupX=subset, Lcol=lcol, Pcol=pcol,
+           "1"= fncHdiBinP(multi_smry=multi_smry, main=main, View.Order=aorder,
+                           View.Level= "1", GroupX=subset, Lcol=lcol, Pcol=pcol,
                          tgt=tgt, tgt.col=tgtcol, plyCol=bcol, roundVal=round.c,
                          XLim1=xlim[1], XLim2=xlim[2], legend=legend, Leg.Loc=add.legend,
                          lwd=lwd, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
                          cex.axis=cex.axis, cex.legend=cex.legend, X.Lab=xlab),
-           "2"= fncHdiBinP(multi_smry=multi_smry, View.Order=aorder, View.Level="2",
-                         GroupX=subset, Lcol=lcol, Pcol=pcol,
+           "2"= fncHdiBinP(multi_smry=multi_smry, main=main, View.Order=aorder,
+                           View.Level="2", GroupX=subset, Lcol=lcol, Pcol=pcol,
                          tgt=tgt, tgt.col=tgtcol, plyCol=bcol, roundVal=round.c,
                          XLim1=xlim[1], XLim2=xlim[2], legend=legend, Leg.Loc=add.legend,
                          lwd=lwd, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
                          cex.axis=cex.axis, cex.legend=cex.legend, X.Lab=xlab),
-           "3"= fncHdiBinP(multi_smry=multi_smry, View.Order=aorder, View.Level="3",
-                         GroupX=subset, Lcol=lcol, Pcol=pcol,
+           "3"= fncHdiBinP(multi_smry=multi_smry, main=main, View.Order=aorder,
+                           View.Level="3", GroupX=subset, Lcol=lcol, Pcol=pcol,
                          tgt=tgt, tgt.col=tgtcol, plyCol=bcol, roundVal=round.c,
                          XLim1=xlim[1], XLim2=xlim[2], legend=legend, Leg.Loc=add.legend,
                          lwd=lwd, cex.lab= cex.lab, cex= cex, cex.main=cex.main,

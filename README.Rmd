@@ -116,6 +116,15 @@ interpret(assess(formula=vs~mpg+wt+hp, data=mtcars, regression="logistic")
           )$model
 ```
 
+### Poisson model with an offset using assess()
+```{r plotreview04, fig.dim = c(6, 4.5)}
+m04 <- assess(formula=HAI ~  Month+ offset(log(PatientDays)),
+data=infections, regression="poisson")
+#Because 1 year is a meaningful period in program evaluation, Month=12
+plot(x=review(m04$model, increase=c(Month=12)), xlim=c(0.6, 1.01),
+lwd=7, color="cyan", pcol="salmon", pt.cex=2)
+```
+
 ham can topcode the outcome and create a propensity score variable. Here is an example using the artificially created hosprog data with hospital stay cost as the outcome with a novel hospital program/intervention binary indicator and a 12 month time variable. The option for new data being returned is specified with newdata=TRUE.
 
 ### OLS topcoding
