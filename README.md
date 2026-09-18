@@ -1136,6 +1136,8 @@ New additions
 - compapt data of VA hospitals completed appointments for 1 month across
   locations
 
+- “decreasing” order argument when y=“multi” in plot.Bayes
+
 Corrected errors
 
 - For the interrupted time-series interpretations, “one-group, multiple

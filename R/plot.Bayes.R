@@ -152,6 +152,9 @@
 #' @param aorder a logical indicator on whether the ordering of the group levels are in alphabetical order or not when y='multi'.
 #' If aorder=TRUE, results are displayed in an increasing alphabetical order based on level name (e.g., 'LA' before 'NY').
 #' If aorder=FALSE, an increasing numeric order based on group parameter values is performed (e.g., 0.65 before 0.70). Default is TRUE.
+#' @param decreasing logical TRUE or FALSE that indicates a decreasing or increasing order in displayed results in the y='multi' graph. When
+#' decreasing=TRUE, the results go from high to low in alphabetical or numerical order. When decreasing=FALSE, results go from low to high.
+#' Default is decreasing=FALSE.
 #' @param round.c an integer indicating the number of decimal places when rounding numbers y='multi' and y='target'. Default is 2.
 #' @param ... additional arguments.
 #'
@@ -259,13 +262,13 @@
 #' # We generally only need the first 3 arguments below. But we'll subset
 #' # on 8 of 12 plants in the level 2 model (observations nested in plants)
 #' # and modify other settings.
-#' plot(x=co2multi, y="multi", level=2, aorder=FALSE,
+#' plot(x=co2multi, y="multi", level=2, aorder=FALSE, decreasing=FALSE,
 #' subset= c("Qn2","Qn3","Qc3","Qc2","Mn3","Mn2","Mc2","Mc3"),
 #' lcol="blue", pcol= c("red", "skyblue"), round.c=1, bcol="yellow",
 #' xlim=c(-.1, 1), legend=NULL, add.legend="topright", lwd=3, cex.lab=1.2,
 #' cex= 2, cex.main=1.5, cex.axis=.75, cex.legend=1.5, X.Lab=NULL)
 #' # And now the level 3 plot (observation in plants in Treatment by type groups)
-#' plot(x=co2multi, y="multi", level=3, aorder=FALSE, lcol="blue",
+#' plot(x=co2multi, y="multi", level=3, aorder=FALSE, decreasing=FALSE, lcol="blue",
 #' pcol= c("green", "pink"), round.c=1, bcol="lavender", xlim=c(-.1, 1), legend=NULL,
 #' add.legend="right", lwd=3, cex.lab =1.2, cex= 2, cex.main=1.5, cex.axis=.75,
 #' cex.legend=1.5, X.Lab=NULL)
@@ -290,7 +293,7 @@ plot.Bayes <- function(x, y=NULL, type="n", parameter=NULL, center="mode", mass=
                        bcol=NULL, lcol=NULL, pcol=NULL, xpt=NULL, tgt=NULL, tgtcol="gray", tpline=NULL, tpcol=NULL,
                        pline=20, pct=95, add.legend=NULL, legend=NULL, cex=1, cex.lab=NULL, cex.axis=NULL, cex.main=NULL,
                        cex.text=NULL, cex.legend=NULL, HDItext=0.7, math="n", es="n",
-                       subset=NULL, level=NULL, aorder=NULL, round.c=2, ...) {
+                       subset=NULL, level=NULL, aorder=NULL, decreasing=NULL, round.c=2, ...) {
   if (any(class(x) == "Bayes") == FALSE) {stop("Error: Expecting Bayes class object." )}
   #Looking for 1 parameter name
   if(!center %in% c("mode","median","mean")) {
@@ -410,6 +413,9 @@ if(y== "target") {
     }
 }
 }
+  if(!is.null(decreasing)) {
+    if (is.logical(decreasing) == FALSE) {stop("Error: Expecting 'decreasing' is a logical (TRUE or FALSE) class object." )}
+  }
 
 #Assign new objects
   MCMC <- x$MCMC
@@ -507,6 +513,12 @@ if(y== "target") {
     n_rowchn <- n_rows/n_chains
     DBDAplColors = c("skyblue","black","royalblue","steelblue")
 }
+  #Set decreasing argument
+  if(!is.null(decreasing)) {
+    decreasing <- decreasing
+  } else {
+    decreasing <- FALSE
+  }
 
   ####################
   # Effect size Beta # #for c("bern", "bin")
@@ -541,7 +553,7 @@ if(y== "target") {
   #           3. Function to plot HDIs for hierarchical estimation               #
   ################################################################################
   #MCmatrix is the output object from fncHdiBinSmry()
-  fncHdiBinP <- function(multi_smry=multi_smry, main=main, View.Order=TRUE,
+  fncHdiBinP <- function(multi_smry=multi_smry, main=main, View.Order=TRUE, decreasing=NULL,
                          View.Level=NULL, GroupX=NULL, Lcol=NULL, Pcol=NULL,
                          tgt=NULL, tgt.col=NULL, plyCol=NULL, roundVal=NULL,
                          XLim1=NULL, XLim2=NULL, legend=NULL, Leg.Loc=NULL,
@@ -612,6 +624,15 @@ if(y== "target") {
     if(View.Order == FALSE) {                                  #Post2
       hdidf <- multi_smry$Post2[row_numbers , c(Group2, Average, Lower, Upper, "Obs.Rate")]
     }
+    #kermit
+    #Decreasing or increasing order
+    if(decreasing == FALSE) {
+      hdidf <- hdidf
+    } else {
+#      hdidf <- hdidf[rev(1:nrow(hdidf)) , ]
+      hdidf <- hdidf[c(rev(1:(nrow(hdidf) - 1)), nrow(hdidf)) , ]
+    }
+    print(hdidf)
     #Create adf table of observed values
     if(View.Order == TRUE) {                                  #Post1
       adf <- multi_smry$Post1[row_numbers , c(Group2, "Obs.Rate")]
@@ -619,6 +640,15 @@ if(y== "target") {
     if(View.Order == FALSE) {                                  #Post2
       adf <- multi_smry$Post2[row_numbers , c(Group2, "Obs.Rate")]
     }
+    #kermit
+    #Decreasing or increasing order
+    if(decreasing == FALSE) {
+      adf <- adf
+    } else {
+#      adf <- adf[rev(1:nrow(adf)) , ]
+      adf <- adf[c(rev(1:(nrow(adf) - 1)), nrow(adf)) , ]
+    }
+    print(adf)
     #Hierarchical average for the highest level (e.g., Omega)
     if(Level >= 2) {
       mainYmn <- hdidf[nrow(hdidf), which(colnames(hdidf)== Average)]
@@ -632,6 +662,16 @@ if(y== "target") {
     if(View.Order == FALSE) {                                  #Post2
       Group3.Obs <- Group3.Obs2
     }
+    #kermit
+    #Decreasing or increasing order, using length(Group3.Obs) because it is a list
+    if(decreasing == FALSE) {
+      Group3.Obs <- Group3.Obs
+    } else {
+    #  Group3.Obs <- Group3.Obs[rev(1:length(Group3.Obs))  ]
+      Group3.Obs <- Group3.Obs[c(rev(1:(length(Group3.Obs) - 1)), length(Group3.Obs)) ]
+    }
+    print(Group3.Obs)
+
     #Main X labels
     if(Level >= 2) {
       X_Label <- paste0("Dashed line= Overall hierarchical est. of ", round(mainYmn, roundVal), ", ", ciconf_lev * 100, "% ", "HDI",
@@ -650,22 +690,28 @@ if(y== "target") {
     #Level-3, hierarchical model
     if(Level== 3) {
       if (View.Level == 3) {
-        main_ttl <- paste0(ciconf_lev * 100, "% ", "Highest Density Intervals of ", Outcome, " by ", Group3)
+        if(!is.null(main)) {
+          main_ttl <- main
+        } else {
+          main_ttl <- paste0(ciconf_lev * 100, "% ", "Highest Density Intervals of ", Outcome, " by ", Group3)
+        }
       }
     }
     if(Level== 3) {
       if (View.Level <= 2) {
-        main_ttl <- paste0(ciconf_lev * 100, "% ", "Highest Density Intervals of ", Outcome, " by ", Group2)
+        if(!is.null(main)) {
+          main_ttl <- main
+        } else {
+          main_ttl <- paste0(ciconf_lev * 100, "% ", "Highest Density Intervals of ", Outcome, " by ", Group2)
+      }
       }
     }
     if(Level < 3) {
-      main_ttl <- paste0(ciconf_lev * 100, "% ", "Highest Density Intervals of ", Outcome, " by ", Group2)
-    }
-    #Select main titles
-    if(!is.null(main)) {
-      main_ttl <- main
-    } else {
-      main_ttl <- main_ttl
+      if(!is.null(main)) {
+        main_ttl <- main
+      } else {
+        main_ttl <- paste0(ciconf_lev * 100, "% ", "Highest Density Intervals of ", Outcome, " by ", Group2)
+      }
     }
     #Legend
     legend_text <- NA
@@ -2218,19 +2264,19 @@ if(y == "check") {
 ## Multilevel summary ##
     if(y == "multi") {
     switch(level,
-           "1"= fncHdiBinP(multi_smry=multi_smry, main=main, View.Order=aorder,
+           "1"= fncHdiBinP(multi_smry=multi_smry, main=main, View.Order=aorder, decreasing=decreasing,
                            View.Level= "1", GroupX=subset, Lcol=lcol, Pcol=pcol,
                          tgt=tgt, tgt.col=tgtcol, plyCol=bcol, roundVal=round.c,
                          XLim1=xlim[1], XLim2=xlim[2], legend=legend, Leg.Loc=add.legend,
                          lwd=lwd, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
                          cex.axis=cex.axis, cex.legend=cex.legend, X.Lab=xlab),
-           "2"= fncHdiBinP(multi_smry=multi_smry, main=main, View.Order=aorder,
+           "2"= fncHdiBinP(multi_smry=multi_smry, main=main, View.Order=aorder, decreasing=decreasing,
                            View.Level="2", GroupX=subset, Lcol=lcol, Pcol=pcol,
                          tgt=tgt, tgt.col=tgtcol, plyCol=bcol, roundVal=round.c,
                          XLim1=xlim[1], XLim2=xlim[2], legend=legend, Leg.Loc=add.legend,
                          lwd=lwd, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
                          cex.axis=cex.axis, cex.legend=cex.legend, X.Lab=xlab),
-           "3"= fncHdiBinP(multi_smry=multi_smry, main=main, View.Order=aorder,
+           "3"= fncHdiBinP(multi_smry=multi_smry, main=main, View.Order=aorder, decreasing=decreasing,
                            View.Level="3", GroupX=subset, Lcol=lcol, Pcol=pcol,
                          tgt=tgt, tgt.col=tgtcol, plyCol=bcol, roundVal=round.c,
                          XLim1=xlim[1], XLim2=xlim[2], legend=legend, Leg.Loc=add.legend,

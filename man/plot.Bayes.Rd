@@ -51,6 +51,7 @@
   subset = NULL,
   level = NULL,
   aorder = NULL,
+  decreasing = NULL,
   round.c = 2,
   ...
 )
@@ -247,6 +248,10 @@ infection rate of hospitals without a hierarchical structure in the model. Defau
 If aorder=TRUE, results are displayed in an increasing alphabetical order based on level name (e.g., 'LA' before 'NY').
 If aorder=FALSE, an increasing numeric order based on group parameter values is performed (e.g., 0.65 before 0.70). Default is TRUE.}
 
+\item{decreasing}{logical TRUE or FALSE that indicates a decreasing or increasing order in displayed results in the y='multi' graph. When
+decreasing=TRUE, the results go from high to low in alphabetical or numerical order. When decreasing=FALSE, results go from low to high.
+Default is decreasing=FALSE.}
+
 \item{round.c}{an integer indicating the number of decimal places when rounding numbers y='multi' and y='target'. Default is 2.}
 
 \item{...}{additional arguments.}
@@ -346,13 +351,13 @@ lcol="steelblue")              #vlim lets me extrapolate a little
 # We generally only need the first 3 arguments below. But we'll subset
 # on 8 of 12 plants in the level 2 model (observations nested in plants)
 # and modify other settings.
-plot(x=co2multi, y="multi", level=2, aorder=FALSE,
+plot(x=co2multi, y="multi", level=2, aorder=FALSE, decreasing=FALSE,
 subset= c("Qn2","Qn3","Qc3","Qc2","Mn3","Mn2","Mc2","Mc3"),
 lcol="blue", pcol= c("red", "skyblue"), round.c=1, bcol="yellow",
 xlim=c(-.1, 1), legend=NULL, add.legend="topright", lwd=3, cex.lab=1.2,
 cex= 2, cex.main=1.5, cex.axis=.75, cex.legend=1.5, X.Lab=NULL)
 # And now the level 3 plot (observation in plants in Treatment by type groups)
-plot(x=co2multi, y="multi", level=3, aorder=FALSE, lcol="blue",
+plot(x=co2multi, y="multi", level=3, aorder=FALSE, decreasing=FALSE, lcol="blue",
 pcol= c("green", "pink"), round.c=1, bcol="lavender", xlim=c(-.1, 1), legend=NULL,
 add.legend="right", lwd=3, cex.lab =1.2, cex= 2, cex.main=1.5, cex.axis=.75,
 cex.legend=1.5, X.Lab=NULL)
