@@ -485,6 +485,8 @@ New additions
 
 * compapt data of VA hospitals completed appointments for 1 month across locations
 
+* covshort data of hospital staffing critical shortage from US Dept. of Health on one day.
+
 * "decreasing" order argument when y="multi" in plot.Bayes
 
 Corrected errors

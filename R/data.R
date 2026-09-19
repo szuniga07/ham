@@ -137,6 +137,24 @@
 #'
 "compapt"
 
+#' The US Department of Health and Human Services data for state reported hospital's critical staff shortage or not for December 14, 2020.
+#' @format ## `covshort`
+#' A public domain data frame with 54 rows and 5 columns:
+#' \describe{
+#'   \item{ state}{The two character state code.}
+#'   \item{ shortyes}{Number of hospitals reporting a critical staffing shortage today (December 14, 2020) in this state.}
+#'   \item{ shortno}{Number of hospitals reporting as not having a critical staffing shortage today (December 14, 2020) in this state.}
+#'   \item{ total}{The sum total of shortyes and shortno.}
+#'   \item{ rate}{The proportion of total that is shortyes.}
+#'   ...
+#' }
+#' @source covshort is a public domain data frame from the US Department of Health and Human Services on the number of
+#' hospitals from each state and territory with a critical staffing shortage or not for December 14, 2020. This is
+#' for the purpose of demonstrating hierarchical estimates of hospitals nested within the US. Records attained from the
+#' CSV file, "COVID-19_Reported_Patient_Impact_and_Hospital_Capacity_by_State_(RAW)".
+#'
+"covshort"
+
 #' Markov Chain Monte Carlo linear regression estimates of plant's CO2 uptake regressed on ambient carbon dioxide concentrations
 #' @format ## `co2mcmc`
 #' MCMC list of 3 chains with 2000 rows and 4 columns in each of the list elements:
