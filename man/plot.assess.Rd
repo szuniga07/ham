@@ -40,9 +40,18 @@
 )
 }
 \arguments{
-\item{x}{assess object. Either difference-in-difference or interrupted time series model with no covariate adjustment.}
+\item{x}{assess object. Either difference-in-difference, interrupted time series, or some regression models (OLS, logistic, Poisson).}
 
-\item{y}{type of model, specify either 'DID' (difference-in-difference) or 'ITS' (interrupted time series). Will not accept other models.}
+\item{y}{type of model, specify either 'DID' (difference-in-difference) and 'ITS' (interrupted time series). For regression
+models ('ols', 'logistic', or 'poisson'), y is a 1 or 2 element character vector with the 1st element being a predictor variable that
+will have the partial prediction plotted and the 2nd element is the type prediction scale response to be graphed. If only the
+predictor variable is selected in a 1 element character vector (e.g., y= 'age'), the plot will be graphed usine the linear predictor.
+For 'ols' models, the only option is 'lp' (linear predictor). For 'logistic' models, the options are 'lp', 'exp' for exponentiated values
+such as exp(lp) and 'plogis' for probabilities (i.e., computes the cumulative distribution function for the logistic distribution).
+For 'poisson' models, the options are 'lp', 'exp', and 'count' and these can differ depending if there is an offset term. For example,
+when there is an offset in the Poisson model, 'lp' is the log on rate scale, 'exp' is the exp(log on rate scale), and 'count' returns the
+count on outcome scale, based on the offset variable's median raw value when offset(log(n)). When there is no offset in the Poisson model,
+'lp' is the log on the outcome scale and both 'exp' and 'count' return the count on the outcome scale (i.e., they are redundant).}
 
 \item{xlim}{specify plot's x-axis limits with a 2 value vector.}
 
@@ -123,10 +132,10 @@ plot of partial predictions for treatment and control groups.
 }
 \description{
 Provides partial prediction plots for treatment and control groups from difference-in-difference (DID)
-and interrupted time series (ITS) models. The graph will produce lines for treatment/intervention and
-control groups to gain understanding through a visual representation of the regression coefficients.
-By default, the treatment/intervention group is represented with a blue line, the control group is represented with
-a red line, and the counterfactual line, when available, is a dashed line. There are many options to change the plot.
+and interrupted time series (ITS) models as well as some traditional regression models. The graph will produce lines
+for treatment/intervention and control groups to gain understanding through a visual representation of the regression
+coefficients. By default, the treatment/intervention group is represented with a blue line, the control group is represented
+with a red line, and the counterfactual line, when available, is a dashed line. There are many options to change the plot.
 }
 \examples{
 am2 <- assess(formula= los ~ ., data=hosprog, intervention = "program",
@@ -156,6 +165,10 @@ for(i in 1:length(key_time)) {
   text(key_time[i], .22-(.01*i), cex=1.25, labels =
          paste0(unemployment[ key_time[i], "Year"], ": ", unemployment[ key_time[i], "event"]))
 }
+# We'll review the partial prediction plot for the 'count', keeping in mind 100.
+pois1 <- assess(HAI ~ Month + offset(log(PatientDays)),
+data = infections, regression="poisson", link="log")
+plot(x=pois1, y=c('Month', 'count'), col='skyblue', tgt=100, tgtcol='magenta', lwd=4)
 }
 \seealso{
 \code{\link[=assess]{assess()}} for the 'assess' class object.

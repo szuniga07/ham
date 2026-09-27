@@ -1131,6 +1131,10 @@ New additions
 - plot.Bayes variation analysis, multiple posterior predictive check
   lines
 
+- Partial prediction plots were added to show the trend line for
+  continuous variables or 95% confidence intervals for categorical
+  variables when the regression type is ‘ols’, ‘logistic’, or ‘poisson’
+
 - losvary Bayesian chains of hospital LOS added for plot.Bayes examples
 
 - compapt data of VA hospitals completed appointments for 1 month across
@@ -1211,6 +1215,30 @@ plot(x=review(m02$model, increase=c(hp= 83.5)))
 ```
 
 <img src="man/figures/README-plotreview2b-1.png" width="100%" />
+
+We’ll review the partial prediction plot for the ‘count’, keeping in
+mind 100. These estimates are based on the median PatientDays and help
+to show the trend.
+
+``` r
+m04 <- assess(formula=HAI ~  Month+ offset(log(PatientDays)),
+data=infections, regression="poisson")
+plot(x=m04, y=c('Month', 'count'), col='skyblue', tgt=100, tgtcol='magenta', lwd=4)
+```
+
+<img src="man/figures/README-plotpartpred13-1.png" width="100%" />
+
+And a partial prediction plot option for categorical variables using 3
+randomly generated categories with 95% confidence interval on effect.
+
+``` r
+infections$rand <- as.factor(sample(1:3, 41, replace = T))
+m05 <- assess(HAI ~ Month + rand + offset(log(PatientDays)),
+               data = infections, regression="poisson")
+plot(x=m05, y=c('rand', 'count'), col='skyblue', tgt=75, tgtcol='orange', lwd=4, cex=2)
+```
+
+<img src="man/figures/README-plotpartpred14-1.png" width="100%" />
 
 ### Bayesian Diagnostics
 
