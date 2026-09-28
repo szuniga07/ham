@@ -1133,7 +1133,8 @@ New additions
 
 - Partial prediction plots were added to show the trend line for
   continuous variables or 95% confidence intervals for categorical
-  variables when the regression type is ‘ols’, ‘logistic’, or ‘poisson’
+  variables when the regression type is ‘ols’, ‘logistic’, or ‘poisson’.
+  These trend lines control for the other predictors in the model.
 
 - losvary Bayesian chains of hospital LOS added for plot.Bayes examples
 
@@ -1215,6 +1216,18 @@ plot(x=review(m02$model, increase=c(hp= 83.5)))
 ```
 
 <img src="man/figures/README-plotreview2b-1.png" width="100%" />
+
+### Partial Prediction Plots
+
+We now review the trend with a partial prediction plot. A partial
+prediction plot graphs the estimated trend of a continuous variable (or
+categorical) while holding all other variables constant at the other
+variables’ median value. This is for a range spanning the inner 95% of
+the target variable (i.e., Month’s trend line is graphed, holding other
+variables constant) and the predicted score is plotted against the range
+of Month values. Categorical variables have 95% confidence interval bars
+for each level. These calculations are performed in a manner similar to
+Professor Frank Harrell’s rms package.
 
 We’ll review the partial prediction plot for the ‘count’, keeping in
 mind 100. These estimates are based on the median PatientDays and help

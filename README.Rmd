@@ -481,7 +481,7 @@ New additions
 
 * plot.Bayes variation analysis, multiple posterior predictive check lines
 
-* Partial prediction plots were added to show the trend line for continuous variables or 95% confidence intervals for categorical variables when the regression type is 'ols', 'logistic', or 'poisson'
+* Partial prediction plots were added to show the trend line for continuous variables or 95% confidence intervals for categorical variables when the regression type is 'ols', 'logistic', or 'poisson'. These trend lines control for the other predictors in the model.
 
 * losvary Bayesian chains of hospital LOS added for plot.Bayes examples 
 
@@ -527,6 +527,10 @@ let's see the impactful 83.5 hp increase in going from the 1st to 3rd quartiles
 m02 <- assess(formula=mpg ~ wt+hp+am, data=mtcars, regression="ols")
 plot(x=review(m02$model, increase=c(hp= 83.5)))
 ```
+
+### Partial Prediction Plots
+
+We now review the trend with a partial prediction plot. A partial prediction plot graphs the estimated trend of a continuous variable (or categorical) while holding all other variables constant at the other variables' median value. This is for a range spanning the inner 95% of the target variable (i.e., Month's trend line is graphed, holding other variables constant) and the predicted score is plotted against the range of Month values. Categorical variables have 95% confidence interval bars for each level. These calculations are performed in a manner similar to Professor Frank Harrell's rms package. 
 
 We'll review the partial prediction plot for the 'count', keeping in mind 100. These estimates are based on the median PatientDays and help to show the trend.
 ```{r plotpartpred13, fig.dim = c(6, 4.5)}

@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot.assess.R
 \name{plot.assess}
 \alias{plot.assess}
-\title{Prediction plot of treatment and control groups for DID and ITS models}
+\title{Prediction plot of treatment and control groups for DID and ITS models and OLS, logistic, and Poisson models}
 \usage{
 \method{plot}{assess}(
   x,
@@ -163,9 +163,10 @@ plot(u110, "ITS", add.means = TRUE, coefs=TRUE, conf.int=TRUE, adj.alpha = .2,
      pos.text=list("ITS.Time"=4, "post42"=1,"txp42"=3,"txp92"=3), x.axis=unemployment$Year)
 for(i in 1:length(key_time)) {
   text(key_time[i], .22-(.01*i), cex=1.25, labels =
-         paste0(unemployment[ key_time[i], "Year"], ": ", unemployment[ key_time[i], "event"]))
+       paste0(unemployment[ key_time[i], "Year"], ": ", unemployment[ key_time[i], "event"]))
 }
-# We'll review the partial prediction plot for the 'count', keeping in mind 100.
+# We'll review the partial prediction plot for the 'count', keeping in mind 100,
+# for this Poisson regression model.
 pois1 <- assess(HAI ~ Month + offset(log(PatientDays)),
 data = infections, regression="poisson", link="log")
 plot(x=pois1, y=c('Month', 'count'), col='skyblue', tgt=100, tgtcol='magenta', lwd=4)
