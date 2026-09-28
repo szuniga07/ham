@@ -45,7 +45,7 @@
 \item{y}{type of model, specify either 'DID' (difference-in-difference) and 'ITS' (interrupted time series). For regression
 models ('ols', 'logistic', or 'poisson'), y is a 1 or 2 element character vector with the 1st element being a predictor variable that
 will have the partial prediction plotted and the 2nd element is the type prediction scale response to be graphed. If only the
-predictor variable is selected in a 1 element character vector (e.g., y= 'age'), the plot will be graphed usine the linear predictor.
+predictor variable is selected in a 1 element character vector (e.g., y= 'age'), the plot will be graphed using the linear predictor.
 For 'ols' models, the only option is 'lp' (linear predictor). For 'logistic' models, the options are 'lp', 'exp' for exponentiated values
 such as exp(lp) and 'plogis' for probabilities (i.e., computes the cumulative distribution function for the logistic distribution).
 For 'poisson' models, the options are 'lp', 'exp', and 'count' and these can differ depending if there is an offset term. For example,
@@ -102,7 +102,7 @@ count on outcome scale, based on the offset variable's median raw value when off
 should be added to the plot. Default is FALSE. It is overridden if coefs = TRUE.}
 
 \item{coefs}{logical TRUE or FALSE that indicates whether coefficient names, values,
-and p-value significance symbols ('+' p<0.10; '\emph{' p<0.05; '\strong{' p<0.01; '}}' p<0.001) should be
+and p-value significance symbols (+ p<0.10; \code{*} p<0.05; \verb{**} p<0.01; \verb{***} p<0.001) should be
 added to the plot. Default is FALSE. coefs = TRUE overrides name = FALSE.}
 
 \item{round.c}{an integer indicating the number of decimal places to be used for rounding coefficient values. Default is 2.}

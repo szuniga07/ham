@@ -270,7 +270,7 @@ plot(x=review(m02$model, increase=c(hp= 83.5)))
 
 ### Partial Prediction Plots
 
-We now review the trend with a partial prediction plot. A partial prediction plot graphs the estimated trend of a continuous variable (or categorical) while holding all other variables constant at the other variables' median value. 
+We now review the trend with a partial prediction plot. A partial prediction plot graphs the estimated trend of a continuous variable (or categorical) while holding all other variables constant at the other variables' median value or reference level for categorical variables. 
 
 For example, 200 values ranging the span of the inner 95% of 'hp' are multiplied by its associated coefficient and added to the product of the median 'wt' and 'am' and their model coefficients (i.e., hp's trend line is graphed, holding wt and am constant) and the predicted score is plotted against each of the hp 200 values. Categorical variables have 95% confidence interval bars for each level. These calculations are performed in a manner similar to Professor Frank Harrell's rms package. 
 
