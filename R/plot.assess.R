@@ -1,4 +1,4 @@
-#' Prediction plot of treatment and control groups for DID and ITS models and OLS, logistic, and Poisson models
+#' Prediction plot of treatment and control groups for DID and ITS models and OLS, logistic, Poisson, and Cox models
 #'
 #' Provides partial prediction plots for treatment and control groups from difference-in-difference (DID)
 #' and interrupted time series (ITS) models as well as some traditional regression models. The graph will produce lines
@@ -6,17 +6,18 @@
 #' coefficients. By default, the treatment/intervention group is represented with a blue line, the control group is represented
 #' with a red line, and the counterfactual line, when available, is a dashed line. There are many options to change the plot.
 #'
-#' @param x assess object. Either difference-in-difference, interrupted time series, or some regression models (OLS, logistic, Poisson).
+#' @param x assess object. Either difference-in-difference, interrupted time series, or some regression models (OLS, logistic, Poisson, Cox proportional hazards).
 #' @param y type of model, specify either 'DID' (difference-in-difference) and 'ITS' (interrupted time series). For regression
-#' models ('ols', 'logistic', or 'poisson'), y is a 1 or 2 element character vector with the 1st element being a predictor variable that
+#' models ('ols', 'logistic', 'poisson', or 'coxph'), y is a 1 or 2 element character vector with the 1st element being a predictor variable that
 #' will have the partial prediction plotted and the 2nd element is the type prediction scale response to be graphed. If only the
 #' predictor variable is selected in a 1 element character vector (e.g., y= 'age'), the plot will be graphed using the linear predictor.
 #' For 'ols' models, the only option is 'lp' (linear predictor). For 'logistic' models, the options are 'lp', 'exp' for exponentiated values
-#' such as exp(lp) and 'plogis' for probabilities (i.e., computes the cumulative distribution function for the logistic distribution).
-#' For 'poisson' models, the options are 'lp', 'exp', and 'count' and these can differ depending if there is an offset term. For example,
-#' when there is an offset in the Poisson model, 'lp' is the log on rate scale, 'exp' is the exp(log on rate scale), and 'count' returns the
-#' count on outcome scale, based on the offset variable's median raw value when offset(log(n)). When there is no offset in the Poisson model,
-#' 'lp' is the log on the outcome scale and both 'exp' and 'count' return the count on the outcome scale (i.e., they are redundant).
+#' such as exp(lp), and 'plogis' for probabilities (i.e., computes the cumulative distribution function for the logistic distribution).
+#' For 'coxph' models from the survival package, the options are 'lp' and 'exp' for hazard ratios. For 'poisson' models, the options are 'lp', 'exp', and
+#' 'count' and these can differ depending if there is an offset term. For example, when there is an offset in the Poisson model, 'lp' is the log on rate
+#' scale, 'exp' is the exp(log on rate scale), and 'count' returns the count on outcome scale, based on the offset variable's median raw value
+#' when offset(log(n)). When there is no offset in the Poisson model, 'lp' is the log on the outcome scale and both 'exp' and 'count' return
+#' the count on the outcome scale (i.e., they are redundant).
 #' @param xlim specify plot's x-axis limits with a 2 value vector.
 #' @param ylim specify plot's y-axis limits with a 2 value vector.
 #' @param xlab a vector label for the x-axis.
@@ -130,7 +131,7 @@ plot.assess <- function(x, y, xlim=NULL, ylim=NULL, xlab=NULL, ylab=NULL, main=N
     if(!is.null(x.axis)) {
       if (length(unique(x$study$group_means[,1])) != length(unique(x.axis))) {stop("Error: Expecting equal lengths for int.time and x.axis." )}
     }
-  # Cox models as causal models
+  # Cox models not as causal models
   causal_model <- NULL
   if (any(class(x) == "coxph") == TRUE) {
     causal_model <- FALSE
@@ -216,7 +217,7 @@ if(length(y) == 1 && y == "ITS") {
   }
   #Get model type, including cox too
   if (any(class(x) == "coxph") == TRUE) {
-    model_type <- "cox"
+    model_type <- "coxph"
   } else if (x$analysis_type$regression_type != "none") {
     model_type <- x$analysis_type$regression_type
   }
@@ -2624,7 +2625,7 @@ if(length(y) == 1 && y == "ITS") {
     # Get model type
     reg_type <- NULL
     if(any(class(x) == "coxph") == TRUE) {
-      reg_type <- "cox"
+      reg_type <- "coxph"
     } else {
       reg_type <- x$analysis_type$regression_type
     }
@@ -2650,7 +2651,7 @@ if(length(y) == 1 && y == "ITS") {
     if(reg_type == "poisson") {
       if (!predtype %in% c("lp", "exp", "count")) {stop("Error: Expecting 'lp', 'exp', or 'count' selected in 'y' for partial prediction plot for Poisson regression." )}
     }
-    if(reg_type == "cox") {
+    if(reg_type == "coxph") {
       if (!predtype %in% c("lp", "exp")) {stop("Error: Expecting 'lp', or 'exp' selected in 'y' for partial prediction plot for Cox PH regression." )}
     }
     ## Get predictions ##
@@ -2658,13 +2659,13 @@ if(length(y) == 1 && y == "ITS") {
                     "ols"   = fncPredOls(model, a=a, predtype = predtype, conf_level = 0.95),
                     "logistic" = fncPredLog(model, a=a, predtype = predtype, conf_level = 0.95) ,
                     "poisson"  = fncPredPois(model, a=a, predtype =predtype, conf_level = 0.95),
-                    "cox"   = fncPredCox(model, a=a, predtype = predtype, conf_level = 0.95)
+                    "coxph"   = fncPredCox(model, a=a, predtype = predtype, conf_level = 0.95)
     )
     # Get outcome variable
-    if (reg_type != "cox") {
+    if (reg_type != "coxph") {
       ylab_name <- all.vars(x$formula$primary_formula)[1]
     }
-    if (reg_type == "cox") {
+    if (reg_type == "coxph") {
       ylab_name <- all.vars(x$formula)[1]
     }
     # Get xlab name
@@ -2693,11 +2694,8 @@ if(length(y) == 1 && y == "ITS") {
       #Create confidence intervals
       for(i in 1:(tail(x_coords, 1))) {
         # set up bars for 95% confidence intervals
-        arrows(x0 = i, y0 = pred1[i, "lower_ci"],
+        segments(x0 = i, y0 = pred1[i, "lower_ci"],
                x1 = i, y1 = pred1[i, "upper_ci"],
-               length = 0.05,    # width of the horizontal
-               angle = 90,      # flat arrowhead
-               code = 3,        # bar on both ends
                col = col, lwd = lwd)
         # points for point estimates
         points(i, pred1[i, "predicted"], col=col, cex=cex, pch=19)
@@ -2757,7 +2755,7 @@ if(length(y) == 1 && y == "ITS") {
 
   }  #end of function
 
-  if (model_type %in% c("ols", "poisson", "logistic", "cox")) {
+  if (model_type %in% c("ols", "poisson", "logistic", "coxph")) {
     fncPredEach(  x=x, y=y,
                   xlim = xlim,
                   ylim = ylim,

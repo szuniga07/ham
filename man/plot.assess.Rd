@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot.assess.R
 \name{plot.assess}
 \alias{plot.assess}
-\title{Prediction plot of treatment and control groups for DID and ITS models and OLS, logistic, and Poisson models}
+\title{Prediction plot of treatment and control groups for DID and ITS models and OLS, logistic, Poisson, and Cox models}
 \usage{
 \method{plot}{assess}(
   x,
@@ -40,18 +40,19 @@
 )
 }
 \arguments{
-\item{x}{assess object. Either difference-in-difference, interrupted time series, or some regression models (OLS, logistic, Poisson).}
+\item{x}{assess object. Either difference-in-difference, interrupted time series, or some regression models (OLS, logistic, Poisson, Cox proportional hazards).}
 
 \item{y}{type of model, specify either 'DID' (difference-in-difference) and 'ITS' (interrupted time series). For regression
-models ('ols', 'logistic', or 'poisson'), y is a 1 or 2 element character vector with the 1st element being a predictor variable that
+models ('ols', 'logistic', 'poisson', or 'coxph'), y is a 1 or 2 element character vector with the 1st element being a predictor variable that
 will have the partial prediction plotted and the 2nd element is the type prediction scale response to be graphed. If only the
 predictor variable is selected in a 1 element character vector (e.g., y= 'age'), the plot will be graphed using the linear predictor.
 For 'ols' models, the only option is 'lp' (linear predictor). For 'logistic' models, the options are 'lp', 'exp' for exponentiated values
-such as exp(lp) and 'plogis' for probabilities (i.e., computes the cumulative distribution function for the logistic distribution).
-For 'poisson' models, the options are 'lp', 'exp', and 'count' and these can differ depending if there is an offset term. For example,
-when there is an offset in the Poisson model, 'lp' is the log on rate scale, 'exp' is the exp(log on rate scale), and 'count' returns the
-count on outcome scale, based on the offset variable's median raw value when offset(log(n)). When there is no offset in the Poisson model,
-'lp' is the log on the outcome scale and both 'exp' and 'count' return the count on the outcome scale (i.e., they are redundant).}
+such as exp(lp), and 'plogis' for probabilities (i.e., computes the cumulative distribution function for the logistic distribution).
+For 'coxph' models from the survival package, the options are 'lp' and 'exp' for hazard ratios. For 'poisson' models, the options are 'lp', 'exp', and
+'count' and these can differ depending if there is an offset term. For example, when there is an offset in the Poisson model, 'lp' is the log on rate
+scale, 'exp' is the exp(log on rate scale), and 'count' returns the count on outcome scale, based on the offset variable's median raw value
+when offset(log(n)). When there is no offset in the Poisson model, 'lp' is the log on the outcome scale and both 'exp' and 'count' return
+the count on the outcome scale (i.e., they are redundant).}
 
 \item{xlim}{specify plot's x-axis limits with a 2 value vector.}
 

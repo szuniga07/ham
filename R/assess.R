@@ -1,6 +1,6 @@
 #' Assess models with regression
 #'
-#' Fit ordinary least squares (OLS) and logistic models. And fit models for causal inference such
+#' Fit ordinary least squares (OLS), logistic, and Poisson models. And fit models for causal inference such
 #' as differences-in-differences and interrupted time series. Run these models to evaluate program performance
 #' or test intervention effects (e.g., healthcare programs). Options are available
 #' for top coding the outcome variable as well as propensity scores. New data can
@@ -77,6 +77,8 @@
 #' This can be a character string naming a link. The 'binomial' family link options are the 'logit' (default),
 #' 'probit', 'cauchit', (corresponding to 'logistic', 'normal' and 'Cauchy' CDFs respectively) 'log' and
 #' 'cloglog' (complementary log-log); and the 'poisson' family links 'log' (default), 'identity', and 'sqrt'.
+#' @param model a non-assess class regression model that will be converted into an assess class object
+#' (e.g., Cox PH model from the survival package).
 #'
 #' @return a list of results from selected regression models. Will return new data if selected.
 #' And returns relevant model information such as variable names, type of analysis, formula, study
@@ -138,10 +140,10 @@
 #' int.time="month", its="two", interrupt = c(5,9))$ITS)
 #'
 #' @importFrom stats as.formula binomial plogis predict update aggregate poisson
-assess <- function(formula, data, regression= "none", did ="none", its ="none",
+assess <- function(formula=NULL, data=NULL, regression= "none", did ="none", its ="none",
                    intervention =NULL, int.time=NULL, treatment=NULL,interrupt=NULL,
                    subset=NULL, stagger= NULL, topcode =NULL, propensity =NULL, trim=NULL,
-                   weights=NULL,offset=NULL, newdata =FALSE, link=NULL) {
+                   weights=NULL,offset=NULL, newdata =FALSE, link=NULL, model=NULL) {
   # Use various formulas for the different models
   primary_formula <- formula
   #Get formula variables
@@ -150,20 +152,22 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
   xvar <- xyvar[-1]
 
 #Identify all rows to use for subsets
+  if(is.null(model)) {
   all_rows <- nrow(data)
   if(!is.null(subset)) {
     subset <- subset
   } else {
     subset <- 1:all_rows
   }
-#Create subset data if needed
+  }
+  #Create subset data if needed
   if(!is.null(subset)) {
     data <-   eval(substitute(data[subset , ], list(subset =subset))  )
   }
   # Identify duplicate variable names in new data
-  if (is.null(data)) {
-    stop("Error: No data found.")
-  }
+#  if (is.null(data)) {
+#    stop("Error: No data found.")
+#  }
 
   main_data_vars <- colnames(data)
 #  newdata_vars <- c("Post.All", "Period", "DID","DID.Trend","Int.Var","pscore", "ipw", "nipw","att")
@@ -928,7 +932,9 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
 
   # Regressions #
   #Put model formula into the environment because weights won't run without
-  environment(primary_formula) <- environment()
+  if(is.null(model)) {
+    environment(primary_formula) <- environment()
+  }
 
   #Standard covariate adjustment
   if(regression == "ols") {
@@ -1084,18 +1090,36 @@ assess <- function(formula, data, regression= "none", did ="none", its ="none",
     group_means_its <- NULL
   }
 
-  z <- list(model=model_1, DID=did_model, DID.Names=DID.Names, ITS=its_model,
-            ITS.Effects=ITS.Effects,ITS.Names=ITS.Names, newdata=new_df,
-            formula=list(primary_formula= primary_formul2,
-                         propensity_formula=propensity_formula,
-                         DID_formula=DID_formula,
-                         ITS_formula=ITS_formula,
-                         weights= wght_obj_var),
-            analysis_type=list(regression_type=regression_type,
-                               did_type=did_type, itsa_type=itsa_type),
-            study= list(regression=regression, did=did, its=its, intervention=intervention,
-                        int.time=int.time, treatment=treatment, interrupt=interrupt, group_means=group_means,
-                        group_means_did=group_means_did, group_means_its=group_means_its))
+  ## Make returned list object, checking if it is a Cox PH model ##
+  if (!is.null(model)) {
+    if (any(class(model) %in% c("coxph"))) {
+    z <- list(model=model, DID=NULL, DID.Names=NULL, ITS=NULL,
+              ITS.Effects=NULL,ITS.Names=NULL, newdata=NULL,
+              formula=list(primary_formula= model$formula,
+                           propensity_formula=NULL,
+                           DID_formula=NULL,
+                           ITS_formula=NULL,
+                           weights= NULL),
+              analysis_type=list(regression_type="coxph",
+                                 did_type="none", itsa_type="none"),
+              study= list(regression="coxph", did="none", its="none", intervention=NULL,
+                          int.time=NULL, treatment=NULL, interrupt=NULL, group_means=NULL,
+                          group_means_did=NULL, group_means_its=NULL))
+  }
+    } else {
+    z <- list(model=model_1, DID=did_model, DID.Names=DID.Names, ITS=its_model,
+              ITS.Effects=ITS.Effects,ITS.Names=ITS.Names, newdata=new_df,
+              formula=list(primary_formula= primary_formul2,
+                           propensity_formula=propensity_formula,
+                           DID_formula=DID_formula,
+                           ITS_formula=ITS_formula,
+                           weights= wght_obj_var),
+              analysis_type=list(regression_type=regression_type,
+                                 did_type=did_type, itsa_type=itsa_type),
+              study= list(regression=regression, did=did, its=its, intervention=intervention,
+                          int.time=int.time, treatment=treatment, interrupt=interrupt, group_means=group_means,
+                          group_means_did=group_means_did, group_means_its=group_means_its))
+}
   class(z) <- c("assess","ham", "list")
 
   #Returned objects

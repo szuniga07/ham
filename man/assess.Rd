@@ -5,8 +5,8 @@
 \title{Assess models with regression}
 \usage{
 assess(
-  formula,
-  data,
+  formula = NULL,
+  data = NULL,
   regression = "none",
   did = "none",
   its = "none",
@@ -22,7 +22,8 @@ assess(
   weights = NULL,
   offset = NULL,
   newdata = FALSE,
-  link = NULL
+  link = NULL,
+  model = NULL
 )
 }
 \arguments{
@@ -112,6 +113,9 @@ The default is newdata=FALSE. No new data will be returned if none was created.}
 This can be a character string naming a link. The 'binomial' family link options are the 'logit' (default),
 'probit', 'cauchit', (corresponding to 'logistic', 'normal' and 'Cauchy' CDFs respectively) 'log' and
 'cloglog' (complementary log-log); and the 'poisson' family links 'log' (default), 'identity', and 'sqrt'.}
+
+\item{model}{a non-assess class regression model that will be converted into an assess class object
+(e.g., Cox PH model from the survival package).}
 }
 \value{
 a list of results from selected regression models. Will return new data if selected.
@@ -119,7 +123,7 @@ And returns relevant model information such as variable names, type of analysis,
 information, and summary of ITS effects if analyzed.
 }
 \description{
-Fit ordinary least squares (OLS) and logistic models. And fit models for causal inference such
+Fit ordinary least squares (OLS), logistic, and Poisson models. And fit models for causal inference such
 as differences-in-differences and interrupted time series. Run these models to evaluate program performance
 or test intervention effects (e.g., healthcare programs). Options are available
 for top coding the outcome variable as well as propensity scores. New data can
