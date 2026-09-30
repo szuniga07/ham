@@ -28,7 +28,7 @@
 #'
 #' @importFrom stats pchisq
 importance <- function(model) {
-  if (!any(class(model) %in% c("glm","lm"))) {stop("Error: Expecting 'lm' or 'glm' class regression model." )}
+  if (!any(class(model) %in% c("glm","lm", "coxph"))) {stop("Error: Expecting 'lm', 'glm', or 'coxph' class regression model." )}
   # Compute the Wald chi squared statistic for a subset of model terms.
   partx2 <- function(model, xvar) {
     #Get predictor variables
