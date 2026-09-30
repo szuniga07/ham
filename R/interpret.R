@@ -276,6 +276,92 @@ interpret <- function(object, digits=NULL) {
   }
 
   #############
+  ## Cox PH  ##
+  #############
+
+  #Length of sig predictors
+  if("assess" %in% class(object) ) {
+    if(object$analysis_type$regression_type == "coxph") {
+      sig_cov <- names(which(summary(object$model)[["coefficients"]][, "Pr(>|z|)"] < .05))
+      sig_increase <- names(which((summary(object$model)[["coefficients"]][, "Pr(>|z|)"] < .05) & (summary(object$model)[["coefficients"]][, "coef"] > 0) ))
+      sig_decrease <- names(which((summary(object$model)[["coefficients"]][, "Pr(>|z|)"] < .05) & (summary(object$model)[["coefficients"]][, "coef"] < 0) ))
+    }
+  }
+
+  if("assess" %in% class(object) ) {
+    if(object$analysis_type$regression_type == "coxph") {
+      Y_var_log <- all.vars(object$formula$primary_formula)[1]
+      if(length(sig_cov) != 0) {
+        log_sig_b <- sig_cov
+      }
+      if(length(sig_cov) == 0) {
+        log_sig_b <- "No significant coefficients in your model at the 0.05 alpha level."
+      }
+      # Determine if there was an increase or decrease in coefficients
+      #Increased
+      if(length(sig_increase) != 0) {
+        log_sig_increase <- intersect(names(which(summary(object$model)[["coefficients"]][, "coef"] > 0 )), log_sig_b)
+      }
+      if(length(sig_increase) == 0) {
+        log_sig_increase <- "No positive coefficients in your model were significant."
+      }
+      #Decrease
+      if(length(sig_decrease) != 0) {
+        log_sig_decrease <- intersect(names(which(summary(object$model)[["coefficients"]][, "coef"] < 0 )), log_sig_b)
+      }
+      if(length(sig_decrease) == 0) {
+        log_sig_decrease <- "No negative coefficients in your model were significant."
+      }
+      #Get hazards ratios for those that increased/decreased
+      #Increased
+      if(length(sig_increase) != 0) {
+        hr_res_inc <- exp(object$model[["coefficients"]])[log_sig_increase]
+      }
+      #Decreased
+      if(length(sig_decrease) != 0) {
+        or_res_dec <- exp(object$model[["coefficients"]])[log_sig_decrease]
+      }
+      ## Functions to get increased/decreased % change in hazards
+      #Increased
+      fncIncHazards <- function(y, digits) {
+        if(y > 1) {
+          tmp_out <- paste0("(", signif((y - 1) * 100, digits), "% increased hazard or hazard is ", signif(y, digits), " times higher", ")" )
+        }
+      }
+      #Decreased hazards
+      fncDecHazards <- function(y, digits) {
+        if(y < 1) {
+          tmp_out <- paste0("(", signif((1 - y) * 100, digits), "% decreased hazard", ")" )
+        }
+      }
+      #Increased hazards
+      if(length(sig_increase) > 0) {
+        hazardsr1 <- sapply(hr_res_inc, FUN=fncIncHazards, digits=digits)
+        hazards_increase_text <- paste(names(hazardsr1), hazardsr1, collapse= "\n")
+      } else {
+        hazards_increase_text <- log_sig_increase
+      }
+      #Decreased hazards
+      if(length(sig_decrease) > 0) {
+        hazardsr2 <- sapply(or_res_dec, FUN=fncDecHazards, digits=digits)
+        hazards_decrease_text <- paste(names(hazardsr2), hazardsr2, collapse= "\n")
+      } else {
+        hazards_decrease_text <- log_sig_decrease
+      }
+
+      coxph_r2 <- round(summary(object$model)$rsq[1], 3)
+      coxph_c <- round(summary(object$model)$concordance[1], 3)
+      #Cox PH interpretations
+      introduction <- c("These estimates tell you about the relationship between the \nindependent variables and the dependent variable. These estimates \ntell the amount of change in outcome scores that would be \npredicted by a 1 unit increase in the predictor.")
+      all_significant <- paste0("The following predictor variable(s) have coefficient(s) \nsignificantly different from 0 using an alpha of 0.05:\n", paste(log_sig_b, collapse=", "))
+      positive_beta <- paste0("For every 1 unit increase in these predictor variables,\n", Y_var_log, ", time-to-event, is predicted to increase by the value of the \ncoefficient, holding all other variables constant. The following \npredictor variable(s) have positive coefficient(s) that \nincrease the hazard of the outcome (i.e., worse survival): \n", hazards_increase_text)
+      negative_beta <- paste0("For every 1 unit increase in these predictor variables,\n", Y_var_log, ", time-to-event, is predicted to decrease by the value of the \ncoefficient, holding all other variables constant. The following \npredictor variable(s) have negative coefficient(s) that \ndecrease the hazard of the outcome (i.e., better survival): \n", hazards_decrease_text)
+      R2 <-            paste0("Psuedo R-Squared (R2) is the fraction of -2*log-likelihood \nexplained that is capable of being explained, analogous to \nR2 in OLS. Lower levels of pseudo R2 (e.g., 0.20) can be \nconsidered very good in Cox PH models because of the complexity \nof predicting time-to-event. And low R2 can still be adequate \nfor hypothesis testing. This model has a R2 of ", signif(coxph_r2, digits), ".",
+                              "\n\nAUC/Concordance. The probability of concordance is identical \nto the AUC. It computes all possible pairs of subjects \n(response=1 vs. response=0). The index is the proportion of such \npairs with the responder having a higher predicted probability of \nresponse than the nonresponder. This model has an AUC of ", signif(coxph_c, digits), ".")
+    }
+  }
+
+  #############
   # DID model #
   #############
   if("assess" %in% class(object) ) {
@@ -547,7 +633,7 @@ interpret <- function(object, digits=NULL) {
     return(z)
   }
   if (interpret_type == "assess") {
-    if(object$analysis_type$regression_type %in% c("ols","logistic", "poisson")) {
+    if(object$analysis_type$regression_type %in% c("ols","logistic", "poisson", "coxph")) {
       model <- list(introduction=introduction, all_significant=all_significant,
                     positive_beta=positive_beta, negative_beta=negative_beta, R2=R2)
     }

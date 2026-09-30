@@ -115,7 +115,7 @@ This can be a character string naming a link. The 'binomial' family link options
 'cloglog' (complementary log-log); and the 'poisson' family links 'log' (default), 'identity', and 'sqrt'.}
 
 \item{model}{a non-assess class regression model that will be converted into an assess class object
-(e.g., Cox PH model from the survival package).}
+(e.g., only Cox PH models from the survival package as of yet).}
 }
 \value{
 a list of results from selected regression models. Will return new data if selected.

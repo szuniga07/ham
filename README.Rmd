@@ -481,7 +481,9 @@ New additions
 
 * plot.Bayes variation analysis, multiple posterior predictive check lines
 
-* Partial prediction plots were added to show the trend line for continuous variables or 95% confidence intervals for categorical variables when the regression type is 'ols', 'logistic', or 'poisson'. These trend lines control for the other predictors in the model.
+* Partial prediction plots were added to show the trend line for continuous variables or 95% confidence intervals for categorical variables when the regression type is 'ols', 'logistic', 'poisson', or 'coxph'. These trend lines control for the other predictors in the model.
+
+* Cox Proportional Hazards models from the survival package have been included for various options such as: partial prediction plots plot(), interpret(), importance(), review() and the various plot options. You would first need to convert it into an assess object like this: assess_obj <- assess(model = cox_model). And then you can use it with the functions listed above.
 
 * losvary Bayesian chains of hospital LOS added for plot.Bayes examples 
 

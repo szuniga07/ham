@@ -188,6 +188,10 @@ We see that there is a significant Incidence Rate by month as seen in the interp
                 data = infections, regression="poisson", link="log"))$model
 ```
 
+### Cox Proportional Hazards models
+
+Cox Proportional Hazards models from the survival package have been included for various options such as: plot(), interpret(), importance(), review() and their various plot options. You would first need to convert it into an assess object like this: assess_obj <- assess(model = cox_model). And then you can use it with the functions listed above in the routine way: interpret(assess_obj)$model.
+
 ### OLS top-coding and propensity scores
 ham can topcode the outcome and create a propensity score variable. top-coding cost at $17,150 and propensity score based on age, female indicator, and a health risk probability score. 
 

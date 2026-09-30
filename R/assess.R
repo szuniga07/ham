@@ -78,7 +78,7 @@
 #' 'probit', 'cauchit', (corresponding to 'logistic', 'normal' and 'Cauchy' CDFs respectively) 'log' and
 #' 'cloglog' (complementary log-log); and the 'poisson' family links 'log' (default), 'identity', and 'sqrt'.
 #' @param model a non-assess class regression model that will be converted into an assess class object
-#' (e.g., Cox PH model from the survival package).
+#' (e.g., only Cox PH models from the survival package as of yet).
 #'
 #' @return a list of results from selected regression models. Will return new data if selected.
 #' And returns relevant model information such as variable names, type of analysis, formula, study
