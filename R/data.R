@@ -118,9 +118,10 @@
 
 #' VA's completed hospital appointments made in the reporting period ending in December, 2020.
 #' @format ## `compapt`
-#' A public domain data frame with 1,245 rows and 9 columns:
+#' A public domain data frame with 1,245 rows and 11 columns:
 #' \describe{
 #'   \item{ ID}{Medical Center Area identification number.}
+#'   \item{ State}{The two character state code.}
 #'   \item{ Name}{Mnemonic based on name and location.}
 #'   \item{ Comp07}{Appointments completed within 0-7 days of contact.}
 #'   \item{ Comp814}{Appointments completed within 8-14 days of contact.}
@@ -128,12 +129,13 @@
 #'   \item{ Comp14}{Appointments completed within 0-14 days of contact.}
 #'   \item{ Comp30}{Appointments completed within 0-30 days of contact.}
 #'   \item{ Total}{Total appointments completed in which patients made contact in December, 2020.}
-#'   \item{ aTotal}{The aggregated total appoinments for each ID of the Medical Center Area.}
+#'   \item{ aTotal}{The aggregated total count of appoinments for each ID of the Medical Center Area.}
+#'   \item{ Sites}{The number of unique hospital sites found within each ID.}
 #'   ...
 #' }
-#' @source compapt is a public domain data frame from the US Vets Administration's on the number of completed
+#' @source compapt is a public domain data frame from the US Vets Administration on the number of completed
 #' appointments for the purpose of demonstrating hierarchical estimates of hospital sites nested within larger
-#' medical center areas. Records attained from the PDF, "DR158_012021_PublicData_CompletedAppointments".
+#' medical center areas nested within states. Records attained from the PDF, "DR158_012021_PublicData_CompletedAppointments".
 #'
 "compapt"
 
