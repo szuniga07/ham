@@ -4,7 +4,10 @@
 #' and interrupted time series (ITS) models as well as some traditional regression models. The graph will produce lines
 #' for treatment/intervention and control groups to gain understanding through a visual representation of the regression
 #' coefficients. By default, the treatment/intervention group is represented with a blue line, the control group is represented
-#' with a red line, and the counterfactual line, when available, is a dashed line. There are many options to change the plot.
+#' with a red line, and the counterfactual line, when available, is a dashed line. The regression models ('ols', 'logistic',
+#' 'poisson', 'coxph') can have partial prediction plots created, target continuous variables are drawn in the range of the 2.5th
+#' to the 97.5th percentiles and are held constant at the median values while the reference level is held constant for categorical
+#' variables. There are many options to modify the plot.
 #'
 #' @param x assess object. Either difference-in-difference, interrupted time series, or some regression models (OLS, logistic, Poisson, Cox proportional hazards).
 #' @param y type of model, specify either 'DID' (difference-in-difference) and 'ITS' (interrupted time series). For regression
