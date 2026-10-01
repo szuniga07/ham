@@ -27,7 +27,8 @@ A public domain data frame with 1,245 rows and 11 columns:
 \source{
 compapt is a public domain data frame from the US Vets Administration on the number of completed
 appointments for the purpose of demonstrating hierarchical estimates of hospital sites nested within larger
-medical center areas nested within states. Records attained from the PDF, "DR158_012021_PublicData_CompletedAppointments".
+medical center areas nested within states. Records for 50 US states, D.C., Puerto Rico, and the Philippines
+attained from the PDF, "DR158_012021_PublicData_CompletedAppointments".
 }
 \usage{
 compapt
