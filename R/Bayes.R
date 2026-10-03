@@ -1143,12 +1143,9 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL, eVal
   if(!is.null(yVal)) {
     if(length(yVal) > 1) {
     if(Distribution == "sn") {
-      #
       for (i in 1:length(yVal)) {         #I need to subtract 1-psn to get the right prop > 1
         PsnormGtY[[i]] <- summarizePost( psn(x=yVal[i], xi= MC.Matrix[, Center], omega= MC.Matrix[, Spread],
                                              alpha= MC.Matrix[, Skew], lower.tail=FALSE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
-#        PsnormGtY[[1 + length(yVal)]] <- summarizePost( abs((psn(x=yVal[length(yVal)], xi= MC.Matrix[, Center], omega= MC.Matrix[, Spread], alpha= MC.Matrix[, Skew], lower.tail=FALSE)) -
-#                                                              (psn(x=yVal[1], xi= MC.Matrix[, Center], omega= MC.Matrix[, Spread], alpha= MC.Matrix[, Skew], lower.tail=FALSE)) ))[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
         PsnormGtY[[1 + length(yVal)]] <- summarizePost( abs(psn(x=yVal[length(yVal)], xi= MC.Matrix[, Center], omega= MC.Matrix[, Spread],
                                                                 alpha= MC.Matrix[, Skew], lower.tail=TRUE) -
                                                               psn(x=yVal[1], xi= MC.Matrix[, Center], omega= MC.Matrix[, Spread],
@@ -1156,7 +1153,6 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL, eVal
 
 
         names(PsnormGtY)[i] <- paste0("Y_", yVal[i])
-        #kermit
         names(PsnormGtY)[length(yVal) + 1] <- "High.Low.Interval"
       }
     }
