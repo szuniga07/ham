@@ -1141,52 +1141,52 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL, eVal
   # Proportion greater than Y
   PsnormGtY <- list()
   if(!is.null(yVal)) {
-#    if(length(yVal) > 1) {
-#    if(Distribution == "sn") {
-#      for (i in 1:length(yVal)) {         #I need to subtract 1-psn to get the prop > 1...changed mind
-#        PsnormGtY[[i]] <- summarizePost( pskewn(x=yVal[i], xi= MC.Matrix[, Center], omega= MC.Matrix[, Spread],
-#                                                    alpha= MC.Matrix[, Skew], lower.tail=FALSE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
-#        names(PsnormGtY)[i] <- paste0("Y_", yVal[i])
-#      }
-#    }
-#  } else {
-#    if(Distribution == "sn") {
-#      for (i in 1:length(yVal)) {         #I need to subtract 1-psn to get the right prop > 1
-#        PsnormGtY[[i]] <- summarizePost( pskewn(x=yVal[i], xi= MC.Matrix[, Center], omega= MC.Matrix[, Spread],
-#                                                    alpha= MC.Matrix[, Skew], lower.tail=FALSE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
-#        PsnormGtY[[1 + length(yVal)]] <- summarizePost( abs((pskewn(x=yVal[length(yVal)], xi= MC.Matrix[, Center], omega= MC.Matrix[, Spread], alpha= MC.Matrix[, Skew], lower.tail=FALSE)) -
-#                                                          (pskewn(x=yVal[1], xi= MC.Matrix[, Center], omega= MC.Matrix[, Spread], alpha= MC.Matrix[, Skew], lower.tail=FALSE)) ))[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
-#        names(PsnormGtY)[i] <- paste0("Y_", yVal[i])
-#        names(PsnormGtY)[length(yVal) + 1] <- "High.Low.Interval"
-#      }
-#    }
-#      }
+    if(length(yVal) > 1) {
+    if(Distribution == "sn") {
+      for (i in 1:length(yVal)) {         #I need to subtract 1-psn to get the prop > 1...changed mind
+        PsnormGtY[[i]] <- summarizePost( psn(x=yVal[i], xi= MC.Matrix[, Center], omega= MC.Matrix[, Spread],
+                                                    alpha= MC.Matrix[, Skew], lower.tail=FALSE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+        names(PsnormGtY)[i] <- paste0("Y_", yVal[i])
+      }
+    }
+  } else {
+    if(Distribution == "sn") {
+      for (i in 1:length(yVal)) {         #I need to subtract 1-psn to get the right prop > 1
+        PsnormGtY[[i]] <- summarizePost( psn(x=yVal[i], xi= MC.Matrix[, Center], omega= MC.Matrix[, Spread],
+                                                    alpha= MC.Matrix[, Skew], lower.tail=FALSE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+        PsnormGtY[[1 + length(yVal)]] <- summarizePost( abs((psn(x=yVal[length(yVal)], xi= MC.Matrix[, Center], omega= MC.Matrix[, Spread], alpha= MC.Matrix[, Skew], lower.tail=FALSE)) -
+                                                          (psn(x=yVal[1], xi= MC.Matrix[, Center], omega= MC.Matrix[, Spread], alpha= MC.Matrix[, Skew], lower.tail=FALSE)) ))[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+        names(PsnormGtY)[i] <- paste0("Y_", yVal[i])
+        names(PsnormGtY)[length(yVal) + 1] <- "High.Low.Interval"
+      }
+    }
+      }
     }
   # Quantiles of Y.
-  # Needs mapply for qskewn() b/c it creates an impossible error for "omega" <= 0.
+  # Needs mapply for qsn() b/c it creates an impossible error for "omega" <= 0.
   QsnormGtY <- list()
   if(!is.null(qVal)) { #
-#    if(length(qVal) > 1) {
-#    if(Distribution == "sn") {
-#      for (i in 1:length(qVal)) {
-#        QsnormGtY[[i]] <- summarizePost(mapply(qskewn, p=qVal[i], xi=MC.Matrix[, Center], omega=MC.Matrix[, Spread],
-#                                               alpha=MC.Matrix[, Skew]))[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
-#        QsnormGtY[[1 + length(qVal)]] <- summarizePost( abs(mapply(qskewn, p=qVal[length(qVal)], xi=MC.Matrix[, Center], omega=MC.Matrix[, Spread], alpha=MC.Matrix[, Skew]) -
-#                                                         mapply(qskewn, p=qVal[1], xi=MC.Matrix[, Center], omega=MC.Matrix[, Spread], alpha=MC.Matrix[, Skew]))
-#                                               )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
-#        names(QsnormGtY)[i] <- paste0("Percentile_", qVal[i])
-#        names(QsnormGtY)[length(qVal) + 1] <- "High.Low.Interval"
-#      }
-#    }
-#    } else {
-#    if(Distribution == "sn") {
-#      for (i in 1:length(qVal)) {
-#        QsnormGtY[[i]] <- summarizePost(mapply(qskewn, p=qVal[i], xi=MC.Matrix[, Center], omega=MC.Matrix[, Spread],
-#                                               alpha=MC.Matrix[, Skew]))[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
-#        names(QsnormGtY)[i] <- paste0("Percentile_", qVal[i])
-#      }
-#    }
-#    }
+    if(length(qVal) > 1) {
+    if(Distribution == "sn") {
+      for (i in 1:length(qVal)) {
+        QsnormGtY[[i]] <- summarizePost(mapply(qsn, p=qVal[i], xi=MC.Matrix[, Center], omega=MC.Matrix[, Spread],
+                                               alpha=MC.Matrix[, Skew]))[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+        QsnormGtY[[1 + length(qVal)]] <- summarizePost( abs(mapply(qsn, p=qVal[length(qVal)], xi=MC.Matrix[, Center], omega=MC.Matrix[, Spread], alpha=MC.Matrix[, Skew]) -
+                                                         mapply(qsn, p=qVal[1], xi=MC.Matrix[, Center], omega=MC.Matrix[, Spread], alpha=MC.Matrix[, Skew]))
+                                               )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+        names(QsnormGtY)[i] <- paste0("Percentile_", qVal[i])
+        names(QsnormGtY)[length(qVal) + 1] <- "High.Low.Interval"
+      }
+    }
+    } else {
+    if(Distribution == "sn") {
+      for (i in 1:length(qVal)) {
+        QsnormGtY[[i]] <- summarizePost(mapply(qsn, p=qVal[i], xi=MC.Matrix[, Center], omega=MC.Matrix[, Spread],
+                                               alpha=MC.Matrix[, Skew]))[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+        names(QsnormGtY)[i] <- paste0("Percentile_", qVal[i])
+      }
+    }
+    }
   } #
 
   #Return NAs for NULL objects
@@ -1767,4 +1767,4 @@ z <- list(Posterior.Summary=Posterior.Summary, MCMC=MCMC, Multilevel=multi_smry,
 class(z) <- c("Bayes","ham", "list")
 return(z)
 } # End of Bayesian section #
-
+utils::globalVariables(c("psn", "qsn"))
