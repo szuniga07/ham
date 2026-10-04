@@ -632,6 +632,18 @@ interpret(im11)$its
 #> above represent effects after controlling for the other variables.
 ```
 
+‘Summary’ reviews the results but in order to view the point estimate
+and confidence interval, check the results with the itsEffect function.
+This also provides the standard error, t-statistic, and p-value. Just
+specify the model type= “sgst” and interruptions= 1 for a single-group,
+single time period analysis with 1 interruption.
+
+``` r
+itsEffect(model= im11$ITS, type= "sgst", interruptions= 1)
+#>                   Effect       S.E.         t    p.value        L95         U95
+#> Intervention -0.08743239 0.04851635 -1.802122 0.07243586 -0.1828716 0.008006875
+```
+
 There is a second key period of interest at month 9 which is specified
 with interrupt= c(5, 9) and its=“one”
 
@@ -755,6 +767,116 @@ summary(im22$ITS)
 #> Residual standard error: 1.748 on 708 degrees of freedom
 #> Multiple R-squared:  0.2203, Adjusted R-squared:  0.2081 
 #> F-statistic: 18.18 on 11 and 708 DF,  p-value: < 2.2e-16
+```
+
+### interpret coefficients
+
+``` r
+interpret(im22)$its
+#> Interpretations: ITS 
+#> -------------------- 
+#> Note: Some variable names below based on time points (or 'interruptions'). 
+#> This analysis is for a two-group, multiple intervention period (interruption). 
+#> Positive values indicate higher intervention group values and vice-versa for: 
+#> post1, txp1, ixp1, txip1, post2, txp2, ixp2, txip2. 
+#> 
+#> Intercept is 3.09 and the starting value of the trend for the 
+#> control group. 
+#> 
+#> ITS.Time is 0.163 and the control group's slope prior to intervention. 
+#> The coefficient is non-significant. 
+#> 
+#> ITS.Int is 3.24 and the difference in the level between intervention 
+#> and control group prior to intervention 1 (intervention - control). 
+#> The coefficient is significant. 
+#> 
+#> txi is -0.452 and the difference between the intervention and 
+#> control group's pre-intervention slopes (intervention - control). 
+#> The coefficient is significant. 
+#> 
+#> post5 is 0.597 and the immediate shift in the control group trend 
+#> line after this intervention time starts. The coefficient is 
+#> non-significant. 
+#> 
+#> txp5 is -0.0378 and the difference between current and prior intervention 
+#> control group slopes (e.g., change in the pre-intervention slope). 
+#> The coefficient is non-significant. 
+#> 
+#> ixp5 is -1.58 and the difference between the intervention and 
+#> control groups (intervention - control) in the period immediately 
+#> after this intervention started (e.g., 1st year of intervention 1). 
+#> The coefficient is significant. 
+#> 
+#> txip5 is 0.29 and non-significant. This is the difference in both 
+#> group's slope changes since the prior intervention (pre-slopes compared 
+#> to post-slopes). For example, both have pre-intervention slopes 
+#> of 2, the control group's slope remained the same, therefore the 
+#> post 1st intervention slope is 0. And the intervention group's slope 
+#> increased by 2, then txip1 = 2 (= 2 - 0). 
+#> 
+#> post9 is -0.213 and the immediate shift in the control group trend 
+#> line after this intervention time starts. The coefficient is 
+#> non-significant. 
+#> 
+#> txp9 is 0.28 and the difference between current and prior intervention 
+#> control group slopes (e.g., change in the pre-intervention slope). 
+#> The coefficient is non-significant. 
+#> 
+#> ixp9 is -0.568 and the difference between the intervention and 
+#> control groups (intervention - control) in the period immediately 
+#> after this intervention started (e.g., 1st year of intervention 1). 
+#> The coefficient is non-significant. 
+#> 
+#> txip9 is -0.0504 and non-significant. This is the difference in both 
+#> group's slope changes since the prior intervention (pre-slopes compared 
+#> to post-slopes). For example, both have pre-intervention slopes 
+#> of 2, the control group's slope remained the same, therefore the 
+#> post 1st intervention slope is 0. And the intervention group's slope 
+#> increased by 2, then txip1 = 2 (= 2 - 0). 
+#> 
+#> Summary 1: For this intervention period 1, the results show that 
+#> the intervention group's non-significant change in los, 
+#> post-intervention is -0.0372 (i.e., value of change per-unit-of-time,
+#> such as month or year, in the intervention period; not the change
+#> relative to the prior period). The control group's non-significant 
+#> change in los, post-intervention is 0.126. The non-significant 
+#> difference between both groups, per-unit-of-time, is -0.163. 
+#> 
+#> Summary 2: For this intervention period 2, the results show that 
+#> the intervention group's non-significant change in los, 
+#> post-intervention is 0.192 (i.e., value of change per-unit-of-time,
+#> such as month or year, in the intervention period; not the change
+#> relative to the prior period). The control group's significant 
+#> change in los, post-intervention is 0.406. The non-significant 
+#> difference between both groups, per-unit-of-time, is -0.213. 
+#> 
+#> If there are additional variables in the model then the coefficients 
+#> above represent effects after controlling for the other variables.
+```
+
+‘Summary 1’ and ‘Summary 2’ reviews the results but in order to view the
+point estimates and confidence intervals, check the results with the
+itsEffect function. This also provides the standard error, t-statistic,
+and p-value. Just specify the model type= “mgmt” and interruptions= 2
+for a multiple-group, multiple time period analysis with 2
+interruptions.
+
+``` r
+itsEffect(model= im22$ITS, type= "mgmt", interruptions= 2)
+#>                     Effect      S.E.          t     p.value        L95
+#> Intervention.1 -0.03715721 0.1486496 -0.2499652 0.802686801 -0.3290039
+#> Control.1       0.12565377 0.1429912  0.8787516 0.379834124 -0.1550838
+#> Difference.1   -0.16281099 0.2062600 -0.7893483 0.430172699 -0.5677654
+#> Intervention.2  0.19245625 0.1549802  1.2418122 0.214717083 -0.1118194
+#> Control.2       0.40570074 0.1294081  3.1350493 0.001789275  0.1516312
+#> Difference.2   -0.21324450 0.2019042 -1.0561667 0.291252291 -0.6096471
+#>                      U95
+#> Intervention.1 0.2546895
+#> Control.1      0.4063914
+#> Difference.1   0.2421435
+#> Intervention.2 0.4967319
+#> Control.2      0.6597703
+#> Difference.2   0.1831581
 ```
 
 ### View a partial prediction plot
@@ -1159,6 +1281,10 @@ Corrected errors
 - For the interrupted time-series interpretations, the phrases
   “one-group, multiple intervention period” and “two group, multiple
   time periods” are correctly stated with the relevant models.
+
+- For the interrupted time-series ITS effect summaries with itsEffect(),
+  the lower and upper confidence limits were corrected. The point
+  estimates, p-values, S.E., and t-statistic have always been correct.
 
 - The propensity score weights, “ipw”, “nipw”, and “att”, are now
   correct because the code was fixed.

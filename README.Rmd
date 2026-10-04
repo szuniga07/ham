@@ -241,6 +241,12 @@ summary(im11$ITS)
 interpret(im11)$its
 ```
 
+'Summary' reviews  the results but in order to view the point estimate and confidence interval, check the results with the itsEffect function. This also provides the standard error, t-statistic, and p-value. Just specify the model type= "sgst" and interruptions= 1 for a single-group, single time period analysis with 1 interruption.
+
+```{r itsEffect model 01}
+itsEffect(model= im11$ITS, type= "sgst", interruptions= 1)
+```
+
 There is a second key period of interest at month 9 which is specified with interrupt= c(5, 9) and its="one"
 
 ### ITS model 2
@@ -279,6 +285,17 @@ im22 <- assess(formula=los ~ ., data=hosprog, intervention = "program",
 ### View ITS model 4 results
 ```{r its model 4 results}
 summary(im22$ITS)
+```
+
+### interpret coefficients
+```{r its model 03 interpretations}
+interpret(im22)$its
+```
+
+'Summary 1' and 'Summary 2' reviews the results but in order to view the point estimates and confidence intervals, check the results with the itsEffect function. This also provides the standard error, t-statistic, and p-value. Just specify the model type= "mgmt" and interruptions= 2 for a multiple-group, multiple time period analysis with 2 interruptions.
+
+```{r itsEffect model 04}
+itsEffect(model= im22$ITS, type= "mgmt", interruptions= 2)
 ```
 
 ### View a partial prediction plot
@@ -496,6 +513,8 @@ New additions
 Corrected errors
 
 * For the interrupted time-series interpretations, the phrases “one-group, multiple intervention period” and “two group, multiple time periods” are correctly stated with the relevant models.
+
+* For the interrupted time-series ITS effect summaries with itsEffect(), the lower and upper confidence limits were corrected. The point estimates, p-values, S.E., and t-statistic have always been correct.
 
 * The propensity score weights, "ipw", "nipw", and "att", are now correct because the code was fixed.
 

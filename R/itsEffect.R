@@ -199,8 +199,8 @@ itsEffect <- function(model, type, interruptions) {
     U951T <- Treated + (stanErr1T * quant_df_res)
     L951C <- Control - (stanErr1C * quant_df_res)
     U951C <- Control + (stanErr1C * quant_df_res)
-    L951D <- Treated - (stanErr1D * quant_df_res)
-    U951D <- Treated + (stanErr1D * quant_df_res)
+    L951D <- Difference - (stanErr1D * quant_df_res)
+    U951D <- Difference + (stanErr1D * quant_df_res)
     effect_list <- list("Intervention"= c(Treated, stanErr1T, t.value1T,
                                           p.value1T, L951T, U951T),
                         "Control"= c(Control, stanErr1C, t.value1C,

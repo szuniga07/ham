@@ -438,9 +438,15 @@ summary(im11$ITS)
 interpret(im11)$its
 ```
 
+'Summary' reviews  the results but in order to view the point estimate and confidence interval, check the results with the itsEffect function. This also provides the standard error, t-statistic, and p-value. Just specify the model type= "sgst" and interruptions= 1 for a single-group, single time period analysis with 1 interruption.
+
+```{r itsEffect model 1}
+itsEffect(model= im11$ITS, type= "sgst", interruptions= 1)
+```
+
 There is a second key period of interest at month 9 which is specified with interrupt= c(5, 9) and its="one". Changing its="one" to its="two" would allow me to compare two groups (i.e., intervention and control groups). We'll examine those options later but for now here is how we specify a model for the intervention group only with 1 interruption (or intervention) period.
 
-<span style="color: red;" >Hint:</span> In assess(), DID="two" and ITS="two" mean two different things. For DID models, DID="two" refers to 2 time periods while ITS="two" refers to 2 groups.
+<span style="color: red;" >Hint:</span> In assess(), DID="two" and ITS="two" means two different things. For DID models, DID="two" refers to 2 time periods while ITS="two" refers to 2 groups.
 
 ### Graph ITS model 1 
 ```{r plotITS1, fig.dim = c(6, 4.5)}
@@ -468,6 +474,13 @@ Let's take a look at the interpretations.
 ### interpret ITS 2 coefficients
 ```{r its model 2 interpretations}
 interpret(im12)$its
+```
+
+
+'Summary 1' and 'Summary 2' reviews the results but in order to view the point estimates and confidence intervals, check the results with the itsEffect function. This also provides the standard error, t-statistic, and p-value. Just specify the model type= "sgmt" and interruptions= 2 for a single-group, multiple time period analysis with 2 interruptions.
+
+```{r itsEffect model 2}
+itsEffect(model= im12$ITS, type= "sgmt", interruptions= 2)
 ```
 
 Let's take a look at the graph.
@@ -514,6 +527,12 @@ interpret(im22)$its
 
 <span style="color: red;" >Hint:</span> The 2 summaries at the bottom help us to understand the overall effect on the LOS reduction up to the end of those time periods. In other words, the coefficient interpretations explain what each means while the summaries give us an idea that each value represents the change per unit of time in that period, the degree of lower (or higher) LOS over time for the intervention and/or control groups. For example, the intervention group saw a slight decrease of 0.037 per month after the first interruption but saw an increase of about 0.192 per month after the second interruption.
 
+'Summary 1' and 'Summary 2' reviews the results but in order to view the point estimates and confidence intervals, check the results with the itsEffect function. This also provides the standard error, t-statistic, and p-value. Just specify the model type= "mgmt" and interruptions= 2 for a multiple-group, multiple time period analysis with 2 interruptions.
+
+```{r itsEffect model 3}
+itsEffect(model= im22$ITS, type= "mgmt", interruptions= 2)
+```
+
 
 We will now graph the results based on our coefficients. We use many of the same arguments as the DID model. In this example, I adjusted the position of the text to read better with the pos.text argument. And you'll notice that within the confidence bands there are dots that represent the means for each time period from the model data. This is done with the argument add.means=TRUE. Although not provided in ITS models with control groups, the ITS models that only have the intervention groups do have counterfactual lines. Counterfactual lines may be added to all ITS models in future versions if can do it in the way I prefer. 
 
@@ -552,6 +571,12 @@ Let's take a look at the interpretations.
 ### interpret ITS 4 coefficients
 ```{r its model 4 interpretations}
 interpret(id22)$its
+```
+
+'Summary 1' and 'Summary 2' reviews the results but in order to view the point estimates and confidence intervals, check the results with the itsEffect function. This also provides the standard error, t-statistic, and p-value. Just specify the model type= "mgmt" and interruptions= 2 for a multiple-group, multiple time period analysis with 2 interruptions.
+
+```{r itsEffect model 4}
+itsEffect(model= id22$ITS, type= "mgmt", interruptions= 2)
 ```
 
 Let's take a look at the graph (intervention is brown, control is gray).
