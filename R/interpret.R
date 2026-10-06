@@ -59,7 +59,12 @@ interpret <- function(object, digits=NULL) {
     if (object$Scale.Statistics$alpha >= 0.8) alpha_rank <- "'very good'"
     if (object$Scale.Statistics$alpha >= 0.9) alpha_rank <- "'excellent'"
     #Items that are deleted
-    delete_items <- names(which(object$Item.Deleted$alpha.item.deleted > object$Scale.Statistics$alpha))
+    num_del_items <- length(names(which(object$Item.Deleted$alpha.item.deleted > object$Scale.Statistics$alpha)))
+    if (num_del_items == 0) {
+      delete_items <- "No item removal"
+    } else {
+      delete_items <- names(which(object$Item.Deleted$alpha.item.deleted > object$Scale.Statistics$alpha))
+    }
     #Interpretations
     alpha_overall <- paste0("Your ", object$Scale.Statistics$Items, " item scale has a Cronbach\'s alpha of ",
                             signif(object$Scale.Statistics$alpha, digits), ". ", "This is \ngenerally considered as being in the ",
