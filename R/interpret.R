@@ -110,7 +110,7 @@ interpret <- function(object, digits=NULL) {
       all_significant <- paste0("The following predictor variable(s) have coefficient(s) \nsignificantly different from 0 using an alpha of 0.05:\n", paste(ols_sig_b, collapse=", "))
       positive_beta <- paste0("For every 1 unit increase in these predictor variables,\n", Y_var_ols, " is predicted to increase by the value of the \ncoefficient, holding all other variables constant. The following \npredictor variable(s) have positive coefficient(s) that \nincrease the predicted value of the outcome: \n", paste(ols_sig_increase, collapse=", "))
       negative_beta <- paste0("For every 1 unit increase in these predictor variables,\n", Y_var_ols, " is predicted to decrease by the value of the \ncoefficient, holding all other variables constant. The following \npredictor variable(s) have negative coefficient(s) that \ndecrease the predicted value of the outcome: \n", paste(ols_sig_decrease, collapse=", "))
-      R2 <- paste0("R-Squared (R2) is the proportion of variance in the dependent \nvariable which can be predicted from the independent \nvariable(s). For example, if R2 = 0.50, 50% of the variance \nin test scores can be predicted from the 5 variables. R2 >= 0.80 \nmay be at a level to reliably make individual predictions. \nLower R2 may be helpful in group level predictions. And low R2 can \nstill be adequate for hypothesis testing. This model has a R2 of ", signif(ols_r2, digits), ".")
+      R2 <- paste0("R-Squared (R2) is the proportion of variance in the dependent \nvariable which can be predicted from the independent \nvariable(s). For example, if R2 = 0.50, 50% of the variance \nin test scores can be predicted from the 5 variables. R2 >= 0.80 \nmay be at a level to reliably make individual predictions. \nLower R2 may be helpful in group level predictions. And low R2 can \nstill be adequate for hypothesis testing. The R2 is ", signif(ols_r2, digits), ".")
     }
   }
   # Logistic model #
@@ -187,12 +187,41 @@ interpret <- function(object, digits=NULL) {
         odds_decrease_text <- log_sig_decrease
       }
 
+      #c-statitic/AUC
+      fncAUCham <- function(assess_model) {
+        # Get model
+        fit1 <- assess_model$model
+        # Get Y
+        obs_y <- fit1$y
+        # Model predictions
+        preds <- predict(fit1, type = "response")
+        # final model data
+        final_df <- na.omit(data.frame(obs_y = obs_y, preds = preds))
+        # Get observed and predicted Y
+        obsY <- final_df$obs_y
+        predY   <- final_df$preds
+        # order predictions
+        o <- order(predY, decreasing = TRUE)
+        obsY <- obsY[o]
+        # cumsum preds
+        truepos <- cumsum(obsY == 1)
+        falsepos <- cumsum(obsY == 0)
+        # true and false positives
+        tprate <- c(0, truepos / sum(obsY == 1))
+        fprate <- c(0, falsepos / sum(obsY == 0))
+        # AUC using the trapezoidal rule
+        cstat <- sum(diff(fprate) * (tprate[-1] + tprate[-length(tprate)]) / 2)
+        return(cstat)
+      }
+      #Get c-stat from model
+      log_model_auc <- fncAUCham(object)
+
       #Logistic interpretations
       introduction <- c("These estimates tell you about the relationship between the \nindependent variables and the dependent variable. These estimates \ntell the amount of change in outcome scores that would be \npredicted by a 1 unit increase in the predictor.")
       all_significant <- paste0("The following predictor variable(s) have coefficient(s) \nsignificantly different from 0 using an alpha of 0.05:\n", paste(log_sig_b, collapse=", "))
       positive_beta <- paste0("For every 1 unit increase in these predictor variables,\n", Y_var_log, " is predicted to increase by the value of the \ncoefficient, holding all other variables constant. The following \npredictor variable(s) have positive coefficient(s) that \nincrease the predicted value and odds of the outcome: \n", odds_increase_text)
       negative_beta <- paste0("For every 1 unit increase in these predictor variables,\n", Y_var_log, " is predicted to decrease by the value of the \ncoefficient, holding all other variables constant. The following \npredictor variable(s) have negative coefficient(s) that \ndecrease the predicted value and odds of the outcome: \n", odds_decrease_text)
-      R2 <- "There is no R2 or C-statistic (AUC) information provided."
+      R2 <- paste0("C-statistic/AUC. The probability of concordance is identical \nto the AUC. It computes all possible pairs of subjects \n(response=1 vs. response=0). The index is the proportion of such \npairs with the responder having a higher predicted probability of \nresponse than the nonresponder. The C-statistic/AUC is ", signif(log_model_auc, digits), ".")
     }
   }
 
@@ -361,8 +390,8 @@ interpret <- function(object, digits=NULL) {
       all_significant <- paste0("The following predictor variable(s) have coefficient(s) \nsignificantly different from 0 using an alpha of 0.05:\n", paste(log_sig_b, collapse=", "))
       positive_beta <- paste0("For every 1 unit increase in these predictor variables,\n", Y_var_log, ", time-to-event, is predicted to increase by the value of the \ncoefficient, holding all other variables constant. The following \npredictor variable(s) have positive coefficient(s) that \nincrease the hazard of the outcome (i.e., worse survival): \n", hazards_increase_text)
       negative_beta <- paste0("For every 1 unit increase in these predictor variables,\n", Y_var_log, ", time-to-event, is predicted to decrease by the value of the \ncoefficient, holding all other variables constant. The following \npredictor variable(s) have negative coefficient(s) that \ndecrease the hazard of the outcome (i.e., better survival): \n", hazards_decrease_text)
-      R2 <-            paste0("Psuedo R-Squared (R2) is the fraction of -2*log-likelihood \nexplained that is capable of being explained, analogous to \nR2 in OLS. Lower levels of pseudo R2 (e.g., 0.20) can be \nconsidered very good in Cox PH models because of the complexity \nof predicting time-to-event. And low R2 can still be adequate \nfor hypothesis testing. This model has a R2 of ", signif(coxph_r2, digits), ".",
-                              "\n\nAUC/Concordance. The probability of concordance is identical \nto the AUC. It computes all possible pairs of subjects \n(response=1 vs. response=0). The index is the proportion of such \npairs with the responder having a higher predicted probability of \nresponse than the nonresponder. This model has an AUC of ", signif(coxph_c, digits), ".")
+      R2 <-            paste0("Psuedo R-Squared (R2) is the fraction of -2*log-likelihood \nexplained that is capable of being explained, analogous to \nR2 in OLS. Lower levels of pseudo R2 (e.g., 0.20) can be \nconsidered very good in Cox PH models because of the complexity \nof predicting time-to-event. And low R2 can still be adequate \nfor hypothesis testing. The R2 is ", signif(coxph_r2, digits), ".",
+                              "\n\nC-statistic/AUC. The probability of concordance is identical \nto the AUC. It computes all possible pairs of subjects \n(response=1 vs. response=0). The index is the proportion of such \npairs with the responder having a higher predicted probability of \nresponse than the nonresponder. The C-statistic/AUC is ", signif(coxph_c, digits), ".")
     }
   }
 
@@ -390,6 +419,9 @@ interpret <- function(object, digits=NULL) {
       B_2 <- paste0("DID estimates the difference in mean overall level between \nthe intervention and both the non-intervention period/group. \nIn other words, there is a ", did_b2_sig, " ", did_b2_change, " in the \nmean ", Y_var_did, " by ", signif(B2_coef, digits)," for the intervention group.")
       B_3 <- paste0("DID.Trend is the difference in the intervention group's \ntrend line after the intervention period started (> Time 1). \nThe intervention group had a ", did_b3_sig, " ", did_b3_change, " in trend \nof the mean ", Y_var_did, " by ", signif(B3_coef, digits),  " after the intervention started.")
       did_covariates <- c("If there are additional variables in the model then the coefficients \nabove represent the effects after controlling for the other variables.")
+      # R2
+      did_r2 <- summary(object$DID)$r.squared
+      R2 <- paste0("R-Squared (R2) is the proportion of variance in the dependent \nvariable which can be predicted from the independent \nvariable(s). For example, if R2 = 0.50, 50% of the variance \nin test scores can be predicted from the 5 variables. R2 >= 0.80 \nmay be at a level to reliably make individual predictions. \nLower R2 may be helpful in group level predictions. And low R2 can \nstill be adequate for hypothesis testing. The R2 is ", signif(did_r2, digits), ".")
     }
     if(object$analysis_type$did_type == "two") {
       Y_var_did <- all.vars(object$formula$DID_formula)[1]
@@ -411,6 +443,9 @@ interpret <- function(object, digits=NULL) {
       B_2 <- paste0("Int.Var is the difference between the intervention \nand control group at the baseline period (Time 1). The \nintervention group had a ", did_b2_sig, " ", did_b2_change, " in the \nmean ", Y_var_did, " value compared to the control group: ", signif(B2_coef, digits), ".")
       B_3 <- paste0("DID estimates the average treatment effect on the \ntreated group (ATET). This interaction represents the \ndifference in the trend differences for the intervention and \ncontrol groups: \n(Int. Time 2 - Int. Time 1) - (Ctl. Time 2 - Ctl. Time 1) = ", signif(B3_coef, digits), ".", " ", " \nIn other words, there is a ", did_b3_sig, " ", did_b3_change," in the \nmean ", Y_var_did, " trend by ", signif(B3_coef, digits)," for the intervention group.")
       did_covariates <- c("If there are additional variables in the model then the coefficients \nabove represent the effects after controlling for the other variables.")
+      # R2
+      did_r2 <- summary(object$DID)$r.squared
+      R2 <- paste0("R-Squared (R2) is the proportion of variance in the dependent \nvariable which can be predicted from the independent \nvariable(s). For example, if R2 = 0.50, 50% of the variance \nin test scores can be predicted from the 5 variables. R2 >= 0.80 \nmay be at a level to reliably make individual predictions. \nLower R2 may be helpful in group level predictions. And low R2 can \nstill be adequate for hypothesis testing. The R2 is ", signif(did_r2, digits), ".")
     }
   }
 
@@ -439,6 +474,9 @@ interpret <- function(object, digits=NULL) {
       B3 <- paste0(X_var_its[3], " is ", signif(its_b3_coef, digits), " and the difference between pre- and \npost-intervention slopes (e.g., change in the pre-intervention \nslope). The coefficient is ", its_b3_sig,".")
       its_Summary <- paste0("Summary: The results show that after the start of the intervention, \nthere is a ", Smry_int_sig, " change in the ", Y_var_its, " trend. This gives \na post-intervention trend change per time unit in the ", Y_var_its, " of ", signif(Smry_int_coef, digits), " \n(i.e., the value of change per-unit-of-time, such as month or year, in \nthe intervention period; not the change relative to pre-intervention).")
       its_covariates <- c("If there are additional variables in the model then the coefficients \nabove represent effects after controlling for the other variables.")
+      # R2
+      its_r2 <- summary(object$ITS)$r.squared
+      R2 <- paste0("R-Squared (R2) is the proportion of variance in the dependent \nvariable which can be predicted from the independent \nvariable(s). For example, if R2 = 0.50, 50% of the variance \nin test scores can be predicted from the 5 variables. R2 >= 0.80 \nmay be at a level to reliably make individual predictions. \nLower R2 may be helpful in group level predictions. And low R2 can \nstill be adequate for hypothesis testing. The R2 is ", signif(its_r2, digits), ".")
     }
     # mgst
     if(object$analysis_type$itsa_type == "mgst") {
@@ -480,6 +518,9 @@ interpret <- function(object, digits=NULL) {
       B7 <- paste0(X_var_its[7], " is ", signif(its_b7_coef, digits), " and ", its_b7_sig, "."," This is the difference in both \ngroup\'s slope changes since pre-intervention (pre-slopes compared \nto post-slopes). For example, both have pre-intervention slopes \nof 2, the control group\'s slope remained the same, therefore the \npost-intervention slope is 0. And the intervention group's slope \nincreased by 2, then txip1 = 2 (= 2 - 0).")
       its_Summary <- paste0("Summary: For the intervention period, the results show that the \nintervention group\'s ", Smry_int_sig, " change in ",Y_var_its, ", \npost-intervention is ", signif(Smry_int_coef, digits), " (i.e., value of change per-unit-of-time, ","\nsuch as month or year, in the intervention period; not the change" ,"\nrelative to the prior period). The control group\'s ",Smry_con_sig, " \nchange in ",Y_var_its, ", post-intervention is ", signif(Smry_con_coef, digits), ". The ", Smry_diff_sig, " \ndifference between both groups is ", signif(Smry_diff_coef, digits), ".")
       its_covariates <- c("If there are additional variables in the model then the coefficients \nabove represent effects after controlling for the other variables.")
+      # R2
+      its_r2 <- summary(object$ITS)$r.squared
+      R2 <- paste0("R-Squared (R2) is the proportion of variance in the dependent \nvariable which can be predicted from the independent \nvariable(s). For example, if R2 = 0.50, 50% of the variance \nin test scores can be predicted from the 5 variables. R2 >= 0.80 \nmay be at a level to reliably make individual predictions. \nLower R2 may be helpful in group level predictions. And low R2 can \nstill be adequate for hypothesis testing. The R2 is ", signif(its_r2, digits), ".")
     }
     # sgmt
     if(object$analysis_type$itsa_type == "sgmt") {
@@ -536,6 +577,9 @@ interpret <- function(object, digits=NULL) {
       }
       # additional variables
       its_covariates <- c("If there are additional variables in the model then the coefficients \nabove represent effects after controlling for the other variables.")
+      # R2
+      its_r2 <- summary(object$ITS)$r.squared
+      R2 <- paste0("R-Squared (R2) is the proportion of variance in the dependent \nvariable which can be predicted from the independent \nvariable(s). For example, if R2 = 0.50, 50% of the variance \nin test scores can be predicted from the 5 variables. R2 >= 0.80 \nmay be at a level to reliably make individual predictions. \nLower R2 may be helpful in group level predictions. And low R2 can \nstill be adequate for hypothesis testing. The R2 is ", signif(its_r2, digits), ".")
     }
     # mgmt
     if(object$analysis_type$itsa_type == "mgmt") {
@@ -628,6 +672,9 @@ interpret <- function(object, digits=NULL) {
       }
       # additional variables
       its_covariates <- c("If there are additional variables in the model then the coefficients \nabove represent effects after controlling for the other variables.")
+      # R2
+      its_r2 <- summary(object$ITS)$r.squared
+      R2 <- paste0("R-Squared (R2) is the proportion of variance in the dependent \nvariable which can be predicted from the independent \nvariable(s). For example, if R2 = 0.50, 50% of the variance \nin test scores can be predicted from the 5 variables. R2 >= 0.80 \nmay be at a level to reliably make individual predictions. \nLower R2 may be helpful in group level predictions. And low R2 can \nstill be adequate for hypothesis testing. The R2 is ", signif(its_r2, digits), ".")
     }
   }
   ## Return ##
@@ -643,25 +690,25 @@ interpret <- function(object, digits=NULL) {
                     positive_beta=positive_beta, negative_beta=negative_beta, R2=R2)
     }
     if(object$analysis_type$did_type %in% c("two","many")) {
-      did <- list(B_0=B_0, B_1=B_1, B_2=B_2, B_3=B_3, did_covariates=did_covariates)
+      did <- list(B_0=B_0, B_1=B_1, B_2=B_2, B_3=B_3, did_covariates=did_covariates, R2=R2)
     }  #"sgst", "sgmt", "mgst", "mgmt"
     if(object$analysis_type$itsa_type == "sgst") {
       its <- list(its_intro=its_intro, B0=B0, B1=B1, B2=B2, B3=B3,
-                  its_Summary=its_Summary, its_covariates=its_covariates)
+                  its_Summary=its_Summary, its_covariates=its_covariates, R2=R2)
     }
     if(object$analysis_type$itsa_type == "mgst") {
       its <- list(its_intro=its_intro, B0=B0, B1=B1, B2=B2, B3=B3,
                   B4=B4,B5=B5,B6=B6,B7=B7, its_Summary=its_Summary,
-                  its_covariates=its_covariates)
+                  its_covariates=its_covariates, R2=R2)
     }
     if(object$analysis_type$itsa_type == "sgmt") {
       its <- list(its_intro=its_intro, B0=B0, B1=B1, post_interpret=post_interpret,
-                  txp_interpret=txp_interpret, its_Summary=its_Summary, its_covariates=its_covariates)
+                  txp_interpret=txp_interpret, its_Summary=its_Summary, its_covariates=its_covariates, R2=R2)
     }
     if(object$analysis_type$itsa_type == "mgmt") {
       its <- list(its_intro=its_intro, B0=B0, B1=B1, B2=B2, B3=B3,
                   post_interpret=post_interpret, txp_interpret=txp_interpret, ixp_interpret=ixp_interpret,
-                  txip_interpret=txip_interpret, its_Summary=its_Summary, its_covariates=its_covariates)
+                  txip_interpret=txip_interpret, its_Summary=its_Summary, its_covariates=its_covariates, R2=R2)
     }
   }
 

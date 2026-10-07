@@ -84,6 +84,8 @@ print.interpret <- function(x, ...) {
       cat(object$B_3 , "\n" )
       cat("\n" )
       cat(object$did_covariates , "\n" )
+      cat("\n" )
+      cat(object$R2 , "\n" )
     }
   }
   # ITS
@@ -104,6 +106,8 @@ print.interpret <- function(x, ...) {
       cat(object$its_Summary , "\n" )
       cat("\n" )
       cat(object$its_covariates , "\n" )
+      cat("\n" )
+      cat(object$R2 , "\n" )
     }
   }
   # mgst
@@ -132,6 +136,8 @@ print.interpret <- function(x, ...) {
       cat(object$its_Summary , "\n" )
       cat("\n" )
       cat(object$its_covariates , "\n" )
+      cat("\n" )
+      cat(object$R2 , "\n" )
     }
   }
   if("interpret" %in% class(object) ) {
@@ -155,6 +161,8 @@ print.interpret <- function(x, ...) {
         cat("\n" )
       }
       cat(object$its_covariates , "\n" )
+      cat("\n" )
+      cat(object$R2 , "\n" )
     }
   }
   if("interpret" %in% class(object) ) {
@@ -187,6 +195,8 @@ print.interpret <- function(x, ...) {
       cat("\n" )
       }
       cat(object$its_covariates , "\n" )
+      cat("\n" )
+      cat(object$R2 , "\n" )
     }
   }
 #Diagnostics

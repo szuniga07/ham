@@ -265,7 +265,11 @@ interpret(assess(formula=vs~mpg+wt+hp, data=mtcars, regression="logistic")
 #> decrease the predicted value and odds of the outcome: 
 #> hp (8.9% decreased odds) 
 #> 
-#> There is no R2 or C-statistic (AUC) information provided.
+#> C-statistic/AUC. The probability of concordance is identical 
+#> to the AUC. It computes all possible pairs of subjects 
+#> (response=1 vs. response=0). The index is the proportion of such 
+#> pairs with the responder having a higher predicted probability of 
+#> response than the nonresponder. The C-statistic/AUC is 0.956.
 ```
 
 ### Poisson model with an offset using assess()
@@ -445,7 +449,15 @@ interpret(dm1)$did
 #> mean los trend by -3.54 for the intervention group. 
 #> 
 #> If there are additional variables in the model then the coefficients 
-#> above represent the effects after controlling for the other variables.
+#> above represent the effects after controlling for the other variables. 
+#> 
+#> R-Squared (R2) is the proportion of variance in the dependent 
+#> variable which can be predicted from the independent 
+#> variable(s). For example, if R2 = 0.50, 50% of the variance 
+#> in test scores can be predicted from the 5 variables. R2 >= 0.80 
+#> may be at a level to reliably make individual predictions. 
+#> Lower R2 may be helpful in group level predictions. And low R2 can 
+#> still be adequate for hypothesis testing. The R2 is 0.185.
 ```
 
 ### DID model 2
@@ -509,7 +521,15 @@ interpret(dm2)$did
 #> of the mean los by -0.196 after the intervention started. 
 #> 
 #> If there are additional variables in the model then the coefficients 
-#> above represent the effects after controlling for the other variables.
+#> above represent the effects after controlling for the other variables. 
+#> 
+#> R-Squared (R2) is the proportion of variance in the dependent 
+#> variable which can be predicted from the independent 
+#> variable(s). For example, if R2 = 0.50, 50% of the variance 
+#> in test scores can be predicted from the 5 variables. R2 >= 0.80 
+#> may be at a level to reliably make individual predictions. 
+#> Lower R2 may be helpful in group level predictions. And low R2 can 
+#> still be adequate for hypothesis testing. The R2 is 0.114.
 ```
 
 We can also use DID on binary outcomes like hospital re-admission within
@@ -629,7 +649,15 @@ interpret(im11)$its
 #> the intervention period; not the change relative to pre-intervention). 
 #> 
 #> If there are additional variables in the model then the coefficients 
-#> above represent effects after controlling for the other variables.
+#> above represent effects after controlling for the other variables. 
+#> 
+#> R-Squared (R2) is the proportion of variance in the dependent 
+#> variable which can be predicted from the independent 
+#> variable(s). For example, if R2 = 0.50, 50% of the variance 
+#> in test scores can be predicted from the 5 variables. R2 >= 0.80 
+#> may be at a level to reliably make individual predictions. 
+#> Lower R2 may be helpful in group level predictions. And low R2 can 
+#> still be adequate for hypothesis testing. The R2 is 0.243.
 ```
 
 ‘Summary’ reviews the results but in order to view the point estimate
@@ -851,7 +879,15 @@ interpret(im22)$its
 #> difference between both groups, per-unit-of-time, is -0.213. 
 #> 
 #> If there are additional variables in the model then the coefficients 
-#> above represent effects after controlling for the other variables.
+#> above represent effects after controlling for the other variables. 
+#> 
+#> R-Squared (R2) is the proportion of variance in the dependent 
+#> variable which can be predicted from the independent 
+#> variable(s). For example, if R2 = 0.50, 50% of the variance 
+#> in test scores can be predicted from the 5 variables. R2 >= 0.80 
+#> may be at a level to reliably make individual predictions. 
+#> Lower R2 may be helpful in group level predictions. And low R2 can 
+#> still be adequate for hypothesis testing. The R2 is 0.22.
 ```
 
 ‘Summary 1’ and ‘Summary 2’ reviews the results but in order to view the
@@ -1015,7 +1051,15 @@ interpret(id22)$its
 #> difference between both groups, per-unit-of-time, is 0.0779. 
 #> 
 #> If there are additional variables in the model then the coefficients 
-#> above represent effects after controlling for the other variables.
+#> above represent effects after controlling for the other variables. 
+#> 
+#> R-Squared (R2) is the proportion of variance in the dependent 
+#> variable which can be predicted from the independent 
+#> variable(s). For example, if R2 = 0.50, 50% of the variance 
+#> in test scores can be predicted from the 5 variables. R2 >= 0.80 
+#> may be at a level to reliably make individual predictions. 
+#> Lower R2 may be helpful in group level predictions. And low R2 can 
+#> still be adequate for hypothesis testing. The R2 is 0.0504.
 ```
 
 <center>
@@ -1265,6 +1309,9 @@ New additions
   would first need to convert it into an assess object like this:
   assess_obj \<- assess(model = cox_model). And then you can use it with
   the functions listed above.
+
+- R2 and C-statistic/AUC are added to interpret() whenever possible for
+  DID, ITS, and other regression models.
 
 - losvary Bayesian chains of hospital LOS added for plot.Bayes examples
 
