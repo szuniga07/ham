@@ -61,13 +61,14 @@
 #' propensity score. If NULL, the default values of >= 0 and <= 1 are used (i.e., c(0,1)).
 #' @param weights an optional 1-element character vector of the data frame column name or character
 #' vector of either 'ipw', 'nipw', or 'att' for Inverse Probability of Treatment Weighting Using the
-#' propensity score (see 'propensity' above) to be used in the fitting process. Should be NULL or a
+#' propensity score (see 'propensity' above) to be used in the fitting process. Or 'nipw' (Normalized
+#' Inverse Probability Weights), or 'att' (Average Treatment Effect on the Treated). Should be NULL or a
 #' character vector. If non-NULL, weighting is used with weights; otherwise standard regression is used.
 #' Weights calculated as ipw: treatment= 1/pscore, control= 1/(1-pscore); nipw: treatment= ipw / sum of
 #' treatment ipw, control= ipw / sum of control ipw; att: treatment= 1; control= pscore/(1-pscore).
 #' @param offset an optional 1-element character vector of the data frame column name to be used with the
-#' predictor during fitting. One or more offset terms can be included in the formula instead. offset is
-#' often used in for rates in Poisson models. Can only use the data frame column name, cannot transform
+#' predictor during fitting. An offset term can be included in the formula instead. offset is
+#' often used for rates in Poisson models. Can only use the data frame column name, cannot transform
 #' the column directly in this argument. If transformations are needed, instead either do so in the formula
 #' call (e.g., 'y ~ x1 + offset(log(x2))') or transform the data directly in the data frame.
 #' @param newdata optional logical value that indicates if you want the new data returned. newdata=TRUE
@@ -78,7 +79,7 @@
 #' 'probit', 'cauchit', (corresponding to 'logistic', 'normal' and 'Cauchy' CDFs respectively) 'log' and
 #' 'cloglog' (complementary log-log); and the 'poisson' family links 'log' (default), 'identity', and 'sqrt'.
 #' @param model a non-assess class regression model that will be converted into an assess class object
-#' (e.g., only Cox PH models from the survival package as of yet).
+#' (e.g., only Cox PH models from the survival package are supported as of yet).
 #'
 #' @return a list of results from selected regression models. Will return new data if selected.
 #' And returns relevant model information such as variable names, type of analysis, formula, study
