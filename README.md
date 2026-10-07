@@ -806,7 +806,7 @@ interpret(im22)$its
 #> Note: Some variable names below based on time points (or 'interruptions'). 
 #> This analysis is for a two-group, multiple intervention period (interruption). 
 #> Positive values indicate higher intervention group values and vice-versa for: 
-#> post1, txp1, ixp1, txip1, post2, txp2, ixp2, txip2. 
+#> Coefficients that begin with 'post', 'txp', 'ixp', and 'txip'. 
 #> 
 #> Intercept is 3.09 and the starting value of the trend for the 
 #> control group. 
@@ -978,7 +978,7 @@ interpret(id22)$its
 #> Note: Some variable names below based on time points (or 'interruptions'). 
 #> This analysis is for a two-group, multiple intervention period (interruption). 
 #> Positive values indicate higher intervention group values and vice-versa for: 
-#> post1, txp1, ixp1, txip1, post2, txp2, ixp2, txip2. 
+#> Coefficients that begin with 'post', 'txp', 'ixp', and 'txip'. 
 #> 
 #> Intercept is 0.0829 and the starting value of the trend for the 
 #> control group. 
@@ -1310,7 +1310,7 @@ New additions
   assess_obj \<- assess(model = cox_model). And then you can use it with
   the functions listed above.
 
-- R2 and C-statistic/AUC are added to interpret() whenever possible for
+- R2 and C-statistic/AUC were added to interpret() whenever possible for
   DID, ITS, and other regression models.
 
 - losvary Bayesian chains of hospital LOS added for plot.Bayes examples

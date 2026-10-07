@@ -502,7 +502,7 @@ New additions
 
 * Cox Proportional Hazards models from the survival package have been included for various options such as: partial prediction plots plot(), interpret(), importance(), review() and the various plot options. You would first need to convert it into an assess object like this: assess_obj <- assess(model = cox_model). And then you can use it with the functions listed above.
 
-* R2 and C-statistic/AUC are added to interpret() whenever possible for DID, ITS, and other regression models.
+* R2 and C-statistic/AUC were added to interpret() whenever possible for DID, ITS, and other regression models.
 
 * losvary Bayesian chains of hospital LOS added for plot.Bayes examples 
 
