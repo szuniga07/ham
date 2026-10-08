@@ -28,11 +28,11 @@ knitr::include_graphics("logo.png")
 # Bayesian Analysis
 </center>
 
-Bayesian summaries and graphs are now available on ham. The Bayes and plot.Bayes functions will summarize and display Markov Chain Monte Carlo (MCMC) simulations that are stored as a list of matrix elements. For example, you may have saved 10,000 simulations as 4 chains that are stored in a list and may want to run standard simulation diagnostics like a traceplot. You can use ham's Bayes function to convert the 4 chains into a data frame that can be used to create a traceplot.
+Bayesian summaries and graphs are now available in ham. The Bayes and plot.Bayes functions will summarize and display Markov Chain Monte Carlo (MCMC) simulations that are stored as a list of matrix elements. For example, you may have saved 10,000 simulations as 4 chains that are stored in a list and you may want to run standard simulation diagnostics like a traceplot. You can use ham's Bayes function to convert the 4 chains into a data frame that can be used to create a traceplot.
 
 MCMC chains created in the coda package (e.g., through JAGS or Stan with a class of coda, matrix, array) can also be converted with the Bayes function.
 
-The following sections will introduce the various commands in Bayes and plot.Bayes. We'll review it in terms of a common focus in health care, hospital length of stay (LOS).
+The following sections will introduce the various commands in Bayes and plot.Bayes. We'll review it in terms of a common focus in healthcare, the hospital length of stay (LOS).
 
 If you are interested in Bayesian analysis and would like to learn more, I highly recommend John Kruschke's book, "Doing Bayesian Data Analysis: A Tutorial with R, JAGS, and Stan, Second Edition" as an excellent source of knowledge with comprehensive sections on putting the analysis into practice.
 
@@ -89,7 +89,7 @@ blos1 <- Bayes(x=losmcmc)
 ```
 
 We'll start by reviewing our MCMC to assess how well the models ran. And this runs with the most basic code. Examine Bayesian model diagnostics for estimated length of stay (LOS).
-Review autocorrelation factor, density plots, Gelman-Rubin statistic, and traceplots.
+Review autocorrelation factor, density plots, Gelman-Rubin statistic, and traceplots for all chains.
 
 This uses the bare minimum code that will run, similar for each diagnostic plot.
 
@@ -361,9 +361,9 @@ round.c=3, bcol="lavender", xlim=c(-.1, 1), legend=NULL, add.legend="bottomleft"
 
 # 6. Target setting: 'target'
 
-Our administrators ask how far are we from our goals, they ask about future targets in increments of 5 points of probability or specific days. We can answer both.
+Our administrators ask how far are we from our goals, they ask about future targets in increments of 5 points of probability or specific fewer days. We can answer both.
 
-The cumulative distribution function (CDF) can be defined for any distribution of a random variable X whether continuous, discrete, or neither. If you can define or calculate the CDF of X them, by using the rules of probability, you can find the probability of any event determined by X (Probability by Pitman, 1993, p. 311). 
+The cumulative distribution function (CDF) can be defined for any distribution of a random variable X whether continuous, discrete, or neither. If you can define or calculate the CDF of X then, by using the rules of probability, you can find the probability of any event determined by X (Probability by Pitman, 1993, p. 311). 
 
 The Bayes function will generate a distribution for each target value within the elements 'p', 'y', and if applicable, will return the mean of the beta distribution. If you think of a distribution of mass instead of probability the mean is the center of gravity. Think of a histogram of the normal distribution as a shape cut from a rigid material of constant thickness and density. The mean value is then a balance point for the histogram, you can place your finger below the mean and the shape would be balanced (Probability by Pitman, 1993, p. 162).
 
@@ -379,9 +379,9 @@ newdata=TRUE, targets=list(p=c(.35,.4,.45, .5, .55),  y=c(3,4), e= list(a=c(.35,
 print(btarget1$Target)
 ```
 
-We can now review the results to identify targets that represent increments of 5 points of probability. This potentially may requires another 5 points of effort to achieve, however moving around a rate in the middle is generally easier than moving to rates that are in the extremes (e.g., 0% infections). Using Jacob Cohen's effect sizes can help in that understanding. Notice "High.Low.Interval", represents the proportion under the curve of the highest and lowest value for y, here 4-3= 1 day. 
+We can now review the results to identify targets that represent increments of 5 points of probability. This potentially may require another 5 points of effort to achieve, however moving around a rate in the middle is generally easier than moving to rates that are in the extremes (e.g., 0% infections). Using Jacob Cohen's effect sizes can help in that understanding. Notice "High.Low.Interval", represents the proportion under the curve of the highest and lowest value for y, here 4-3= 1 day.
 
-We can review these results better by getting the interpretations.
+We can review these results better by getting the interpretations. 
 
 ```{r Interpret Target1}
 interpret(btarget1$Target, digits=3)

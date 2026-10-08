@@ -21,7 +21,9 @@ library(ham)
 
 # Healthcare Analysis Methods (ham)
 
-The goal of ham is to provide different modeling approaches to evaluating healthcare programs (or interventions) with descriptive statistics, point estimates and confidence intervals, and regression analyses. This includes standard regression methods like linear (OLS) and logistic regression. And ham adds options for differences-in-differences models as well as interrupted time series models. DID and ITS models offer options for causal modeling. What is unique about ham is that it creates datasets with constructed variables for DID and ITS models, optionally it can add top coded outcome variables, propensity scores, and provides some interpretation of model results. Additionally, Cronbach's alpha can be calculated for such things as patient surveys. As the logo of Dr. Ham suggests, the ham package can help illuminate your results.
+The goal of ham is to provide different modeling approaches to evaluating healthcare programs (or interventions) with descriptive statistics, point estimates and confidence intervals, and regression analyses. This includes standard regression methods like linear (OLS) and logistic regression. And ham adds options for differences-in-differences models as well as interrupted time series models. DID and ITS models offer options for causal modeling. What is unique about ham is that it creates datasets with constructed variables for DID and ITS models, optionally it can add top coded outcome variables, propensity scores, and provides some interpretation of model results. Additionally, Cronbach's alpha can be calculated for such things as patient surveys. 
+
+For those working in healthcare, program evaluation, performance improvement, hospital quality improvement, or clinical decision making, ham may be especially helpful. As the logo of Dr. Ham suggests, the ham package can help illuminate your results. 
 
 ```{r vlogo, echo=FALSE, out.width="30%", fig.align="center"}
 knitr::include_graphics("logo.png") 
@@ -39,7 +41,7 @@ This is the ham package for healthcare analysis methods. This package can help w
 
 ham can help with research or evaluation studies. When working in healthcare systems, multi-site evaluations can strongly resemble research studies and commonly use regression methods. For an introduction to evaluation, please see Michael Patton's book (1997).
 
-What is unique about ham, is that it provides options for running standard linear or ordinary least squares (OLS) and logistic regression as well as methods used in causal modeling such as differences-in-differences (DID) and interrupted time series analysis (ITS). It also optionally makes data with the newly created variables (i.e., this saves you time).
+What is unique about ham, is that it provides options for running standard linear or ordinary least squares (OLS), logistic, and Poisson regression as well as methods used in causal modeling such as differences-in-differences (DID) and interrupted time series analysis (ITS). It also optionally makes data with the newly created variables (i.e., this saves you time).
 
 This vignette will introduce ham's features in the following functions:
 
@@ -49,9 +51,13 @@ This vignette will introduce ham's features in the following functions:
 
 * group: Confidence Intervals for descriptive and inferential statistics. Compare groups in cross-sectional or repeated cross-sectional data.
 
-* importance: Rank variable importance from regression coefficients using the partial chi-square statistic.
+* importance: Rank variable importance from regression coefficients using the partial chi-square statistic. 
 
 * interpret: Provides simple coefficient interpretations. This is a helpful reminder, especially as models have increased coefficients (e.g., ITS).
+
+* itsEffect: Accompanies interrupted time series analyses to show the level of trend changes during each period after the interruption(s).
+
+* review: Provides a review of regression results to show increased or decreased variable effects.
 
 * There are also printing and plotting options to help review your results.
 

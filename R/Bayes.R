@@ -1480,8 +1480,8 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL, eVal
     Effect.Size.Output <- NA
   }
 
-  return(list("Est.Quantile.P"= QdisGtY,
-              "Est.Prob.LT.Y"= PdisGtY, #Changing to traditional CDF value
+  return(list("Est.Prob.LT.Y"= PdisGtY,
+              "Est.Quantile.P"= QdisGtY,
               "Est.Mean.Beta"=mean_val_dist,
               "Effect.Size.Prop"=Effect.Size.Output) )
 }
