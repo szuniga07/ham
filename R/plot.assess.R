@@ -2096,7 +2096,7 @@ if(length(y) == 1 && y == "ITS") {
     if (is.numeric(target_col)) {
       a_vals <- seq(from = quantile(target_col, na.rm = TRUE, probs=.025),
                     to = quantile(target_col, na.rm = TRUE, probs=.975),
-                    length.out = 200)
+                    length.out = 2000)
     } else if (is_cat) {
       if (is.factor(target_col) || is.ordered(target_col)) {
         a_vals <- levels(target_col)
@@ -2286,7 +2286,7 @@ if(length(y) == 1 && y == "ITS") {
     if (is.numeric(target_col)) {
       a_vals <- seq(from = quantile(target_col, na.rm = TRUE, probs=.025),
                     to = quantile(target_col, na.rm = TRUE, probs=.975),
-                    length.out = 200)
+                    length.out = 2000)
     } else if (is_cat) {
       if (is.factor(target_col) || is.ordered(target_col)) {
         a_vals <- levels(target_col)
@@ -2401,7 +2401,7 @@ if(length(y) == 1 && y == "ITS") {
     if (is.numeric(target_col)) {
       a_vals <- seq(from = quantile(target_col, na.rm = TRUE, probs=.025),
                     to = quantile(target_col, na.rm = TRUE, probs=.975),
-                    length.out = 200)
+                    length.out = 2000)
     } else if (is_cat) {
       if (is.factor(target_col) || is.ordered(target_col)) {
         a_vals <- levels(target_col)
@@ -2523,7 +2523,7 @@ if(length(y) == 1 && y == "ITS") {
     if (is.numeric(target_col)) {
       a_vals <- seq(from = quantile(target_col, na.rm = TRUE, probs=.025),
                     to = quantile(target_col, na.rm = TRUE, probs=.975),
-                    length.out = 200)
+                    length.out = 2000)
     } else if (is_cat) {
       if (is.factor(target_col) || is.ordered(target_col)) {
         a_vals <- levels(target_col)
@@ -2652,7 +2652,7 @@ if(length(y) == 1 && y == "ITS") {
     # Generate sequence grid values for the continuous predictor 'a'
     a_vals <- seq(from = quantile(target_col, na.rm = TRUE, probs=.025),
                   to = quantile(target_col, na.rm = TRUE, probs=.975),
-                  length.out = 200)
+                  length.out = 2000)
 
     # 5. Process the categorical breakdown variable if requested
     cat_levels <- NULL
@@ -2850,7 +2850,7 @@ if(length(y) == 1 && y == "ITS") {
     # Generate sequence grid values for the continuous predictor 'a'
     a_vals <- seq(from = quantile(target_col, na.rm = TRUE, probs=.025),
                   to = quantile(target_col, na.rm = TRUE, probs=.975),
-                  length.out = 200)
+                  length.out = 2000)
 
     # 5. Process the categorical breakdown variable if requested
     cat_levels <- NULL
@@ -2989,7 +2989,7 @@ if(length(y) == 1 && y == "ITS") {
     # Generate sequence grid values for the continuous predictor 'a'
     a_vals <- seq(from = quantile(target_col, na.rm = TRUE, probs=.025),
                   to = quantile(target_col, na.rm = TRUE, probs=.975),
-                  length.out = 200)
+                  length.out = 2000)
 
     # 4. Process the categorical breakdown variable if requested
     cat_levels <- NULL
@@ -3137,7 +3137,7 @@ if(length(y) == 1 && y == "ITS") {
     if (is.numeric(target_col)) {
       a_vals <- seq(from = quantile(target_col, na.rm = TRUE, probs=.025),
                     to = quantile(target_col, na.rm = TRUE, probs=.975),
-                    length.out = 200)
+                    length.out = 2000)
     } else if (is_cat) {
       if (is.factor(target_col) || is.ordered(target_col)) {
         a_vals <- levels(target_col)
@@ -3261,7 +3261,7 @@ if(length(y) == 1 && y == "ITS") {
     # Generate sequence grid values for the continuous predictor 'a'
     a_vals <- seq(from = quantile(target_col, na.rm = TRUE, probs=.025),
                   to = quantile(target_col, na.rm = TRUE, probs=.975),
-                  length.out = 200)
+                  length.out = 2000)
 
     # 5. Process the categorical breakdown variable if requested
     cat_levels <- NULL
@@ -3516,9 +3516,9 @@ if(length(y) == 1 && y == "ITS") {
     }
 
     # Enforce alpha baseline transparency configuration fallback
-    if (is.null(adj.alpha)) {
-      adj.alpha <- 0.15
-    }
+    #    if (is.null(adj.alpha)) {
+    #      adj.alpha <- 0.15
+    #    }
 
     ###################
     ### Make Graphs ###
@@ -3610,8 +3610,8 @@ if(length(y) == 1 && y == "ITS") {
         u95     <- as.numeric(df_slice[, 4])
 
         lines(ci_time, pred_y, col=current_col, lwd=ifelse(is.null(lwd), 2, lwd))
-        lines(ci_time, l95, col=current_col, lwd=1, lty=2)
-        lines(ci_time, u95, col=current_col, lwd=1, lty=2)
+#        lines(ci_time, l95, col=current_col, lwd=1, lty=1)
+#        lines(ci_time, u95, col=current_col, lwd=1, lty=1)
       }
 
       axis(side=1, cex.axis=cex.axis)

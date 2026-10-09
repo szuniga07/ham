@@ -1435,6 +1435,26 @@ plot(x=m05, y=c('rand', 'count'), col='skyblue', tgt=75, tgtcol='orange', lwd=4,
 
 <img src="man/figures/README-plotpartpred14-1.png" width="100%" />
 
+And now we’ll look at the partial predictions of the ‘Month’ variable
+for each level of a categorical variable by adding a 3rd element,
+y=c(‘Month’, ‘count’, ‘rand’). Because ‘count’ was specified and there
+is an offset, it returns estimates based on the median value of the
+offset variable. To do this for each level, you’ll always need 3
+elements with the same type of info of the following, in the same order:
+y=c(my_continuous_variable, type_of_prediction,
+my_categorical_variable). Don’t forget the ‘add.legend’ and ‘col’
+arguments to help highlight each level.
+
+``` r
+set.seed(1)
+infections$rand <- as.factor(sample(1:3, 41, replace = T))
+m05 <- assess(HAI ~ Month + rand + offset(log(PatientDays)),
+               data = infections, regression="poisson")
+plot(x=m05, y=c('Month', 'count', 'rand'), col=c('purple', 'gold','green'), add.legend= "topright", lwd=4, cex=2)
+```
+
+<img src="man/figures/README-plotpartpred14b-1.png" width="100%" />
+
 ### Bayesian Diagnostics
 
 Here’s a new way to all diagnostics for the parameters with an
@@ -1466,7 +1486,7 @@ interpret(blos2$Diagnostics, digits=5)
 #> regards to the ESS formula (see below). 2) The effective sample size (ESS) 
 #> tells us the sample size of a completely non-correlated chain that yielded 
 #> the same info because we'd like a measure of how much independent info there 
-#> is in autocorrelated chains. An ESS value of 10,000 is recommended. Note that 
+#> is in autocorrelated chains. An ESS of >= 10,000 is recommended. Note that 
 #> the ESS uses the ACF in its calculations with higher ACF leading to lower ESS. 
 #> 3) The Monte Carlo standard error (MCSE) = parameter Std. Dev. / sqrt(ESS) 
 #> with values on the parameter scale. If the MCSE is much smaller than the 
