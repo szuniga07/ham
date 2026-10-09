@@ -1442,7 +1442,7 @@ is an offset, it returns estimates based on the median value of the
 offset variable. To do this for each level, you’ll always need 3
 elements with the same type of info of the following, in the same order:
 y=c(my_continuous_variable, type_of_prediction,
-my_categorical_variable). Don’t forget the ‘add.legend’ and ‘col’
+my_categorical_variable). Don’t forget to use the ‘add.legend’ and ‘col’
 arguments to help highlight each level.
 
 ``` r

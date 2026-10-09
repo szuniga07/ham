@@ -2117,11 +2117,14 @@ if(length(y) == 1 && y == "ITS") {
       v_col <- train_data[[v]]
       if (!is.null(v_col)) {
         if (is.numeric(v_col)) {
+          # Use median for other continuous covariates
           newdata_list[[v]] <- rep(median(v_col, na.rm = TRUE), n_rows)
         } else if (is.factor(v_col) || is.ordered(v_col)) {
-          newdata_list[[v]] <- rep(levels(v_col), n_rows)
+          # FIX: Force a single reference category [1] instead of expanding ALL levels!
+          newdata_list[[v]] <- rep(levels(v_col)[1], n_rows)
         } else if (is.character(v_col)) {
-          newdata_list[[v]] <- rep(sort(unique(na.omit(v_col))), n_rows)
+          # FIX: Force a single alphabetical reference [1]
+          newdata_list[[v]] <- rep(sort(unique(na.omit(v_col)))[1], n_rows)
         }
       }
     }

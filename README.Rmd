@@ -570,7 +570,7 @@ m05 <- assess(HAI ~ Month + rand + offset(log(PatientDays)),
 plot(x=m05, y=c('rand', 'count'), col='skyblue', tgt=75, tgtcol='orange', lwd=4, cex=2)
 ```
 
-And now we'll look at the partial predictions of the 'Month' variable for each level of a categorical variable by adding a 3rd element, y=c('Month', 'count', 'rand'). Because 'count' was specified and there is an offset, it returns estimates based on the median value of the offset variable. To do this for each level, you'll always need 3 elements with the same type of info of the following, in the same order: y=c(my_continuous_variable, type_of_prediction, my_categorical_variable). Don't forget the 'add.legend' and 'col' arguments to help highlight each level.
+And now we'll look at the partial predictions of the 'Month' variable for each level of a categorical variable by adding a 3rd element, y=c('Month', 'count', 'rand'). Because 'count' was specified and there is an offset, it returns estimates based on the median value of the offset variable. To do this for each level, you'll always need 3 elements with the same type of info of the following, in the same order: y=c(my_continuous_variable, type_of_prediction, my_categorical_variable). Don't forget to use the 'add.legend' and 'col' arguments to help highlight each level.  
 
 ```{r plotpartpred14b, fig.dim = c(6, 4.5)}
 set.seed(1)
@@ -580,7 +580,7 @@ m05 <- assess(HAI ~ Month + rand + offset(log(PatientDays)),
 plot(x=m05, y=c('Month', 'count', 'rand'), col=c('purple', 'gold','green'), add.legend= "topright", lwd=4, cex=2)
 ```
 
-### Bayesian Diagnostics
+### Bayesian Diagnostics 
 
 Here's a new way to all diagnostics for the parameters with an interpretation
 ```{r Diagnostics1b}
