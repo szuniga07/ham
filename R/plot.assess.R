@@ -2083,17 +2083,14 @@ if(length(y) == 1 && y == "ITS") {
       stop(paste("Variable '", a, "' is not a predictor in the provided model.", sep = ""))
     }
 
-    # 4. Generate values for target variable 'a' based on its class
+    # 4. Generate values for target variable 'a' based on its class (Continuous or Categorical)
     target_col <- train_data[[a]]
-    if (is.null(target_col)) {
-      matching_idx <- grep(paste0("\\b", a, "\\b"), names(train_data))
-      if (length(matching_idx) > 0) target_col <- train_data[[matching_idx]]
-    }
-
     is_cat <- is.factor(target_col) || is.ordered(target_col) || is.character(target_col)
 
     if (is.numeric(target_col)) {
-      a_vals <- seq(from = quantile(target_col, na.rm = TRUE, probs=.025), to = quantile(target_col, na.rm = TRUE, probs=.975), length.out = 200)
+      a_vals <- seq(from = quantile(target_col, na.rm = TRUE, probs=.025),
+                    to = quantile(target_col, na.rm = TRUE, probs=.975),
+                    length.out = 200)
     } else if (is_cat) {
       if (is.factor(target_col) || is.ordered(target_col)) {
         a_vals <- levels(target_col)
@@ -2112,62 +2109,62 @@ if(length(y) == 1 && y == "ITS") {
     other_vars <- setdiff(pred_vars, a)
     for (v in other_vars) {
       v_col <- train_data[[v]]
-      if (is.null(v_col)) {
-        matching_v <- grep(paste0("\\b", v, "\\b"), names(train_data))
-        if (length(matching_v) > 0) v_col <- train_data[[matching_v]]
-      }
       if (!is.null(v_col)) {
         if (is.numeric(v_col)) {
           newdata_list[[v]] <- rep(median(v_col, na.rm = TRUE), n_rows)
         } else if (is.factor(v_col) || is.ordered(v_col)) {
-          newdata_list[[v]] <- rep(levels(v_col)[1], n_rows)
+          newdata_list[[v]] <- rep(levels(v_col), n_rows)
         } else if (is.character(v_col)) {
-          newdata_list[[v]] <- rep(sort(unique(na.omit(v_col)))[1], n_rows)
+          newdata_list[[v]] <- rep(sort(unique(na.omit(v_col))), n_rows)
         }
       }
     }
 
-    # ROBUST FIX: Safely extract the evaluated offset from the model frame
+    # Robust Offset Capture (Handles both Method 1 and Method 2 offsets)
     raw_median_offset <- 1
     is_log_offset <- FALSE
+    has_offset <- FALSE
+    evaluated_offset <- NULL
+    offset_vars <- character(0)
 
     if (length(offset_idx) > 0 && !is.null(offset_idx)) {
+      has_offset <- TRUE
       offset_expr <- attr(terms_obj, "variables")[[offset_idx + 1]]
       offset_vars <- all.vars(offset_expr)
-
-      # Check if the offset expression wrapped the variable in log()
       is_log_offset <- any(grep("log\\(", as.character(offset_expr)))
-
-      # Directly extract the pre-calculated offset vector from the model frame
       evaluated_offset <- model.offset(m_frame)
 
       if (is.null(evaluated_offset)) {
-        # Fallback: find the column name that exactly matches the expression string
         expr_string <- deparse(offset_expr)
         if (expr_string %in% names(m_frame)) {
           evaluated_offset <- m_frame[[expr_string]]
         } else {
-          # Alternate fallback: check for standard offset name format
           alt_string <- paste0("offset(", expr_string, ")")
-          if (alt_string %in% names(m_frame)) {
-            evaluated_offset <- m_frame[[alt_string]]
-          }
+          if (alt_string %in% names(m_frame)) evaluated_offset <- m_frame[[alt_string]]
         }
       }
-
-      if (!is.null(evaluated_offset)) {
-        if (is_log_offset) {
-          # model.offset() returns the fully evaluated math (i.e. log(n))
-          # Convert back to the raw scale using exp()
-          raw_offset_values <- exp(evaluated_offset)
-          raw_median_offset <- median(raw_offset_values, na.rm = TRUE)
-        } else {
-          raw_median_offset <- median(evaluated_offset, na.rm = TRUE)
-        }
+    } else if (!is.null(model$offset)) {
+      has_offset <- TRUE
+      evaluated_offset <- model$offset
+      model_call <- model$call
+      if (!is.null(model_call$offset)) {
+        offset_expr <- model_call$offset
+        offset_vars <- all.vars(offset_expr)
+        is_log_offset <- any(grep("log\\(", as.character(offset_expr)))
+      } else {
+        is_log_offset <- TRUE
       }
+    }
 
-      # Populate all underlying raw offset variables in the newdata grid
+    if (has_offset && !is.null(evaluated_offset)) {
+      if (is_log_offset) {
+        raw_offset_values <- exp(evaluated_offset)
+        raw_median_offset <- median(raw_offset_values, na.rm = TRUE)
+      } else {
+        raw_median_offset <- median(evaluated_offset, na.rm = TRUE)
+      }
       for (ov in offset_vars) {
+        if (ov %in% names(newdata_list)) next
         newdata_list[[ov]] <- rep(raw_median_offset, n_rows)
       }
     }
@@ -2214,7 +2211,7 @@ if(length(y) == 1 && y == "ITS") {
       )
     } else {
       # COUNT SCALE
-      if (length(offset_idx) == 0 || is.null(offset_idx)) {
+      if (!has_offset) {
         predicted_counts <- exp(linear_predictor)
         lower_ci <- exp(link_lower)
         upper_ci <- exp(link_upper)
@@ -2237,8 +2234,7 @@ if(length(y) == 1 && y == "ITS") {
     }
 
     # 8. Return structured results
-    target_col_df <- data_to_use[, a, drop = FALSE]
-    new_return_df <- cbind(target_col_df, results)
+    new_return_df <- cbind(data_to_use[, a, drop = FALSE], results)
     colnames(new_return_df) <- c(a, "predicted", "lower_ci", "upper_ci")
     return(new_return_df)
   }
@@ -2263,7 +2259,10 @@ if(length(y) == 1 && y == "ITS") {
     # 3. Extract training data and validate variable 'a'
     train_data <- model$model
     if (is.null(train_data)) {
-      stop("The training data frame could not be recovered from the ham object.")
+      train_data <- model.frame(model)
+    }
+    if (is.null(train_data)) {
+      stop("The training data frame could not be recovered from the model object.")
     }
 
     form <- formula(model)
@@ -2274,7 +2273,7 @@ if(length(y) == 1 && y == "ITS") {
       stop(paste("Variable '", a, "' is not a predictor in the provided model.", sep = ""))
     }
 
-    # 4. Generate values for target variable 'a' based on its class
+    # 4. Generate values for target variable 'a' based on its class (Continuous or Categorical)
     target_col <- train_data[[a]]
     is_cat <- is.factor(target_col) || is.ordered(target_col) || is.character(target_col)
 
@@ -2362,7 +2361,7 @@ if(length(y) == 1 && y == "ITS") {
 
     # 8. Return structured results with isolated column name assignments
     new_return_df <- cbind(data_to_use[, a, drop = FALSE], results)
-    colnames(new_return_df)[1] <- a
+    colnames(new_return_df) <- c(a, "predicted", "lower_ci", "upper_ci")
     return(new_return_df)
   }
 
@@ -2372,7 +2371,6 @@ if(length(y) == 1 && y == "ITS") {
   fncPredCox <- function(model, a, predtype = c("lp", "exp"), conf_level = 0.95) {
     # 1. Validate choices and verify model type
     predtype <- match.arg(predtype)
-    #if (!inherits(model, "coxph")) {
     if (!("coxph" %in% class(model))) {
       stop("The provided model is not a 'coxph' object.")
     }
@@ -2390,7 +2388,7 @@ if(length(y) == 1 && y == "ITS") {
       stop(paste("Variable '", a, "' is not a predictor in the provided model.", sep = ""))
     }
 
-    # 3. Generate values for target variable 'a' based on its class
+    # 3. Generate values for target variable 'a' based on its class (Continuous or Categorical)
     target_col <- train_data[[a]]
     is_cat <- is.factor(target_col) || is.ordered(target_col) || is.character(target_col)
 
@@ -2421,10 +2419,10 @@ if(length(y) == 1 && y == "ITS") {
         newdata_list[[v]] <- rep(median(v_col, na.rm = TRUE), n_rows)
       } else if (is.factor(v_col) || is.ordered(v_col)) {
         # Use the reference category (first level)
-        newdata_list[[v]] <- rep(levels(v_col)[1], n_rows)
+        newdata_list[[v]] <- rep(levels(v_col), n_rows)
       } else if (is.character(v_col)) {
         # Use the first alphabetical unique string as the reference
-        newdata_list[[v]] <- rep(sort(unique(na.omit(v_col)))[1], n_rows)
+        newdata_list[[v]] <- rep(sort(unique(na.omit(v_col))), n_rows)
       }
     }
 
@@ -2478,7 +2476,7 @@ if(length(y) == 1 && y == "ITS") {
 
     # 8. Return structured results
     new_return_df <- cbind(data_to_use[, a, drop = FALSE], results)
-    colnames(new_return_df)[1] <- a
+    colnames(new_return_df) <- c(a, "predicted", "lower_ci", "upper_ci")
     return(new_return_df)
   }
 
@@ -2603,177 +2601,1044 @@ if(length(y) == 1 && y == "ITS") {
     return(new_return_df)
   }
 
-## Partial prediction plot
+##                Partial prediction plots by a categorical level             ##
+
+  fncPredPoislevel <- function(model, a, predtype = c("count", "lp", "exp"), conf_level = 0.95, categorical = NULL) {
+    # 1. Validate the predtype choice argument
+    predtype <- match.arg(predtype)
+
+    # 2. Extract the inner GLM model from the list structure if wrapped
+    if (inherits(model, "assess") || (is.list(model) && !inherits(model, "glm"))) {
+      glm_idx <- sapply(model, function(x) inherits(x, "glm") || inherits(x, "lm"))
+      if (any(glm_idx)) {
+        model <- model[[which(glm_idx)]]
+      } else {
+        stop("Could not find an underlying GLM/LM model inside the provided object.")
+      }
+    }
+
+    # 3. Extract training data and formula metadata
+    m_frame <- model.frame(model)
+    train_data <- model$model
+    if (is.null(train_data)) {
+      train_data <- m_frame
+    }
+    form <- formula(model)
+    terms_obj <- terms(form)
+    offset_idx <- attr(terms_obj, "offset")
+    pred_vars <- all.vars(delete.response(terms_obj))
+
+    if (!a %in% pred_vars) {
+      stop(paste("Variable '", a, "' is not a predictor in the provided model.", sep = ""))
+    }
+
+    # 4. Enforce constraint: Target variable 'a' must be continuous (numeric)
+    target_col <- train_data[[a]]
+    if (is.null(target_col)) {
+      matching_idx <- grep(paste0("\\b", a, "\\b"), names(train_data))
+      if (length(matching_idx) > 0) target_col <- train_data[[matching_idx]]
+    }
+
+    if (!is.numeric(target_col)) {
+      stop(paste("The target variable '", a, "' must be a continuous numeric variable.", sep = ""))
+    }
+
+    # Generate sequence grid values for the continuous predictor 'a'
+    a_vals <- seq(from = quantile(target_col, na.rm = TRUE, probs=.025),
+                  to = quantile(target_col, na.rm = TRUE, probs=.975),
+                  length.out = 200)
+
+    # 5. Process the categorical breakdown variable if requested
+    cat_levels <- NULL
+    if (!is.null(categorical)) {
+      if (!categorical %in% pred_vars) {
+        stop(paste("Categorical variable '", categorical, "' is not a predictor in the provided model.", sep = ""))
+      }
+      cat_col <- train_data[[categorical]]
+      if (is.factor(cat_col) || is.ordered(cat_col)) {
+        cat_levels <- levels(cat_col)
+      } else {
+        cat_levels <- sort(unique(na.omit(cat_col)))
+      }
+    }
+
+    # Core helper function to generate predictions for a specific subset/slice
+    generate_slice <- function(current_cat_val = NULL) {
+      n_rows <- length(a_vals)
+      newdata_list <- list()
+      newdata_list[[a]] <- a_vals
+
+      other_vars <- setdiff(pred_vars, a)
+      for (v in other_vars) {
+        # If this is the chosen split variable, force it to the active loop level
+        if (!is.null(categorical) && v == categorical) {
+          newdata_list[[v]] <- rep(current_cat_val, n_rows)
+          next
+        }
+
+        v_col <- train_data[[v]]
+        if (is.null(v_col)) {
+          matching_v <- grep(paste0("\\b", v, "\\b"), names(train_data))
+          if (length(matching_v) > 0) v_col <- train_data[[matching_v]]
+        }
+        if (!is.null(v_col)) {
+          if (is.numeric(v_col)) {
+            newdata_list[[v]] <- rep(median(v_col, na.rm = TRUE), n_rows)
+          } else if (is.factor(v_col) || is.ordered(v_col)) {
+            # Fix non-target factors to their baseline reference level
+            newdata_list[[v]] <- rep(levels(v_col)[1], n_rows)
+          } else if (is.character(v_col)) {
+            newdata_list[[v]] <- rep(sort(unique(na.omit(v_col)))[1], n_rows)
+          }
+        }
+      }
+
+      # Robust Offset Processing
+      raw_median_offset <- 1
+      is_log_offset <- FALSE
+      has_offset <- FALSE
+      evaluated_offset <- NULL
+      offset_vars <- character(0)
+
+      if (length(offset_idx) > 0 && !is.null(offset_idx)) {
+        has_offset <- TRUE
+        offset_expr <- attr(terms_obj, "variables")[[offset_idx + 1]]
+        offset_vars <- all.vars(offset_expr)
+        is_log_offset <- any(grep("log\\(", as.character(offset_expr)))
+        evaluated_offset <- model.offset(m_frame)
+
+        if (is.null(evaluated_offset)) {
+          expr_string <- deparse(offset_expr)
+          if (expr_string %in% names(m_frame)) {
+            evaluated_offset <- m_frame[[expr_string]]
+          } else {
+            alt_string <- paste0("offset(", expr_string, ")")
+            if (alt_string %in% names(m_frame)) evaluated_offset <- m_frame[[alt_string]]
+          }
+        }
+      } else if (!is.null(model$offset)) {
+        has_offset <- TRUE
+        evaluated_offset <- model$offset
+        model_call <- model$call
+        if (!is.null(model_call$offset)) {
+          offset_expr <- model_call$offset
+          offset_vars <- all.vars(offset_expr)
+          is_log_offset <- any(grep("log\\(", as.character(offset_expr)))
+        } else {
+          is_log_offset <- TRUE
+        }
+      }
+
+      if (has_offset && !is.null(evaluated_offset)) {
+        if (is_log_offset) {
+          raw_offset_values <- exp(evaluated_offset)
+          raw_median_offset <- median(raw_offset_values, na.rm = TRUE)
+        } else {
+          raw_median_offset <- median(evaluated_offset, na.rm = TRUE)
+        }
+        for (ov in offset_vars) {
+          if (ov %in% names(newdata_list)) next
+          newdata_list[[ov]] <- rep(raw_median_offset, n_rows)
+        }
+      }
+
+      data_to_use <- do.call(data.frame, newdata_list)
+      for (v in pred_vars) {
+        if (v %in% names(model$xlevels)) {
+          data_to_use[[v]] <- factor(data_to_use[[v]], levels = model$xlevels[[v]])
+        }
+      }
+
+      # 6. Extract linear predictions and compute bounds
+      clean_terms <- drop.terms(terms_obj, dropx = NULL, keep.response = FALSE)
+      X <- model.matrix(clean_terms, data = data_to_use, xlev = model$xlevels)
+      linear_predictor <- as.vector(X %*% coef(model))
+      vcov_matrix <- vcov(model)
+      se_link <- sqrt(diag(X %*% vcov_matrix %*% t(X)))
+
+      alpha <- 1 - conf_level
+      z_val <- qnorm(1 - alpha / 2)
+      link_lower <- linear_predictor - (z_val * se_link)
+      link_upper <- linear_predictor + (z_val * se_link)
+
+      # 7. Format scales
+      if (predtype == "lp") {
+        results <- data.frame(predicted = linear_predictor, lower_ci = link_lower, upper_ci = link_upper)
+      } else if (predtype == "exp") {
+        results <- data.frame(predicted = exp(linear_predictor), lower_ci = exp(link_lower), upper_ci = exp(link_upper))
+      } else {
+        if (!has_offset) {
+          predicted_counts <- exp(linear_predictor)
+          lower_ci <- exp(link_lower)
+          upper_ci <- exp(link_upper)
+        } else {
+          if (is_log_offset) {
+            predicted_counts <- exp(linear_predictor) * raw_median_offset
+            lower_ci <- exp(link_lower) * raw_median_offset
+            upper_ci <- exp(link_upper) * raw_median_offset
+          } else {
+            predicted_counts <- exp(linear_predictor + raw_median_offset)
+            lower_ci <- exp(link_lower + raw_median_offset)
+            upper_ci <- exp(link_upper + raw_median_offset)
+          }
+        }
+        results <- data.frame(predicted = predicted_counts, lower_ci = lower_ci, upper_ci = upper_ci)
+      }
+
+      target_col_df <- data_to_use[, a, drop = FALSE]
+      new_return_df <- cbind(target_col_df, results)
+      colnames(new_return_df) <- c(a, "predicted", "lower_ci", "upper_ci")
+      return(new_return_df)
+    }
+
+    # 8. Manage Output Structure
+    if (!is.null(cat_levels)) {
+      # Generate list elements mapped to factor levels ("1", "2", "3")
+      output_list <- lapply(cat_levels, function(lvl) generate_slice(lvl))
+      names(output_list) <- cat_levels
+      return(output_list)
+    } else {
+      return(generate_slice(NULL))
+    }
+  }
+
+## Logistic ##
+  fncPredLoglevel <- function(model, a, predtype = c("lp", "exp", "plogis"), conf_level = 0.95, categorical = NULL) {
+    # 1. Validate the scale choice argument
+    predtype <- match.arg(predtype)
+
+    # 2. Extract the inner GLM model from the 'ham' list structure
+    if (inherits(model, "assess") || (is.list(model) && !inherits(model, "glm"))) {
+      glm_idx <- sapply(model, function(x) inherits(x, "glm") || inherits(x, "lm"))
+      if (any(glm_idx)) {
+        model <- model[[which(glm_idx)]]
+      } else {
+        stop("Could not find an underlying GLM/LM model inside the provided object.")
+      }
+    }
+
+    # 3. Extract training data and validate variable 'a'
+    train_data <- model$model
+    if (is.null(train_data)) {
+      # Fallback to model.frame if model$model is unavailable
+      train_data <- model.frame(model)
+    }
+    if (is.null(train_data)) {
+      stop("The training data frame could not be recovered from the model object.")
+    }
+
+    form <- formula(model)
+    terms_obj <- terms(form)
+    pred_vars <- all.vars(delete.response(terms_obj))
+
+    if (!a %in% pred_vars) {
+      stop(paste("Variable '", a, "' is not a predictor in the provided model.", sep = ""))
+    }
+
+    # 4. Enforce constraint: Target variable 'a' must be continuous (numeric)
+    target_col <- train_data[[a]]
+    if (!is.numeric(target_col)) {
+      stop(paste("The target variable '", a, "' must be a continuous numeric variable.", sep = ""))
+    }
+
+    # Generate sequence grid values for the continuous predictor 'a'
+    a_vals <- seq(from = quantile(target_col, na.rm = TRUE, probs=.025),
+                  to = quantile(target_col, na.rm = TRUE, probs=.975),
+                  length.out = 200)
+
+    # 5. Process the categorical breakdown variable if requested
+    cat_levels <- NULL
+    if (!is.null(categorical)) {
+      if (!categorical %in% pred_vars) {
+        stop(paste("Categorical variable '", categorical, "' is not a predictor in the provided model.", sep = ""))
+      }
+      cat_col <- train_data[[categorical]]
+      if (is.factor(cat_col) || is.ordered(cat_col)) {
+        cat_levels <- levels(cat_col)
+      } else {
+        cat_levels <- sort(unique(na.omit(cat_col)))
+      }
+    }
+
+    # Core helper function to generate predictions for a specific subset level slice
+    generate_slice <- function(current_cat_val = NULL) {
+      n_rows <- length(a_vals)
+      newdata_list <- list()
+      newdata_list[[a]] <- a_vals
+
+      other_vars <- setdiff(pred_vars, a)
+      for (v in other_vars) {
+        # If this is the chosen split variable, force it to the active loop level
+        if (!is.null(categorical) && v == categorical) {
+          newdata_list[[v]] <- rep(current_cat_val, n_rows)
+          next
+        }
+
+        v_col <- train_data[[v]]
+        if (is.numeric(v_col)) {
+          # Use median for other numerical coefficients
+          newdata_list[[v]] <- rep(median(v_col, na.rm = TRUE), n_rows)
+        } else if (is.factor(v_col) || is.ordered(v_col)) {
+          # Use the reference category (first level)
+          newdata_list[[v]] <- rep(levels(v_col)[1], n_rows)
+        } else if (is.character(v_col)) {
+          # Use the first alphabetical unique string as the reference
+          newdata_list[[v]] <- rep(sort(unique(na.omit(v_col)))[1], n_rows)
+        }
+      }
+
+      # Create data frame and ensure correct factor structures match the model
+      data_to_use <- do.call(data.frame, newdata_list)
+      for (v in pred_vars) {
+        if (v %in% names(model$xlevels)) {
+          data_to_use[[v]] <- factor(data_to_use[[v]], levels = model$xlevels[[v]])
+        }
+      }
+
+      # 6. Build design matrix X for predictors
+      clean_terms <- drop.terms(terms_obj, dropx = NULL, keep.response = FALSE)
+      X <- model.matrix(clean_terms, data = data_to_use, xlev = model$xlevels)
+
+      # Calculate linear predictor (X * beta) on the logit (link) scale
+      linear_predictor <- as.vector(X %*% coef(model))
+
+      # Calculate standard errors on the logit (link) scale
+      vcov_matrix <- vcov(model)
+      se_link <- sqrt(diag(X %*% vcov_matrix %*% t(X)))
+
+      # Calculate Z critical value based on requested confidence level
+      alpha <- 1 - conf_level
+      z_val <- qnorm(1 - alpha / 2)
+
+      # Compute bounds on the logit (link) scale first (Statistical best practice)
+      link_lower <- linear_predictor - (z_val * se_link)
+      link_upper <- linear_predictor + (z_val * se_link)
+
+      # 7. Output processing based on requested predtype scale
+      if (predtype == "lp") {
+        results <- data.frame(
+          predicted = as.vector(linear_predictor),
+          lower_ci  = as.vector(link_lower),
+          upper_ci  = as.vector(link_upper)
+        )
+      } else if (predtype == "exp") {
+        results <- data.frame(
+          predicted = as.vector(exp(linear_predictor)),
+          lower_ci  = as.vector(exp(link_lower)),
+          upper_ci  = as.vector(exp(link_upper))
+        )
+      } else {
+        results <- data.frame(
+          predicted = as.vector(plogis(linear_predictor)),
+          lower_ci  = as.vector(plogis(link_lower)),
+          upper_ci  = as.vector(plogis(link_upper))
+        )
+      }
+
+      # 8. Return structured results with isolated column name assignments
+      new_return_df <- cbind(data_to_use[, a, drop = FALSE], results)
+      colnames(new_return_df)[1] <- a
+      return(new_return_df)
+    }
+
+    # 8. Manage Output Structure
+    if (!is.null(cat_levels)) {
+      # Generate list elements mapped to factor levels
+      output_list <- lapply(cat_levels, function(lvl) generate_slice(lvl))
+      names(output_list) <- cat_levels
+      return(output_list)
+    } else {
+      # Default behavior if categorical is NULL
+      return(generate_slice(NULL))
+    }
+  }
+
+  ## Cox ##
+  fncPredCoxlevel <- function(model, a, predtype = c("lp", "exp"), conf_level = 0.95, categorical = NULL) {
+    # 1. Validate choices and verify model type
+    predtype <- match.arg(predtype)
+    if (!("coxph" %in% class(model))) {
+      stop("The provided model is not a 'coxph' object.")
+    }
+
+    # 2. Extract training data frame
+    train_data <- model.frame(model)
+    if (is.null(train_data)) {
+      stop("The training data frame could not be recovered from the model object.")
+    }
+
+    terms_obj <- terms(model)
+    pred_vars <- all.vars(delete.response(terms_obj))
+
+    if (!a %in% pred_vars) {
+      stop(paste("Variable '", a, "' is not a predictor in the provided model.", sep = ""))
+    }
+
+    # 3. Enforce constraint: Target variable 'a' must be continuous (numeric)
+    target_col <- train_data[[a]]
+    if (!is.numeric(target_col)) {
+      stop(paste("The target variable '", a, "' must be a continuous numeric variable.", sep = ""))
+    }
+
+    # Generate sequence grid values for the continuous predictor 'a'
+    a_vals <- seq(from = quantile(target_col, na.rm = TRUE, probs=.025),
+                  to = quantile(target_col, na.rm = TRUE, probs=.975),
+                  length.out = 200)
+
+    # 4. Process the categorical breakdown variable if requested
+    cat_levels <- NULL
+    if (!is.null(categorical)) {
+      if (!categorical %in% pred_vars) {
+        stop(paste("Categorical variable '", categorical, "' is not a predictor in the provided model.", sep = ""))
+      }
+      cat_col <- train_data[[categorical]]
+      if (is.factor(cat_col) || is.ordered(cat_col)) {
+        cat_levels <- levels(cat_col)
+      } else {
+        cat_levels <- sort(unique(na.omit(cat_col)))
+      }
+    }
+
+    # Core helper function to generate predictions for a specific category level slice
+    generate_slice <- function(current_cat_val = NULL) {
+      n_rows <- length(a_vals)
+      newdata_list <- list()
+      newdata_list[[a]] <- a_vals
+
+      other_vars <- setdiff(pred_vars, a)
+      for (v in other_vars) {
+        # If this is the chosen split variable, force it to the active loop level
+        if (!is.null(categorical) && v == categorical) {
+          newdata_list[[v]] <- rep(current_cat_val, n_rows)
+          next
+        }
+
+        v_col <- train_data[[v]]
+        if (is.numeric(v_col)) {
+          # Use median for other numerical coefficients
+          newdata_list[[v]] <- rep(median(v_col, na.rm = TRUE), n_rows)
+        } else if (is.factor(v_col) || is.ordered(v_col)) {
+          # Use the reference category (first level)
+          newdata_list[[v]] <- rep(levels(v_col)[1], n_rows)
+        } else if (is.character(v_col)) {
+          # Use the first alphabetical unique string as the reference
+          newdata_list[[v]] <- rep(sort(unique(na.omit(v_col)))[1], n_rows)
+        }
+      }
+
+      # Create data frame and ensure correct factor structures match the model
+      data_to_use <- do.call(data.frame, newdata_list)
+      for (v in pred_vars) {
+        if (v %in% names(model$xlevels)) {
+          data_to_use[[v]] <- factor(data_to_use[[v]], levels = model$xlevels[[v]])
+        }
+      }
+
+      # 5. Extract parameters and align design matrix X
+      beta <- coef(model)
+      clean_terms <- drop.terms(terms_obj, dropx = NULL, keep.response = FALSE)
+      X <- model.matrix(clean_terms, data = data_to_use, xlev = model$xlevels)
+
+      # Cox models omit an intercept term column. Ensure alignment with beta coefficients.
+      if ("(Intercept)" %in% colnames(X)) {
+        X <- X[, colnames(X) != "(Intercept)", drop = FALSE]
+      }
+
+      # Center design matrix X based on model averages (matching survival package architecture)
+      X_centered <- scale(X, center = model$means, scale = FALSE)
+
+      # 6. Calculate Linear Predictor and Standard Errors on the Link scale
+      linear_predictor <- as.vector(X_centered %*% beta)
+      vcov_matrix <- vcov(model)
+      se_link <- sqrt(diag(X_centered %*% vcov_matrix %*% t(X_centered)))
+
+      # Calculate Z critical boundaries
+      alpha <- 1 - conf_level
+      z_val <- qnorm(1 - alpha / 2)
+
+      link_lower <- linear_predictor - (z_val * se_link)
+      link_upper <- linear_predictor + (z_val * se_link)
+
+      # 7. Output processing based on requested scale
+      if (predtype == "lp") {
+        results <- data.frame(
+          predicted = as.vector(linear_predictor),
+          lower_ci  = as.vector(link_lower),
+          upper_ci  = as.vector(link_upper)
+        )
+      } else if (predtype == "exp") {
+        results <- data.frame(
+          predicted = as.vector(exp(linear_predictor)),
+          lower_ci  = as.vector(exp(link_lower)),
+          upper_ci  = as.vector(exp(link_upper))
+        )
+      }
+
+      # 8. Return structured results
+      new_return_df <- cbind(data_to_use[, a, drop = FALSE], results)
+      colnames(new_return_df)[1] <- a
+      return(new_return_df)
+    }
+
+    # 9. Manage Output Structure
+    if (!is.null(cat_levels)) {
+      # Generate list elements mapped to factor levels
+      output_list <- lapply(cat_levels, function(lvl) generate_slice(lvl))
+      names(output_list) <- cat_levels
+      return(output_list)
+    } else {
+      # Default behavior if categorical is NULL
+      return(generate_slice(NULL))
+    }
+  }
+
+
+  ## OLS ##
+  fncPredOls <- function(model, a, predtype = c("lp", "response"), conf_level = 0.95) {
+    # 1. Validate the predtype choice argument
+    predtype <- match.arg(predtype)
+
+    # 2. Extract the inner LM/GLM model from the 'ham' list structure if wrapped
+    if (inherits(model, "assess") || (is.list(model) && !inherits(model, "lm") && !inherits(model, "glm"))) {
+      glm_idx <- sapply(model, function(x) inherits(x, "lm") || inherits(x, "glm"))
+      if (any(glm_idx)) {
+        model <- model[[which(glm_idx)]]
+      } else {
+        stop("Could not find an underlying LM/GLM model inside the provided object.")
+      }
+    }
+
+    # 3. Extract training data and validate variable 'a'
+    train_data <- model$model
+    if (is.null(train_data)) {
+      train_data <- model.frame(model)
+    }
+    if (is.null(train_data)) {
+      stop("The training data frame could not be recovered from the model object.")
+    }
+
+    terms_obj <- terms(formula(model))
+    pred_vars <- all.vars(delete.response(terms_obj))
+
+    if (!a %in% pred_vars) {
+      stop(paste("Variable '", a, "' is not a predictor in the provided model.", sep = ""))
+    }
+
+    # 4. Generate values for target variable 'a' based on its class (Continuous or Categorical)
+    target_col <- train_data[[a]]
+    is_cat <- is.factor(target_col) || is.ordered(target_col) || is.character(target_col)
+
+    if (is.numeric(target_col)) {
+      a_vals <- seq(from = quantile(target_col, na.rm = TRUE, probs=.025),
+                    to = quantile(target_col, na.rm = TRUE, probs=.975),
+                    length.out = 200)
+    } else if (is_cat) {
+      if (is.factor(target_col) || is.ordered(target_col)) {
+        a_vals <- levels(target_col)
+      } else {
+        a_vals <- sort(unique(na.omit(target_col)))
+      }
+    } else {
+      stop("Variable 'a' must be numeric, factor, ordered, or character.")
+    }
+
+    # 5. Construct the baseline newdata data frame
+    n_rows <- length(a_vals)
+    newdata_list <- list()
+    newdata_list[[a]] <- a_vals
+
+    other_vars <- setdiff(pred_vars, a)
+    for (v in other_vars) {
+      v_col <- train_data[[v]]
+      if (is.numeric(v_col)) {
+        # Use median for other numerical coefficients
+        newdata_list[[v]] <- rep(median(v_col, na.rm = TRUE), n_rows)
+      } else if (is.factor(v_col) || is.ordered(v_col)) {
+        # Fix to the reference category (first level)
+        newdata_list[[v]] <- rep(levels(v_col)[1], n_rows)
+      } else if (is.character(v_col)) {
+        # Use the first alphabetical unique string as the reference
+        newdata_list[[v]] <- rep(sort(unique(na.omit(v_col)))[1], n_rows)
+      }
+    }
+
+    # Create data frame and ensure correct factor structures match the model
+    data_to_use <- do.call(data.frame, newdata_list)
+    for (v in pred_vars) {
+      if (v %in% names(model$xlevels)) {
+        data_to_use[[v]] <- factor(data_to_use[[v]], levels = model$xlevels[[v]])
+      }
+    }
+
+    # 6. Build design matrix X and calculate predictions
+    clean_terms <- drop.terms(terms_obj, dropx = NULL, keep.response = FALSE)
+    X <- model.matrix(clean_terms, data = data_to_use, xlev = model$xlevels)
+
+    predicted_lp <- as.vector(X %*% coef(model))
+    vcov_matrix <- vcov(model)
+    se_fit <- sqrt(diag(X %*% vcov_matrix %*% t(X)))
+
+    # 7. Confidence intervals (t-distribution vs normal fallback)
+    df_residual <- df.residual(model)
+    alpha <- 1 - conf_level
+    if (!is.null(df_residual) && df_residual > 0) {
+      critical_val <- qt(1 - alpha / 2, df = df_residual)
+    } else {
+      critical_val <- qnorm(1 - alpha / 2)
+    }
+
+    lower_lp <- predicted_lp - (critical_val * se_fit)
+    upper_lp <- predicted_lp + (critical_val * se_fit)
+
+    # 8. Handle predtype transformations
+    if (predtype == "response" && inherits(model, "glm")) {
+      linkinv   <- family(model)$linkinv
+      predicted <- linkinv(predicted_lp)
+      lower_ci  <- linkinv(lower_lp)
+      upper_ci  <- linkinv(upper_lp)
+    } else {
+      predicted <- predicted_lp
+      lower_ci  <- lower_lp
+      upper_ci  <- upper_lp
+    }
+
+    # 9. Return structured results with isolated column name assignments
+    results <- data.frame(
+      predicted = predicted,
+      lower_ci  = lower_ci,
+      upper_ci  = upper_ci
+    )
+
+    new_return_df <- cbind(data_to_use[, a, drop = FALSE], results)
+    colnames(new_return_df)[1] <- a
+    return(new_return_df)
+  }
+
+  ## OLS ##
+  fncPredOlslevel <- function(model, a, predtype = c("lp", "response"), conf_level = 0.95, categorical = NULL) {
+    # 1. Validate the predtype choice argument
+    predtype <- match.arg(predtype)
+
+    # 2. Extract the inner LM/GLM model from the 'ham' list structure
+    if (inherits(model, "assess") || (is.list(model) && !inherits(model, "lm") && !inherits(model, "glm"))) {
+      glm_idx <- sapply(model, function(x) inherits(x, "lm") || inherits(x, "glm"))
+      if (any(glm_idx)) {
+        model <- model[[which(glm_idx)]]
+      } else {
+        stop("Could not find an underlying LM/GLM model inside the provided object.")
+      }
+    }
+
+    # 3. Extract training data and validate variable 'a'
+    train_data <- model$model
+    if (is.null(train_data)) {
+      # Fallback to model.frame if model$model is unavailable
+      train_data <- model.frame(model)
+    }
+    if (is.null(train_data)) {
+      stop("The training data frame could not be recovered from the model object.")
+    }
+
+    terms_obj <- terms(formula(model))
+    pred_vars <- all.vars(delete.response(terms_obj))
+
+    if (!a %in% pred_vars) {
+      stop(paste("Variable '", a, "' is not a predictor in the provided model.", sep = ""))
+    }
+
+    # 4. Enforce constraint: Target variable 'a' must be continuous (numeric)
+    target_col <- train_data[[a]]
+    if (!is.numeric(target_col)) {
+      stop(paste("The target variable '", a, "' must be a continuous numeric variable.", sep = ""))
+    }
+
+    # Generate sequence grid values for the continuous predictor 'a'
+    a_vals <- seq(from = quantile(target_col, na.rm = TRUE, probs=.025),
+                  to = quantile(target_col, na.rm = TRUE, probs=.975),
+                  length.out = 200)
+
+    # 5. Process the categorical breakdown variable if requested
+    cat_levels <- NULL
+    if (!is.null(categorical)) {
+      if (!categorical %in% pred_vars) {
+        stop(paste("Categorical variable '", categorical, "' is not a predictor in the provided model.", sep = ""))
+      }
+      cat_col <- train_data[[categorical]]
+      if (is.factor(cat_col) || is.ordered(cat_col)) {
+        cat_levels <- levels(cat_col)
+      } else {
+        cat_levels <- sort(unique(na.omit(cat_col)))
+      }
+    }
+
+    # Core helper function to generate predictions for a specific category level slice
+    generate_slice <- function(current_cat_val = NULL) {
+      n_rows <- length(a_vals)
+      newdata_list <- list()
+      newdata_list[[a]] <- a_vals
+
+      other_vars <- setdiff(pred_vars, a)
+      for (v in other_vars) {
+        # If this is the chosen split variable, force it to the active loop level
+        if (!is.null(categorical) && v == categorical) {
+          newdata_list[[v]] <- rep(current_cat_val, n_rows)
+          next
+        }
+
+        v_col <- train_data[[v]]
+        if (is.numeric(v_col)) {
+          # Use median for other numerical coefficients
+          newdata_list[[v]] <- rep(median(v_col, na.rm = TRUE), n_rows)
+        } else if (is.factor(v_col) || is.ordered(v_col)) {
+          # Use the reference category (first level)
+          newdata_list[[v]] <- rep(levels(v_col), n_rows)
+        } else if (is.character(v_col)) {
+          # Use the first alphabetical unique string as the reference
+          newdata_list[[v]] <- rep(sort(unique(na.omit(v_col))), n_rows)
+        }
+      }
+
+      # Create data frame and ensure correct factor structures match the model
+      data_to_use <- do.call(data.frame, newdata_list)
+      for (v in pred_vars) {
+        if (v %in% names(model$xlevels)) {
+          data_to_use[[v]] <- factor(data_to_use[[v]], levels = model$xlevels[[v]])
+        }
+      }
+
+      # 6. Build design matrix X and calculate predictions
+      clean_terms <- drop.terms(terms_obj, dropx = NULL, keep.response = FALSE)
+      X <- model.matrix(clean_terms, data = data_to_use, xlev = model$xlevels)
+
+      predicted_lp <- as.vector(X %*% coef(model))
+      vcov_matrix <- vcov(model)
+      se_fit <- sqrt(diag(X %*% vcov_matrix %*% t(X)))
+
+      # 7. Confidence intervals (t-distribution vs normal fallback)
+      df_residual <- df.residual(model)
+      alpha <- 1 - conf_level
+      if (!is.null(df_residual) && df_residual > 0) {
+        critical_val <- qt(1 - alpha / 2, df = df_residual)
+      } else {
+        critical_val <- qnorm(1 - alpha / 2)
+      }
+
+      lower_lp <- predicted_lp - (critical_val * se_fit)
+      upper_lp <- predicted_lp + (critical_val * se_fit)
+
+      # 8. Handle predtype transformations
+      if (predtype == "response" && inherits(model, "glm")) {
+        linkinv   <- family(model)$linkinv
+        predicted <- linkinv(predicted_lp)
+        lower_ci  <- linkinv(lower_lp)
+        upper_ci  <- linkinv(upper_lp)
+      } else {
+        predicted <- predicted_lp
+        lower_ci  <- lower_lp
+        upper_ci  <- upper_lp
+      }
+
+      # 9. Return structured results
+      results <- data.frame(
+        predicted = predicted,
+        lower_ci  = lower_ci,
+        upper_ci  = upper_ci
+      )
+
+      new_return_df <- cbind(data_to_use[, a, drop = FALSE], results)
+      colnames(new_return_df) <- a
+      return(new_return_df)
+    }
+
+    # 10. Manage Output Structure
+    if (!is.null(cat_levels)) {
+      # Generate list elements mapped to factor levels
+      output_list <- lapply(cat_levels, function(lvl) generate_slice(lvl))
+      names(output_list) <- cat_levels
+      return(output_list)
+    } else {
+      # Default behavior if categorical is NULL
+      return(generate_slice(NULL))
+    }
+  }
+
+
   ################################################################################
   #                Function partial predicted 95% CIs for OLS                    #
   ################################################################################
 
-  fncPredEach <- function(  x,
-                            y,
-                            xlim = NULL,
-                            ylim = NULL,
-                            main = NULL,
-                            lwd = NULL,
-                            col = NULL,
-                            adj.alpha = NULL,
-                            tgt = NULL,
-                            tgtcol = NULL,
-                            cex = NULL,
-                            cex.axis = NULL,
-                            cex.lab = NULL,
-                            cex.main = NULL) {
-    # assign objects
-    #model
+  fncPredEach <- function(x,
+                          y,
+                          xlim = NULL,
+                          ylim = NULL,
+                          main = NULL,
+                          lwd = NULL,
+                          col = NULL,
+                          adj.alpha = NULL,
+                          tgt = NULL,
+                          tgtcol = NULL,
+                          cex = NULL,
+                          cex.axis = NULL,
+                          cex.lab = NULL,
+                          cex.main = NULL,
+                          add.legend=NULL,
+                          cex.legend=NULL) {
+    # Assign objects
     model <- x$model
+
     # Get model type
     reg_type <- NULL
-    if(any(class(x) == "coxph") == TRUE) {
+    if (any(class(x) == "coxph") || any(class(model) == "coxph")) {
       reg_type <- "coxph"
     } else {
       reg_type <- x$analysis_type$regression_type
     }
 
-    # key variable
-    a <- NULL
+    # Key variable (1st element of y)
     a <- y[1]
-    #Requested prediction type
+
+    # Requested prediction type (2nd element of y)
     predtype <- "lp"
     if (length(y) >= 2 && !is.na(y[2])) {
       predtype <- y[2]
-    } else {
-      predtype <- predtype
     }
-    # Error checks #
-    # check to make sure the correct predictions types are requested for each regression
-    if(reg_type == "ols") {
-      if (predtype != "lp") {stop("Error: Expecting 'lp' selected in 'y' for partial prediction plot for OLS regression." )}
+
+    # Parse Categorical Variable (3rd element of y)
+    categorical <- NULL
+    if (length(y) >= 3 && !is.na(y[3])) {
+      categorical <- y[3]
     }
-    if(reg_type == "logistic") {
-      if (!predtype %in% c("lp", "exp", "plogis")) {stop("Error: Expecting 'lp', 'exp', or 'plogis' selected in 'y' for partial prediction plot for logistic regression." )}
+
+    # Error checks for prediction types
+    if (reg_type == "ols" && predtype != "lp") {
+      stop("Error: Expecting 'lp' selected in 'y' for partial prediction plot for OLS regression.")
     }
-    if(reg_type == "poisson") {
-      if (!predtype %in% c("lp", "exp", "count")) {stop("Error: Expecting 'lp', 'exp', or 'count' selected in 'y' for partial prediction plot for Poisson regression." )}
+    if (reg_type == "logistic" && !predtype %in% c("lp", "exp", "plogis")) {
+      stop("Error: Expecting 'lp', 'exp', or 'plogis' selected in 'y' for partial prediction plot for logistic regression.")
     }
-    if(reg_type == "coxph") {
-      if (!predtype %in% c("lp", "exp")) {stop("Error: Expecting 'lp', or 'exp' selected in 'y' for partial prediction plot for Cox PH regression." )}
+    if (reg_type == "poisson" && !predtype %in% c("lp", "exp", "count")) {
+      stop("Error: Expecting 'lp', 'exp', or 'count' selected in 'y' for partial prediction plot for Poisson regression.")
     }
+    if (reg_type == "coxph" && !predtype %in% c("lp", "exp")) {
+      stop("Error: Expecting 'lp', or 'exp' selected in 'y' for partial prediction plot for Cox PH regression.")
+    }
+
     ## Get predictions ##
-    pred1 <- switch(reg_type,
-                    "ols"   = fncPredOls(model, a=a, predtype = predtype, conf_level = 0.95),
-                    "logistic" = fncPredLog(model, a=a, predtype = predtype, conf_level = 0.95) ,
-                    "poisson"  = fncPredPois(model, a=a, predtype =predtype, conf_level = 0.95),
-                    "coxph"   = fncPredCox(model, a=a, predtype = predtype, conf_level = 0.95)
-    )
-    # Get outcome variable
+    if (!is.null(categorical)) {
+      pred_data <- switch(reg_type,
+                          "ols"      = fncPredOlslevel(model, a=a, predtype = predtype, conf_level = 0.95, categorical = categorical),
+                          "logistic" = fncPredLoglevel(model, a=a, predtype = predtype, conf_level = 0.95, categorical = categorical),
+                          "poisson"  = fncPredPoislevel(model, a=a, predtype = predtype, conf_level = 0.95, categorical = categorical),
+                          "coxph"    = fncPredCoxlevel(model, a=a, predtype = predtype, conf_level = 0.95, categorical = categorical)
+      )
+      is_list_output <- TRUE
+    } else {
+      pred_data <- switch(reg_type,
+                          "ols"      = fncPredOls(model, a=a, predtype = predtype, conf_level = 0.95),
+                          "logistic" = fncPredLog(model, a=a, predtype = predtype, conf_level = 0.95),
+                          "poisson"  = fncPredPois(model, a=a, predtype = predtype, conf_level = 0.95),
+                          "coxph"    = fncPredCox(model, a=a, predtype = predtype, conf_level = 0.95)
+      )
+      is_list_output <- FALSE
+    }
+
+    # Get outcome labels
     if (reg_type != "coxph") {
       ylab_name <- all.vars(x$formula$primary_formula)[1]
+    } else {
+      ylab_name <- if (!is.null(x$formula)) all.vars(x$formula)[1] else "Relative Risk"
     }
-    if (reg_type == "coxph") {
-      ylab_name <- all.vars(x$formula)[1]
+
+    # Standardize list formatting
+    if (!is_list_output) {
+      loop_list <- list("Baseline" = pred_data)
+    } else {
+      loop_list <- pred_data
     }
-    # Get xlab name
-    xlab_name <- colnames(pred1)[1]
-    # Determine if it is a factor or continuous variable
-    factor_variable <- NULL
-    factor_variable <- ifelse(nrow(pred1) == 200, 0, 1)
+
+    # Safe Interleaved Layer Split
+    final_loop_list <- list()
+    for (name in names(loop_list)) {
+      df <- as.data.frame(loop_list[[name]])
+      col1_vals <- as.numeric(df[, 1])
+
+      if (any(duplicated(col1_vals))) {
+        num_layers <- sum(col1_vals == col1_vals[1])
+        for (k in 1:num_layers) {
+          sub_df <- df[seq(k, nrow(df), by = num_layers), , drop = FALSE]
+          sub_df <- sub_df[order(as.numeric(sub_df[, 1])), , drop = FALSE]
+          final_loop_list[[paste(name, "Layer", k)]] <- sub_df
+        }
+      } else {
+        df <- df[order(col1_vals), , drop = FALSE]
+        final_loop_list[[name]] = df
+      }
+    }
+    loop_list <- final_loop_list
+
+    # CRUCIAL BASELINE ISOLATION FIX:
+    # If the user did NOT request a categorical split, only keep the first reference layer.
+    if (!is_list_output && length(loop_list) > 1) {
+      loop_list <- loop_list[1]
+    }
+
+    # Safely extract first dataframe metadata
+    first_df <- loop_list[[1]]
+    xlab_name <- colnames(first_df)[1]
+
+    # Determine if it is a factor or continuous variable using Column 1
+    target_vector <- first_df[, 1]
+    if (is.factor(target_vector) || is.character(target_vector) || is.logical(target_vector)) {
+      factor_variable <- 1
+    } else {
+      factor_variable <- 0
+    }
+
+    # Set up color mapping vectors
+#    if (is.null(col)) col <- c("black", "blue", "red", "darkgreen", "purple", "orange")
+#    col_vec <- rep(col, length.out = length(loop_list))
+
+    # Enforce alpha baseline transparency configuration fallback
+#    if (is.null(adj.alpha)) {
+#      adj.alpha <- 0.15
+#    }
 
     ###################
     ### Make Graphs ###
     ###################
-    if(factor_variable == 1) {
-      if(!is.null(ylim)) {
+    if (factor_variable == 1) {
+      if (!is.null(ylim)) {
         ylim_min <- min(ylim)
         ylim_max <- max(ylim)
       } else {
-        ylim_min <- min(pred1[, "lower_ci"])
-        ylim_max <- max(pred1[, "upper_ci"])
+        ylim_min <- min(sapply(loop_list, function(d) min(as.numeric(d[, 3]), na.rm = TRUE)))
+        ylim_max <- max(sapply(loop_list, function(d) max(as.numeric(d[, 4]), na.rm = TRUE)))
       }
-      x_range <- seq(0, (nrow(pred1) + 1))
-      x_coords <- x_range[2:(nrow(pred1) + 1)]
+
+      x_range <- seq(0, (nrow(first_df) + 1))
 
       plot(c(0, tail(x_range, 1)), c(ylim_min, ylim_max), type="n",
            axes=FALSE, xlab= xlab_name, ylab= ylab_name, main=main,
-           lwd=lwd, col =col, cex=cex, cex.lab=cex.lab, cex.main=cex.main)
-      #Create confidence intervals
-      for(i in 1:(tail(x_coords, 1))) {
-        # set up bars for 95% confidence intervals
-        segments(x0 = i, y0 = pred1[i, "lower_ci"],
-               x1 = i, y1 = pred1[i, "upper_ci"],
-               col = col, lwd = lwd)
-        # points for point estimates
-        points(i, pred1[i, "predicted"], col=col, cex=cex, pch=19)
-      }
-      # axis
-      axis(side=1, at=0:(tail(x_range, 1)) , labels=c(" ", as.character(pred1[, 1])," "), cex.axis=cex.axis)
-      axis(side=2, cex.axis=cex.axis)
-      box()
-      #Target line(s)
-      if(!is.null(tgt)) {
-        for (i in 1:length(tgt)) {
-          abline(h=tgt[i], lwd=lwd, col= tgtcol[1], lty=1)
+           cex=cex, cex.lab=cex.lab, cex.main=cex.main)
+
+      for (g_idx in seq_along(loop_list)) {
+        df_slice <- loop_list[[g_idx]]
+#        current_col <- col_vec[g_idx]
+        current_col <- lcol[g_idx]
+        j_offset <- if(length(loop_list) > 1) (g_idx - (length(loop_list)+1)/2) * 0.1 else 0
+
+        for (i in 1:nrow(df_slice)) {
+          segments(x0 = i + j_offset, y0 = as.numeric(df_slice[i, 3]),
+                   x1 = i + j_offset, y1 = as.numeric(df_slice[i, 4]),
+                   col = current_col, lwd = lwd)
+          points(i + j_offset, as.numeric(df_slice[i, 2]), col=current_col, cex=cex, pch=19)
         }
       }
+
+      axis(side=1, at=0:(tail(x_range, 1)), labels=c(" ", as.character(first_df[, 1]), " "), cex.axis=cex.axis)
+      axis(side=2, cex.axis=cex.axis)
+      box()
+
+      if (!is.null(tgt)) {
+        for (i in 1:length(tgt)) abline(h=tgt[i], lwd=lwd, col=tgtcol, lty=1)
+      }
+
     } else {
-      #Confidence bands
-      # X and Y limits
-      if(!is.null(ylim)) {
+      # Continuous Variables Track
+      if (!is.null(ylim)) {
         ylim_min <- min(ylim)
         ylim_max <- max(ylim)
       } else {
-        ylim_min <- min(pred1[, "lower_ci"])
-        ylim_max <- max(pred1[, "upper_ci"])
+        ylim_min <- min(sapply(loop_list, function(d) min(as.numeric(d[, 3]), na.rm = TRUE)))
+        ylim_max <- max(sapply(loop_list, function(d) max(as.numeric(d[, 4]), na.rm = TRUE)))
       }
-      if(!is.null(xlim)) {
+
+      if (!is.null(xlim)) {
         xlim_min <- min(xlim)
         xlim_max <- max(xlim)
       } else {
-        xlim_min <- min(pred1[, 1])
-        xlim_max <- max(pred1[, 1])
+        xlim_min <- min(sapply(loop_list, function(d) min(as.numeric(d[, 1]), na.rm = TRUE)))
+        xlim_max <- max(sapply(loop_list, function(d) max(as.numeric(d[, 1]), na.rm = TRUE)))
       }
 
-      plot(pred1[, 1], pred1[, 2], type="l", col=col,
-           xlim=c(xlim_min, xlim_max), ylim=c( ylim_min, ylim_max),
-           xlab= xlab_name, ylab= ylab_name, main=main, lwd=lwd,
+      # Blank Canvas Initialization
+      plot(1, type="n", xlim=c(xlim_min, xlim_max), ylim=c(ylim_min, ylim_max),
+           xlab= xlab_name, ylab= ylab_name, main=main,
            cex=cex, cex.lab=cex.lab, cex.main=cex.main, axes=FALSE)
-      lines(pred1[, 1], pred1[, 3], col=col, lwd=1)
-      lines(pred1[, 1], pred1[, 4], col=col, lwd=1)
+
+      # Draw background ribbons
+      for (g_idx in seq_along(loop_list)) {
+        df_slice <- loop_list[[g_idx]]
+#        current_col <- col_vec[g_idx]
+        current_col <- lcol[g_idx]
+
+        ci_time <- as.numeric(df_slice[, 1])
+        l95     <- as.numeric(df_slice[, 3])
+        u95     <- as.numeric(df_slice[, 4])
+
+        xx_t <- c(ci_time, rev(ci_time))
+        yy_t <- c(l95, rev(u95))
+
+        polygon(xx_t, yy_t,
+                col = adjustcolor(current_col, alpha.f = adj.alpha),
+                border = NA)
+      }
+
+      # Draw central prediction trend lines over polygons
+      for (g_idx in seq_along(loop_list)) {
+        df_slice <- loop_list[[g_idx]]
+        #current_col <- col_vec[g_idx]
+        current_col <- lcol[g_idx]
+
+        ci_time <- as.numeric(df_slice[, 1])
+        pred_y  <- as.numeric(df_slice[, 2])
+        l95     <- as.numeric(df_slice[, 3])
+        u95     <- as.numeric(df_slice[, 4])
+
+        lines(ci_time, pred_y, col=current_col, lwd=ifelse(is.null(lwd), 2, lwd))
+        lines(ci_time, l95, col=current_col, lwd=1, lty=2)
+        lines(ci_time, u95, col=current_col, lwd=1, lty=2)
+      }
+
       axis(side=1, cex.axis=cex.axis)
       axis(side=2, cex.axis=cex.axis)
       box()
 
-      ci_time <- pred1[, 1]
-      l95 <- pred1[, 3]
-      u95 <- pred1[, 4]
-      xx_t <- c(ci_time, rev(ci_time))
-      yy_t <- c(l95, rev(u95))
-      polygon(unlist(xx_t), unlist(yy_t), col = adjustcolor(col, alpha.f = adj.alpha),
-              border=adjustcolor(col, alpha.f = adj.alpha))
-      #Target line(s)
-      if(!is.null(tgt)) {
-        for (i in 1:length(tgt)) {
-          abline(h=tgt[i], lwd=lwd, col= tgtcol[1], lty=1)
-        }
+      if (!is.null(tgt)) {
+        for (i in 1:length(tgt)) abline(h=tgt[i], lwd=lwd, col=tgtcol, lty=1)
       }
     }
 
-  }  #end of function
+    # Add category legend if parsing a multi-series slice
+    if(is.null(add.legend) ){
+      add.legend <- "topright"
+    }
+    if (is_list_output || length(loop_list) > 1) {
+      legend(x=add.legend, legend = names(loop_list), col = col, lty = 1,
+             bty = "n",lwd=cex.legend, cex=cex.legend, )
+    }
+  }
+
 
   if (model_type %in% c("ols", "poisson", "logistic", "coxph")) {
-    fncPredEach(  x=x, y=y,
-                  xlim = xlim,
-                  ylim = ylim,
-                  main = main_title,
-                  lwd = lwidth,
-                  col = lcol,
-                  adj.alpha = adj.alpha,
-                  tgt = tgt,
-                  tgtcol = tgtcol,
-                  cex = cex,
-                  cex.axis = cex.axis,
-                  cex.lab = cex.lab,
-                  cex.main = cex.main)
+    fncPredEach(x = x,
+                y = y, # e.g. c("hp", "lp", "cyl")
+                xlim = xlim,
+                ylim = ylim,
+                main = main_title,
+                lwd = lwidth,
+                col = lcol,
+                adj.alpha = adj.alpha,
+                tgt = tgt,
+                tgtcol = tgtcol,
+                cex = cex,
+                cex.axis = cex.axis,
+                cex.lab = cex.lab,
+                cex.main = cex.main,
+                add.legend=add.legend,
+                cex.legend=cex.legend)
+  }
 
-  } #end of partial prediction block
 
 }
 
