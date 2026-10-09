@@ -142,6 +142,12 @@ to the 97.5th percentiles and are held constant at the median values while the r
 variables. There are many options to modify the plot.
 }
 \examples{
+mtcars$cyl <- factor(mtcars$cyl)  # first convert 'cyl' into a factor
+mod1 <- assess(mpg ~ hp+ cyl, data=mtcars, regression="ols")  #run model
+plot(x=mod1, y="hp")  #select the 'hp' variable, default trend for linear predictor ('lp')
+# select 'hp', trend for linear predictor ('lp'), trends for each 'cyl' factor level
+plot(x=mod1, y=c("hp","lp", "cyl"), col=c("slategray", "red", "green"),
+add.legend="bottom", ylim=c(10, 30))
 am2 <- assess(formula= los ~ ., data=hosprog, intervention = "program",
 topcode =NULL, int.time="month", regression="none", treatment= 5,
 interrupt=c(5,9), did="two", its="two", newdata=TRUE, propensity=NULL)

@@ -77,6 +77,12 @@
 #' @seealso [assess()] for the 'assess' class object.
 #'
 #' @examples
+#' mtcars$cyl <- factor(mtcars$cyl)  # first convert 'cyl' into a factor
+#' mod1 <- assess(mpg ~ hp+ cyl, data=mtcars, regression="ols")  #run model
+#' plot(x=mod1, y="hp")  #select the 'hp' variable, default trend for linear predictor ('lp')
+#' # select 'hp', trend for linear predictor ('lp'), trends for each 'cyl' factor level
+#' plot(x=mod1, y=c("hp","lp", "cyl"), col=c("slategray", "red", "green"),
+#' add.legend="bottom", ylim=c(10, 30))
 #' am2 <- assess(formula= los ~ ., data=hosprog, intervention = "program",
 #' topcode =NULL, int.time="month", regression="none", treatment= 5,
 #' interrupt=c(5,9), did="two", its="two", newdata=TRUE, propensity=NULL)
@@ -3381,8 +3387,8 @@ if(length(y) == 1 && y == "ITS") {
                           cex.axis = NULL,
                           cex.lab = NULL,
                           cex.main = NULL,
-                          add.legend=NULL,
-                          cex.legend=NULL) {
+                          add.legend = NULL,
+                          cex.legend = NULL) {
     # Assign objects
     model <- x$model
 
@@ -3456,28 +3462,37 @@ if(length(y) == 1 && y == "ITS") {
       loop_list <- pred_data
     }
 
-    # Safe Interleaved Layer Split
+    # Extract first dataframe to securely inspect the target vector data class type
+    temp_df <- as.data.frame(loop_list[[1]])
+    is_discrete_target <- is.factor(temp_df[[1]]) || is.character(temp_df[[1]]) || is.logical(temp_df[[1]])
+
+    # Protect, isolate unique rows, and split interleaved repeating datasets safely
     final_loop_list <- list()
     for (name in names(loop_list)) {
       df <- as.data.frame(loop_list[[name]])
-      col1_vals <- as.numeric(df[, 1])
 
-      if (any(duplicated(col1_vals))) {
-        num_layers <- sum(col1_vals == col1_vals[1])
-        for (k in 1:num_layers) {
-          sub_df <- df[seq(k, nrow(df), by = num_layers), , drop = FALSE]
-          sub_df <- sub_df[order(as.numeric(sub_df[, 1])), , drop = FALSE]
-          final_loop_list[[paste(name, "Layer", k)]] <- sub_df
-        }
+      # CRUCIAL MULTI-FACTOR CATEGORICAL FIX:
+      # If the target predictor column is discrete, collapse it to unique factor rows only
+      if (is_discrete_target) {
+        final_loop_list[[name]] <- df[!duplicated(df[[1]]), , drop = FALSE]
       } else {
-        df <- df[order(col1_vals), , drop = FALSE]
-        final_loop_list[[name]] = df
+        col1_vals <- as.numeric(df[[1]])
+        if (any(duplicated(col1_vals))) {
+          num_layers <- sum(col1_vals == col1_vals[1])
+          for (k in 1:num_layers) {
+            sub_df <- df[seq(k, nrow(df), by = num_layers), , drop = FALSE]
+            sub_df <- sub_df[order(as.numeric(sub_df[[1]])), , drop = FALSE]
+            final_loop_list[[paste(name, "Layer", k)]] <- sub_df
+          }
+        } else {
+          df <- df[order(col1_vals), , drop = FALSE]
+          final_loop_list[[name]] <- df
+        }
       }
     }
     loop_list <- final_loop_list
 
-    # CRUCIAL BASELINE ISOLATION FIX:
-    # If the user did NOT request a categorical split, only keep the first reference layer.
+    # If the user did NOT request a categorical split, only keep the first reference layer
     if (!is_list_output && length(loop_list) > 1) {
       loop_list <- loop_list[1]
     }
@@ -3486,22 +3501,24 @@ if(length(y) == 1 && y == "ITS") {
     first_df <- loop_list[[1]]
     xlab_name <- colnames(first_df)[1]
 
-    # Determine if it is a factor or continuous variable using Column 1
-    target_vector <- first_df[, 1]
-    if (is.factor(target_vector) || is.character(target_vector) || is.logical(target_vector)) {
+    # Determine if it is a factor or continuous variable
+    if (is_discrete_target) {
       factor_variable <- 1
     } else {
       factor_variable <- 0
     }
 
     # Set up color mapping vectors
-#    if (is.null(col)) col <- c("black", "blue", "red", "darkgreen", "purple", "orange")
-#    col_vec <- rep(col, length.out = length(loop_list))
+    if (is.null(col)) {
+      col_vec <- rep("black", length.out = length(loop_list))
+    } else {
+      col_vec <- rep(col, length.out = length(loop_list))
+    }
 
     # Enforce alpha baseline transparency configuration fallback
-#    if (is.null(adj.alpha)) {
-#      adj.alpha <- 0.15
-#    }
+    if (is.null(adj.alpha)) {
+      adj.alpha <- 0.15
+    }
 
     ###################
     ### Make Graphs ###
@@ -3523,8 +3540,7 @@ if(length(y) == 1 && y == "ITS") {
 
       for (g_idx in seq_along(loop_list)) {
         df_slice <- loop_list[[g_idx]]
-#        current_col <- col_vec[g_idx]
-        current_col <- lcol[g_idx]
+        current_col <- col_vec[g_idx]
         j_offset <- if(length(loop_list) > 1) (g_idx - (length(loop_list)+1)/2) * 0.1 else 0
 
         for (i in 1:nrow(df_slice)) {
@@ -3566,11 +3582,10 @@ if(length(y) == 1 && y == "ITS") {
            xlab= xlab_name, ylab= ylab_name, main=main,
            cex=cex, cex.lab=cex.lab, cex.main=cex.main, axes=FALSE)
 
-      # Draw background ribbons
+      # Draw background ribbons first
       for (g_idx in seq_along(loop_list)) {
         df_slice <- loop_list[[g_idx]]
-#        current_col <- col_vec[g_idx]
-        current_col <- lcol[g_idx]
+        current_col <- col_vec[g_idx]
 
         ci_time <- as.numeric(df_slice[, 1])
         l95     <- as.numeric(df_slice[, 3])
@@ -3584,11 +3599,10 @@ if(length(y) == 1 && y == "ITS") {
                 border = NA)
       }
 
-      # Draw central prediction trend lines over polygons
+      # Draw central prediction trend lines over ribbons
       for (g_idx in seq_along(loop_list)) {
         df_slice <- loop_list[[g_idx]]
-        #current_col <- col_vec[g_idx]
-        current_col <- lcol[g_idx]
+        current_col <- col_vec[g_idx]
 
         ci_time <- as.numeric(df_slice[, 1])
         pred_y  <- as.numeric(df_slice[, 2])
@@ -3609,13 +3623,23 @@ if(length(y) == 1 && y == "ITS") {
       }
     }
 
-    # Add category legend if parsing a multi-series slice
-    if(is.null(add.legend) ){
-      add.legend <- "topright"
+    # ROBUST LEGEND EXTRACTION
+    show_legend <- FALSE
+    legend_pos <- "topright"
+
+    if (!is.null(add.legend)) {
+      if (is.character(add.legend)) {
+        show_legend <- TRUE
+        legend_pos <- add.legend
+      } else if (is.logical(add.legend) && add.legend == TRUE) {
+        show_legend <- TRUE
+      }
     }
-    if (is_list_output || length(loop_list) > 1) {
-      legend(x=add.legend, legend = names(loop_list), col = col, lty = 1,
-             bty = "n",lwd=cex.legend, cex=cex.legend, )
+
+    if (show_legend && (is_list_output || length(loop_list) > 1)) {
+      l_cex <- if (is.null(cex.legend)) 1 else cex.legend
+      legend(x = legend_pos, legend = names(loop_list), col = col_vec,
+             lty = 1, lwd = 2, bty = "n", cex = l_cex)
     }
   }
 
