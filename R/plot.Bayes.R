@@ -163,7 +163,7 @@
 #' @importFrom graphics lines plot abline points text arrows hist layout matplot mtext plot.new
 #' @importFrom utils head tail
 #' @importFrom methods is
-#' @importFrom stats lm acf cor dgamma dlnorm dnorm dt dweibull pbeta pgamma plnorm pnorm pweibull qbeta qgamma qlnorm qweibull runif qchisq df
+#' @importFrom stats lm acf cor dgamma dlnorm dnorm dt dweibull pbeta pgamma plnorm pnorm pweibull qbeta qgamma qlnorm qweibull runif qchisq df dbeta dpois
 #' @export
 #'
 #' @seealso [Bayes()] for the 'Bayes' class object.
@@ -365,9 +365,9 @@ plot.Bayes <- function(x, y=NULL, type="n", parameter=NULL, center="mode", mass=
     }
   }
   if(y== "check") {
-    if(type %in% c('n', 'ln', 'sn', 'w', 'g', 't')) {
+    if(type %in% c('n', 'ln', 'sn', 'w', 'g', 't','b','p')) {
       if (any(sapply(list(x, parameter, data, dv), is.null))) {
-      stop("Error: Expecting that the 'x', 'parameter', 'data', and 'dv' arguments are not NULL when y='check' and type= 'n', 'ln', 'sn', 'w', 'g', or 't'. Please include those missing argument entries.")
+      stop("Error: Expecting that the 'x', 'parameter', 'data', and 'dv' arguments are not NULL when y='check' and type= 'n', 'ln', 'sn', 'w', 'g', 't','p', or 'b'. Please include those missing argument entries.")
     }
   }
   }
@@ -938,6 +938,19 @@ if(y== "target") {
       if (Distribution == "t") {
         lines( xComb ,
                dt( xComb, df= MC.Chain[chnIdx, MCnu], ncp= MC.Chain[chnIdx, Mean.Var] ),
+               col= Line.Color, lwd=lwd )
+      }
+      #beta Distribution
+      if (Distribution == "b") {
+        lines( xComb ,
+               dbeta( xComb, shape1=MC.Chain[chnIdx, Mean.Var], shape2=MC.Chain[chnIdx, SD.Var], log = FALSE ),
+               col= Line.Color, lwd=lwd )
+      }
+      #Poisson Distribution
+      if (Distribution == "p") {
+        xCom2 <- seq(floor( range(xComb)[1] ), ceiling( range(xComb)[2]  )) #dpois() demands integers, returns integers
+        lines( xCom2 ,
+               dpois( xCom2, lambda=MC.Chain[chnIdx, Mean.Var], log = FALSE),
                col= Line.Color, lwd=lwd )
       }
       #Add points
@@ -2119,6 +2132,22 @@ if(y == "check") {
                                     Max.Val=vlim[2], Round.Digits=round.c, Point.Loc= xpt, PCol=pcol,
                                     Leg.Loc= add.legend, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
                                     cex.axis=cex.axis, legend=legend, cex.legend=cex.legend, lwd=lwd, Y.Lab=ylab ),
+         "b" = fncGrpPostPredCheck(MCMC=MCMC, datFrm=data, Outcome=dv, Group=group[[1]],
+                                   Group.Level=group[[2]], Mean.Var=parameter[1], SD.Var=parameter[2],
+                                   MCnu=NULL, Distribution=type, Num.Lines=pline,
+                                   Main.Title=main, X.Lab=xlab, Bar.Color=bcol,
+                                   Line.Color=lcol, Hist.Breaks=breaks, X.Lim=xlim, Y.Lim=ylim,  Min.Val=vlim[1],
+                                   Max.Val=vlim[2], Round.Digits=round.c, Point.Loc= xpt, PCol=pcol,
+                                   Leg.Loc= add.legend, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
+                                   cex.axis=cex.axis, legend=legend, cex.legend=cex.legend, lwd=lwd, Y.Lab=ylab ),
+         "p" = fncGrpPostPredCheck(MCMC=MCMC, datFrm=data, Outcome=dv, Group=group[[1]],
+                                   Group.Level=group[[2]], Mean.Var=parameter[1], SD.Var=parameter[2],
+                                   MCnu=NULL, Distribution=type, Num.Lines=pline,
+                                   Main.Title=main, X.Lab=xlab, Bar.Color=bcol,
+                                   Line.Color=lcol, Hist.Breaks=breaks, X.Lim=xlim, Y.Lim=ylim,  Min.Val=vlim[1],
+                                   Max.Val=vlim[2], Round.Digits=round.c, Point.Loc= xpt, PCol=pcol,
+                                   Leg.Loc= add.legend, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
+                                   cex.axis=cex.axis, legend=legend, cex.legend=cex.legend, lwd=lwd, Y.Lab=ylab ),
          "taov" = fncPlotMcANOVA(MCMC=MCMC, datFrm=data, yName=dv, xName=iv[1],
                                   MCmean=parameter[1], MCsigma=parameter[2], MCnu=parameter[3],
                                   Num.Lines=pline, Main.Title=main, X.Lab=xlab,
