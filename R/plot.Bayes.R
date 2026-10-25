@@ -1222,6 +1222,19 @@ if(y== "target") {
                  dt( xComb, df= MC.Chain[chnIdx, MCnu], ncp= MC.Chain[chnIdx, Mean.Var] ),
                  col= Line.Color, lwd=lwd )
         }
+        #Poisson Distribution
+        if (Distribution == "p") {
+          xCom2 <- seq(floor( range(xComb)[1] ), ceiling( range(xComb)[2]  )) #dpois() demands integers, returns integers          lines( xComb ,
+          lines( xCom2 ,
+                 dpois( xCom2, lambda=MC.Chain[chnIdx, Mean.Var], log = FALSE),
+                 col= Line.Color, lwd=lwd )
+        }
+        #Beta Distribution
+        if (Distribution == "b") {
+          lines( xComb ,
+                 dbeta( xComb, shape1=MC.Chain[chnIdx, Mean.Var], shape2=MC.Chain[chnIdx, SD.Var] ),
+                 col= Line.Color, lwd=lwd )
+        }
       }
     }  #end of sub-function
 
@@ -2277,7 +2290,23 @@ if(y == "check") {
                                      Line.Color=lcol, Hist.Breaks=breaks, X.Lim=xlim, Y.Lim=ylim,  Min.Val=vlim[1],
                                      Max.Val=vlim[2], Round.Digits=round.c, Point.Loc= xpt, PCol=pcol,
                                      Leg.Loc= add.legend, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
-                                     cex.axis=cex.axis, legend=legend, cex.legend=cex.legend, lwd=lwd, Y.Lab=ylab )
+                                     cex.axis=cex.axis, legend=legend, cex.legend=cex.legend, lwd=lwd, Y.Lab=ylab ),
+           "p" = fncGrpPostPredCheckVar(MCMC=MCMC, datFrm=data, Outcome=dv, Group=group[[1]],
+                                        Group.Level=group[[2]], parameter=parameter,
+                                        Distribution=type, Num.Lines=pline,
+                                        Main.Title=main, X.Lab=xlab, Bar.Color=bcol,
+                                        Line.Color=lcol, Hist.Breaks=breaks, X.Lim=xlim, Y.Lim=ylim,  Min.Val=vlim[1],
+                                        Max.Val=vlim[2], Round.Digits=round.c, Point.Loc= xpt, PCol=pcol,
+                                        Leg.Loc= add.legend, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
+                                        cex.axis=cex.axis, legend=legend, cex.legend=cex.legend, lwd=lwd, Y.Lab=ylab ),
+           "b" = fncGrpPostPredCheckVar(MCMC=MCMC, datFrm=data, Outcome=dv, Group=group[[1]],
+                                        Group.Level=group[[2]], parameter=parameter,
+                                        Distribution=type, Num.Lines=pline,
+                                        Main.Title=main, X.Lab=xlab, Bar.Color=bcol,
+                                        Line.Color=lcol, Hist.Breaks=breaks, X.Lim=xlim, Y.Lim=ylim,  Min.Val=vlim[1],
+                                        Max.Val=vlim[2], Round.Digits=round.c, Point.Loc= xpt, PCol=pcol,
+                                        Leg.Loc= add.legend, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
+                                        cex.axis=cex.axis, legend=legend, cex.legend=cex.legend, lwd=lwd, Y.Lab=ylab )
     )
   }
 ## Multilevel summary ##
