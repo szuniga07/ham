@@ -64,16 +64,16 @@
 autocorrelation factor, density plots on chain convergence, Gelman-Rubin statistic, and traceplot), posterior predictive
 check, multilevel or hierarchical model summary (up to 3 levels), or target summary plots. When y="vary", it allows multiple
 posterior predictive check lines for various parameters over observed data. This produces a modified version of y="check" for continuous
-outcomes when 'type' is one of the following: 'n', 'ln', 'sn', 'w', 'g', 't'. This was created for a variation analysis, assessed with a
+outcomes when 'type' is one of the following: 'n', 'ln', 'sn', 'w', 'g', 't', 'p', 'b'. This was created for a variation analysis, assessed with a
 Bayesian DID model of the variance (i.e., 'spread') parameter. 'vary' works for parameters that represent the 'average' (i.e.,
 center) or basically whenever you would like to have multiple posterior predictive check lines in the same graph. Default is 'post'.}
 
 \item{type}{character vector of length == 1 that indicates the likelihood function used in the model when y='check' or y='multi'.
 Posterior predictive checks allow us to see how well our estimates match the observed data. These checks are
 available for Bayesian estimation of outcomes and regression trend lines (with polynomial terms) using various distributions in the
-likelihood function. Select 'n', 'ln', 'sn', 'w', 'g', 't', 'taov', 'taov1', 'ol', 'oq','oc', 'lnl', 'lnq', 'lnc',
+likelihood function. Select 'n', 'ln', 'sn', 'w', 'g', 'p', 'b', 't', 'taov', 'taov1', 'ol', 'oq','oc', 'lnl', 'lnq', 'lnc',
 'logl', 'logq', 'logc', 'bern', and 'bin' for these respective options in Bayesian estimation (multilevel): 'Normal', 'Log-normal',
-'Skew-normal', 'Weibull', 'Gamma', 't', 't: ANOVA, side view', 't: ANOVA 1 group, side view'; and for regression trend lines:
+'Skew-normal', 'Weibull', 'Gamma', 'Poisson', 'Beta' 't', 't: ANOVA, side view', 't: ANOVA 1 group, side view'; and for regression trend lines:
 'OLS: Linear', 'OLS: Quadratic', 'OLS: Cubic', 'Log-normal: Linear', 'Log-normal: Quadratic', 'Log-normal: Cubic',
 'Logistic: Linear', 'Logistic: Quadratic', and 'Logistic: Cubic', 'Bernoulli', and 'binomial'. The first 8 selections are for Bayesian
 estimation of outcomes, the next 9 options were developed to assess regression trend lines from ordinary least squares (OLS),
@@ -85,8 +85,8 @@ for log-normal and Poisson models with lines based on exponentiated values. In g
 may not be on the same scale as the parameter estimates and may not be automatically visible in the graph (i.e., x and y-axis
 limits may help). When graphing target summary plots that use posterior predictive checks rather than the basic posterior
 summary graph (plots target values over the parameter estimate of the center such as the mean), enter y='target' and other
-arguments relevant to y='check'. However, type= 'bern', 'bin', 'sn' are not available but type='n', 'ln', 'w', 'g', or 't' are
-available. When y='vary', select 'n', 'ln', 'sn', 'w', 'g', or 't'. Default is NULL.}
+arguments relevant to y='check'. However, type= 'bern', 'bin', 'sn' are not available but type='n', 'ln', 'w', 'g', 't', 'p', 'b' are
+available. When y='vary', select 'n', 'ln', 'sn', 'w', 'g', 't', 'p', 'b'. Default is NULL.}
 
 \item{parameter}{a character vector of length >= 1 or a 2 element list with the name(s) of parameter in MCMC chains to produce
 summary statistics. Use a 1 element vector to get posterior estimates of a single parameter. Use a 2 or more element vector

@@ -13,15 +13,15 @@
 #' autocorrelation factor, density plots on chain convergence, Gelman-Rubin statistic, and traceplot), posterior predictive
 #' check, multilevel or hierarchical model summary (up to 3 levels), or target summary plots. When y="vary", it allows multiple
 #' posterior predictive check lines for various parameters over observed data. This produces a modified version of y="check" for continuous
-#' outcomes when 'type' is one of the following: 'n', 'ln', 'sn', 'w', 'g', 't'. This was created for a variation analysis, assessed with a
+#' outcomes when 'type' is one of the following: 'n', 'ln', 'sn', 'w', 'g', 't', 'p', 'b'. This was created for a variation analysis, assessed with a
 #' Bayesian DID model of the variance (i.e., 'spread') parameter. 'vary' works for parameters that represent the 'average' (i.e.,
 #' center) or basically whenever you would like to have multiple posterior predictive check lines in the same graph. Default is 'post'.
 #' @param type character vector of length == 1 that indicates the likelihood function used in the model when y='check' or y='multi'.
 #' Posterior predictive checks allow us to see how well our estimates match the observed data. These checks are
 #' available for Bayesian estimation of outcomes and regression trend lines (with polynomial terms) using various distributions in the
-#' likelihood function. Select 'n', 'ln', 'sn', 'w', 'g', 't', 'taov', 'taov1', 'ol', 'oq','oc', 'lnl', 'lnq', 'lnc',
+#' likelihood function. Select 'n', 'ln', 'sn', 'w', 'g', 'p', 'b', 't', 'taov', 'taov1', 'ol', 'oq','oc', 'lnl', 'lnq', 'lnc',
 #' 'logl', 'logq', 'logc', 'bern', and 'bin' for these respective options in Bayesian estimation (multilevel): 'Normal', 'Log-normal',
-#' 'Skew-normal', 'Weibull', 'Gamma', 't', 't: ANOVA, side view', 't: ANOVA 1 group, side view'; and for regression trend lines:
+#' 'Skew-normal', 'Weibull', 'Gamma', 'Poisson', 'Beta' 't', 't: ANOVA, side view', 't: ANOVA 1 group, side view'; and for regression trend lines:
 #' 'OLS: Linear', 'OLS: Quadratic', 'OLS: Cubic', 'Log-normal: Linear', 'Log-normal: Quadratic', 'Log-normal: Cubic',
 #' 'Logistic: Linear', 'Logistic: Quadratic', and 'Logistic: Cubic', 'Bernoulli', and 'binomial'. The first 8 selections are for Bayesian
 #' estimation of outcomes, the next 9 options were developed to assess regression trend lines from ordinary least squares (OLS),
@@ -33,8 +33,8 @@
 #' may not be on the same scale as the parameter estimates and may not be automatically visible in the graph (i.e., x and y-axis
 #' limits may help). When graphing target summary plots that use posterior predictive checks rather than the basic posterior
 #' summary graph (plots target values over the parameter estimate of the center such as the mean), enter y='target' and other
-#' arguments relevant to y='check'. However, type= 'bern', 'bin', 'sn' are not available but type='n', 'ln', 'w', 'g', or 't' are
-#' available. When y='vary', select 'n', 'ln', 'sn', 'w', 'g', or 't'. Default is NULL.
+#' arguments relevant to y='check'. However, type= 'bern', 'bin', 'sn' are not available but type='n', 'ln', 'w', 'g', 't', 'p', 'b' are
+#' available. When y='vary', select 'n', 'ln', 'sn', 'w', 'g', 't', 'p', 'b'. Default is NULL.
 #' @param parameter a character vector of length >= 1 or a 2 element list with the name(s) of parameter in MCMC chains to produce
 #' summary statistics. Use a 1 element vector to get posterior estimates of a single parameter. Use a 2 or more element vector
 #' to estimate the average joint effects of multiple parameters (e.g., average infection rate for interventions A and B when
@@ -518,6 +518,12 @@ if(y== "target") {
     decreasing <- decreasing
   } else {
     decreasing <- FALSE
+  }
+#alphaetical order
+  if(!is.null(aorder)) {
+    aorder <- aorder
+  } else {
+    aorder <- TRUE
   }
 
   ####################
@@ -1053,6 +1059,19 @@ if(y== "target") {
       if (Distribution == "t") {
         lines( xComb ,
                dt( xComb, df= MC.Chain[chnIdx, MCnu], ncp= MC.Chain[chnIdx, Mean.Var] ),
+               col= Line.Color, lwd=lwd )
+      }
+      #beta Distribution
+      if (Distribution == "b") {
+        lines( xComb ,
+               dbeta( xComb, shape1=MC.Chain[chnIdx, Mean.Var], shape2=MC.Chain[chnIdx, SD.Var], log = FALSE ),
+               col= Line.Color, lwd=lwd )
+      }
+      #Poisson Distribution
+      if (Distribution == "p") {
+        xCom2 <- seq(floor( range(xComb)[1] ), ceiling( range(xComb)[2]  )) #dpois() demands integers, returns integers
+        lines( xCom2 ,
+               dpois( xCom2, lambda=MC.Chain[chnIdx, Mean.Var], log = FALSE),
                col= Line.Color, lwd=lwd )
       }
       #Add points
@@ -2154,7 +2173,7 @@ if(y == "check") {
                                    Leg.Loc= add.legend, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
                                    cex.axis=cex.axis, legend=legend, cex.legend=cex.legend, lwd=lwd, Y.Lab=ylab ),
          "p" = fncGrpPostPredCheck(MCMC=MCMC, datFrm=data, Outcome=dv, Group=group[[1]],
-                                   Group.Level=group[[2]], Mean.Var=parameter[1], SD.Var=parameter[2],
+                                   Group.Level=group[[2]], Mean.Var=parameter[1], SD.Var=NULL,
                                    MCnu=NULL, Distribution=type, Num.Lines=pline,
                                    Main.Title=main, X.Lab=xlab, Bar.Color=bcol,
                                    Line.Color=lcol, Hist.Breaks=breaks, X.Lim=xlim, Y.Lim=ylim,  Min.Val=vlim[1],
@@ -2430,7 +2449,23 @@ if(y == "check") {
                                      Line.Color=lcol, Hist.Breaks=breaks, X.Lim=xlim, Y.Lim=ylim,  Min.Val=vlim[1],
                                      Max.Val=vlim[2], Round.Digits=round.c, Point.Loc= xpt, PCol=pcol,
                                      Leg.Loc= add.legend, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
-                                     cex.axis=cex.axis, legend=legend, cex.legend=cex.legend, lwd=lwd, Y.Lab=ylab )
+                                     cex.axis=cex.axis, legend=legend, cex.legend=cex.legend, lwd=lwd, Y.Lab=ylab ),
+           "b" = fncGrpPostPredCheckTarget(MCMC=MCMC, datFrm=data, Outcome=dv, Group=group[[1]],
+                                           Group.Level=group[[2]], Mean.Var=parameter[1], SD.Var=parameter[2],
+                                           MCnu=NULL, Distribution=type, Num.Lines=pline,
+                                           Main.Title=main, X.Lab=xlab, Bar.Color=bcol,
+                                           Line.Color=lcol, Hist.Breaks=breaks, X.Lim=xlim, Y.Lim=ylim,  Min.Val=vlim[1],
+                                           Max.Val=vlim[2], Round.Digits=round.c, Point.Loc= xpt, PCol=pcol,
+                                           Leg.Loc= add.legend, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
+                                           cex.axis=cex.axis, legend=legend, cex.legend=cex.legend, lwd=lwd, Y.Lab=ylab ),
+           "p" = fncGrpPostPredCheckTarget(MCMC=MCMC, datFrm=data, Outcome=dv, Group=group[[1]],
+                                           Group.Level=group[[2]], Mean.Var=parameter[1], SD.Var=NULL,
+                                           MCnu=NULL, Distribution=type, Num.Lines=pline,
+                                           Main.Title=main, X.Lab=xlab, Bar.Color=bcol,
+                                           Line.Color=lcol, Hist.Breaks=breaks, X.Lim=xlim, Y.Lim=ylim,  Min.Val=vlim[1],
+                                           Max.Val=vlim[2], Round.Digits=round.c, Point.Loc= xpt, PCol=pcol,
+                                           Leg.Loc= add.legend, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
+                                           cex.axis=cex.axis, legend=legend, cex.legend=cex.legend, lwd=lwd, Y.Lab=ylab )
     )
   }
 }

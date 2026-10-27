@@ -51,9 +51,10 @@ the null hypothesis value of 0.50. We can accept the null hypothesis if the enti
 it will return the list object of MCMC chains, converted into a data frame. This data is used for analysis and
 all plots. Please select newdata=TRUE to produce any graphs but not needed when y='multi'. The default is newdata=FALSE.}
 
-\item{type}{character vector of length == 1 that indicates the likelihood function used in the model when y='multi' or y='target'.
-Select 'n', 'ln', 'w', 'g', 't', 'bern', and 'bin' for these respective options in Bayesian estimation (multilevel):
-'Normal', 'Log-normal', 'Weibull', 'Gamma', 't', 'Bernoulli', or 'binomial'. Default is NULL.}
+\item{type}{character vector of length == 1 that indicates the likelihood function used in the model when y='multi' or
+y='target'. Select 'n', 'ln', 'w', 'g', 't', 'p', 'b', 'bern', and 'bin' for these respective options in Bayesian
+estimation (multilevel): 'Normal', 'Log-normal', 'Weibull', 'Gamma', 't', 'Poisson', 'Beta', 'Bernoulli', or 'Binomial'.
+Default is NULL.}
 
 \item{center}{character vector that selects the type of central tendency to use when reporting parameter values when
 y='post', y='target', or y='r2'. Choices include: 'mean', 'median', and 'mode' when y='post', or 'mean' and
@@ -89,7 +90,7 @@ about the effort needed to meet this target of a reduced readmission rate. And a
 as a 'small effect', but substantial, the Cohen's h effect size of 0.20 indicates that this is met when comparing targets of
 0.50 vs 0.40. For list elements 'p' and 'y, selecting 2 values will result in the intervals between the values in the form of
 the object 'High.Low.Interval'. When there are more than 2 listed values, the interval is between the lowest and highest values.
-Select type= one of these options: 'n', 'ln', 'w', 'g', 't', 'bern', 'bin'. Also select parameter= the appropriate center, spread,
+Select type= one of these options: 'n', 'ln', 'w', 'g', 't', 'p', 'b', 'bern', 'bin'. Also select parameter= the appropriate center, spread,
 and possible 3rd shape distribution parameter (e.g., parameter=c('mean', 'sd')). And option to select center= 'mean', 'median',
 'mode'. Default is NULL.}
 }

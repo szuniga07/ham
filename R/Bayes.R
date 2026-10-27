@@ -31,9 +31,10 @@
 #' @param newdata optional logical vector that indicates if you want the new MCMC data returned. When newdata=TRUE,
 #' it will return the list object of MCMC chains, converted into a data frame. This data is used for analysis and
 #' all plots. Please select newdata=TRUE to produce any graphs but not needed when y='multi'. The default is newdata=FALSE.
-#' @param type character vector of length == 1 that indicates the likelihood function used in the model when y='multi' or y='target'.
-#' Select 'n', 'ln', 'w', 'g', 't', 'bern', and 'bin' for these respective options in Bayesian estimation (multilevel):
-#' 'Normal', 'Log-normal', 'Weibull', 'Gamma', 't', 'Bernoulli', or 'binomial'. Default is NULL.
+#' @param type character vector of length == 1 that indicates the likelihood function used in the model when y='multi' or
+#' y='target'. Select 'n', 'ln', 'w', 'g', 't', 'p', 'b', 'bern', and 'bin' for these respective options in Bayesian
+#' estimation (multilevel): 'Normal', 'Log-normal', 'Weibull', 'Gamma', 't', 'Poisson', 'Beta', 'Bernoulli', or 'Binomial'.
+#' Default is NULL.
 #' @param center character vector that selects the type of central tendency to use when reporting parameter values when
 #' y='post', y='target', or y='r2'. Choices include: 'mean', 'median', and 'mode' when y='post', or 'mean' and
 #' 'median' when y='r2'. Default is 'mode' when y='post' or 'target' and 'median' when y='r2'.
@@ -63,7 +64,7 @@
 #' as a 'small effect', but substantial, the Cohen's h effect size of 0.20 indicates that this is met when comparing targets of
 #' 0.50 vs 0.40. For list elements 'p' and 'y, selecting 2 values will result in the intervals between the values in the form of
 #' the object 'High.Low.Interval'. When there are more than 2 listed values, the interval is between the lowest and highest values.
-#' Select type= one of these options: 'n', 'ln', 'w', 'g', 't', 'bern', 'bin'. Also select parameter= the appropriate center, spread,
+#' Select type= one of these options: 'n', 'ln', 'w', 'g', 't', 'p', 'b', 'bern', 'bin'. Also select parameter= the appropriate center, spread,
 #' and possible 3rd shape distribution parameter (e.g., parameter=c('mean', 'sd')). And option to select center= 'mean', 'median',
 #' 'mode'. Default is NULL.
 
@@ -72,7 +73,7 @@
 #' within and outside of a ROPE, distribution compared with a set value, and the parameter's mean,
 #' median, and mode. And distribution summaries for multilevel models, target summaries, regression model
 #' R2, and MCMC diagnostics.
-#' @importFrom stats sd ar density median residuals var
+#' @importFrom stats sd ar density median residuals var ppois qpois
 #' @export
 #'
 #' @seealso [plot.Bayes()], [interpret()] for a plot and interpretation of the 'Bayes' class object.
@@ -896,8 +897,11 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL, eVal
   }
 
   #Shape and rate parameters using the mode values of omega and kappa
-  a_shape <- MC.Matrix[, Center] * (MC.Matrix[, Spread] - 2) + 1
-  b_shape <- (1 - MC.Matrix[, Center]) * (MC.Matrix[, Spread] - 2) + 1
+  #kermit
+  if(Distribution == "bin") {
+    a_shape <- MC.Matrix[, Center] * (MC.Matrix[, Spread] - 2) + 1
+    b_shape <- (1 - MC.Matrix[, Center]) * (MC.Matrix[, Spread] - 2) + 1
+  }
 
   ###################
   ## Mean for Beta ##
@@ -916,9 +920,9 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL, eVal
     mean_val_dist <- NA
   }
 
-  #######################
-  ## Beta distribution ##
-  #######################
+  ###########################
+  ## Bern/Bin distribution ##
+  ###########################
   ## Get summary ##
   # Proportion greater than Y
   PbetaGtY <- list()
@@ -1408,6 +1412,138 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL, eVal
     QGammaGtY <- QGammaGtY
   }
 
+  #######################
+  ## Beta distribution ##
+  #######################
+  ## Get summary ##
+  # Proportion greater than Y
+  PbetaGtY <- list()
+  if(!is.null(yVal)) {
+    if(length(yVal) > 1) {
+      if(Distribution == "b") {
+        for (i in 1:length(yVal)) {
+          PbetaGtY[[i]] <- summarizePost( pbeta(q=yVal[i], shape1= MC.Matrix[, Center],
+                                                shape2= MC.Matrix[, Spread], lower.tail=TRUE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+          PbetaGtY[[1 + length(yVal)]] <- summarizePost( abs(pbeta(q=yVal[length(yVal)], shape1= MC.Matrix[, Center], shape2= MC.Matrix[, Spread], lower.tail=TRUE) -
+                                                               pbeta(q=yVal[1], shape1= MC.Matrix[, Center], shape2= MC.Matrix[, Spread], lower.tail=TRUE)))[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+          names(PbetaGtY)[i] <- paste0("Y_", yVal[i])
+          names(PbetaGtY)[length(yVal) + 1] <- "High.Low.Interval"
+        }
+      }
+    } else {
+      if(Distribution == "b") {
+        for (i in 1:length(yVal)) {
+          PbetaGtY[[i]] <- summarizePost( pbeta(q=yVal[i], shape1= MC.Matrix[, Center],
+                                                shape2= MC.Matrix[, Spread], lower.tail=TRUE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+          names(PbetaGtY)[i] <- paste0("Y_", yVal[i])
+        }
+      }
+    }
+  }
+  # Quantiles of Y
+  QbetaGtY <- list()
+  if(!is.null(qVal)) {
+    if(length(qVal) > 1) {
+      if(Distribution == "b") {
+        for (i in 1:length(qVal)) {
+          QbetaGtY[[i]] <- summarizePost( qbeta(p=qVal[i], shape1= MC.Matrix[, Center],
+                                                shape2= MC.Matrix[, Spread]) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+          QbetaGtY[[1 + length(qVal)]] <- summarizePost( abs(qbeta(p=qVal[length(qVal)], shape1= MC.Matrix[, Center], shape2= MC.Matrix[, Spread]) -
+                                                               qbeta(p=qVal[1], shape1= MC.Matrix[, Center], shape2= MC.Matrix[, Spread]))
+          )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+          names(QbetaGtY)[i] <- paste0("Percentile_", qVal[i])
+          names(QbetaGtY)[length(qVal) + 1] <- "High.Low.Interval"
+        }
+      }
+    } else {
+      if(Distribution == "b") {
+        for (i in 1:length(qVal)) {
+          QbetaGtY[[i]] <- summarizePost( qbeta(p=qVal[i], shape1= MC.Matrix[, Center],
+                                                shape2= MC.Matrix[, Spread]) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+          names(QbetaGtY)[i] <- paste0("Percentile_", qVal[i])
+        }
+      }
+    }
+  }
+  #Return NAs for NULL objects
+  #probability
+  if (length(PbetaGtY)==0 ) {
+    PbetaGtY <- NA
+  } else {
+    PbetaGtY <- PbetaGtY
+  }
+  #quantile
+  if (length(QbetaGtY)==0 ) {
+    QbetaGtY <- NA
+  } else {
+    QbetaGtY <- QbetaGtY
+  }
+
+  ##########################
+  ## Poisson distribution ##
+  ##########################
+  ## Get summary ##
+  # Proportion greater than Y
+  PpoisGtY <- list()
+  if(!is.null(yVal)) {
+    if(length(yVal) > 1) {
+      if(Distribution == "p") {
+        for (i in 1:length(yVal)) {
+          PpoisGtY[[i]] <- summarizePost( ppois(q=yVal[i], lambda= MC.Matrix[, Center],
+                                                lower.tail=TRUE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+          PpoisGtY[[1 + length(yVal)]] <- summarizePost( abs(ppois(q=yVal[length(yVal)], lambda= MC.Matrix[, Center], lower.tail=TRUE) -
+                                                               ppois(q=yVal[1], lambda= MC.Matrix[, Center], lower.tail=TRUE)))[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+          names(PpoisGtY)[i] <- paste0("Y_", yVal[i])
+          names(PpoisGtY)[length(yVal) + 1] <- "High.Low.Interval"
+        }
+      }
+    } else {
+      if(Distribution == "p") {
+        for (i in 1:length(yVal)) {
+          PpoisGtY[[i]] <- summarizePost( ppois(q=yVal[i], lambda= MC.Matrix[, Center],
+                                                lower.tail=TRUE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+          names(PpoisGtY)[i] <- paste0("Y_", yVal[i])
+        }
+      }
+    }
+  }
+  # Quantiles of Y
+  QpoisGtY <- list()
+  if(!is.null(qVal)) {
+    if(length(qVal) > 1) {
+      if(Distribution == "p") {
+        for (i in 1:length(qVal)) {
+          QpoisGtY[[i]] <- summarizePost( qpois(p=qVal[i], lambda= MC.Matrix[, Center]))[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+          QpoisGtY[[1 + length(qVal)]] <- summarizePost( abs(qpois(p=qVal[length(qVal)], lambda= MC.Matrix[, Center]) -
+                                                               qpois(p=qVal[1], lambda= MC.Matrix[, Center]))
+          )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+          names(QpoisGtY)[i] <- paste0("Percentile_", qVal[i])
+          names(QpoisGtY)[length(qVal) + 1] <- "High.Low.Interval"
+        }
+      }
+    } else {
+      if(Distribution == "p") {
+        for (i in 1:length(qVal)) {
+          QpoisGtY[[i]] <- summarizePost( qpois(p=qVal[i], lambda= MC.Matrix[, Center]))[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+          names(QpoisGtY)[i] <- paste0("Percentile_", qVal[i])
+        }
+      }
+    }
+  }
+  #Return NAs for NULL objects
+  #probability
+  if (length(PpoisGtY)==0 ) {
+    PpoisGtY <- NA
+  } else {
+    PpoisGtY <- PpoisGtY
+  }
+  #quantile
+  if (length(QpoisGtY)==0 ) {
+    QpoisGtY <- NA
+  } else {
+    QpoisGtY <- QpoisGtY
+  }
+
   ######################################
   ## Create final distribution values ##
   ######################################
@@ -1432,6 +1568,12 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL, eVal
   }
   if (Distribution == "g") {
     PdisGtY <- PGammaGtY
+  }
+  if (Distribution == "b") {
+    PdisGtY <- PbetaGtY
+  }
+  if (Distribution == "p") {
+    PdisGtY <- PpoisGtY
   }
   #Make NA if the above weren't selected
   if (is.null(PdisGtY)) {
@@ -1458,6 +1600,12 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL, eVal
   }
   if (Distribution == "g") {
     QdisGtY <- QGammaGtY
+  }
+  if (Distribution == "b") {
+    QdisGtY <- QbetaGtY
+  }
+  if (Distribution == "p") {
+    QdisGtY <- QpoisGtY
   }
   #Make NA if the above weren't selected
   if (is.null(QdisGtY)) {
