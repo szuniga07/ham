@@ -861,7 +861,7 @@ interpret <- function(object, digits=NULL) {
         Y_targets_est <- NA
       }
       #Y interval
-      if(is.numeric(object$Target$Est.Prob.LT.Y["High.Low.Interval"])) {
+      if(is.numeric(object$Target$Est.Prob.LT.Y["High.Low.Interval"][[1]])) {
         Y_interval_est <- object$Target$Est.Prob.LT.Y$High.Low.Interval
       } else {
         Y_interval_est <- NA
@@ -872,7 +872,7 @@ interpret <- function(object, digits=NULL) {
         P_targets_est <- NA
       }
       #P interval
-      if(is.numeric(object$Target$Est.Quantile.P["High.Low.Interval"])) {
+      if(is.numeric(object$Target$Est.Quantile.P["High.Low.Interval"][[1]])) {
         P_interval_est <- object$Target$Est.Quantile.P$High.Low.Interval
       } else {
         P_interval_est <- NA
