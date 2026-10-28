@@ -294,6 +294,19 @@ plot.Bayes <- function(x, y=NULL, type="n", parameter=NULL, center="mode", mass=
                        pline=20, pct=95, add.legend=NULL, legend=NULL, cex=1, cex.lab=NULL, cex.axis=NULL, cex.main=NULL,
                        cex.text=NULL, cex.legend=NULL, HDItext=0.7, math="n", es="n",
                        subset=NULL, level=NULL, aorder=NULL, decreasing=NULL, round.c=2, ...) {
+  # -----------------------------------------------------------------
+  #             DEACTIVATE CODA NAMESPACE HIJACKING
+  # -----------------------------------------------------------------
+  # This safely removes coda's hidden S3 intercept keys from R's method
+  # lookup table for this session, forcing R to use pristine native code maps.
+  if (exists(".__S3MethodsTable__.", envir = baseenv())) {
+    coda_intercepts <- ls(envir = base::.__S3MethodsTable__., pattern = "mcmc|jags")
+    if (length(coda_intercepts) > 0) {
+      rm(list = coda_intercepts, envir = base::.__S3MethodsTable__.)
+    }
+  }
+  # -----------------------------------------------------------------
+
   if (any(class(x) == "Bayes") == FALSE) {stop("Error: Expecting Bayes class object." )}
   #Looking for 1 parameter name
   if(!center %in% c("mode","median","mean")) {
