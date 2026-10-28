@@ -897,7 +897,6 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL, eVal
   }
 
   #Shape and rate parameters using the mode values of omega and kappa
-  #kermit
   if(Distribution == "bin") {
     a_shape <- MC.Matrix[, Center] * (MC.Matrix[, Spread] - 2) + 1
     b_shape <- (1 - MC.Matrix[, Center]) * (MC.Matrix[, Spread] - 2) + 1
@@ -1482,6 +1481,43 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL, eVal
   ##########################
   ## Poisson distribution ##
   ##########################
+  # First are modified versions of Poisson ppois and qpois for linearly extrapolated values
+  fncQpois <- function(lambda, p) {
+    # 1. Get integers matching or exceeding p
+    q_high <- qpois(p, lambda)
+
+    # 2. Vectorized calculation for q_low (handles 0 limits cleanly)
+    q_low <- q_high - 1
+
+    # 3. Get outer cumulative probabilities
+    p_low <- ppois(q_low, lambda)
+    p_high <- ppois(q_high, lambda)
+
+    # 4. Correctly interpolate from the lower integer
+    q_val <- q_low + (p - p_low) / (p_high - p_low)
+
+    # 5. Use ifelse to handle instances where q_high was 0
+    return(ifelse(q_high == 0, 0, q_val))
+  }
+  fncPpois <- function(lambda, q) {
+    # 1. Split input into the lower whole number and the decimal fraction
+    q_low <- floor(q)
+    fraction <- q - q_low
+
+    # 2. For integers, return standard ppois
+    if (fraction == 0) {
+      return(ppois(q_low, lambda))
+    }
+
+    # 3. Get outer cumulative probabilities
+    p_low  <- ppois(q_low, lambda)
+    p_high <- ppois(q_low + 1, lambda)
+
+    # 4. Linearly interpolate using the size of the decimal fraction
+    p_val <- p_low + fraction * (p_high - p_low)
+    return(p_val)
+  }
+
   ## Get summary ##
   # Proportion greater than Y
   PpoisGtY <- list()
@@ -1489,10 +1525,9 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL, eVal
     if(length(yVal) > 1) {
       if(Distribution == "p") {
         for (i in 1:length(yVal)) {
-          PpoisGtY[[i]] <- summarizePost( ppois(q=yVal[i], lambda= MC.Matrix[, Center],
-                                                lower.tail=TRUE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
-          PpoisGtY[[1 + length(yVal)]] <- summarizePost( abs(ppois(q=yVal[length(yVal)], lambda= MC.Matrix[, Center], lower.tail=TRUE) -
-                                                               ppois(q=yVal[1], lambda= MC.Matrix[, Center], lower.tail=TRUE)))[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+          PpoisGtY[[i]] <- summarizePost( fncPpois(q=yVal[i], lambda= MC.Matrix[, Center]))[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+          PpoisGtY[[1 + length(yVal)]] <- summarizePost( abs(fncPpois(q=yVal[length(yVal)], lambda= MC.Matrix[, Center]) -
+                                                               fncPpois(q=yVal[1], lambda= MC.Matrix[, Center])))[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
           names(PpoisGtY)[i] <- paste0("Y_", yVal[i])
           names(PpoisGtY)[length(yVal) + 1] <- "High.Low.Interval"
         }
@@ -1500,8 +1535,7 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL, eVal
     } else {
       if(Distribution == "p") {
         for (i in 1:length(yVal)) {
-          PpoisGtY[[i]] <- summarizePost( ppois(q=yVal[i], lambda= MC.Matrix[, Center],
-                                                lower.tail=TRUE) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+          PpoisGtY[[i]] <- summarizePost( fncPpois(q=yVal[i], lambda= MC.Matrix[, Center]) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
           names(PpoisGtY)[i] <- paste0("Y_", yVal[i])
         }
       }
@@ -1513,9 +1547,9 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL, eVal
     if(length(qVal) > 1) {
       if(Distribution == "p") {
         for (i in 1:length(qVal)) {
-          QpoisGtY[[i]] <- summarizePost( qpois(p=qVal[i], lambda= MC.Matrix[, Center]))[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
-          QpoisGtY[[1 + length(qVal)]] <- summarizePost( abs(qpois(p=qVal[length(qVal)], lambda= MC.Matrix[, Center]) -
-                                                               qpois(p=qVal[1], lambda= MC.Matrix[, Center]))
+          QpoisGtY[[i]] <- summarizePost( fncQpois(p=qVal[i], lambda= MC.Matrix[, Center]))[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+          QpoisGtY[[1 + length(qVal)]] <- summarizePost( abs(fncQpois(p=qVal[length(qVal)], lambda= MC.Matrix[, Center]) -
+                                                               fncQpois(p=qVal[1], lambda= MC.Matrix[, Center]))
           )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
           names(QpoisGtY)[i] <- paste0("Percentile_", qVal[i])
           names(QpoisGtY)[length(qVal) + 1] <- "High.Low.Interval"
@@ -1524,7 +1558,7 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL, eVal
     } else {
       if(Distribution == "p") {
         for (i in 1:length(qVal)) {
-          QpoisGtY[[i]] <- summarizePost( qpois(p=qVal[i], lambda= MC.Matrix[, Center]))[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
+          QpoisGtY[[i]] <- summarizePost( fncQpois(p=qVal[i], lambda= MC.Matrix[, Center]))[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
           names(QpoisGtY)[i] <- paste0("Percentile_", qVal[i])
         }
       }
@@ -1913,6 +1947,25 @@ if(!is.null(dx_parameter)) {
   class(dx_parameter) <- c("Bayes", "Dx","ham", "list")
 }
 #Combine in list
+if (!is.null(target_list)) {
+  # This works if target_list is a vector or a list
+  for (i in 1:length(target_list)) {
+    # 1. Get a plain atomic vector
+    if (is.atomic(target_list) && !is.list(target_list)) {
+      target_list <- sort(target_list)
+      break # Sorted the whole vector, we can stop the loop
+    }
+    # 2. Get list elements: check if the item is atomic before sorting
+    if (is.atomic(target_list[[i]])) {
+      target_list[[i]] <- sort(target_list[[i]])
+    }
+    # 3. If it's a nested sub-list, get internal components
+    else if (is.list(target_list[[i]])) {
+      # Use lapply to sort only atomic vectors
+      target_list[[i]] <- lapply(target_list[[i]], function(x) if(is.atomic(x)) sort(x) else x)
+    }
+  }
+}
 z <- list(Posterior.Summary=Posterior.Summary, MCMC=MCMC, Multilevel=multi_smry,
           Target=target_list, R2.Summary=r2_smry, parameter=parameter, Diagnostics=dx_parameter)
 # Assign ham classes
