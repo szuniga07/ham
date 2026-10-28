@@ -18,6 +18,7 @@
 #' @param color the color to be used for points and labels when there are
 #' significant results. Default is 'red'.
 #' @param lcolor the color(s) to be used for the horizontal lines. Default is 'gray'.
+#' @param abbrv the minimum length of the character length for the coefficient name abbreviations. Default is 7.
 #' @param ... additional arguments.
 #'
 #' @return plot of variable importance, significant variables highlighted in red.
@@ -38,7 +39,10 @@
 #' # logistic regression
 #' plot(importance(assess(vs~mpg+wt+hp, data=mtcars, regression= "logistic")$model))
 plot.importance <- function(x, y, main=NULL, cex=NULL, pt.cex=NULL, pch=NULL,
-                            color=NULL, lcolor=NULL, ...) {
+                            color=NULL, lcolor=NULL, abbrv=NULL, ...) {
+  if(!is.null(abbrv)) {
+    if (is.numeric(abbrv) == FALSE) {stop("Error: Expecting 'abbrv' is a numeric class object." )}
+  }
   # Make default values #
   if (!is.null(color)) {  #label color
     color <- color
@@ -70,6 +74,12 @@ plot.importance <- function(x, y, main=NULL, cex=NULL, pt.cex=NULL, pch=NULL,
   } else {
     pch <- 19
   }
+  #Abbreviated row names
+  if(!is.null(abbrv)) {
+    abbrv <- abbrv
+  } else {
+    abbrv <- 7
+  }
 # main arguments #
 object <- x
   # Plotting objects
@@ -77,7 +87,7 @@ object <- x
   a_o <- order(chi2_df, decreasing = T)
   a_num <- chi2_df[a_o ]
   p_vals <- object[a_o, "p.value"]
-  chi2_labels <- object[, "X"][a_o]
+  chi2_labels <- abbreviate(object[, "X"][a_o], abbrv)
 
   # Create the dot chart
   graphics::dotchart(a_num, labels = chi2_labels, main = main,

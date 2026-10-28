@@ -64,7 +64,9 @@
 #' as a 'small effect', but substantial, the Cohen's h effect size of 0.20 indicates that this is met when comparing targets of
 #' 0.50 vs 0.40. For list elements 'p' and 'y, selecting 2 values will result in the intervals between the values in the form of
 #' the object 'High.Low.Interval'. When there are more than 2 listed values, the interval is between the lowest and highest values.
-#' Select type= one of these options: 'n', 'ln', 'w', 'g', 't', 'p', 'b', 'bern', 'bin'. Also select parameter= the appropriate center, spread,
+#' Select type= one of these options: 'n', 'ln', 'w', 'g', 't', 'p', 'b', 'bern', 'bin'. When type='bin', the returned 'Mean' value
+#' is calculated assuming that the model has an underlying likelihood function using the mode instead of the mean for the beta
+#' distribution. If not, the returned 'Mean' will be incorrect. Also select parameter= the appropriate center, spread,
 #' and possible 3rd shape distribution parameter (e.g., parameter=c('mean', 'sd')). And option to select center= 'mean', 'median',
 #' 'mode'. Default is NULL.
 

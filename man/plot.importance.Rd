@@ -13,6 +13,7 @@
   pch = NULL,
   color = NULL,
   lcolor = NULL,
+  abbrv = NULL,
   ...
 )
 }
@@ -35,6 +36,8 @@ not a multiple of par('cex').}
 significant results. Default is 'red'.}
 
 \item{lcolor}{the color(s) to be used for the horizontal lines. Default is 'gray'.}
+
+\item{abbrv}{the minimum length of the character length for the coefficient name abbreviations. Default is 7.}
 
 \item{...}{additional arguments.}
 }

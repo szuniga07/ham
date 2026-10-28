@@ -33,7 +33,7 @@
 #' may not be on the same scale as the parameter estimates and may not be automatically visible in the graph (i.e., x and y-axis
 #' limits may help). When graphing target summary plots that use posterior predictive checks rather than the basic posterior
 #' summary graph (plots target values over the parameter estimate of the center such as the mean), enter y='target' and other
-#' arguments relevant to y='check'. However, type= 'bern', 'bin', 'sn' are not available but type='n', 'ln', 'w', 'g', 't', 'p', 'b' are
+#' arguments relevant to y='check'. However, type= 'bern' and 'bin' are not available but type='n', 'ln', 'sn', 'w', 'g', 't', 'p', 'b' are
 #' available. When y='vary', select 'n', 'ln', 'sn', 'w', 'g', 't', 'p', 'b'. Default is NULL.
 #' @param parameter a character vector of length >= 1 or a 2 element list with the name(s) of parameter in MCMC chains to produce
 #' summary statistics. Use a 1 element vector to get posterior estimates of a single parameter. Use a 2 or more element vector
@@ -87,7 +87,9 @@
 #' lines along the x-axis. For example, when drawing a log-normal distribution, we may want to have our
 #' posterior lines fit within a narrower range while having our graph's x-axis limits extend past those lines.
 #' If so, the value limits (vlim) help us keep our posterior predictive check lines within desired limits.
-#' Default is NULL.
+#' When y='check', 'target', or 'vary' and type='b', may need to include vlim argument (e.g., vlim=c(0.0, 1.0))
+#' because the default x-axis might range from 1 to higher, depending on your data, while the beta distribution
+#' may have a 0 to 1 range. Default is NULL.
 #' @param curve select a curve to display instead of a histogram when y='post'. Default is FALSE.
 #' @param lwd select the line width.
 #' @param breaks number of breaks in a histogram. Default is 15.
