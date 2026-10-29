@@ -64,11 +64,12 @@
 #' as a 'small effect', but substantial, the Cohen's h effect size of 0.20 indicates that this is met when comparing targets of
 #' 0.50 vs 0.40. For list elements 'p' and 'y, selecting 2 values will result in the intervals between the values in the form of
 #' the object 'High.Low.Interval'. When there are more than 2 listed values, the interval is between the lowest and highest values.
-#' Select type= one of these options: 'n', 'ln', 'w', 'g', 't', 'p', 'b', 'bern', 'bin'. When type='bin', the returned 'Mean' value
-#' is calculated assuming that the model has an underlying likelihood function using the mode instead of the mean for the beta
-#' distribution. If not, the returned 'Mean' will be incorrect. Also select parameter= the appropriate center, spread,
-#' and possible 3rd shape distribution parameter (e.g., parameter=c('mean', 'sd')). And option to select center= 'mean', 'median',
-#' 'mode'. Default is NULL.
+#' Select type= one of these options: 'n', 'ln', 'w', 'g', 't', 'p', 'b', 'bern', 'bin'. Select parameter= the appropriate center,
+#' spread, and possible 3rd shape distribution parameter (e.g., parameter=c('mean', 'sd')). And the options to select center= 'mean',
+#' 'median', or 'mode'. When type='bin', the returned 'Mean' value is calculated assuming that the model has an underlying likelihood
+#' function using the mode instead of the mean for the beta distribution. If not, the returned 'Mean' will be incorrect. When type='p',
+#' linear interpolation is used to calculate returned probabilities and Y values at specific percentiles because ppois() and qpois()
+#' work for discrete integers in the Poisson distribution. Default is NULL.
 
 #' @return data frame of summary statistics for the MCMC parameter's distribution and/or MCMC data frame.
 #' Statistics include highest density interval, effective sample size, proportion of distribution
@@ -132,7 +133,6 @@
 #' print(bDx$Diagnostics$Monte.Carlo.Standard.Error)      #MCSE
 #' #Gelman-Rubin statistic (shrink factor) across various iterations of the chains
 #' print(bDx$Diagnostics$Shrink.Factor)                   #Shrink
-
 
 Bayes <- function(x, y="mcmc", parameter=NULL, mass=.95, compare=NULL,
                     rope=NULL, newdata=FALSE, type=NULL, center="mode",
