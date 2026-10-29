@@ -926,51 +926,51 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL, eVal
   ###########################
   ## Get summary ##
   # Proportion greater than Y
-  PbetaGtY <- list()
+  PBbetaGtY <- list()
   if(!is.null(yVal)) {
     if(length(yVal) > 1) {
     if(Distribution %in% c("bern", "bin")) {
       for (i in 1:length(yVal)) {        #replaced "1- pbeta" with "pbeta" to get p < X
-        PbetaGtY[[i]] <- summarizePost( pbeta(yVal[i], a_shape,
+        PBbetaGtY[[i]] <- summarizePost( pbeta(yVal[i], a_shape,
                                                  b_shape) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
-        PbetaGtY[[1 + length(yVal)]] <- summarizePost( abs((pbeta(yVal[length(yVal)], a_shape, b_shape)) -
+        PBbetaGtY[[1 + length(yVal)]] <- summarizePost( abs((pbeta(yVal[length(yVal)], a_shape, b_shape)) -
                                                        (pbeta(yVal[1], a_shape, b_shape)))    )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
-        names(PbetaGtY)[i] <- paste0("Y_", yVal[i])
-        names(PbetaGtY)[length(yVal) + 1] <- "High.Low.Interval"
+        names(PBbetaGtY)[i] <- paste0("Y_", yVal[i])
+        names(PBbetaGtY)[length(yVal) + 1] <- "High.Low.Interval"
       }
     }
     } else {
       if(Distribution %in% c("bern", "bin")) {
         for (i in 1:length(yVal)) {
-          PbetaGtY[[i]] <- summarizePost( pbeta(yVal[i], a_shape,
+          PBbetaGtY[[i]] <- summarizePost( pbeta(yVal[i], a_shape,
                                                    b_shape) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
-          names(PbetaGtY)[i] <- paste0("Y_", yVal[i])
+          names(PBbetaGtY)[i] <- paste0("Y_", yVal[i])
         }
       }
     }
   }
 
   # Quantiles of Y
-  QbetaGtY <- list()
+  QBbetaGtY <- list()
   if(!is.null(qVal)) {
     if(length(qVal) > 1) {
     if(Distribution %in% c("bern", "bin")) {
       for (i in 1:length(qVal)) {
-        QbetaGtY[[i]] <- summarizePost( qbeta(qVal[i], a_shape,
+        QBbetaGtY[[i]] <- summarizePost( qbeta(qVal[i], a_shape,
                                               b_shape) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
-        QbetaGtY[[1 + length(qVal)]] <- summarizePost( abs(qbeta(qVal[length(qVal)], a_shape, b_shape) -
+        QBbetaGtY[[1 + length(qVal)]] <- summarizePost( abs(qbeta(qVal[length(qVal)], a_shape, b_shape) -
                                                          qbeta(qVal[1], a_shape, b_shape))
                                            )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
-        names(QbetaGtY)[i] <- paste0("Percentile_", qVal[i])
-        names(QbetaGtY)[length(qVal) + 1] <- "High.Low.Interval"
+        names(QBbetaGtY)[i] <- paste0("Percentile_", qVal[i])
+        names(QBbetaGtY)[length(qVal) + 1] <- "High.Low.Interval"
       }
     }
     } else {
       if(Distribution %in% c("bern", "bin")) {
         for (i in 1:length(qVal)) {
-          QbetaGtY[[i]] <- summarizePost( qbeta(qVal[i], a_shape,
+          QBbetaGtY[[i]] <- summarizePost( qbeta(qVal[i], a_shape,
                                                 b_shape) )[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
-          names(QbetaGtY)[i] <- paste0("Percentile_", qVal[i])
+          names(QBbetaGtY)[i] <- paste0("Percentile_", qVal[i])
         }
       }
     }
@@ -987,16 +987,16 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL, eVal
   }
   #Return NAs for NULL objects
   #probability
-  if (length(PbetaGtY)==0 ) {
-    PbetaGtY <- NA
+  if (length(PBbetaGtY)==0 ) {
+    PBbetaGtY <- NA
   } else {
-    PbetaGtY <- PbetaGtY
+    PBbetaGtY <- PBbetaGtY
   }
   #quantile
-  if (length(QbetaGtY)==0 ) {
-    QbetaGtY <- NA
+  if (length(QBbetaGtY)==0 ) {
+    QBbetaGtY <- NA
   } else {
-    QbetaGtY <- QbetaGtY
+    QBbetaGtY <- QBbetaGtY
   }
   #Effect size
   if (length(betaEffSize2Y)== 0 ) {
@@ -1585,7 +1585,7 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL, eVal
   ######################################
   ## 1. Probability ##
   if (Distribution %in% c("bern", "bin")) {
-    PdisGtY <- PbetaGtY
+    PdisGtY <- PBbetaGtY
   }
   if (Distribution == "ln") {
     PdisGtY <- PlogGtY
@@ -1617,7 +1617,7 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL, eVal
   }
   ## 2. Quantile ##
   if (Distribution %in% c("bern", "bin")) {
-    QdisGtY <- QbetaGtY
+    QdisGtY <- QBbetaGtY
   }
   if (Distribution == "ln") {
     QdisGtY <- QlogGtY

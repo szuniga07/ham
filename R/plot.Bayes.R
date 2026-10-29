@@ -300,7 +300,7 @@ plot.Bayes <- function(x, y=NULL, type="n", parameter=NULL, center="mode", mass=
   #             DEACTIVATE CODA NAMESPACE HIJACKING
   # -----------------------------------------------------------------
   # This safely removes coda's hidden S3 intercept keys from R's method
-  # lookup table for this session, forcing R to use pristine native code maps.
+  # lookup table for this session, forcing R to use clean native code maps.
   if (exists(".__S3MethodsTable__.", envir = baseenv())) {
     coda_intercepts <- ls(envir = base::.__S3MethodsTable__., pattern = "mcmc|jags")
     if (length(coda_intercepts) > 0) {
