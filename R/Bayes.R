@@ -909,13 +909,12 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL, eVal
   ###################
   #if(!is.null(yVal)) {
   if(Distribution %in% c("bern", "bin")) {
-    mean_val <- a_shape/MC.Matrix[, Spread]
+    mean_val <- a_shape/MC.Matrix[, Spread] # Shape A/Kappa= Mean
   }
   #  }
 
   if(Distribution %in% c("bern", "bin")) {
-    mean_val_dist <- summarizePost(mean_val)[c(c("Mode","Median",
-                                                 "Mean")[which(c("Mode","Median","Mean")== CenTend)],"HDIlow","HDIhigh")]
+    mean_val_dist <-  summarizePost((mean_val))[c(c("Mode","Median","Mean")[which(c("Mode","Median","Mean") == CenTend)], "HDIlow", "HDIhigh")]
   }
   else {
     mean_val_dist <- NA
@@ -1666,7 +1665,7 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL, eVal
 
   return(list("Est.Prob.LT.Y"= PdisGtY,
               "Est.Quantile.P"= QdisGtY,
-              "Est.Mean.Beta"=mean_val_dist,
+              "Est.Mean.Beta"= mean_val_dist,
               "Effect.Size.Prop"=Effect.Size.Output) )
 }
 

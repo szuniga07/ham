@@ -901,7 +901,7 @@ interpret <- function(object, digits=NULL) {
       Y_interval_intro <- c("The estimated interval of the lowest and highest x values you \nlisted have this estimated area under the curve between them:")
       P_interval_intro <- c("The estimated interval of the lowest and highest percentile values you \nlisted have this estimated absolute difference in x between them:")
       E_targets_intro <- c("Cohen's h effect sizes may help understand the difference in potential \ntargets, for the following absolute differences in proportions:")
-      beta_mean_intro <- c("The estimated mean of the X values from the beta distribution \nwith 95% Highest Density Intervals [HDI Low, HDI High]:")
+      beta_mean_intro <- c("The estimated mean of X, if using beta distribution parameters 'omega' \n& 'kappa', and 95% Highest Density Intervals [HDI Low, HDI High]:")
 
       # Interpretations that come from a for loop #
       # Y_targets #
@@ -958,8 +958,8 @@ interpret <- function(object, digits=NULL) {
       }
       #Beta estimate with HDIs
       if(any(!is.na(beta_mean))) {
-        beta_interpret <- paste0("The estimated mean is ", signif(beta_mean[1], digits=digits),
-                                    " [", signif(beta_mean[2], digits=digits), ", ", signif(beta_mean[3], digits=digits),"]." )
+        beta_interpret <- paste0("The estimated mean is ", signif(beta_mean[2], digits=digits),
+                                    " [", signif(beta_mean[1], digits=digits), ", ", signif(beta_mean[3], digits=digits),"]." )
       } else {
         beta_interpret <- NA
       }
