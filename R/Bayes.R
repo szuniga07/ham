@@ -1662,13 +1662,11 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL, eVal
   } else {
     Effect.Size.Output <- NA
   }
-
   return(list("Est.Prob.LT.Y"= PdisGtY,
               "Est.Quantile.P"= QdisGtY,
               "Est.Mean.Beta"= mean_val_dist,
               "Effect.Size.Prop"=Effect.Size.Output) )
 }
-
 
 
 ################################################################################
@@ -1871,7 +1869,6 @@ if(y == "multi") {
 #  multi_smry <- NA
   multi_smry <- NULL
 }
-
 ## Targets ##
 if(y == "target") {
   target_smry <- fncPropGtY(MCMC=MCMC, Distribution=type, yVal=targets[["y"]],
@@ -1967,6 +1964,41 @@ if (!is.null(target_list)) {
     }
   }
 }
+new_targ_list <- function(target_list, ordering_reference, Effect.Size.Output) {
+  # Handle target_list$targets$e[["a"]]
+  if (!is.null(target_list$targets$e[["a"]])) {
+    temp_vector <- target_list$targets$e[["a"]]
+    # Drills down into the ordering_reference parent object
+    if (!missing(ordering_reference) && !is.null(ordering_reference)) {
+      ref_order <- ordering_reference$e[["a"]]
+      if (!is.null(ref_order)) {
+        temp_vector <- temp_vector[order(match(temp_vector, ref_order))]
+      }
+    }
+    target_list$targets$e[["a"]] <- temp_vector
+  }
+
+  # Handle target_list$Target$Effect.Size.Prop
+  if (!is.null(target_list$Target$Effect.Size.Prop)) {
+    temp_effect <- target_list$Target$Effect.Size.Prop
+    # Safely checks the reference object
+    if (!missing(Effect.Size.Output) && !is.null(Effect.Size.Output)) {
+      # Assumes Effect.Size.Output was passed directly as a vector or
+      # can be matched directly if it is an atomic vector itself.
+      temp_effect <- temp_effect[order(match(temp_effect, Effect.Size.Output))]
+    }
+    target_list$Target$Effect.Size.Prop <- temp_effect
+  }
+  return(target_list)
+}
+
+# overwrite original global object when called
+target_list <- new_targ_list(
+  target_list        = target_list,
+  ordering_reference = targets,            # Pass the parent 'targets' list object
+  Effect.Size.Output = target_smry$Effect.Size.Prop  # Pass the vector or parent environment containing it
+)
+
 z <- list(Posterior.Summary=Posterior.Summary, MCMC=MCMC, Multilevel=multi_smry,
           Target=target_list, R2.Summary=r2_smry, parameter=parameter, Diagnostics=dx_parameter)
 # Assign ham classes
