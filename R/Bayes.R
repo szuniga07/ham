@@ -1654,18 +1654,23 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL, eVal
     as2 <- (asin(sign(y) * sqrt(abs(y))))*2  #Arcsine transformation for vector 2
     #Effect size
     Effect.Size.Output <- abs(as1 - as2 )
-    return("Effect.Size.Output"=Effect.Size.Output )
+    #Number Needed to Treat
+    Number.Needed.Treat <- 1/abs(x-y)
+    return(list("Effect.Size.Output"=Effect.Size.Output, "Number.Needed.Treat"=Number.Needed.Treat) )
   }
   #Run function to get effect sizes
   if(!is.null(eVal)) {
-    Effect.Size.Output <- fncPropEffectSize(x=eVal[[1]], y=eVal[[2]])
+    Effect.Size.Output  <- fncPropEffectSize(x=eVal[[1]], y=eVal[[2]])[[1]]
+    Number.Needed.Treat <- fncPropEffectSize(x=eVal[[1]], y=eVal[[2]])[[2]]
   } else {
     Effect.Size.Output <- NA
+    Number.Needed.Treat <- NA
   }
   return(list("Est.Prob.LT.Y"= PdisGtY,
               "Est.Quantile.P"= QdisGtY,
               "Est.Mean.Beta"= mean_val_dist,
-              "Effect.Size.Prop"=Effect.Size.Output) )
+              "Effect.Size.Prop"=Effect.Size.Output,
+              "Number.Needed.Treat"=Number.Needed.Treat) )
 }
 
 
@@ -1964,7 +1969,7 @@ if (!is.null(target_list)) {
     }
   }
 }
-new_targ_list <- function(target_list, ordering_reference, Effect.Size.Output) {
+new_targ_list <- function(target_list, ordering_reference, Effect.Size.Output, Number.Needed.Treat) {
   # Handle target_list$targets$e[["a"]]
   if (!is.null(target_list$targets$e[["a"]])) {
     temp_vector <- target_list$targets$e[["a"]]
