@@ -1658,19 +1658,36 @@ fncPropGtY <- function( MCMC=NULL, Distribution=NULL, yVal=NULL, qVal=NULL, eVal
     Number.Needed.Treat <- 1/abs(x-y)
     return(list("Effect.Size.Output"=Effect.Size.Output, "Number.Needed.Treat"=Number.Needed.Treat) )
   }
+  #calculate switch Risk Ratio
+  fncSwitchRR <- function(p0, p1) {
+    # Vectorized calculation using ifelse
+    theta <- ifelse(p1 < p0,  (p0 - p1) / p0,
+                    ifelse(p1 > p0,  (p0 - p1) / (1 - p0),
+                           0))
+#    return(data.frame(
+#      p0 = p0,
+#      p1 = p1,
+#      Directional_Theta = theta,
+#      Absolute_Magnitude = abs(theta)    ))
+    return( Switch.Risk.Ratio = abs(theta))
+  }
+
   #Run function to get effect sizes
   if(!is.null(eVal)) {
     Effect.Size.Output  <- fncPropEffectSize(x=eVal[[1]], y=eVal[[2]])[[1]]
     Number.Needed.Treat <- fncPropEffectSize(x=eVal[[1]], y=eVal[[2]])[[2]]
+    Switch.Risk.Ratio  <- fncSwitchRR(p0=eVal[[1]], p1=eVal[[2]])
   } else {
     Effect.Size.Output <- NA
     Number.Needed.Treat <- NA
+    Switch.Risk.Ratio <- NA
   }
   return(list("Est.Prob.LT.Y"= PdisGtY,
               "Est.Quantile.P"= QdisGtY,
               "Est.Mean.Beta"= mean_val_dist,
-              "Effect.Size.Prop"=Effect.Size.Output,
-              "Number.Needed.Treat"=Number.Needed.Treat) )
+              "Effect.Size.Prop"= Effect.Size.Output,
+              "Number.Needed.Treat"= Number.Needed.Treat,
+              "Switch.Risk.Ratio"= Switch.Risk.Ratio) )
 }
 
 
@@ -1969,7 +1986,7 @@ if (!is.null(target_list)) {
     }
   }
 }
-new_targ_list <- function(target_list, ordering_reference, Effect.Size.Output, Number.Needed.Treat) {
+new_targ_list <- function(target_list, ordering_reference, Effect.Size.Output) {
   # Handle target_list$targets$e[["a"]]
   if (!is.null(target_list$targets$e[["a"]])) {
     temp_vector <- target_list$targets$e[["a"]]

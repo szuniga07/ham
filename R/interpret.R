@@ -889,12 +889,17 @@ interpret <- function(object, digits=NULL) {
       } else {
         E_targets_ESize <- NA
       }
-      #kermit
       #Number needed to treat
       if(any(!is.na(object$Target$Number.Needed.Treat))) {
         E_NNT_est <- object$Target$Number.Needed.Treat
       } else {
         E_NNT_est <- NA
+      }
+      #Switch Relative Risk Ratio
+      if(any(!is.na(object$Target$Switch.Risk.Ratio))) {
+        E_SRR_est <- object$Target$Switch.Risk.Ratio
+      } else {
+        E_SRR_est <- NA
       }
       #Get beta mean estimate
       if(any(!is.na(object$Target$Est.Mean.Beta))) {
@@ -907,7 +912,7 @@ interpret <- function(object, digits=NULL) {
       P_targets_intro <- c("Based on the inverse cumulative distribution function for \nP(X <= x) = p'th quantile, the following x is at this percentile, \nwith 95% Highest Density Intervals [HDI Low, HDI High]:")
       Y_interval_intro <- c("The estimated interval of the lowest and highest x values you \nlisted have this estimated area under the curve between them:")
       P_interval_intro <- c("The estimated interval of the lowest and highest percentile values you \nlisted have this estimated absolute difference in x between them:")
-      E_targets_intro <- c("Cohen's h effect sizes may help understand the difference in potential \ntargets, adjusted for the distance to 0 or 1. And the number needed \nto treat (NNT) helps us understand the level of effort needed to impact \nour outcome (e.g., to reach the target when NNT= 20, we'll create an \nintervention that works well enough to reduce harm for 1 additional \npatient out of 20). For the following absolute differences in proportions:")
+      E_targets_intro <- c("Cohen's h effect sizes may help understand the difference in potential \ntargets, adjusted for the distance to 0 or 1. And the number needed \nto treat (NNT) helps us understand the level of effort needed to impact \nour outcome (e.g., to reach the target when NNT= 20, we'll create an \nintervention that works well enough to reduce harm for 1 additional \npatient out of 20). The switch risk ratio (SRR) is the relative risk \nratio adjusted for how close it is to 0 or 1. For the following \nabsolute differences in proportions:")
       beta_mean_intro <- c("The estimated mean of X, if using beta distribution parameters 'omega' \n& 'kappa', and 95% Highest Density Intervals [HDI Low, HDI High]:")
 
       # Interpretations that come from a for loop #
@@ -924,7 +929,6 @@ interpret <- function(object, digits=NULL) {
       if(any(!is.na(P_targets))) {
         P_interpret <- vector(mode="character", length=length(P_targets))
         for(i in 1:length(P_targets)) {
-          #kermit
 #          P_interpret[i] <- paste0("The ", P_targets[i]*100, "th percentile of x is ", signif(P_targets_est[[i]][1], digits=digits), " [", signif(P_targets_est[[i]][2], digits=digits), ", ", signif(P_targets_est[[i]][3], digits=digits), "].")
           if (substr(as.character(P_targets[i]), nchar(as.character(P_targets[i])), nchar(as.character(P_targets[i]))) == "1") {
             P_interpret[i] <- paste0("The ", P_targets[i]*100, "st percentile of x is ", signif(P_targets_est[[i]][1], digits=digits), " [", signif(P_targets_est[[i]][2], digits=digits), ", ", signif(P_targets_est[[i]][3], digits=digits), "].")
@@ -943,7 +947,7 @@ interpret <- function(object, digits=NULL) {
       if(any(!is.na(E_targets))) {
         E_interpret <- vector(mode="character", length=nrow(E_targets))
         for(i in 1:nrow(E_targets)) {
-          E_interpret[i] <- paste0("The effect size of ", signif(E_targets[i, 2], digits=digits), " minus ", signif(E_targets[i, 1], digits=digits)," is ", signif(E_targets_est[i], digits=digits),", a ", E_targets_ESize[i]," effect. The NNT is ", signif(E_NNT_est[i], digits=digits), ".")
+          E_interpret[i] <- paste0(signif(E_targets[i, 2], digits=digits), " minus ", signif(E_targets[i, 1], digits=digits)," is ", signif(E_targets_est[i], digits=digits),", a ", E_targets_ESize[i]," effect size. NNT is ", signif(E_NNT_est[i], digits=digits), ". ", "SRR is ", signif(E_SRR_est[i], digits=digits), ".")
         }
       } else {
         E_interpret <- NA
@@ -982,7 +986,8 @@ interpret <- function(object, digits=NULL) {
                 P_targets_intro =P_targets_intro , P_interpret=P_interpret,
                 P_interval_intro=P_interval_intro, P_int_interpret=P_int_interpret,
                 beta_mean_intro=beta_mean_intro, beta_interpret=beta_interpret,
-                E_targets_intro=E_targets_intro, E_interpret=E_interpret, E_NNT_est=E_NNT_est)
+                E_targets_intro=E_targets_intro, E_interpret=E_interpret,
+                E_NNT_est=E_NNT_est, E_SRR_est=E_SRR_est)
       class(z) <- c("interpret", "target", "ham", "list")
   }
   }
