@@ -792,17 +792,7 @@ if(y== "target") {
         }
       }
     }
-    #Merge 2 tables so I can get points in correct order
-    for (i in 1:(length(plot_row_numbers)) ) {
-      lines(c(hdidf[plot_row_numbers, Lower][i], hdidf[plot_row_numbers, Upper][i]),
-            c((1:length(plot_row_numbers))[i], (1:length(plot_row_numbers))[i]),
-            lwd=lwd, col=Lcol)
-      #Points for observed rates and Bayesian estimates
-      points(hdidf[plot_row_numbers, Average][i ], i, pch=24, col=Pcol[1], bg=Pcol[1], lwd=lwd,cex=cex)
-      if(Level >= 2) {
-        points(hdidf[plot_row_numbers, "Obs.Rate"][i ], (1:length(plot_row_numbers))[i], pch=2, col=Pcol[1], bg=Pcol[1], lwd=lwd,cex=cex)
-      }
-    }
+    #kermit
     #Mean line
     if(Level >= 2) {
       abline(v=mainYmn, lwd=lwd, col="grey", lty=3)
@@ -820,6 +810,18 @@ if(y== "target") {
     if(Level >= 2) {
       if(!is.null(plyCol)) {
       polygon(Cbar_x, Cbar_y, col = adjustcolor(plyCol, alpha.f = 0.4), border= plyCol )
+      }
+    }
+    #kermit
+    #Merge 2 tables so I can get points in correct order
+    for (i in 1:(length(plot_row_numbers)) ) {
+      lines(c(hdidf[plot_row_numbers, Lower][i], hdidf[plot_row_numbers, Upper][i]),
+            c((1:length(plot_row_numbers))[i], (1:length(plot_row_numbers))[i]),
+            lwd=lwd, col=Lcol)
+      #Points for observed rates and Bayesian estimates
+      points(hdidf[plot_row_numbers, Average][i ], i, pch=24, col=Pcol[1], bg=Pcol[1], lwd=lwd,cex=cex)
+      if(Level >= 2) {
+        points(hdidf[plot_row_numbers, "Obs.Rate"][i ], (1:length(plot_row_numbers))[i], pch=2, col=Pcol[1], bg=Pcol[1], lwd=lwd,cex=cex)
       }
     }
     #Add legend
