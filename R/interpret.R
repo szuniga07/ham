@@ -947,7 +947,7 @@ interpret <- function(object, digits=NULL) {
       if(any(!is.na(E_targets))) {
         E_interpret <- vector(mode="character", length=nrow(E_targets))
         for(i in 1:nrow(E_targets)) {
-          E_interpret[i] <- paste0(signif(E_targets[i, 2], digits=digits), " minus ", signif(E_targets[i, 1], digits=digits)," is ", signif(E_targets_est[i], digits=digits),", a ", E_targets_ESize[i]," effect size. NNT is ", signif(E_NNT_est[i], digits=digits), ". ", "SRR is ", signif(E_SRR_est[i], digits=digits), ".")
+          E_interpret[i] <- paste0(signif(E_targets[i, 2], digits=digits), " to ", signif(E_targets[i, 1], digits=digits)," is a ", E_targets_ESize[i]," effect size (h=", signif(E_targets_est[i], digits=digits), "). ", "NNT is ", signif(E_NNT_est[i], digits=digits), ". ", "SRR is ", signif(E_SRR_est[i], digits=digits), ".")
         }
       } else {
         E_interpret <- NA
