@@ -913,7 +913,7 @@ interpret <- function(object, digits=NULL) {
       Y_interval_intro <- c("The estimated interval of the lowest and highest x values you \nlisted have this estimated area under the curve between them:")
       P_interval_intro <- c("The estimated interval of the lowest and highest percentile values you \nlisted have this estimated absolute difference in x between them:")
       E_targets_intro <- c("Cohen's h effect sizes may help understand the difference in potential \ntargets, adjusted for the distance to 0 or 1. And the number needed \nto treat (NNT) helps us understand the level of effort needed to impact \nour outcome (e.g., to reach the target when NNT= 20, we'll create an \nintervention that works well enough to reduce harm for 1 additional \npatient out of 20). The switch risk ratio (SRR) is the relative risk \nratio adjusted for how close it is to 0 or 1. For the following \nabsolute differences in proportions:")
-      beta_mean_intro <- c("The estimated mean of X, if using beta distribution parameters 'omega' \n& 'kappa', and 95% Highest Density Intervals [HDI Low, HDI High]:")
+      beta_mean_intro <- c("The estimated mean of X (if using type= 'bin' with parameters 'omega' \n& 'kappa') and 95% Highest Density Intervals [HDI Low, HDI High]:")
 
       # Interpretations that come from a for loop #
       # Y_targets #
