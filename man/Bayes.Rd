@@ -90,12 +90,18 @@ about the effort needed to meet this target of a reduced readmission rate. And a
 as a 'small effect', but substantial, the Cohen's h effect size of 0.20 indicates that this is met when comparing targets of
 0.50 vs 0.40. For list elements 'p' and 'y, selecting 2 values will result in the intervals between the values in the form of
 the object 'High.Low.Interval'. When there are more than 2 listed values, the interval is between the lowest and highest values.
-Select type= one of these options: 'n', 'ln', 'w', 'g', 't', 'p', 'b', 'bern', 'bin'. Select parameter= the appropriate center,
-spread, and possible 3rd shape distribution parameter (e.g., parameter=c('mean', 'sd')). And the options to select center= 'mean',
-'median', or 'mode'. When type='bin', the returned 'Mean' value is calculated assuming that the model has an underlying likelihood
-function using the mode instead of the mean for the beta distribution. If not, the returned 'Mean' will be incorrect. When type='p',
-linear interpolation is used to calculate returned probabilities and Y values at specific percentiles because ppois() and qpois()
-work for discrete integers in the Poisson distribution. Default is NULL.}
+The number needed to treat (NNT) is the number of patients who must be treated in order to prevent one adverse event and is
+calculated as 1 / ARR with the ARR (absolute risk reduction) being the absolute difference in proportions between 2 groups
+(Laupacis, 1988). For example, if the outcome rates for two groups are 0.25 and 0.20, the NNT is 20 (1/absolute(0.25 - 0.20) = 20).
+Generally, NNTs <= 20 are preferred. The switch risk ratio (SRR) is the relative risk ratio adjusted for how close it is to 0 or 1,
+switching between the relative risk and survival ratios (Sheps, 1958). For example, when the difference between the proportions
+0.10 and 0.05 and 0.95 and 0.90 both equal and SRR of 0.50. Select type= one of these options: 'n', 'ln', 'w', 'g', 't', 'p', 'b',
+'bern', 'bin'. Select parameter= the appropriate center, spread, and possible 3rd shape distribution parameter (e.g., parameter=
+c('mean', 'sd')). And the options to select center= 'mean', 'median', or 'mode'. When type='bin', the returned 'Mean' value is
+calculated assuming that the model has an underlying likelihood function using the mode instead of the mean for the beta
+distribution. If not, the returned 'Mean' will be incorrect. When type='p', linear interpolation (Hyndman, 1996) is used to calculate
+returned probabilities and Y values at specific percentiles because ppois() and qpois() work for discrete integers in the Poisson
+distribution. Default is NULL.}
 }
 \value{
 data frame of summary statistics for the MCMC parameter's distribution and/or MCMC data frame.
@@ -162,10 +168,20 @@ Gelman, A., Goodrich, B., Gabry, J., & Vehtari, A. (2019). R-squared for Bayesia
 Regression Models. The American Statistician, 73, 3, 307–309.
 https://doi.org/10.1080/00031305.2018.1549100
 
+Hyndman, R., & Fan, Y. (1996). Sample Quantiles in Statistical Packages. The American
+Statistician, 50, 4, 361–365. https://doi.org/10.1080/00031305.1996.10473566
+
 Kruschke, J. (2014). Doing Bayesian Data Analysis: A Tutorial with R, JAGS, and
 Stan, Second Edition. New York: Academic Press. ISBN: 9780124058880
 
+Laupacis, A., Sackett, D., & Roberts, R. (1988). An assessment of clinically useful
+Measures of the Consequences of Treatment. New England Journal of Medicine, 318, 26,
+1728–1733. https://doi.org/10.1056/NEJM198806303182605
+
 Pitman, J. (1993). Probability. Springer-Verlag. ISBN: 978-0-387-97974-8
+
+Sheps, M. (1958). Shall we Count the Living or the Dead? New England Journal of
+Medicine, 259, 25, 1210–1214. https://doi.org/10.1056/NEJM195812182592505
 }
 \seealso{
 \code{\link[=plot.Bayes]{plot.Bayes()}}, \code{\link[=interpret]{interpret()}} for a plot and interpretation of the 'Bayes' class object.
