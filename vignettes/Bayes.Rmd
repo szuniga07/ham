@@ -341,7 +341,7 @@ plot(x=co2multi, y="multi", level=2)
 We see below that there are solid and hollow triangles. The hollow triangles represent the observed data and the solid triangles represent the estimated parameters. We see signs of 'shrinkage' with the plant means being pulled over to the overall mean. The level of shrinkage is impacted by sample size and the distribution of the plant's uptake values. Groups with larger samples tend to have more pull on group estimates because the analysis borrows on the information provided by other groups when calculating each group's estimated rate.
 
 ```{r plotMulti1, fig.dim = c(6, 4.5)}
-plot(x=co2multi, y="multi", level=2, aorder=FALSE,
+plot(x=co2multi, y="multi", level=2, order='numeric',
 subset= c("Qn2","Qn3","Qc3","Qc2","Mn3","Mn2","Mc2","Mc3"),
 lcol="blue", pcol= c("red", "skyblue"), round.c=2, bcol="yellow",
 xlim=c(-.1, 1), legend=NULL, add.legend="topright", lwd=3, cex.lab=1.2,
@@ -353,7 +353,7 @@ cex= 2, cex.main=1.25, cex.axis=.75, cex.legend=1.5, xlab=NULL)
 And now the level 3 plot (observation in plants in Treatment by type groups). You'll notice that in both the graphs, there is a wide HDI band, partially due to only having a few groups at each level, here just 4 groups. Having more groups at the higher levels can help narrow our degree of uncertainty by providing more information.
 
 ```{r plotMulti2, fig.dim = c(6, 4.5)}
-plot(x=co2multi, y="multi", level=3, aorder=FALSE, lcol="blue", pcol= c("green", "pink"),
+plot(x=co2multi, y="multi", level=3, order='numeric', lcol="blue", pcol= c("green", "pink"),
 round.c=3, bcol="lavender", xlim=c(-.1, 1), legend=NULL, add.legend="bottomleft", lwd=3, cex.lab =1.2, cex= 2, cex.main=1.25, cex.axis=.75, cex.legend=1.25, xlab=NULL)
 ```
 

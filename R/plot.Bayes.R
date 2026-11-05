@@ -151,13 +151,14 @@
 #' Graphs can be created separately for both level=2 and level=3 when there is a three-level model. The graph when y='multi'
 #' can be produced when level=1 for non-hierarchical models if there are estimates for groups. For example, estimating the patient
 #' infection rate of hospitals without a hierarchical structure in the model. Default is NULL.
-#' @param aorder a logical indicator on whether the ordering of the group levels are in alphabetical order or not when y='multi'.
-#' If aorder=TRUE, results are displayed in an increasing alphabetical order based on level name (e.g., 'LA' before 'NY').
-#' If aorder=FALSE, an increasing numeric order based on group parameter values is performed (e.g., 0.65 before 0.70). Default is TRUE.
+#' @param order a character vector to specify order as 'alpha' or 'numeric' for alphabetical or numerical ordering when y='multi'.
+#' If order= 'alpha', results are displayed in an increasing alphabetical order based on level name (e.g., 'LA' before 'NY').
+#' If order= 'numeric', an increasing numeric order based on group parameter values is performed (e.g., 0.65 before 0.70). Default is 'alpha'.
 #' @param decreasing logical TRUE or FALSE that indicates a decreasing or increasing order in displayed results in the y='multi' graph. When
 #' decreasing=TRUE, the results go from high to low in alphabetical or numerical order. When decreasing=FALSE, results go from low to high.
 #' Default is decreasing=FALSE.
 #' @param round.c an integer indicating the number of decimal places when rounding numbers y='multi' and y='target'. Default is 2.
+#' @param aorder not currently used, please use 'order' instead.
 #' @param ... additional arguments.
 #'
 #' @return plots assessing model quality, posterior distributions, posterior predictive checks, hierarchical
@@ -264,13 +265,13 @@
 #' # We generally only need the first 3 arguments below. But we'll subset
 #' # on 8 of 12 plants in the level 2 model (observations nested in plants)
 #' # and modify other settings.
-#' plot(x=co2multi, y="multi", level=2, aorder=FALSE, decreasing=FALSE,
+#' plot(x=co2multi, y="multi", level=2, order='numeric', decreasing=FALSE,
 #' subset= c("Qn2","Qn3","Qc3","Qc2","Mn3","Mn2","Mc2","Mc3"),
 #' lcol="blue", pcol= c("red", "skyblue"), round.c=1, bcol="yellow",
 #' xlim=c(-.1, 1), legend=NULL, add.legend="topright", lwd=3, cex.lab=1.2,
 #' cex= 2, cex.main=1.5, cex.axis=.75, cex.legend=1.5, X.Lab=NULL)
 #' # And now the level 3 plot (observation in plants in Treatment by type groups)
-#' plot(x=co2multi, y="multi", level=3, aorder=FALSE, decreasing=FALSE, lcol="blue",
+#' plot(x=co2multi, y="multi", level=3, order='numeric', decreasing=FALSE, lcol="blue",
 #' pcol= c("green", "pink"), round.c=1, bcol="lavender", xlim=c(-.1, 1), legend=NULL,
 #' add.legend="right", lwd=3, cex.lab =1.2, cex= 2, cex.main=1.5, cex.axis=.75,
 #' cex.legend=1.5, X.Lab=NULL)
@@ -295,7 +296,7 @@ plot.Bayes <- function(x, y=NULL, type="n", parameter=NULL, center="mode", mass=
                        bcol=NULL, lcol=NULL, pcol=NULL, xpt=NULL, tgt=NULL, tgtcol="gray", tpline=NULL, tpcol=NULL,
                        pline=20, pct=95, add.legend=NULL, legend=NULL, cex=1, cex.lab=NULL, cex.axis=NULL, cex.main=NULL,
                        cex.text=NULL, cex.legend=NULL, HDItext=0.7, math="n", es="n",
-                       subset=NULL, level=NULL, aorder=NULL, decreasing=NULL, round.c=2, ...) {
+                       subset=NULL, level=NULL, order=NULL, decreasing=NULL, round.c=2, aorder=NULL, ...) {
   # -----------------------------------------------------------------
   #             DEACTIVATE CODA NAMESPACE HIJACKING
   # -----------------------------------------------------------------
@@ -431,6 +432,10 @@ if(y== "target") {
   if(!is.null(decreasing)) {
     if (is.logical(decreasing) == FALSE) {stop("Error: Expecting 'decreasing' is a logical (TRUE or FALSE) class object." )}
   }
+  # aorder
+  if(!is.null(aorder)) {
+      stop("Error: 'aorder' not currently used, please use 'order' instead.")
+  }
 
 #Assign new objects
   MCMC <- x$MCMC
@@ -535,10 +540,10 @@ if(y== "target") {
     decreasing <- FALSE
   }
 #alphaetical order
-  if(!is.null(aorder)) {
-    aorder <- aorder
+  if(!is.null(order)) {
+    order <- order
   } else {
-    aorder <- TRUE
+    order <- 'alpha'
   }
 
   ####################
@@ -639,10 +644,10 @@ if(y== "target") {
       }
     }
     #Create hdidf table of Bayesian estimates
-    if(View.Order == TRUE) {                                  #Post1
+    if(View.Order == 'alpha') {                                  #Post1
       hdidf <- multi_smry$Post1[row_numbers , c(Group2, Average, Lower, Upper, "Obs.Rate")]
     }
-    if(View.Order == FALSE) {                                  #Post2
+    if(View.Order == 'numeric') {                                  #Post2
       hdidf <- multi_smry$Post2[row_numbers , c(Group2, Average, Lower, Upper, "Obs.Rate")]
     }
     #Decreasing or increasing order
@@ -652,10 +657,10 @@ if(y== "target") {
       hdidf <- hdidf[c(rev(1:(nrow(hdidf) - 1)), nrow(hdidf)) , ]
     }
     #Create adf table of observed values
-    if(View.Order == TRUE) {                                  #Post1
+    if(View.Order == 'alpha') {                                  #Post1
       adf <- multi_smry$Post1[row_numbers , c(Group2, "Obs.Rate")]
     }
-    if(View.Order == FALSE) {                                  #Post2
+    if(View.Order == 'numeric') {                                  #Post2
       adf <- multi_smry$Post2[row_numbers , c(Group2, "Obs.Rate")]
     }
     #Decreasing or increasing order
@@ -671,10 +676,10 @@ if(y== "target") {
       mainYmn <- NA
     }
     #Select which 3-level category data gets reported
-    if(View.Order == TRUE) {                                  #Post1
+    if(View.Order == 'alpha') {                                  #Post1
       Group3.Obs <- Group3.Obs1
     }
-    if(View.Order == FALSE) {                                  #Post2
+    if(View.Order == 'numeric') {                                  #Post2
       Group3.Obs <- Group3.Obs2
     }
     #Decreasing or increasing order, using length(Group3.Obs) because it is a list
@@ -2348,19 +2353,19 @@ if(y == "check") {
 ## Multilevel summary ##
     if(y == "multi") {
     switch(level,
-           "1"= fncHdiBinP(multi_smry=multi_smry, main=main, View.Order=aorder, decreasing=decreasing,
+           "1"= fncHdiBinP(multi_smry=multi_smry, main=main, View.Order=order, decreasing=decreasing,
                            View.Level= "1", GroupX=subset, Lcol=lcol, Pcol=pcol,
                          tgt=tgt, tgt.col=tgtcol, plyCol=bcol, roundVal=round.c,
                          XLim1=xlim[1], XLim2=xlim[2], legend=legend, Leg.Loc=add.legend,
                          lwd=lwd, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
                          cex.axis=cex.axis, cex.legend=cex.legend, X.Lab=xlab),
-           "2"= fncHdiBinP(multi_smry=multi_smry, main=main, View.Order=aorder, decreasing=decreasing,
+           "2"= fncHdiBinP(multi_smry=multi_smry, main=main, View.Order=order, decreasing=decreasing,
                            View.Level="2", GroupX=subset, Lcol=lcol, Pcol=pcol,
                          tgt=tgt, tgt.col=tgtcol, plyCol=bcol, roundVal=round.c,
                          XLim1=xlim[1], XLim2=xlim[2], legend=legend, Leg.Loc=add.legend,
                          lwd=lwd, cex.lab= cex.lab, cex= cex, cex.main=cex.main,
                          cex.axis=cex.axis, cex.legend=cex.legend, X.Lab=xlab),
-           "3"= fncHdiBinP(multi_smry=multi_smry, main=main, View.Order=aorder, decreasing=decreasing,
+           "3"= fncHdiBinP(multi_smry=multi_smry, main=main, View.Order=order, decreasing=decreasing,
                            View.Level="3", GroupX=subset, Lcol=lcol, Pcol=pcol,
                          tgt=tgt, tgt.col=tgtcol, plyCol=bcol, roundVal=round.c,
                          XLim1=xlim[1], XLim2=xlim[2], legend=legend, Leg.Loc=add.legend,
