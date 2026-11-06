@@ -511,14 +511,14 @@ if(y== "target") {
         vlim <- range(data[, iv], na.rm=TRUE)
       }
     }
-    if(type %in% c("n","ln", "sn", "w", "g", "t")) {
+    if(type %in% c("n","ln", "sn", "w", "g", "t","p","b")) {
       if(!is.null(data)) {
         vlim <- range(data[, dv], na.rm=TRUE)
       }
     }
   }
     if(y %in% c("target")) {
-      if(type %in% c("n","ln", "sn", "w", "g", "t")) {
+      if(type %in% c("n","ln", "sn", "w", "g", "t","p","b")) {
         if(!is.null(data)) {
           vlim <- range(data[, dv], na.rm=TRUE)
         }
@@ -797,7 +797,6 @@ if(y== "target") {
         }
       }
     }
-    #kermit
     #Mean line
     if(Level >= 2) {
       abline(v=mainYmn, lwd=lwd, col="grey", lty=3)
@@ -817,7 +816,6 @@ if(y== "target") {
       polygon(Cbar_x, Cbar_y, col = adjustcolor(plyCol, alpha.f = 0.4), border= plyCol )
       }
     }
-    #kermit
     #Merge 2 tables so I can get points in correct order
     for (i in 1:(length(plot_row_numbers)) ) {
       lines(c(hdidf[plot_row_numbers, Lower][i], hdidf[plot_row_numbers, Upper][i]),
@@ -984,7 +982,7 @@ if(y== "target") {
       #Add points
       if (!is.null(Point.Loc)) {
         for (i in 1:length(Point.Loc)) {
-          points(x=Point.Loc[i], y=0, pch=3, cex=cex, col=PCol)
+          points(x=Point.Loc[i], y=0, pch=3, cex=cex, col=PCol, lwd=cex)
         }
       }
       #Add legend
@@ -1099,7 +1097,7 @@ if(y== "target") {
       #Add points
       if (!is.null(Point.Loc)) {
         for (i in 1:length(Point.Loc)) {
-          points(x=Point.Loc[i], y=0, pch=3, cex=cex, col=PCol)
+          points(x=Point.Loc[i], y=0, pch=3, cex=cex, col=PCol, lwd=cex)
         }
       }
       #Add legend
@@ -1289,7 +1287,7 @@ if(y== "target") {
     #Add points
     if (!is.null(Point.Loc)) {
       for (i in 1:length(Point.Loc)) {
-        points(x=Point.Loc[i], y=0, pch=3, cex=cex, col=PCol)
+        points(x=Point.Loc[i], y=0, pch=3, cex=cex, col=PCol, lwd=cex)
       }
     }
     #Add legend
