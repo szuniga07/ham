@@ -929,8 +929,9 @@ interpret <- function(object, digits=NULL) {
       if(any(!is.na(P_targets))) {
         P_interpret <- vector(mode="character", length=length(P_targets))
         for(i in 1:length(P_targets)) {
-#          P_interpret[i] <- paste0("The ", P_targets[i]*100, "th percentile of x is ", signif(P_targets_est[[i]][1], digits=digits), " [", signif(P_targets_est[[i]][2], digits=digits), ", ", signif(P_targets_est[[i]][3], digits=digits), "].")
-          if (substr(as.character(P_targets[i]), nchar(as.character(P_targets[i])), nchar(as.character(P_targets[i]))) == "1") {
+          if (isTRUE(all.equal((P_targets[i]/0.1), round((P_targets[i]/0.1))))) {
+            P_interpret[i] <- paste0("The ", P_targets[i]*100, "th percentile of x is ", signif(P_targets_est[[i]][1], digits=digits), " [", signif(P_targets_est[[i]][2], digits=digits), ", ", signif(P_targets_est[[i]][3], digits=digits), "].")
+          } else if (substr(as.character(P_targets[i]), nchar(as.character(P_targets[i])), nchar(as.character(P_targets[i]))) == "1") {
             P_interpret[i] <- paste0("The ", P_targets[i]*100, "st percentile of x is ", signif(P_targets_est[[i]][1], digits=digits), " [", signif(P_targets_est[[i]][2], digits=digits), ", ", signif(P_targets_est[[i]][3], digits=digits), "].")
           } else if (substr(as.character(P_targets[i]), nchar(as.character(P_targets[i])), nchar(as.character(P_targets[i]))) == "2") {
             P_interpret[i] <- paste0("The ", P_targets[i]*100, "nd percentile of x is ", signif(P_targets_est[[i]][1], digits=digits), " [", signif(P_targets_est[[i]][2], digits=digits), ", ", signif(P_targets_est[[i]][3], digits=digits), "].")
